@@ -1,0 +1,22 @@
+language: python
+cache: pip
+
+python:
+  - 2.7
+  - 3.4
+  - 3.5
+  - 3.6
+
+before_install:
+  - pip install --quiet coverage flake8 pyyaml
+
+install:
+  - make install
+
+script:
+  - make test
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
+
+sudo: false
