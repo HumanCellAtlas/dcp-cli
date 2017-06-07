@@ -1,3 +1,5 @@
+# Dependencies: git pandoc moreutils httpie
+
 SHELL=/bin/bash -eo pipefail
 
 release_major:
