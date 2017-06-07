@@ -4,8 +4,8 @@ import glob
 from setuptools import setup, find_packages
 
 setup(
-    name="hcacli",
-    version="0.0.7",
+    name="hca-cli",
+    version="0.0.8",
     url='https://github.com/HumanCellAtlas/data-store-cli',
     license='Apache Software License',
     author='Human Cell Atlas contributors',
