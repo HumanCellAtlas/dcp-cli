@@ -1,10 +1,8 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-# import os, sys, json, time, base64
-from bravado.swagger_model import load_file
-from bravado.client import SwaggerClient
 import json, sys, os
 from io import open
+import pprint
 import requests
 from .parser import get_parser
 
@@ -15,7 +13,6 @@ class API:
     def __init__(self, user, password, test=False):
         """Initialize the CLI API."""
         spec = self.get_spec(test)
-
         self.base_url = "https://" + spec['host'] + spec['basePath']
         self.parser, self.positional_args = get_parser(spec)
 
@@ -80,8 +77,6 @@ class API:
             raise ValueError("Bad request type")
 
         return request
-        # Template for datetime transformer.
-        # datetime.datetime.strptime( "2007-03-04T21:08:12", "%Y-%m-%dT%H:%M:%S" )
 
 
 if __name__ == "__main__":

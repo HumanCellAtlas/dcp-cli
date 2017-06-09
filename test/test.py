@@ -181,7 +181,6 @@ class TestHCACLI(unittest.TestCase):
 
         args = ["get-bundles", "uuid_arg", "version_arg", "--replica", "rep"]
         response = api.make_request(args)
-        print(response.status_code)
         self.assertEqual(self._get_first_url(response), "https://hca-dss.czi.technology/v1/bundles/uuid_arg/version_arg?replica=rep")
         self.assertTrue(response.ok)
 
@@ -194,7 +193,6 @@ class TestHCACLI(unittest.TestCase):
         # Works for now. --replica isn't an option unless both uuid and version specified.
         args = ["get-bundles", "uuid_arg", "--replica", "rep"]
         response = api.make_request(args)
-        print(response.status_code)
         self.assertEqual(self._get_first_url(response), "https://hca-dss.czi.technology/v1/bundles/uuid_arg?replica=rep")
         self.assertTrue(response.ok)
 
@@ -205,14 +203,12 @@ class TestHCACLI(unittest.TestCase):
         out = {"obj_name": "name", "obj_uuid": "uuid", "obj_versions": ["item1", "item2"]}
         self.assertEqual(api.parse_args(args), out)
 
-
     def test_array_cli(self):
         """Ensure that this framework can handle arrays."""
         api = hca.define_api.Api("a", "b", True)
         args = ["put-bundles", "--obj-name", "name", "--obj-uuid", "uuid", "--obj-versions", "item1", "item2"]
         out = {"obj_name": "name", "obj_uuid": "uuid", "obj_versions": ["item1", "item2"]}
         self.assertEqual(api.parse_args(args), out)
-
 
 
 if __name__ == '__main__':

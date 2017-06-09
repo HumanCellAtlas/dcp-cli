@@ -83,7 +83,6 @@ def get_parser(spec):
             endpoint_info = spec['paths'][path][http_method]
             endpoint_name = make_name(http_method, path_split)
             indexed_parameters = index_parameters(spec, endpoint_info)
-            pprint.pprint(indexed_parameters)
 
             if endpoint_name not in param_holders:
                 param_holders[endpoint_name] = {
