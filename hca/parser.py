@@ -38,6 +38,7 @@ def index_parameters(endpoint_info):
         else:
             param_name = param['name']
             indexed_parameters[param_name] = param
+
     return indexed_parameters
 
 
