@@ -24,23 +24,12 @@ class Api:
         return api_spec_dict
 
     def make_request(self, args):
+        """Function to actually make request to api. Ignore for now."""
         namespace = vars(self.parser.parse_args(args))
-        namespace = {k:namespace[k] for k in namespace if namespace[k] is not None}
+        namespace = {k: namespace[k] for k in namespace if namespace[k] is not None}
+        # Template for datetime transformer.
+        # datetime.datetime.strptime( "2007-03-04T21:08:12", "%Y-%m-%dT%H:%M:%S" )
 
-        
-
-
-        # path_args = path.split("/")
-        # for arg in path_args:
-        #     if (len(arg) > 0 and arg[0] == "{") or len(arg) == 0:
-
-# print(requests.get('https://hca-dss.czi.technology/v1/bundles/1/1').json())
-
-# x = Api("a", "b", "c")
-# pprint.pprint(x.spec)
-
-# import datetime
-# datetime.datetime.strptime( "2007-03-04T21:08:12", "%Y-%m-%dT%H:%M:%S" )
 
 if __name__ == "__main__":
     api = Api("a", "b", "c")
