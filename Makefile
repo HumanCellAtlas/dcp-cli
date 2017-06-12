@@ -4,7 +4,7 @@ lint:
 	./setup.py flake8
 
 test: lint
-	python ./test/test.py -v
+	coverage run --source=$$(python setup.py --name) ./test/test.py
 
 init_docs:
 	cd docs; sphinx-quickstart
