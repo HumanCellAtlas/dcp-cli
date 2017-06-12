@@ -134,7 +134,7 @@ def get_parser(spec):
             h = h + "\n".join(optional_data['required_for'])
             subparser.add_argument(
                 "--" + optional_name,
-                nargs=1 if optional_data["required"] else "?",
+                required=optional_data["required"],
                 help=h
             )
     # pprint.pprint(param_holders)
