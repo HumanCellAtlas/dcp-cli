@@ -159,6 +159,37 @@ class TestHCACLI(unittest.TestCase):
         out = {"uuid": "uuid_arg", "replica": "rep"}
         self.assertEqual(api.parse_args(args), out)
 
+    def test_requests(self):
+        """Test that the parser parses arguments in the right way."""
+        api = hca.define_api.Api("user", "password")
+
+        args = ["get-bundles"]
+        response = api.make_request(args)
+        self.assertEqual(response.url, "https://hca-dss.czi.technology/v1/bundles")
+        self.assertTrue(response.ok())
+
+        args = ["get-bundles", "uuid_arg"]
+        response = api.make_request(args)
+        self.assertEqual(response.url, "https://hca-dss.czi.technology/v1/bundles/uuid_arg")
+        self.assertTrue(response.ok())
+
+        args = ["get-bundles", "uuid_arg", "version_arg", "--replica", "rep"]
+        response = api.make_request(args)
+        self.assertEqual(response.url, "https://hca-dss.czi.technology/v1/bundles/uuid_arg/version_arg")
+        self.assertTrue(response.ok())
+
+        # Works for now but shouldn't in the future b/c --replica required when uuid and version specified.
+        args = ["get-bundles", "uuid_arg", "version_arg"]
+        response = api.make_request(args)
+        self.assertEqual(response.url, "https://hca-dss.czi.technology/v1/bundles/uuid_arg/version_arg")
+        self.assertTrue(response.ok())
+
+        # Works for now. --replica isn't an option unless both uuid and version specified.
+        args = ["get-bundles", "uuid_arg", "--replica", "rep"]
+        response = api.make_request(args)
+        self.assertEqual(response.url, "https://hca-dss.czi.technology/v1/bundles/uuid_arg")
+        self.assertTrue(response.ok())
+
 
 if __name__ == '__main__':
     unittest.main()

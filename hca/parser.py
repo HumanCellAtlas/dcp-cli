@@ -131,4 +131,8 @@ def get_parser(spec):
                 required=optional_data["required"],
                 help=h
             )
-    return parser
+    positional_args = {endpoint: [arg['argument'] for arg in param_holders[endpoint]['positional']] for endpoint in param_holders}
+
+    # pprint.pprint(param_holders)
+    # print(positional_args)
+    return parser, positional_args
