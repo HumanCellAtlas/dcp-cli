@@ -6,5 +6,9 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import os, sys, logging
 
+from .define_api import Api
+
 def main():
-    print("Hello HCA!")
+    api = Api("a", "b", "c")
+    print("Hello HCA! :)")
+    return api.make_request(sys.argv[1:])

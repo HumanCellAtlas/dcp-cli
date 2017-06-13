@@ -1,11 +1,11 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 # import os, sys, json, time, base64
-import json, sys
+import json, sys, os
 from io import open
 # import pprint
 import requests
-from parser import get_parser
+from .parser import get_parser
 
 
 class Api:
@@ -19,14 +19,18 @@ class Api:
 
     def get_spec(self):
         """Load the API specification."""
-        with open("api_spec.json") as fp:
+        with open(os.path.dirname(os.path.realpath(__file__)) + "/api_spec.json") as fp:
             api_spec_dict = json.load(fp)
         return api_spec_dict
 
-    def make_request(self, args):
-        """Function to actually make request to api. Ignore for now."""
+    def parse_args(self, args):
         namespace = vars(self.parser.parse_args(args))
         namespace = {k: namespace[k] for k in namespace if namespace[k] is not None}
+        return namespace
+
+    def make_request(self, args):
+        """Function to actually make request to api. Ignore for now."""
+        return self.parse_args(args)
         # Template for datetime transformer.
         # datetime.datetime.strptime( "2007-03-04T21:08:12", "%Y-%m-%dT%H:%M:%S" )
 
