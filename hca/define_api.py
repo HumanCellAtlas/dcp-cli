@@ -1,6 +1,9 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-import json, sys, o
+# import os, sys, json, time, base64
+from bravado.swagger_model import load_file
+from bravado.client import SwaggerClient
+import json, sys, os
 from io import open
 import requests
 from .parser import get_parser
@@ -9,18 +12,20 @@ from .parser import get_parser
 class API:
     """Class for interacting with the REST Api."""
 
-    def __init__(self, api_url, user):
+    def __init__(self, user, password, test=False):
         """Initialize the CLI API."""
-        self.spec = self.get_spec()
-        self.base_url = "https://" + self.spec['host'] + self.spec['basePath']
-        self.parser, self.positional_args = get_parser(self.spec)
+        spec = self.get_spec(test)
 
-    def get_spec(self):
+        self.base_url = "https://" + spec['host'] + spec['basePath']
+        self.parser, self.positional_args = get_parser(spec)
+
+    def get_spec(self, test):
         """Load the API specification."""
-        client = SwaggerClient.from_spec(load_file('api_spec.json'))
-        print(client.swagger_spec.deref(client.swagger_spec.spec_dict['definitions']))
-        print("Done")
-        with open("api_spec.json") as fp:
+        url = os.path.dirname(os.path.realpath(__file__)) + "/api_spec.json"
+        if test:
+            url = os.path.dirname(os.path.realpath(__file__)) + "/../test/test.json"
+
+        with open(url) as fp:
             api_spec_dict = json.load(fp)
         return api_spec_dict
 
@@ -38,16 +43,26 @@ class API:
         return url
 
     def _build_payload(self, endpoint, namespace):
-        payload = {}
+        query_payload = {}
+        body_payload = {}
+        header_payload = {}
         for (arg_name, arg) in namespace.items():
+            if arg_name in self.positional_args[endpoint]["query"]:
+                query_payload[arg_name] = arg
+            if arg_name in self.positional_args[endpoint]["header"]:
+                header_payload[arg_name] = arg
             if arg_name not in self.positional_args[endpoint]:
                 payload[arg_name] = arg
         return payload
 
-    def make_request(self, args):
-        """Function to actually make request to api."""
+    def parse_args(self, args):
         namespace = vars(self.parser.parse_args(args))
         namespace = {k: namespace[k] for k in namespace if namespace[k] is not None}
+        return namespace
+
+    def make_request(self, args):
+        """Function to actually make request to api."""
+        namespace = self.parse_args(args)
         endpoint = args[0]
 
         url = self._build_url(endpoint, namespace)
@@ -70,6 +85,5 @@ class API:
 
 
 if __name__ == "__main__":
-    api = Api("a", "b")
-    print(sys.argv[1])
+    api = API("a", "b", True)
     print(api.make_request(sys.argv[1:]))
