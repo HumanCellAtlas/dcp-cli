@@ -69,7 +69,7 @@ def get_parser(spec):
             path_args = list(filter(lambda x: len(x) > 0 and x[0] == "{", path_split))
             path_args = map(lambda x: x[1: -1], path_args)
             positional = param_holders[endpoint_name]["positional"]
-            for i in range(max(len(path_args), len(positional))):
+            for i in range(max(len(list(path_args)), len(list(positional)))):
                 if i >= len(positional):
                     argument = path_args[i]
                     argrequired = indexed_parameters[argument]['required']
