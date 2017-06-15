@@ -67,7 +67,7 @@ def get_parser(spec):
 
             # Find positional arguments and label them required or not
             path_args = list(filter(lambda x: len(x) > 0 and x[0] == "{", path_split))
-            path_args = map(lambda x: x[1: -1], path_args)
+            path_args = list(map(lambda x: x[1: -1], path_args))
             positional = param_holders[endpoint_name]["positional"]
             for i in range(max(len(list(path_args)), len(list(positional)))):
                 if i >= len(positional):
