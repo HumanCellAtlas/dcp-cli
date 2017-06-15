@@ -119,7 +119,7 @@ class TestHCACLI(unittest.TestCase):
 
     def test_parsing(self):
         """Test that the parser parses arguments correctly."""
-        api = hca.define_api.Api("url", "user", "password")
+        api = hca.define_api.API("url", "user")
 
         args = ["put-files", "134", "--extras-bundle_uuid", "asdf", "--extras-creator_uid", "sdf", "--extras-source_url", "sljdf.com"]
         out = {'extras_source_url': 'sljdf.com', 'extras_bundle_uuid': 'asdf', 'uuid': ['134'], 'extras_creator_uid': 'sdf'}
@@ -156,7 +156,7 @@ class TestHCACLI(unittest.TestCase):
 
         # Works for now. --replica isn't an option unless both uuid and version specified.
         args = ["get-bundles", "uuid_arg", "--replica", "rep"]
-        out = {"uuid": "uuid_arg", "--replica": "rep"}
+        out = {"uuid": "uuid_arg", "replica": "rep"}
         self.assertEqual(api.parse_args(args), out)
 
 
