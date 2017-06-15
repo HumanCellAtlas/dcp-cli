@@ -118,7 +118,7 @@ class TestHCACLI(unittest.TestCase):
         )
 
     def test_parsing(self):
-        """Test that the parser parses arguments in the right way."""
+        """Test that the parser parses arguments correctly."""
         api = hca.define_api.Api("url", "user", "password")
 
         args = ["put-files", "134", "--extras-bundle_uuid", "asdf", "--extras-creator_uid", "sdf", "--extras-source_url", "sljdf.com"]

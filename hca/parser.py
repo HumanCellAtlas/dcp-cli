@@ -24,7 +24,6 @@ def index_parameters(endpoint_info):
 
     for param in endpoint_info['parameters']:
         if "schema" in param:
-            # upper_required = param['required']
             schema_params = param['schema']['properties']
             for schema_param_name in schema_params:
                 param_name = param['name'] + "-" + schema_param_name
@@ -39,13 +38,7 @@ def index_parameters(endpoint_info):
         else:
             param_name = param['name']
             indexed_parameters[param_name] = param
-    # pprint.pprint(indexed_parameters)
     return indexed_parameters
-
-
-def get_or_else(d, key, els):
-    """Get key from d. If key not in d, get els."""
-    return d[key] if key in d else els
 
 
 def get_parser(spec):
@@ -67,7 +60,7 @@ def get_parser(spec):
                     "seen": False,
                     "positional": [],
                     "options": {},
-                    "description": get_or_else(endpoint_info, "description", "placeholder")
+                    "description": endpoint_info.get("description", "placeholder")
                 }
             else:
                 param_holders[endpoint_name]["seen"] = True
@@ -85,10 +78,10 @@ def get_parser(spec):
                         "argument": argument,
                         "required": argrequired and not param_holders[endpoint_name]["seen"],
                         "required_for": [],
-                        "description": get_or_else(arg_params, "description", ""),
-                        "type": get_or_else(arg_params, "type", None),
-                        "format": get_or_else(arg_params, "format", None),
-                        "pattern": get_or_else(arg_params, "pattern", None)
+                        "description": arg_params.get("description", ""),
+                        "type": arg_params.get("type", None),
+                        "format": arg_params.get("format", None),
+                        "pattern": arg_params.get("pattern", None)
                     })
                 elif i >= len(path_args):
                     positional[i]["required"] = False
@@ -109,10 +102,10 @@ def get_parser(spec):
                         options[param_name] = {
                             "required": argrequired and not param_holders[endpoint_name]["seen"],
                             "required_for": [],
-                            "description": get_or_else(arg_params, "description", ""),
-                            "type": get_or_else(arg_params, "type", None),
-                            "format": get_or_else(arg_params, "format", None),
-                            "pattern": get_or_else(arg_params, "pattern", None)
+                            "description": arg_params.get("description", ""),
+                            "type": arg_params.get("type", None),
+                            "format": arg_params.get("format", None),
+                            "pattern": arg_params.get("pattern", None)
                         }
                     else:
                         options[param_name]['required'] = argrequired and options[param_name]['required']
@@ -137,5 +130,4 @@ def get_parser(spec):
                 required=optional_data["required"],
                 help=h
             )
-    # pprint.pprint(param_holders)
     return parser

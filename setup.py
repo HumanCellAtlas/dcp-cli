@@ -14,7 +14,6 @@ setup(
     long_description=open('README.rst').read(),
     install_requires=[
         "requests==2.17.3"
-        'boto3 >= 1.4.4, < 2'
     ],
     extras_require={
         ':python_version == "2.7"': ['enum34 >= 1.1.6, < 2']

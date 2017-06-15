@@ -1,7 +1,12 @@
 SHELL=/bin/bash
 
+constants: hca/api_spec.json
+
 lint:
 	./setup.py flake8
+
+hca/api_spec.json:
+	wget https://hca-dss.czi.technology/v1/swagger.json
 
 test: lint
 	python ./test/test.py -v
