@@ -1,7 +1,12 @@
 SHELL=/bin/bash
 
+constants: hca/api_spec.json
+
 lint:
 	./setup.py flake8
+
+hca/api_spec.json:
+	curl https://hca-dss.czi.technology/v1/swagger.json > hca/api_spec.json
 
 test: lint
 	coverage run --source=$$(python setup.py --name) ./test/test.py
