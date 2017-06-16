@@ -6,7 +6,7 @@ lint:
 	./setup.py flake8
 
 hca/api_spec.json:
-	wget https://hca-dss.czi.technology/v1/swagger.json
+	curl https://hca-dss.czi.technology/v1/swagger.json > hca/api_spec.json
 
 test: lint
 	python ./test/test.py -v
