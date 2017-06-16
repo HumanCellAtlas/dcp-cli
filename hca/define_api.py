@@ -44,13 +44,13 @@ class API:
         body_payload = {}
         header_payload = {}
         for (arg_name, arg) in namespace.items():
-            if arg_name in self.positional_args[endpoint]["query"]:
-                query_payload[arg_name] = arg
-            if arg_name in self.positional_args[endpoint]["header"]:
-                header_payload[arg_name] = arg
             if arg_name not in self.positional_args[endpoint]:
-                payload[arg_name] = arg
-        return payload
+                query_payload[arg_name] = arg
+        #     if arg_name in self.positional_args[endpoint]["header"]:
+        #         header_payload[arg_name] = arg
+        #     if arg_name not in self.positional_args[endpoint]:
+        #         body_payload[arg_name] = arg
+        return query_payload, body_payload, header_payload
 
     def parse_args(self, args):
         namespace = vars(self.parser.parse_args(args))
@@ -63,16 +63,16 @@ class API:
         endpoint = args[0]
 
         url = self._build_url(endpoint, namespace)
-        payload = self._build_payload(endpoint, namespace)
+        query_payload, body_payload, header_payload = self._build_payload(endpoint, namespace)
 
         param_methods = ["get", "options", "head", "delete"]
         json_methods = ["post", "put", "patch"]
 
         method = endpoint[:endpoint.find("-")]
         if method in param_methods:
-            request = requests.request(method, url, params=payload)
+            request = requests.request(method, url, params=query_payload, headers=header_payload)
         elif method in json_methods:
-            request = requests.request(method, url, json=payload)
+            request = requests.request(method, url, json=body_payload, params=query_payload, headers=header_payload)
         else:
             raise ValueError("Bad request type")
 
