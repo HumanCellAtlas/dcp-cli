@@ -2,6 +2,9 @@
 # - A leading slash means the pattern is anchored at the root.
 # - No leading slash means the pattern matches at any depth.
 
+# Sublime files
+*~
+
 # Python files
 *.pyc
 __pycache__/
