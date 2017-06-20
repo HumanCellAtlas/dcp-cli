@@ -74,9 +74,10 @@ class TestHCACLI(unittest.TestCase):
                 "in": "path",
                 "name": "uuid",
                 "required": True,
-                "type": "string", 
+                "type": "string",
                 "array": False,
-                'req': True
+                'req': True,
+                'hierarchy': ['uuid']
             }})
 
         params['parameters'] = [{
@@ -102,25 +103,26 @@ class TestHCACLI(unittest.TestCase):
             }
           }
         ]
-        pprint.pprint(hca.parser.index_parameters(None, params))
         self.assertEqual(
             hca.parser.index_parameters(None, params),
-            {"extras-timestamp": {
+            {"timestamp": {
                 "description": "Timestamp of file creation in RFC3339.",
                 "in": "body",
-                "name": "extras-timestamp",
+                "name": "timestamp",
                 "type": "string",
-                "format": "date-time", 
+                "format": "date-time",
                 "array": False,
-                'req': False
+                'req': False,
+                'hierarchy': ['timestamp']
             },
-            "extras-bundle_uuid": {
+            "bundle_uuid": {
                 "description": "A RFC4122-compliant ID.",
                 "in": "body",
-                "name": "extras-bundle_uuid",
+                "name": "bundle_uuid",
                 "type": "string",
                 "array": False,
-                'req': True
+                'req': True,
+                'hierarchy': ['bundle_uuid']
             }}
         )
 
@@ -128,20 +130,20 @@ class TestHCACLI(unittest.TestCase):
         """Test that the parser parses arguments correctly."""
         api = hca.define_api.API("url", "user")
 
-        args = ["put-files", "134", "--extras-bundle_uuid", "asdf", "--extras-creator_uid", "sdf", "--extras-source_url", "sljdf.com"]
-        out = {'extras_source_url': 'sljdf.com', 'extras_bundle_uuid': 'asdf', 'uuid': '134', 'extras_creator_uid': 'sdf'}
+        args = ["put-files", "134", "--bundle_uuid", "asdf", "--creator_uid", "1", "--source_url", "sljdf.com"]
+        out = {'source_url': 'sljdf.com', 'bundle_uuid': 'asdf', 'uuid': '134', 'creator_uid': 1}
         self.assertEqual(api.parse_args(args), out)
 
-        args = ["put-files", "--extras-bundle_uuid", "asdf", "--extras-creator_uid", "sdf", "--extras-source_url", "sljdf.com", "134"]
+        args = ["put-files", "--bundle_uuid", "asdf", "--creator_uid", "1", "--source_url", "sljdf.com", "134"]
         self.assertEqual(api.parse_args(args), out)
 
-        args = ["put-files", "--extras-creator_uid", "sdf", "--extras-source_url", "sljdf.com", "134"]
+        args = ["put-files", "--creator_uid", "1", "--source_url", "sljdf.com", "134"]
         self.assertRaises(SystemExit, api.parse_args, args)
 
-        args = ["put-files", "--extras-bundle_uuid", "asdf", "--extras-creator_uid", "sdf", "--extras-source_url", "sljdf.com"]
+        args = ["put-files", "--bundle_uuid", "asdf", "--creator_uid", "1", "--source_url", "sljdf.com"]
         self.assertRaises(SystemExit, api.parse_args, args)
 
-        args = ["put-files", "--extras-bundle_uuid", "--extras-creator_uid", "sdf", "--extras-source_url", "sljdf.com", "134"]
+        args = ["put-files", "--bundle_uuid", "--creator_uid", "1", "--source_url", "sljdf.com", "134"]
         self.assertRaises(SystemExit, api.parse_args, args)
 
         args = ["get-bundles"]
@@ -206,16 +208,15 @@ class TestHCACLI(unittest.TestCase):
     def test_refs(self):
         """Test internal JSON reference resolution."""
         api = hca.define_api.API("a", "b", True)
-        args = ["put-ref_test", "--obj-name", "name", "--obj-uuid", "uuid", "--obj-versions", "item1", "item2"]
-        out = {"obj_name": "name", "obj_uuid": "uuid", "obj_versions": ["item1", "item2"]}
+        args = ["put-ref_test", "--name", "name", "--uuid", "uuid", "--versions", "item1", "item2"]
+        out = {"name": "name", "uuid": "uuid", "versions": ["item1", "item2"]}
         self.assertEqual(api.parse_args(args), out)
 
     def test_array_cli(self):
         """Ensure that this framework can handle arrays."""
         api = hca.define_api.API("a", "b", True)
-        args = ["put-bundles", "uuid", "version", "--extras-timestamp", "name", "name1", "--extras-file_uuid", "uuid1", "uuid2"]
-        print(api.parse_args(args))
-        out = {"uuid": "uuid", "bundle_version": "version", "extras_timestamp": ["name", "name1"], "extras_file_uuid": ["uuid1", "uuid2"]}
+        args = ["put-bundles", "uuid", "version", "--inner_item", "name:uuid1", "name1:uuid2"]
+        out = {"uuid": "uuid", "bundle_version": "version", "inner_item": ["name:uuid1", "name1:uuid2"]}
         self.assertEqual(api.parse_args(args), out)
 
 
