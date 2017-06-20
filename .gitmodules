@@ -1,3 +1,3 @@
 [submodule "checksum_reader"]
 	path = checksum_reader
-	url = git@github.com:HumanCellAtlas/checksum_reader.git
+	url = https://github.com/HumanCellAtlas/checksum_reader.git
