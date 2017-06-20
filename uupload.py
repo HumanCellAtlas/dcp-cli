@@ -1,5 +1,9 @@
 #!/usr/bin/env python3.6
 
+"""
+Run "pip install crcmod python-magic" to install this script's dependencies.
+"""
+
 import os, sys, hashlib, uuid, logging, argparse
 from io import BufferedRandom, BufferedReader
 
