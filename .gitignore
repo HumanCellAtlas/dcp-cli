@@ -5,6 +5,12 @@
 # Sublime files
 *~
 
+# Random files
+get-pip.py
+setup.py-e
+test/play.py
+v/
+
 # Python files
 *.pyc
 __pycache__/
