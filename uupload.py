@@ -64,7 +64,7 @@ class MetadataReader(BufferedReader):
 def encode_tags(tags):
     return [dict(Key=k, Value=v) for k, v in tags.items()]
 
-parser = argparse.ArgumentParser()
+parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument("files", type=argparse.FileType("rb"), nargs="+")
 parser.add_argument("--staging-bucket", default="hca-dcp-staging-test")
 args = parser.parse_args()
