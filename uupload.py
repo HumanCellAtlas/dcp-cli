@@ -9,7 +9,7 @@ import os, sys, hashlib, uuid, logging, argparse, mimetypes
 import boto3
 from boto3.s3.transfer import TransferConfig
 
-from checksum_reader.checksum_reader import ChecksumReader, S3Etag
+from checksum_reader.checksum_reader import ChecksummingBufferedReader, S3Etag
 
 logging.basicConfig(level=logging.INFO)
 
@@ -27,7 +27,7 @@ tx_cfg = TransferConfig(multipart_threshold=S3Etag.etag_stride,
 s3 = boto3.resource("s3")
 bucket = s3.Bucket(args.staging_bucket)
 for raw_fh in args.files:
-    with ChecksumReader(raw_fh) as fh:
+    with ChecksummingBufferedReader(raw_fh) as fh:
         key_name = "{}/{}".format(uuid.uuid4(), os.path.basename(fh.raw.name))
         bucket.upload_fileobj(fh, key_name, Config=tx_cfg)
         sums = fh.get_checksums()
