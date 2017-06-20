@@ -1,7 +1,7 @@
 #!/usr/bin/env python3.6
 
 """
-Run "pip install crcmod python-magic" to install this script's dependencies.
+Run "pip install crcmod python-magic boto3" to install this script's dependencies.
 """
 
 import os, sys, hashlib, uuid, logging, argparse
