@@ -13,7 +13,8 @@ setup(
     description='Human Cell Atlas Data Storage System Command Line Interface',
     long_description=open('README.rst').read(),
     install_requires=[
-        "requests==2.17.3"
+        "requests==2.17.3", 
+        "jsonpointer==1.10"
     ],
     extras_require={
         ':python_version == "2.7"': ['enum34 >= 1.1.6, < 2']
