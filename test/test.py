@@ -128,22 +128,22 @@ class TestHCACLI(unittest.TestCase):
 
     def test_parsing(self):
         """Test that the parser parses arguments correctly."""
-        api = hca.define_api.API("url", "user")
+        api = hca.define_api.API()
 
-        args = ["put-files", "134", "--bundle_uuid", "asdf", "--creator_uid", "1", "--source_url", "sljdf.com"]
+        args = ["put-files", "134", "--bundle-uuid", "asdf", "--creator-uid", "1", "--source-url", "sljdf.com"]
         out = {'source_url': 'sljdf.com', 'bundle_uuid': 'asdf', 'uuid': '134', 'creator_uid': 1}
         self.assertEqual(api.parse_args(args), out)
 
-        args = ["put-files", "--bundle_uuid", "asdf", "--creator_uid", "1", "--source_url", "sljdf.com", "134"]
+        args = ["put-files", "--bundle-uuid", "asdf", "--creator-uid", "1", "--source-url", "sljdf.com", "134"]
         self.assertEqual(api.parse_args(args), out)
 
-        args = ["put-files", "--creator_uid", "1", "--source_url", "sljdf.com", "134"]
+        args = ["put-files", "--creator-uid", "1", "--source-url", "sljdf.com", "134"]
         self.assertRaises(SystemExit, api.parse_args, args)
 
-        args = ["put-files", "--bundle_uuid", "asdf", "--creator_uid", "1", "--source_url", "sljdf.com"]
+        args = ["put-files", "--bundle-uuid", "asdf", "--creator-uid", "1", "--source-url", "sljdf.com"]
         self.assertRaises(SystemExit, api.parse_args, args)
 
-        args = ["put-files", "--bundle_uuid", "--creator_uid", "1", "--source_url", "sljdf.com", "134"]
+        args = ["put-files", "--bundle-uuid", "--creator-uid", "1", "--source-url", "sljdf.com", "134"]
         self.assertRaises(SystemExit, api.parse_args, args)
 
         args = ["get-bundles"]
@@ -176,7 +176,7 @@ class TestHCACLI(unittest.TestCase):
 
     def test_requests(self):
         """Test that the parser parses arguments in the right way."""
-        api = hca.define_api.API("user", "password")
+        api = hca.define_api.API()
 
         args = ["get-bundles"]
         response = api.make_request(args)
@@ -185,37 +185,49 @@ class TestHCACLI(unittest.TestCase):
 
         args = ["get-bundles", "AAAAAAAA-AAAA-AAAA-AAAA-AAAAAAAAAAAA"]
         response = api.make_request(args)
-        self.assertEqual(self._get_first_url(response), "https://hca-dss.czi.technology/v1/bundles/AAAAAAAA-AAAA-AAAA-AAAA-AAAAAAAAAAAA")
+        self.assertEqual(
+            self._get_first_url(response),
+            "https://hca-dss.czi.technology/v1/bundles/AAAAAAAA-AAAA-AAAA-AAAA-AAAAAAAAAAAA"
+        )
         self.assertTrue(response.ok)
 
         args = ["get-bundles", "AAAAAAAA-AAAA-AAAA-AAAA-AAAAAAAAAAAA", "version_arg", "--replica", "rep"]
         response = api.make_request(args)
-        self.assertEqual(self._get_first_url(response), "https://hca-dss.czi.technology/v1/bundles/AAAAAAAA-AAAA-AAAA-AAAA-AAAAAAAAAAAA/version_arg?replica=rep")
+        self.assertEqual(
+            self._get_first_url(response),
+            "https://hca-dss.czi.technology/v1/bundles/AAAAAAAA-AAAA-AAAA-AAAA-AAAAAAAAAAAA/version_arg?replica=rep"
+        )
         self.assertTrue(response.ok)
 
         # Works for now but shouldn't in the future b/c --replica required when uuid and version specified.
         args = ["get-bundles", "AAAAAAAA-AAAA-AAAA-AAAA-AAAAAAAAAAAA", "version_arg"]
         response = api.make_request(args)
-        self.assertEqual(self._get_first_url(response), "https://hca-dss.czi.technology/v1/bundles/AAAAAAAA-AAAA-AAAA-AAAA-AAAAAAAAAAAA/version_arg")
+        self.assertEqual(
+            self._get_first_url(response),
+            "https://hca-dss.czi.technology/v1/bundles/AAAAAAAA-AAAA-AAAA-AAAA-AAAAAAAAAAAA/version_arg"
+        )
         self.assertFalse(response.ok)
 
         # Works for now. --replica isn't an option unless both uuid and version specified.
         args = ["get-bundles", "AAAAAAAA-AAAA-AAAA-AAAA-AAAAAAAAAAAA", "--replica", "rep"]
         response = api.make_request(args)
-        self.assertEqual(self._get_first_url(response), "https://hca-dss.czi.technology/v1/bundles/AAAAAAAA-AAAA-AAAA-AAAA-AAAAAAAAAAAA?replica=rep")
+        self.assertEqual(
+            self._get_first_url(response),
+            "https://hca-dss.czi.technology/v1/bundles/AAAAAAAA-AAAA-AAAA-AAAA-AAAAAAAAAAAA?replica=rep"
+        )
         self.assertTrue(response.ok)
 
     def test_refs(self):
         """Test internal JSON reference resolution."""
-        api = hca.define_api.API("a", "b", True)
-        args = ["put-ref_test", "--name", "name", "--uuid", "uuid", "--versions", "item1", "item2"]
+        api = hca.define_api.API(True)
+        args = ["put-reftest", "--name", "name", "--uuid", "uuid", "--versions", "item1", "item2"]
         out = {"name": "name", "uuid": "uuid", "versions": ["item1", "item2"]}
         self.assertEqual(api.parse_args(args), out)
 
     def test_array_cli(self):
         """Ensure that this framework can handle arrays."""
-        api = hca.define_api.API("a", "b", True)
-        args = ["put-bundles", "uuid", "version", "--inner_item", "name:uuid1", "name1:uuid2"]
+        api = hca.define_api.API(True)
+        args = ["put-bundles", "uuid", "version", "--inner-item", "name:uuid1", "name1:uuid2"]
         out = {"uuid": "uuid", "bundle_version": "version", "inner_item": ["name:uuid1", "name1:uuid2"]}
         self.assertEqual(api.parse_args(args), out)
 

@@ -258,7 +258,7 @@
         }
       }
     }, 
-    "/ref_test": {
+    "/reftest": {
       "put": {
         "description": "placeholder desc",
         "parameters": [

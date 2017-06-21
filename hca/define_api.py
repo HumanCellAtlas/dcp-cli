@@ -10,16 +10,21 @@ from .parser import get_parser
 class API:
     """Class for interacting with the REST Api."""
 
-    def __init__(self, user, password, test=False):
+    def __init__(self, test=False):
         """Initialize the CLI API."""
         spec = self.get_spec(test)
         self.base_url = "https://" + spec['host'] + spec['basePath']
         self.parser, self.param_data = get_parser(spec)
 
-        self.positional_args = {endpoint: [arg['argument'] for arg in self.param_data[endpoint]['positional']] for endpoint in self.param_data}
-
     def get_spec(self, test):
-        """Load the API specification."""
+        """
+        Load the API specification.
+
+        :param test: boolean flag to indicate which spec to use.
+                     api_spec is the spec downloaded from the api on build.
+                     ../test/test is the mocked up spec I've been toying with.
+        :return:     The dictionary containing all swagger specification definitions.
+        """
         url = os.path.dirname(os.path.realpath(__file__)) + "/api_spec.json"
         if test:
             url = os.path.dirname(os.path.realpath(__file__)) + "/../test/test.json"
@@ -32,12 +37,13 @@ class API:
         """Add positional arguments into the url."""
         split_endpoint = endpoint.split("-")[1:]
 
+        all_positional_args_for_endpoint = [arg['argument'] for arg in self.param_data[endpoint]['positional']]
+
+        # If the api needs file/write/{sdf} functionality, will become put-file-write
         given_positional_args = [p for p in split_endpoint]
-        for positional_arg in self.positional_args[endpoint]:
+        for positional_arg in all_positional_args_for_endpoint:
             if positional_arg in namespace:
                 arg = namespace[positional_arg]
-                if isinstance(positional_arg, list):
-                    arg = arg[0]
                 given_positional_args.append(arg)
         url = self.base_url + "/" + "/".join(given_positional_args)
         return url
@@ -52,6 +58,8 @@ class API:
          - hierarchy: Data structure that describes where in payload to put arg.
         """
         inner_payload = payload
+
+        # Iterating through payload structure to find the right value to set.
         while len(hierarchy) > 1:
             curr_level = hierarchy[0]
 
@@ -63,6 +71,7 @@ class API:
 
         curr_level = hierarchy[0]
 
+        # Command line argument represents a list of objects.
         if type(curr_level) == list and len(curr_level) > 0:
             for object_arg in arg:
                 args = object_arg.split(":")
@@ -77,9 +86,12 @@ class API:
                     obj[argument_name] = arg
                 inner_payload.append(obj)
 
+        # Command line argument represents a list of standard types.
         elif type(curr_level) == list:
             for object_arg in arg:
                 inner_payload.append(object_arg)
+
+        # Command line argument represents a standard type.
         else:
             inner_payload[curr_level] = arg
 
@@ -88,6 +100,7 @@ class API:
         body_payload = {}
         header_payload = {}
         for (arg_name, arg) in namespace.items():
+            # If the argument is positional, belongs in path, not a payload
             if arg_name not in self.param_data[endpoint]["options"]:
                 continue
 
@@ -129,6 +142,7 @@ class API:
 
 
 if __name__ == "__main__":
-    api = API("a", "b", True)
+    api = API(True)
     response = api.make_request(sys.argv[1:])
+    print(response.headers)
     print(response.content)
