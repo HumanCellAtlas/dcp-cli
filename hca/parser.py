@@ -2,6 +2,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import argparse
 import pprint
+from .end_to_end import EndToEnd
 
 import jsonpointer
 
@@ -41,19 +42,22 @@ def _array_indexing(spec, param, hierarchy_clone, indexed_parameters):
 
     # If recursive_indexing returns a list, that means this is an array of objects. Iterate through
     # this list and update hierarchy_clone to reflect the order they'll be inputted on the console.
+    # Each element must be a tuple to know if there's a need to parse booleans and numbers.
     # This will be used when parsing manually.
     if isinstance(items, list):
-        hierarchy_clone.append([arg["name"] for arg in items])
+        items.sort(key=lambda x: x['name'])
+        hierarchy_clone.append([(arg["name"], arg["type"]) for arg in items])
         new_param["hierarchy"] = hierarchy_clone
 
         for item in items:
             metavar.append(item["name"].upper())
             if 'description' in item:
-                description.append(item['name'] + item['description'])
+                description.append("{}: {}".format(item['name'], item['description']))
 
     # If recursive_indexing doesn't return a list, we still need to indicate that we're in an array,
     # so add an empty list to this level of the hierarchy.
     else:
+        new_param["type"] = items["type"]
         hierarchy_clone.append([])
         new_param["hierarchy"] = hierarchy_clone
         metavar.append(items["name"].upper())
@@ -224,20 +228,37 @@ def _label_optional_args_required(path, endpoint_params, indexed_parameters):
                 options[param_name]["required_for"].append(path)
 
 
+def _get_arg_type(arg_type_string):
+    argtype = None
+    if arg_type_string == "integer":
+        argtype = int
+    elif arg_type_string == "boolean":
+        argtype = bool
+    elif arg_type_string == "number":
+        argtype = float
+    return argtype
+
+
 def _add_positional_args(subparser, endpoint_info):
     for positional_arg in endpoint_info["positional"]:
         h = create_help_statement(positional_arg)
+
+        argtype = _get_arg_type(positional_arg["type"])
+
         subparser.add_argument(
             positional_arg["argument"],
             nargs=None if positional_arg["required"] else "?",
             help=h,
-            type=int if positional_arg["type"] == "integer" else None
+            type=argtype
         )
 
 
 def _add_optional_args(subparser, endpoint_info):
     for (optional_name, optional_data) in endpoint_info["options"].items():
         h = create_help_statement(optional_data)
+
+        argtype = _get_arg_type(optional_data["type"])
+
         optional_name_with_dashes = optional_name.replace("_", "-")
         subparser.add_argument(
             "--" + optional_name_with_dashes,
@@ -246,7 +267,7 @@ def _add_optional_args(subparser, endpoint_info):
             required=optional_data["required"],
             nargs="+" if optional_data['array'] else None,
             help=h,
-            type=int if optional_data["type"] == "integer" else None,
+            type=argtype
         )
 
 
@@ -287,6 +308,7 @@ def get_parser(spec):
     """
     parser = argparse.ArgumentParser(description=spec['info']['description'])
     subparsers = parser.add_subparsers(help='sub-command help')
+    EndToEnd.add_demo_parser(subparsers)
     param_holders = {}
 
     for path in spec['paths']:

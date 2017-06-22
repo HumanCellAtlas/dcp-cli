@@ -256,6 +256,87 @@
             }
           }
         }
+      },
+      "put": {
+        "parameters": [
+          {
+            "description": "Bundle unique ID.", 
+            "in": "path", 
+            "name": "uuid", 
+            "required": true, 
+            "type": "string"
+          }, 
+          {
+            "description": "Version of the bundle.", 
+            "in": "query", 
+            "name": "version", 
+            "required": false, 
+            "type": "string", 
+            "format": "date-time"
+          }, 
+          {
+            "description": "Replica to write to.", 
+            "in": "query", 
+            "name": "replica", 
+            "required": true, 
+            "type": "string", 
+            "enum": ["aws", "gc", "azure"]
+          }, 
+          {
+            "in": "body", 
+            "name": "extras", 
+            "required": true, 
+            "schema": {
+              "type": "object", 
+              "properties": {
+                "files": {
+                  "type": "array",
+                  "items": {
+                    "type": "object", 
+                    "properties": {
+                      "uuid": {
+                        "description": "A RFC4122-compliant ID for the file.", 
+                        "type": "string",
+                        "pattern": "[A-Za-z0-9]{8}-[A-Za-z0-9]{4}-[A-Za-z0-9]{4}-[A-Za-z0-9]{4}-[A-Za-z0-9]{12}"
+                      }, 
+                      "version": {
+                        "description": "Timestamp of file creation in RFC3339.", 
+                        "type": "string",
+                        "format": "date-time"
+                      },
+                      "name": {
+                        "description": "Name of the file.", 
+                        "type": "string",
+                        "pattern": "^[^/\\\\]+$"
+                      },
+                      "indexed": {
+                        "description": "True iff this file should be indexed.", 
+                        "type": "boolean",
+                        "pattern": "^[^/\\\\]+$"
+                      }
+                    }, 
+                    "required": [
+                      "file_uuid", 
+                      "timestamp", 
+                      "name", 
+                      "indexed"
+                    ]
+                  }
+                },
+                "creator_uid": {
+                  "description": "User ID who is creating this bundle.",
+                  "type": "integer",
+                  "format": "int64"
+                } 
+              }, 
+              "required": [
+                "files", 
+                "creator_uid"
+              ]
+            }
+          }
+
+        ]
       }
     }, 
     "/reftest": {
@@ -335,57 +416,6 @@
             }
           }
         }
-      }, 
-      "put": {
-        "parameters": [
-          {
-            "description": "Bundle unique ID.", 
-            "in": "path", 
-            "name": "uuid", 
-            "required": true, 
-            "type": "string"
-          }, 
-          {
-            "description": "Version of the bundle.", 
-            "in": "path", 
-            "name": "bundle_version", 
-            "required": true, 
-            "type": "string"
-          }, 
-          {
-            "in": "body", 
-            "name": "extras", 
-            "required": true, 
-            "schema": {
-              "type": "object", 
-              "properties": {
-                "inner_item": {
-                  "type": "array",
-                  "items": {
-                    "type": "object", 
-                    "properties": {
-                      "file_uuid": {
-                        "description": "A RFC4122-compliant ID for the file.", 
-                        "type": "string"
-                      }, 
-                      "timestamp": {
-                        "description": "Timestamp of file creation in RFC3339.", 
-                        "type": "string",
-                        "format": "date-time"
-                      }
-                    }, 
-                    "required": [
-                      "file_uuid", 
-                      "timestamp"
-                    ]
-                  }
-                }
-              }, 
-              "required": ["inner_item"]
-            }
-          }
-
-        ]
       }
     }, 
     "/files": {
@@ -564,7 +594,7 @@
                   "pattern": "^(gs|s3|wasb)://", 
                   "type": "string"
                 }, 
-                "timestamp": {
+                "version": {
                   "description": "Timestamp of file creation in RFC3339.", 
                   "format": "date-time", 
                   "type": "string"

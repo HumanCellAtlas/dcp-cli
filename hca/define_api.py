@@ -1,10 +1,11 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-import json, sys, os
+import json, sys, os, ast
 from io import open
 import pprint
 import requests
 from .parser import get_parser
+from .end_to_end import EndToEnd
 
 
 class API:
@@ -73,17 +74,26 @@ class API:
 
         # Command line argument represents a list of objects.
         if type(curr_level) == list and len(curr_level) > 0:
-            for object_arg in arg:
-                args = object_arg.split(":")
-                if len(args) != len(curr_level):
+            for string_object_values in arg:
+                object_values = string_object_values.split(":")
+                if len(object_values) != len(curr_level):
                     raise ValueError("Each argument must have a value. Use 'None' if you don't want to define it.")
 
                 obj = {}
-                for i, arg in enumerate(args):
-                    if arg == "None":
+                for i, value in enumerate(object_values):
+                    if value == "None":
                         continue
-                    argument_name = curr_level[i]
-                    obj[argument_name] = arg
+                    argument_name = curr_level[i][0]
+                    argument_type = curr_level[i][1]
+                    if argument_type == "integer":
+                        value = int(value)
+                    elif argument_type == "number":
+                        value = float(value)
+                    elif argument_type == "boolean" and value == "True":
+                        value = True
+                    elif argument_type == "boolean" and value == "False":
+                        value = False
+                    obj[argument_name] = value
                 inner_payload.append(obj)
 
         # Command line argument represents a list of standard types.
@@ -112,6 +122,7 @@ class API:
                 self._add_arg(arg, body_payload, hierarchy)
             if payload_format == "header":
                 self._add_arg(arg, header_payload, hierarchy)
+
         return query_payload, body_payload, header_payload
 
     def parse_args(self, args):
@@ -124,6 +135,10 @@ class API:
         """Function to actually make request to api."""
         namespace = self.parse_args(args)
         endpoint = args[0]
+
+        if endpoint == EndToEnd.DEMO_CONSOLE_ARGUMENT:
+            EndToEnd.full_demo(namespace, self)
+            return
 
         url = self._build_url(endpoint, namespace)
         query_payload, body_payload, header_payload = self._build_payloads(endpoint, namespace)
@@ -144,5 +159,6 @@ class API:
 if __name__ == "__main__":
     api = API(True)
     response = api.make_request(sys.argv[1:])
-    print(response.headers)
-    print(response.content)
+    if response:
+        print(response.headers)
+        print(response.content)

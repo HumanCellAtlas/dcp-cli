@@ -9,6 +9,6 @@ import os, sys, logging
 from .define_api import API
 
 def main():
-    api = API("a", "b")
+    api = API()
     print("Hello HCA! :)")
     return api.make_request(sys.argv[1:])
