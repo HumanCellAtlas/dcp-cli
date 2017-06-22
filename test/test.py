@@ -185,10 +185,6 @@ class TestHCACLI(unittest.TestCase):
 
         args = ["get-bundles", "AAAAAAAA-AAAA-AAAA-AAAA-AAAAAAAAAAAA", "--version", "1981-07-21T11:35:45+00:00", "--replica", "aws"]
         response = api.make_request(args)
-        url_one = "https://hca-dss.czi.technology/v1/bundles/AAAAAAAA-AAAA-AAAA-AAAA-AAAAAAAAAAAA?replica=aws&version=1981-07-21T11%3A35%3A45%2B00%3A00"
-        url_two = "https://hca-dss.czi.technology/v1/bundles/AAAAAAAA-AAAA-AAAA-AAAA-AAAAAAAAAAAA?replica=aws&version=1981-07-21T11%3A35%3A45%2B00%3A00"
-        first_url = self._get_first_url(response)
-        self.assertTrue(first_url == url_one or first_url == url_two)
         self.assertFalse(response.ok)  # The key is not in there
 
         # Works for now but shouldn't in the future b/c --replica required when uuid and version specified.
