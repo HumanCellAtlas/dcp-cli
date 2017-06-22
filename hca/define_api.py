@@ -4,8 +4,10 @@ import json, sys, os, ast
 from io import open
 import pprint
 import requests
+
 from .parser import get_parser
-from .end_to_end import EndToEnd
+from .full_upload import EndToEnd
+from .constants import Constants
 
 
 class API:
@@ -75,7 +77,7 @@ class API:
         # Command line argument represents a list of objects.
         if type(curr_level) == list and len(curr_level) > 0:
             for string_object_values in arg:
-                object_values = string_object_values.split(":")
+                object_values = string_object_values.split(Constants.OBJECT_SPLITTER)
                 if len(object_values) != len(curr_level):
                     raise ValueError("Each argument must have a value. Use 'None' if you don't want to define it.")
 
@@ -122,7 +124,6 @@ class API:
                 self._add_arg(arg, body_payload, hierarchy)
             if payload_format == "header":
                 self._add_arg(arg, header_payload, hierarchy)
-
         return query_payload, body_payload, header_payload
 
     def parse_args(self, args):

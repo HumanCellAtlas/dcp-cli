@@ -15,7 +15,8 @@ setup(
     install_requires=[
         "requests==2.17.3",
         "jsonpointer==1.10",
-        "boto3==1.4.4"
+        "boto3==1.4.4",
+        "crcmod==1.7"
     ],
     extras_require={
         ':python_version == "2.7"': ['enum34 >= 1.1.6, < 2']

@@ -10,10 +10,10 @@ from io import open
 import boto3
 from boto3.s3.transfer import TransferConfig
 
-pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-sys.path.insert(0, pkg_root)
+#pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+#sys.path.insert(0, pkg_root)
 
-from checksumming_io.checksumming_io import ChecksummingBufferedReader, S3Etag
+from .packages.checksumming_io import ChecksummingBufferedReader, S3Etag
 
 
 logging.basicConfig(level=logging.INFO)
@@ -71,6 +71,7 @@ def upload_to_s3(files, staging_bucket):
     return key_names
 
 if __name__ == "__main__":
+
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("files", nargs="+", type=lambda f: open(f, "rb"))
     parser.add_argument("--staging-bucket", default="hca-dcp-staging-test")

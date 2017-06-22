@@ -1,6 +1,4 @@
-"""
-HCA DCP CLI!
-"""
+"""HCA DCP CLI."""
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
@@ -10,5 +8,5 @@ from .define_api import API
 
 def main():
     api = API()
-    print("Hello HCA! :)")
-    return api.make_request(sys.argv[1:])
+    sys.stderr.write("Hello HCA!!! :)\n\n")
+    sys.stdout.write(api.make_request(sys.argv[1:]))

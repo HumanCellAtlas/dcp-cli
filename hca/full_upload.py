@@ -5,8 +5,10 @@ from io import open
 import argparse
 from datetime import datetime
 import uuid
+import pprint
 
-from .uupload import upload_to_s3
+from .constants import Constants
+from .upload_to_s3 import upload_to_s3
 
 
 def eprint(*args, **kwargs):
@@ -47,10 +49,10 @@ class EndToEnd:
             if os.path.isdir(path):
                 for filename in os.listdir(path):
                     full_file_name = os.path.join(path, filename)
-                    filenames.append(full_file_name)
+                    filenames.append(filename)
                     files_to_upload.append(open(full_file_name, "rb"))
             else:  # It's a file
-                filenames.append(path)
+                filenames.append(os.path.basename(path))
                 files_to_upload.append(open(path, "rb"))
 
         # Print to stderr, upload the files to s3 and return a list of tuples: (filename, filekey)
@@ -78,18 +80,17 @@ class EndToEnd:
             creator_uid = os.environ.get(cls.CREATOR_ID_ENVIRONMENT_VARIABLE, "1")
             source_url = "s3://{}/{}".format(staging_bucket, key)
             file_uuid = str(uuid.uuid4())
-            version = datetime.utcnow().isoformat() + "Z"
 
             response = api.make_request([
                 "put-files",
                 file_uuid,
                 "--bundle-uuid", bundle_uuid,
                 "--creator-uid", creator_uid,
-                "--source-url", source_url,
-                "--version", version
+                "--source-url", source_url
             ])
 
             if response.ok:
+                version = response.json().get("version", "blank")
                 eprint("File {}: registered with uuid {}".format(filename, file_uuid))
                 files.append({
                     "name": filename,
@@ -106,10 +107,9 @@ class EndToEnd:
     @classmethod
     def _put_bundle(cls, bundle_uuid, files, api):
         """Use the API class to make a put-bundles request."""
-        file_args = [":".join(["True", file["version"], file["uuid"], file["name"]]) for file in files]
+        file_args = [Constants.OBJECT_SPLITTER.join(["True", file["name"], file["uuid"], file["version"]]) for file in files]
         creator_uid = os.environ.get(cls.CREATOR_ID_ENVIRONMENT_VARIABLE, "1")
         replica = "aws"
-        version = datetime.utcnow().isoformat() + "Z"
 
         eprint("Bundle {}: registering...".format(bundle_uuid))
         request = [
@@ -120,10 +120,12 @@ class EndToEnd:
             "--files"
         ]
         request.extend(file_args)  # file_args is already a list.
-        # Argparse turns items into list - don't want to fee a list.
         response = api.make_request(request)
 
+        version = None
+
         if response.ok:
+            version = response.json().get("version", "blank")
             eprint("Bundle {}: registered successfully".format(bundle_uuid))
 
         else:
@@ -152,5 +154,5 @@ class EndToEnd:
         filename_key_list = cls._upload_files(args)
         bundle_uuid, files = cls._put_files(filename_key_list, args["staging_bucket"], api)
         final_return = cls._put_bundle(bundle_uuid, files, api)
-        print(final_return)
+        pprint.pprint(final_return)
         return final_return

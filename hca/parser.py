@@ -2,9 +2,10 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import argparse
 import pprint
-from .end_to_end import EndToEnd
-
 import jsonpointer
+
+from .full_upload import EndToEnd
+from .constants import Constants
 
 
 def make_name(http_method, path_split):
@@ -64,7 +65,7 @@ def _array_indexing(spec, param, hierarchy_clone, indexed_parameters):
         if 'description' in items:
             description.append(items['name'] + items['description'])
 
-    new_param["metavar"] = ":".join(metavar)
+    new_param["metavar"] = Constants.OBJECT_SPLITTER.join(metavar)
     new_param['description'] = "\n".join(description)
 
     indexed_parameters[param["name"]] = new_param
