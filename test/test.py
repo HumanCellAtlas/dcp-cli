@@ -183,21 +183,13 @@ class TestHCACLI(unittest.TestCase):
         self.assertEqual(self._get_first_url(response), "https://hca-dss.czi.technology/v1/bundles")
         self.assertTrue(response.ok)
 
-        args = ["get-bundles", "AAAAAAAA-AAAA-AAAA-AAAA-AAAAAAAAAAAA"]
+        args = ["get-bundles", "AAAAAAAA-AAAA-AAAA-AAAA-AAAAAAAAAAAA", "--version", "1981-07-21T11:35:45+00:00", "--replica", "aws"]
         response = api.make_request(args)
         self.assertEqual(
             self._get_first_url(response),
-            "https://hca-dss.czi.technology/v1/bundles/AAAAAAAA-AAAA-AAAA-AAAA-AAAAAAAAAAAA"
+            "https://hca-dss.czi.technology/v1/bundles/AAAAAAAA-AAAA-AAAA-AAAA-AAAAAAAAAAAA?replica=aws&version=1981-07-21T11%3A35%3A45%2B00%3A00"
         )
-        self.assertTrue(response.ok)
-
-        args = ["get-bundles", "AAAAAAAA-AAAA-AAAA-AAAA-AAAAAAAAAAAA", "version_arg", "--replica", "rep"]
-        response = api.make_request(args)
-        self.assertEqual(
-            self._get_first_url(response),
-            "https://hca-dss.czi.technology/v1/bundles/AAAAAAAA-AAAA-AAAA-AAAA-AAAAAAAAAAAA/version_arg?replica=rep"
-        )
-        self.assertTrue(response.ok)
+        self.assertFalse(response.ok)  # The key is not in there
 
         # Works for now but shouldn't in the future b/c --replica required when uuid and version specified.
         args = ["get-bundles", "AAAAAAAA-AAAA-AAAA-AAAA-AAAAAAAAAAAA", "version_arg"]
@@ -207,15 +199,6 @@ class TestHCACLI(unittest.TestCase):
             "https://hca-dss.czi.technology/v1/bundles/AAAAAAAA-AAAA-AAAA-AAAA-AAAAAAAAAAAA/version_arg"
         )
         self.assertFalse(response.ok)
-
-        # Works for now. --replica isn't an option unless both uuid and version specified.
-        args = ["get-bundles", "AAAAAAAA-AAAA-AAAA-AAAA-AAAAAAAAAAAA", "--replica", "rep"]
-        response = api.make_request(args)
-        self.assertEqual(
-            self._get_first_url(response),
-            "https://hca-dss.czi.technology/v1/bundles/AAAAAAAA-AAAA-AAAA-AAAA-AAAAAAAAAAAA?replica=rep"
-        )
-        self.assertTrue(response.ok)
 
     def test_refs(self):
         """Test internal JSON reference resolution."""
