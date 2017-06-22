@@ -1,6 +1,6 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-import sys, os
+import sys, os, json
 from io import open
 import argparse
 from datetime import datetime
@@ -101,7 +101,9 @@ class EndToEnd:
 
             else:
                 eprint("File {}: registration FAILED".format(filename))
-            eprint("\t{}".format(response.content))
+
+            eprint("File PUT Request response")
+            eprint("{}".format(response.content))
         return bundle_uuid, files
 
     @classmethod
@@ -130,8 +132,8 @@ class EndToEnd:
 
         else:
             eprint("Bundle {}: registration FAILED".format(bundle_uuid))
-
-        eprint("\t{}".format(response.content))
+        eprint("Bundles PUT Request response")
+        eprint("{}\n".format(response.content))
         final_return = {
             "bundle_uuid": bundle_uuid,
             "creator_uid": creator_uid,
@@ -154,5 +156,4 @@ class EndToEnd:
         filename_key_list = cls._upload_files(args)
         bundle_uuid, files = cls._put_files(filename_key_list, args["staging_bucket"], api)
         final_return = cls._put_bundle(bundle_uuid, files, api)
-        pprint.pprint(final_return)
         return final_return

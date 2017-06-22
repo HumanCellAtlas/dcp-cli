@@ -2,11 +2,16 @@
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-import os, sys, logging
+import os, sys, logging, json
+import requests
+import pprint
 
 from .define_api import API
 
 def main():
     api = API()
-    sys.stderr.write("Hello HCA!!! :)\n\n")
-    sys.stdout.write(api.make_request(sys.argv[1:]))
+    response = api.make_request(sys.argv[1:])
+    if isinstance(response, requests.Response):
+        sys.stdout.write(response.content)
+    else:
+        print(json.dumps(response))

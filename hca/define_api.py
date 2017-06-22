@@ -138,8 +138,7 @@ class API:
         endpoint = args[0]
 
         if endpoint == EndToEnd.DEMO_CONSOLE_ARGUMENT:
-            EndToEnd.full_demo(namespace, self)
-            return
+            return EndToEnd.full_demo(namespace, self)
 
         url = self._build_url(endpoint, namespace)
         query_payload, body_payload, header_payload = self._build_payloads(endpoint, namespace)
