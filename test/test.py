@@ -128,7 +128,7 @@ class TestHCACLI(unittest.TestCase):
 
     def test_parsing(self):
         """Test that the parser parses arguments correctly."""
-        api = hca.define_api.API()
+        api = hca.define_api.API(True)
 
         args = ["put-files", "134", "--bundle-uuid", "asdf", "--creator-uid", "1", "--source-url", "sljdf.com"]
         out = {'source_url': 'sljdf.com', 'bundle_uuid': 'asdf', 'uuid': '134', 'creator_uid': 1}
@@ -176,7 +176,7 @@ class TestHCACLI(unittest.TestCase):
 
     def test_requests(self):
         """Test that the parser parses arguments in the right way."""
-        api = hca.define_api.API()
+        api = hca.define_api.API(True)
 
         args = ["get-bundles"]
         response = api.make_request(args)
@@ -227,14 +227,14 @@ class TestHCACLI(unittest.TestCase):
     def test_array_cli(self):
         """Ensure that this framework can handle arrays."""
         api = hca.define_api.API(True)
-        args = ["put-bundles", "uuid", "--version", "version", "--files", "uuid1:v1:n1:True", "uuid2:v2:n2:False", "--creator-uid", "3", "--replica", "rep"]
-        out = {"uuid": "uuid", "version": "version", "files": ["uuid1:v1:n1:True", "uuid2:v2:n2:False"], "creator_uid": 3, "replica": "rep"}
+        args = ["put-bundles", "uuid", "--version", "version", "--files", "uuid1/v1/n1/True", "uuid2/v2/n2/False", "--creator-uid", "3", "--replica", "rep"]
+        out = {"uuid": "uuid", "version": "version", "files": ["uuid1/v1/n1/True", "uuid2/v2/n2/False"], "creator_uid": 3, "replica": "rep"}
         self.assertEqual(api.parse_args(args), out)
 
 
     def test_parsing_array_object_literals(self):
         api = hca.define_api.API(True)
-        args = ["put-bundles", "234sf", "--files", "True:n1:u1:v1", "False:n2:u2:v2", "--replica" ,"rep", "--creator-uid", "8"]
+        args = ["put-bundles", "234sf", "--files", "True/n1/u1/v1", "False/n2/u2/v2", "--replica" ,"rep", "--creator-uid", "8"]
         parsed_args = api.parse_args(args)
         out = {'files': [{'indexed': True, 'version': 'v1', 'uuid': 'u1', 'name': 'n1'}, {'indexed': False, 'version': 'v2', 'uuid': 'u2', 'name': 'n2'}], 'creator_uid': 8}
         query_payload, body_payload, header_payload = api._build_payloads("put-bundles", parsed_args)
