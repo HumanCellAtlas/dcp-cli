@@ -1,3 +1,14 @@
+Command line interface that interacts with the Human Cell Atlas data
+store REST API.
+
+Current functionality: Retrieve or register a data file. Retrieve or
+register a data bundle (collection of data files). Upload full directory
+to cloud, register given files, and collect them into a bundle. Download
+a bundle or file from HCA data store to local.
+
+Changes for v1.0.0 (2017-06-26)
+===============================
+
 Changes for v0.0.8 (2017-06-06)
 ===============================
 
