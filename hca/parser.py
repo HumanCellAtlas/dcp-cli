@@ -4,8 +4,11 @@ import argparse
 import pprint
 import jsonpointer
 
-from .full_upload import EndToEnd
+from .full_upload import FullUpload
+from .full_download import FullDownload
 from .constants import Constants
+
+ADDED_COMMANDS = [FullUpload, FullDownload]
 
 
 def make_name(http_method, path_split):
@@ -309,7 +312,8 @@ def get_parser(spec):
     """
     parser = argparse.ArgumentParser(description=spec['info']['description'])
     subparsers = parser.add_subparsers(help='sub-command help')
-    EndToEnd.add_demo_parser(subparsers)
+    for command in ADDED_COMMANDS:
+        command.add_parser(subparsers)
     param_holders = {}
 
     for path in spec['paths']:

@@ -1,14 +1,14 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-import sys, os, json
-from io import open
-import argparse
-from datetime import datetime
-import uuid
+import os
 import pprint
+import sys
+import uuid
+
+from io import open
 
 from .constants import Constants
-from .upload_to_s3 import upload_to_s3
+from .upload_to_cloud import upload_to_cloud
 
 
 def eprint(*args, **kwargs):
@@ -16,18 +16,19 @@ def eprint(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)
 
 
-class EndToEnd:
+class FullUpload:
     """Functions needed to create the end-to-end parser and actually run the demo."""
 
-    DEMO_CONSOLE_ARGUMENT = "upload"
+    CONSOLE_ARGUMENT = "upload"
     FILE_OR_DIR_ARGNAME = "file_or_dir"
     CREATOR_ID_ENVIRONMENT_VARIABLE = "creator_uid"
+    DEMO_REPLICA_ARGNAME = "--replica"
 
     @classmethod
-    def add_demo_parser(cls, subparsers):
+    def add_parser(cls, subparsers):
         """Call from parser.py to create the parser to run the demo."""
         subparser = subparsers.add_parser(
-            cls.DEMO_CONSOLE_ARGUMENT,
+            cls.CONSOLE_ARGUMENT,
             help="Full end to end demo of the ingest and data-store functionality."
         )
 
@@ -36,7 +37,16 @@ class EndToEnd:
             nargs="+",
             help="Relative or direct path to folder with all bundle files."
         )
-        subparser.add_argument("--staging-bucket", default="hca-dcp-staging-test")
+
+        subparser.add_argument(
+            cls.DEMO_REPLICA_ARGNAME,
+            help="Which cloud to upload to first. One of 'aws', 'gc', or 'azure'.",
+            default="aws"
+        )
+        subparser.add_argument(
+            "--staging-bucket",
+            help="Bucket within replica to upload to.",
+            default="hca-dcp-staging-test")
         return True
 
     @classmethod
@@ -60,7 +70,7 @@ class EndToEnd:
         for file in filenames:
             eprint("\t", file)
 
-        uploaded_keys = upload_to_s3(files_to_upload, args["staging_bucket"])
+        uploaded_keys = upload_to_cloud(files_to_upload, args["staging_bucket"], args["replica"])
 
         filename_key_list = list(zip(filenames, uploaded_keys))
         eprint("\nThe following keys were uploaded successfuly:")
@@ -79,7 +89,8 @@ class EndToEnd:
             # Generating file data
             creator_uid = os.environ.get(cls.CREATOR_ID_ENVIRONMENT_VARIABLE, "1")
             source_url = "s3://{}/{}".format(staging_bucket, key)
-            file_uuid = str(uuid.uuid4())
+            file_uuid = key[:key.find("/")]
+            eprint("File {}: assigned uuid {}".format(filename, file_uuid))
 
             response = api.make_request([
                 "put-files",
@@ -87,7 +98,7 @@ class EndToEnd:
                 "--bundle-uuid", bundle_uuid,
                 "--creator-uid", creator_uid,
                 "--source-url", source_url
-            ])
+            ], stream=True)
 
             if response.ok:
                 version = response.json().get("version", "blank")
@@ -98,11 +109,15 @@ class EndToEnd:
                     "uuid": file_uuid,
                     "creator_uid": creator_uid
                 })
+                response.close()
 
             else:
                 eprint("File {}: registration FAILED".format(filename))
+                eprint(response.text)
+                response.close()
+                response.raise_for_status()
 
-            eprint("File PUT Request response")
+            eprint("Request response")
             eprint("{}".format(response.content))
         return bundle_uuid, files
 
@@ -132,7 +147,10 @@ class EndToEnd:
 
         else:
             eprint("Bundle {}: registration FAILED".format(bundle_uuid))
-        eprint("Bundles PUT Request response")
+            eprint(response.text)
+            response.raise_for_status()
+
+        eprint("Request response:")
         eprint("{}\n".format(response.content))
         final_return = {
             "bundle_uuid": bundle_uuid,
@@ -145,7 +163,7 @@ class EndToEnd:
         return final_return
 
     @classmethod
-    def full_demo(cls, args, api):
+    def run(cls, args, api):
         """
         Run through full demo functionality.
 

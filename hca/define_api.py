@@ -1,12 +1,13 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-import json, sys, os, ast
-from io import open
-import pprint
+import json
+import os
+import sys
 import requests
 
-from .parser import get_parser
-from .full_upload import EndToEnd
+from io import open
+
+from .parser import get_parser, ADDED_COMMANDS
 from .constants import Constants
 
 
@@ -19,7 +20,7 @@ class API:
         self.base_url = "https://" + spec['host'] + spec['basePath']
         self.parser, self.param_data = get_parser(spec)
 
-    def get_spec(self, test):
+    def get_spec(self, test=False):
         """
         Load the API specification.
 
@@ -132,13 +133,14 @@ class API:
         namespace = {k: namespace[k] for k in namespace if namespace[k] is not None}
         return namespace
 
-    def make_request(self, args):
+    def make_request(self, args, stream=False):
         """Function to actually make request to api."""
         namespace = self.parse_args(args)
         endpoint = args[0]
 
-        if endpoint == EndToEnd.DEMO_CONSOLE_ARGUMENT:
-            return EndToEnd.full_demo(namespace, self)
+        for command in ADDED_COMMANDS:
+            if endpoint == command.CONSOLE_ARGUMENT:
+                return command.run(namespace, self)
 
         url = self._build_url(endpoint, namespace)
         query_payload, body_payload, header_payload = self._build_payloads(endpoint, namespace)
@@ -148,9 +150,9 @@ class API:
 
         method = endpoint[:endpoint.find("-")]
         if method in param_methods:
-            request = requests.request(method, url, params=query_payload, headers=header_payload)
+            request = requests.request(method, url, params=query_payload, headers=header_payload, stream=stream)
         elif method in json_methods:
-            request = requests.request(method, url, json=body_payload, params=query_payload, headers=header_payload)
+            request = requests.request(method, url, json=body_payload, params=query_payload, headers=header_payload, stream=stream)
         else:
             raise ValueError("Bad request type")
         return request
