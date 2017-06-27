@@ -88,7 +88,9 @@ class API:
                         continue
                     argument_name = curr_level[i][0]
                     argument_type = curr_level[i][1]
-                    if argument_type == "integer":
+                    if argument_type == "object":
+                        value = json.loads(value)
+                    elif argument_type == "integer":
                         value = int(value)
                     elif argument_type == "number":
                         value = float(value)
@@ -135,6 +137,9 @@ class API:
 
     def make_request(self, args, stream=False):
         """Function to actually make request to api."""
+        if not args:
+            self.parser.print_help()
+            self.parser.exit(1)
         namespace = self.parse_args(args)
         endpoint = args[0]
 
@@ -159,7 +164,7 @@ class API:
 
 
 if __name__ == "__main__":
-    api = API(True)
+    api = API()
     response = api.make_request(sys.argv[1:])
     if response:
         print(response.headers)

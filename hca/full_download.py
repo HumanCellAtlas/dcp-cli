@@ -22,7 +22,7 @@ class FullDownload:
         """Call from parser.py to create the parser to run the demo."""
         subparser = subparsers.add_parser(
             cls.CONSOLE_ARGUMENT,
-            help="Full end to end demo of the ingest and data-store functionality."
+            help="Download a full bundle or file to local."
         )
 
         subparser.add_argument(
@@ -101,9 +101,12 @@ class FullDownload:
 
         else:
             eprint("Bundle {}: GET FAILED. Checking if uuid is a file.".format(bundle_uuid))
+            eprint(response.text)
+            response.close()
+            response.raise_for_status()
 
         eprint("Request response:")
-        eprint("{}\n".format(response.content))
+        eprint("{}\n".format(response.content.decode()))
         return files, folder
 
     @classmethod

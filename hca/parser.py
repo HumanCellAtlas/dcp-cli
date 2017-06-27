@@ -1,8 +1,9 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import argparse
-import pprint
+import json
 import jsonpointer
+import pprint
 
 from .full_upload import FullUpload
 from .full_download import FullDownload
@@ -101,6 +102,22 @@ def _recursive_indexing(spec, param, hierarchy, indexed_parameters={}, arr=False
 
     # Index each element in the object
     elif param["type"] == "object":
+        # If there are no properties (undefined schema) and it's not an array, add each type
+        if ("properties" not in param) and (not arr):
+            param_name = param["name"]
+            param['name'] = param_name
+            param["array"] = arr
+            param["hierarchy"] = hierarchy_clone
+            indexed_parameters[param_name] = param
+            return
+
+        # If there are no properties and not within an array, we should just parse the input as json
+        elif "properties" not in param:
+            return []
+
+        # If there are properties or it's within an array, loop through properties and add each.
+        # Will be an empty list if it's an array there are no defined properties. In this case,
+        # we should parse the input as json.
         object_indexed_params = []
         for (prop_name, payload) in param['properties'].items():
             payload["name"] = prop_name
@@ -243,6 +260,21 @@ def _get_arg_type(arg_type_string):
     return argtype
 
 
+def _get_action(arg_type_string):
+    if arg_type_string == "object":
+        return AddObject
+    return "store"
+
+
+class AddObject(argparse.Action):
+    """Object to parse json objects."""
+
+    def __init__(self, option_strings, dest, nargs=None, **kwargs):
+        super(AddObject, self).__init__(option_strings, dest, **kwargs)
+    def __call__(self, parser, namespace, values, option_string=None):
+        setattr(namespace, self.dest, json.loads(values))
+
+
 def _add_positional_args(subparser, endpoint_info):
     for positional_arg in endpoint_info["positional"]:
         h = create_help_statement(positional_arg)
@@ -262,6 +294,7 @@ def _add_optional_args(subparser, endpoint_info):
         h = create_help_statement(optional_data)
 
         argtype = _get_arg_type(optional_data["type"])
+        actiontype = _get_action(optional_data["type"])
 
         optional_name_with_dashes = optional_name.replace("_", "-")
         subparser.add_argument(
@@ -271,7 +304,8 @@ def _add_optional_args(subparser, endpoint_info):
             required=optional_data["required"],
             nargs="+" if optional_data['array'] else None,
             help=h,
-            type=argtype
+            type=argtype,
+            action=actiontype
         )
 
 

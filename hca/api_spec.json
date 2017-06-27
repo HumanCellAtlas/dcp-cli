@@ -14,6 +14,72 @@
     "application/json"
   ],
   "paths": {
+    "/search": {
+      "get": {
+        "description": "Returns a list of bundles matching the given simple criteria\n",
+        "summary": "Find bundles by querying their metadata using simple criteria",
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "description": "Metadata query",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "default": {
+            "description": "Unexpected error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      },
+      "post": {
+        "description": "Accepts Elasticsearch JSON query and returns matching bundle identifiers\n",
+        "summary": "Find bundles by searching their metadata with an Elasticsearch query\n",
+        "consumes": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "extras",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "query": {
+                  "description": "Elasticsearch query",
+                  "type": "object"
+                }
+              },
+              "required": [
+                "query"
+              ]
+            }
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "default": {
+            "description": "Unexpected error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
     "/files": {
       "get": {
         "summary": "Query files",
@@ -41,6 +107,7 @@
     },
     "/files/{uuid}": {
       "get": {
+        "description": "Returns a list of files matching given criteria.\n",
         "parameters": [
           {
             "name": "uuid",
@@ -124,6 +191,7 @@
         }
       },
       "head": {
+        "description": "Get the associated metadata from a file with a given uuid.",
         "parameters": [
           {
             "name": "uuid",

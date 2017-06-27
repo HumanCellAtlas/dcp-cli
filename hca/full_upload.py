@@ -29,7 +29,7 @@ class FullUpload:
         """Call from parser.py to create the parser to run the demo."""
         subparser = subparsers.add_parser(
             cls.CONSOLE_ARGUMENT,
-            help="Full end to end demo of the ingest and data-store functionality."
+            help="Upload a file or directory to the cloud, register each of the files, and bundle them together."
         )
 
         subparser.add_argument(
@@ -118,7 +118,7 @@ class FullUpload:
                 response.raise_for_status()
 
             eprint("Request response")
-            eprint("{}".format(response.content))
+            eprint("{}".format(response.content.decode()))
         return bundle_uuid, files
 
     @classmethod
@@ -151,7 +151,7 @@ class FullUpload:
             response.raise_for_status()
 
         eprint("Request response:")
-        eprint("{}\n".format(response.content))
+        eprint("{}\n".format(response.content.decode()))
         final_return = {
             "bundle_uuid": bundle_uuid,
             "creator_uid": creator_uid,

@@ -213,7 +213,6 @@ class TestHCACLI(unittest.TestCase):
         out = {"uuid": "uuid", "version": "version", "files": ["uuid1/v1/n1/True", "uuid2/v2/n2/False"], "creator_uid": 3, "replica": "rep"}
         self.assertEqual(api.parse_args(args), out)
 
-
     def test_parsing_array_object_literals(self):
         api = hca.define_api.API(True)
         args = ["put-bundles", "234sf", "--files", "True/n1/u1/v1", "False/n2/u2/v2", "--replica" ,"rep", "--creator-uid", "8"]
@@ -222,6 +221,12 @@ class TestHCACLI(unittest.TestCase):
         query_payload, body_payload, header_payload = api._build_payloads("put-bundles", parsed_args)
         self.assertEqual(body_payload, out)
 
+    def test_json_input(self):
+        api = hca.define_api.API()
+        args = ["post-search", "--query", '{"hello":"world", "goodbye":"earth"}']
+        parsed_args = api.parse_args(args)
+        out = {"query": {"hello": "world", "goodbye": "earth"}}
+        self.assertEqual(out, parsed_args)
 
     def test_upload_files(self):
 
