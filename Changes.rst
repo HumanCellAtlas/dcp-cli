@@ -1,3 +1,8 @@
+Changes for v0.1.0 (2017-06-27)
+===============================
+
+-  Demo version pre-release
+
 Command line interface that interacts with the Human Cell Atlas data
 store REST API.
 
