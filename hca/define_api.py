@@ -17,7 +17,8 @@ class API:
     def __init__(self, test=False):
         """Initialize the CLI API."""
         spec = self.get_spec(test)
-        self.base_url = "https://" + spec['host'] + spec['basePath']
+        scheme = spec["schemes"][0] if "schemes" in spec else "https"
+        self.base_url = "{}://{}{}".format(scheme, spec['host'], spec['basePath'])
         self.parser, self.param_data = get_parser(spec)
 
     def get_spec(self, test=False):
