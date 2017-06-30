@@ -229,13 +229,7 @@ class TestHCACLI(unittest.TestCase):
         self.assertEqual(out, parsed_args)
 
     def test_upload_files(self):
-
         pass
-        # [(<_io.BufferedReader name='test/bundle/a.txt'>, '034a9842-1670-4e84-9991-b022eb2ebe66/a.txt'), (<_io.BufferedReader name='test/bundle/b.txt'>, '44b48f40-b94c-4fcc-8cd1-85449de7086e/b.txt'), (<_io.BufferedReader name='test/bundle/c.txt'>, '71129b9a-9320-4b47-8263-e1796702c2bb/c.txt')]
-
-
-
-
 
 
 if __name__ == '__main__':
