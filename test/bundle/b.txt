@@ -1,0 +1,74 @@
+def
+
+import requests
+from .parser import get_parser
+from .end_to_end import EndToEnd
+
+
+class API:
+    """Class for interacting with the REST Api."""
+
+    def __init__(self, test=False):
+        """Initialize the CLI API."""
+        spec = self.get_spec(test)
+        self.base_url = "https://" + spec['host'] + spec['basePath']
+        self.parser, self.param_data = get_parser(spec)
+
+    def get_spec(self, test):
+        """
+        Load the API specification.
+
+        :param test: boolean flag to indicate which spec to use.
+                     api_spec is the spec downloaded from the api on build.
+                     ../test/test is the mocked up spec I've been toying with.
+        :return:     The dictionary containing all swagger specification definitions.
+        """
+        url = os.path.dirname(os.path.realpath(__file__)) + "/api_spec.json"
+        if test:
+            url = os.path.dirname(os.path.realpath(__file__)) + "/../test/test.json"
+
+        with open(url) as fp:
+            api_spec_dict = json.load(fp)
+        return api_spec_dict
+
+    def _build_url(self, endpoint, namespace):
+        """Add positional arguments into the url."""
+        split_endpoint = endpoint.split("-")[1:]
+
+        all_positional_args_for_endpoint = [arg['argument'] for arg in self.param_data[endpoint]['positional']]
+
+        # If the api needs file/write/{sdf} functionality, will become put-file-write
+        given_positional_args = [p for p in split_endpoint]
+        for positional_arg in all_positional_args_for_endpoint:
+            if positional_arg in namespace:
+                arg = namespace[positional_arg]
+
+
+
+
+        spec = self.get_spec(test)
+        self.base_url = "https://" + spec['host'] + spec['basePath']
+        self.parser, self.param_data = get_parser(spec)
+
+    def get_spec(self, test):
+        """
+        Load the API specification.
+
+        :param test: boolean flag to indicate which spec to use.
+                     api_spec is the spec downloaded from the api on build.
+                     ../test/test is the mocked up spec I've been toying with.
+        :return:     The dictionary containing all swagger specification definitions.
+        """
+        url = os.path.dirname(os.path.realpath(__file__)) + "/api_spec.json"
+        if test:
+            url = os.path.dirname(os.path.realpath(__file__)) + "/../test/test.json"
+
+        with open(url) as fp:
+            api_spec_dict = json.load(fp)
+        return api_spec_dict
+
+    def _build_url(self, endpoint, namespace):
+        """Add positional arguments into the url."""
+        split_endpoint = endpoint.split("-")[1:]
+
+        all_positional_args_for_endpoint = [arg['
