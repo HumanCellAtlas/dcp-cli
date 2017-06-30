@@ -13,10 +13,6 @@ for bundle in ~/projects/data-bundle-examples/smartseq2/*; do
 done
 
 d(){
-
-bundle_manifest=$(hca upload $bundle)
-bundle_uuid=$(echo "$bundle_manifest" | jq .bundle_uuid)
-
 # Or, manually:
 # aws s3 sync $bundle s3://hca-dcp-staging-dev/$bundle
 # for file in $(jq "$bundle/manifest.json" .files[]); do
@@ -46,13 +42,17 @@ hca get-bundles $bundle_uuid
 http https://hca-dss.czi.technology/v1/search query=='{"foo": "bar"}'
 }
 
+http https://hca-dss.czi.technology/v1/search query=='{"files.assay_json.single_cell.method": "Fluidigm C1"}'
+hca get-search --query '{"files.assay_json.single_cell.method": "Fluidigm C1"}'
+
+http https://hca-dss.czi.technology/v1/search query:=@~/projects/data-store/tests/sample_query.json
 hca post-search --query="$(cat ~/projects/data-store/tests/sample_query.json)"
 
 d2(){
 # Show creating a stored search (webhook subscription)
 # Fire off a mock event to the green box
 # (Either the green box pipeline runs, or we mock it)
-http POST https://green-dot-broad-dsde-mint-dev.appspot.com/v1/notifications example_webhook_payload.json
+http POST https://green-dot-broad-dsde-mint-dev.appspot.com/v1/notifications ~/projects/data-store/tests/example_webhook_payload.json
 #   - Green box accesses bundles, files, and possibly runs queries
 # Another round of put-file/put-bundle for a secondary analysis result
 }
