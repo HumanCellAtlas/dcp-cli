@@ -12,14 +12,14 @@ def eprint(*args, **kwargs):
 
 
 class FullDownload:
-    """Functions needed to create the end-to-end parser and actually run the demo."""
+    """Functions needed to fully add this functionality to the command line parser."""
 
     CONSOLE_ARGUMENT = "download"
     UUID = "uuid"
 
     @classmethod
     def add_parser(cls, subparsers):
-        """Call from parser.py to create the parser to run the demo."""
+        """Call from parser.py to create the parser."""
         subparser = subparsers.add_parser(
             cls.CONSOLE_ARGUMENT,
             help="Download a full bundle or file to local."
@@ -111,7 +111,7 @@ class FullDownload:
 
     @classmethod
     def run(cls, args, api):
-        """Run through full demo functionality."""
+        """Download a bundle or file from the blue box to local."""
         files, folder = cls._download_bundle(args, api)
         status = cls._download_files(files, folder, api, args["replica"])
 

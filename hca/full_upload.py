@@ -17,16 +17,16 @@ def eprint(*args, **kwargs):
 
 
 class FullUpload:
-    """Functions needed to create the end-to-end parser and actually run the demo."""
+    """Functions needed to fully add this functionality to the command line parser."""
 
     CONSOLE_ARGUMENT = "upload"
     FILE_OR_DIR_ARGNAME = "file_or_dir"
     CREATOR_ID_ENVIRONMENT_VARIABLE = "creator_uid"
-    DEMO_REPLICA_ARGNAME = "--replica"
+    REPLICA_ARGNAME = "--replica"
 
     @classmethod
     def add_parser(cls, subparsers):
-        """Call from parser.py to create the parser to run the demo."""
+        """Call from parser.py to create the parser."""
         subparser = subparsers.add_parser(
             cls.CONSOLE_ARGUMENT,
             help="Upload a file or directory to the cloud, register each of the files, and bundle them together."
@@ -39,7 +39,7 @@ class FullUpload:
         )
 
         subparser.add_argument(
-            cls.DEMO_REPLICA_ARGNAME,
+            cls.REPLICA_ARGNAME,
             help="Which cloud to upload to first. One of 'aws', 'gc', or 'azure'.",
             default="aws"
         )
@@ -165,7 +165,7 @@ class FullUpload:
     @classmethod
     def run(cls, args, api):
         """
-        Run through full demo functionality.
+        Bring a bundle from local to the blue box.
 
         Step 1: Upload the files to s3.
         Step 2: Put the files in the blue box with a shared bundle_uuid.
