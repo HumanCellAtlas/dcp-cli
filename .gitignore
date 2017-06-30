@@ -2,6 +2,15 @@
 # - A leading slash means the pattern is anchored at the root.
 # - No leading slash means the pattern matches at any depth.
 
+# Sublime files
+*~
+
+# Random files
+get-pip.py
+setup.py-e
+test/play.py
+v/
+
 # Python files
 *.pyc
 __pycache__/
