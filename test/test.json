@@ -1,0 +1,659 @@
+{
+  "basePath": "/v1", 
+  "definitions": {
+    "Bundle": {
+      "properties": {
+        "uuid": {
+          "description": "Bundle unique ID", 
+          "type": "string"
+        }, 
+        "versions": {
+          "items": {
+            "description": "Timestamp of bundle creation in RFC3339.", 
+            "format": "date-time", 
+            "type": "string"
+          }, 
+          "type": "array"
+        }
+      }, 
+      "required": [
+        "uuid", 
+        "versions"
+      ], 
+      "type": "object"
+    }, 
+    "Error": {
+      "properties": {
+        "code": {
+          "format": "int32", 
+          "type": "integer"
+        }, 
+        "fields": {
+          "type": "string"
+        }, 
+        "message": {
+          "type": "string"
+        }
+      }, 
+      "type": "object"
+    }, 
+    "File": {
+      "properties": {
+        "name": {
+          "description": "Filename (unique within a bundle)", 
+          "type": "string"
+        }, 
+        "uuid": {
+          "description": "File unique ID", 
+          "type": "string"
+        }, 
+        "versions": {
+          "description": "List of versions", 
+          "items": {
+            "type": "string"
+          }, 
+          "type": "array"
+        }
+      }, 
+      "required": [
+        "uuid", 
+        "name", 
+        "versions"
+      ], 
+      "type": "object"
+    }, 
+    "FilesGetResponse": {
+      "properties": {
+        "files": {
+          "type": "string"
+        }
+      }, 
+      "type": "object"
+    }, 
+    "blob_common_metadata": {
+      "description": "Common fields between the files list of a bundle and the metadata tracking an unique file.", 
+      "properties": {
+        "crc32c": {
+          "description": "CRC-32C of the file contents in hex", 
+          "type": "string"
+        }, 
+        "md5": {
+          "description": "MD5 of the file contents in hex", 
+          "type": "string"
+        }, 
+        "sha1": {
+          "description": "SHA-1 of the file contents in hex", 
+          "type": "string"
+        }, 
+        "sha256": {
+          "description": "SHA-256 of the file contents in hex", 
+          "type": "string"
+        }, 
+        "timestamp": {
+          "description": "Timestamp of bundle creation in RFC3339.", 
+          "format": "date-time", 
+          "type": "string"
+        }, 
+        "uuid": {
+          "description": "A RFC4122-compliant ID for the file.", 
+          "type": "string"
+        }
+      }, 
+      "required": [
+        "uuid", 
+        "timestamp", 
+        "crc32c", 
+        "md5", 
+        "sha1", 
+        "sha256"
+      ], 
+      "type": "object"
+    }, 
+    "bundle_version": {
+      "properties": {
+        "bundle_timestamp": {
+          "description": "Timestamp of bundle creation in RFC3339.", 
+          "format": "date-time", 
+          "type": "string"
+        }, 
+        "contents": {
+          "items": {
+            "$ref": "#/definitions/file_version"
+          }, 
+          "type": "array"
+        }, 
+        "creator_uid": {
+          "description": "User ID who created this bundle manifest.", 
+          "format": "int", 
+          "type": "integer"
+        }, 
+        "uuid": {
+          "description": "Bundle unique ID", 
+          "type": "string"
+        }
+      }, 
+      "type": "object"
+    }, 
+    "file_metadata": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/blob_common_metadata"
+        }, 
+        {
+          "properties": {
+            "bundle_uuid": {
+              "description": "A RFC4122-compliant ID for the bundle that contains this file.", 
+              "type": "string"
+            }, 
+            "creator_uid": {
+              "description": "User ID who created this file.", 
+              "format": "int64", 
+              "type": "integer"
+            }, 
+            "version": {
+              "description": "Version of the file metadata object.", 
+              "type": "string"
+            }
+          }, 
+          "required": [
+            "version", 
+            "bundle_uuid", 
+            "creator_uid"
+          ], 
+          "type": "object"
+        }
+      ], 
+      "description": "Object describing a single file in the files list of a bundle.", 
+      "type": "object"
+    }, 
+    "file_version": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/blob_common_metadata"
+        }, 
+        {
+          "properties": {
+            "content-type": {
+              "description": "Content-type of the file.", 
+              "type": "string"
+            }, 
+            "name": {
+              "description": "Filename (unique within a bundle)", 
+              "type": "string"
+            }
+          }, 
+          "required": [
+            "name", 
+            "content-type"
+          ], 
+          "type": "object"
+        }
+      ], 
+      "description": "Object describing a single file in the files list of a bundle.", 
+      "type": "object"
+    }
+  }, 
+  "host": "hca-dss.czi.technology", 
+  "info": {
+    "description": "Human Cell Atlas Data Coordination Platform Data Storage System API", 
+    "title": "HCA DCP DSS API", 
+    "version": "0.0.1"
+  }, 
+  "paths": {
+    "/bundles": {
+      "get": {
+        "description": "Returns a list of bundles matching given criteria.\n", 
+        "responses": {
+          "200": {
+            "description": "OK", 
+            "schema": {
+              "properties": {
+                "bundles": {
+                  "items": {
+                    "$ref": "#/definitions/Bundle"
+                  }, 
+                  "type": "array"
+                }
+              }, 
+              "required": [
+                "bundles"
+              ], 
+              "type": "object"
+            }
+          }
+        }, 
+        "summary": "Query bundles"
+      }
+    }, 
+    "/bundles/{uuid}": {
+      "get": {
+        "parameters": [
+          {
+            "name": "uuid",
+            "in": "path",
+            "description": "Bundle unique ID.",
+            "required": true,
+            "type": "string",
+            "pattern": "[A-Za-z0-9]{8}-[A-Za-z0-9]{4}-[A-Za-z0-9]{4}-[A-Za-z0-9]{4}-[A-Za-z0-9]{12}"
+          },
+          {
+            "name": "version",
+            "in": "query",
+            "description": "Timestamp of bundle creation in RFC3339.",
+            "required": true,
+            "type": "string",
+            "format": "date-time"
+          },
+          {
+            "name": "replica",
+            "in": "query",
+            "description": "Replica to fetch from.",
+            "required": true,
+            "type": "string",
+            "enum": [
+              "aws",
+              "gc",
+              "azure"
+            ]
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/bundle_version"
+              }
+            }
+          },
+          "default": {
+            "description": "Unexpected error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      },
+      "put": {
+        "parameters": [
+          {
+            "description": "Bundle unique ID.", 
+            "in": "path", 
+            "name": "uuid", 
+            "required": true, 
+            "type": "string"
+          }, 
+          {
+            "description": "Version of the bundle.", 
+            "in": "query", 
+            "name": "version", 
+            "required": false, 
+            "type": "string", 
+            "format": "date-time"
+          }, 
+          {
+            "description": "Replica to write to.", 
+            "in": "query", 
+            "name": "replica", 
+            "required": true, 
+            "type": "string", 
+            "enum": ["aws", "gc", "azure"]
+          }, 
+          {
+            "in": "body", 
+            "name": "extras", 
+            "required": true, 
+            "schema": {
+              "type": "object", 
+              "properties": {
+                "files": {
+                  "type": "array",
+                  "items": {
+                    "type": "object", 
+                    "properties": {
+                      "uuid": {
+                        "description": "A RFC4122-compliant ID for the file.", 
+                        "type": "string",
+                        "pattern": "[A-Za-z0-9]{8}-[A-Za-z0-9]{4}-[A-Za-z0-9]{4}-[A-Za-z0-9]{4}-[A-Za-z0-9]{12}"
+                      }, 
+                      "version": {
+                        "description": "Timestamp of file creation in RFC3339.", 
+                        "type": "string",
+                        "format": "date-time"
+                      },
+                      "name": {
+                        "description": "Name of the file.", 
+                        "type": "string",
+                        "pattern": "^[^/\\\\]+$"
+                      },
+                      "indexed": {
+                        "description": "True iff this file should be indexed.", 
+                        "type": "boolean",
+                        "pattern": "^[^/\\\\]+$"
+                      }
+                    }, 
+                    "required": [
+                      "file_uuid", 
+                      "timestamp", 
+                      "name", 
+                      "indexed"
+                    ]
+                  }
+                },
+                "creator_uid": {
+                  "description": "User ID who is creating this bundle.",
+                  "type": "integer",
+                  "format": "int64"
+                } 
+              }, 
+              "required": [
+                "files", 
+                "creator_uid"
+              ]
+            }
+          }
+
+        ]
+      }
+    }, 
+    "/reftest": {
+      "put": {
+        "description": "placeholder desc",
+        "parameters": [
+          {
+            "description": "random", 
+            "in": "body", 
+            "name": "obj", 
+            "required": true, 
+            "schema": {
+              "$ref": "#/definitions/File"
+            }
+          }
+        ], 
+        "responses": {
+          "200": {
+            "description": "OK", 
+            "schema": {
+              "items": {
+                "description": "Timestamp of bundle creation in RFC3339.", 
+                "format": "date-time", 
+                "type": "string"
+              }, 
+              "type": "array"
+            }
+          }, 
+          "default": {
+            "description": "Unexpected error", 
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/bundles/{uuid}/{bundle_version}": {
+      "get": {
+        "parameters": [
+          {
+            "description": "Replica to fetch from.", 
+            "in": "query", 
+            "name": "replica", 
+            "required": true, 
+            "type": "string"
+          }, 
+          {
+            "description": "Bundle unique ID.", 
+            "in": "path", 
+            "name": "uuid", 
+            "required": true, 
+            "type": "string"
+          }, 
+          {
+            "description": "Version of the bundle.", 
+            "in": "path", 
+            "name": "bundle_version", 
+            "required": true, 
+            "type": "string"
+          }
+        ], 
+        "responses": {
+          "200": {
+            "description": "OK", 
+            "schema": {
+              "items": {
+                "$ref": "#/definitions/bundle_version"
+              }, 
+              "type": "array"
+            }
+          }, 
+          "default": {
+            "description": "Unexpected error", 
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    }, 
+    "/files": {
+      "get": {
+        "description": "Returns a list of files matching given criteria.\n", 
+        "responses": {
+          "200": {
+            "description": "OK", 
+            "schema": {
+              "properties": {
+                "files": {
+                  "items": {
+                    "$ref": "#/definitions/File"
+                  }, 
+                  "type": "array"
+                }
+              }, 
+              "required": [
+                "files"
+              ], 
+              "type": "object"
+            }
+          }
+        }, 
+        "summary": "Query files"
+      }
+    }, 
+    "/files/{uuid}": {
+      "get": {
+        "parameters": [
+          {
+            "description": "A RFC4122-compliant ID for the file.", 
+            "in": "path", 
+            "name": "uuid", 
+            "required": true, 
+            "type": "string"
+          }, 
+          {
+            "description": "Replica to fetch from.", 
+            "in": "query", 
+            "name": "replica", 
+            "required": false, 
+            "type": "string"
+          }, 
+          {
+            "description": "Timestamp of file creation in RFC3339.  If this is not provided, the latest version is returned.", 
+            "format": "date-time", 
+            "in": "query", 
+            "name": "timestamp", 
+            "required": false, 
+            "type": "string"
+          }
+        ], 
+        "responses": {
+          "200": {
+            "description": "On a HEAD request, returns metadata", 
+            "headers": {
+              "X-DSS-BUNDLE-UUID": {
+                "description": "A RFC4122-compliant ID for the bundle that contains this file.", 
+                "type": "string"
+              }, 
+              "X-DSS-CONTENT-TYPE": {
+                "description": "Content-type of the file.", 
+                "type": "string"
+              }, 
+              "X-DSS-CRC32C": {
+                "description": "CRC32C of the file contents in hex.", 
+                "pattern": "^[A-Za-z0-9]{8}$", 
+                "type": "string"
+              }, 
+              "X-DSS-CREATOR-UID": {
+                "description": "User ID who created this file.", 
+                "format": "int64", 
+                "type": "integer"
+              }, 
+              "X-DSS-S3-ETAG": {
+                "description": "S3 ETag of the file contents.", 
+                "pattern": "^[A-Za-z0-9]{32}(-([2-9]|[1-8][0-9]|9[0-9]|[1-8][0-9]{2}|9[0-8][0-9]|99[0-9]|[1-8][0-9]{3}|9[0-8][0-9]{2}|99[0-8][0-9]|999[0-9]|10000))?$", 
+                "type": "string"
+              }, 
+              "X-DSS-SHA1": {
+                "description": "SHA-1 of the file contents in hex.", 
+                "pattern": "^[A-Za-z0-9]{40}$", 
+                "type": "string"
+              }, 
+              "X-DSS-SHA256": {
+                "description": "SHA-256 of the file contents in hex.", 
+                "pattern": "^[A-Za-z0-9]{64}$", 
+                "type": "string"
+              }, 
+              "X-DSS-TIMESTAMP": {
+                "description": "Timestamp of file creation in RFC3339.", 
+                "format": "date-time", 
+                "type": "string"
+              }
+            }
+          }, 
+          "302": {
+            "description": "On a GET request, redirects to a signed URL.", 
+            "headers": {
+              "X-DSS-BUNDLE-UUID": {
+                "description": "A RFC4122-compliant ID for the bundle that contains this file.", 
+                "type": "string"
+              }, 
+              "X-DSS-CONTENT-TYPE": {
+                "description": "Content-type of the file.", 
+                "type": "string"
+              }, 
+              "X-DSS-CRC32C": {
+                "description": "CRC32C of the file contents in hex.", 
+                "pattern": "^[A-Za-z0-9]{8}$", 
+                "type": "string"
+              }, 
+              "X-DSS-CREATOR-UID": {
+                "description": "User ID who created this file.", 
+                "format": "int64", 
+                "type": "integer"
+              }, 
+              "X-DSS-S3-ETAG": {
+                "description": "S3 ETag of the file contents.", 
+                "pattern": "^[A-Za-z0-9]{32}(-([2-9]|[1-8][0-9]|9[0-9]|[1-8][0-9]{2}|9[0-8][0-9]|99[0-9]|[1-8][0-9]{3}|9[0-8][0-9]{2}|99[0-8][0-9]|999[0-9]|10000))?$", 
+                "type": "string"
+              }, 
+              "X-DSS-SHA1": {
+                "description": "SHA-1 of the file contents in hex.", 
+                "pattern": "^[A-Za-z0-9]{40}$", 
+                "type": "string"
+              }, 
+              "X-DSS-SHA256": {
+                "description": "SHA-256 of the file contents in hex.", 
+                "pattern": "^[A-Za-z0-9]{64}$", 
+                "type": "string"
+              }, 
+              "X-DSS-TIMESTAMP": {
+                "description": "Timestamp of file creation in RFC3339.", 
+                "format": "date-time", 
+                "type": "string"
+              }
+            }
+          }, 
+          "default": {
+            "description": "Unexpected error", 
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }, 
+      "put": {
+        "description": "Create a new file with a given UUID.  The file content is passed in through a cloud URL.  The file on the cloud\nprovider must have metadata set reflecting the file checksums and the file content type.\n", 
+        "parameters": [
+          {
+            "description": "A RFC4122-compliant ID for the file.", 
+            "in": "path", 
+            "name": "uuid", 
+            "required": true, 
+            "type": "string"
+          }, 
+          {
+            "in": "body", 
+            "name": "extras", 
+            "required": true, 
+            "schema": {
+              "properties": {
+                "bundle_uuid": {
+                  "description": "A RFC4122-compliant ID for the bundle that contains this file.", 
+                  "type": "string"
+                }, 
+                "creator_uid": {
+                  "description": "User ID who is creating this file.", 
+                  "format": "int64", 
+                  "type": "integer"
+                }, 
+                "source_url": {
+                  "description": "Cloud URL for source data.", 
+                  "pattern": "^(gs|s3|wasb)://", 
+                  "type": "string"
+                }, 
+                "version": {
+                  "description": "Timestamp of file creation in RFC3339.", 
+                  "format": "date-time", 
+                  "type": "string"
+                }
+              }, 
+              "required": [
+                "source_url", 
+                "bundle_uuid", 
+                "creator_uid"
+              ], 
+              "type": "object"
+            }
+          }
+        ], 
+        "responses": {
+          "201": {
+            "description": "OK", 
+            "schema": {
+              "properties": {
+                "timestamp": {
+                  "description": "Timestamp of file creation in RFC3339.", 
+                  "format": "date-time", 
+                  "type": "string"
+                }
+              }, 
+              "required": [
+                "timestamp"
+              ], 
+              "type": "object"
+            }
+          }
+        }, 
+        "summary": "Create a file"
+      }
+    }
+  }, 
+  "produces": [
+    "application/json"
+  ], 
+  "schemes": [
+    "https"
+  ], 
+  "swagger": "2.0"
+}
