@@ -7,7 +7,7 @@ Please report bugs, issues, feature requests, etc. on `GitHub <https://github.co
 
 License
 -------
-Licensed under the terms of the `Apache License, Version 2.0 <http://www.apache.org/licenses/LICENSE-2.0>`_.
+Licensed under the terms of the `MIT License <https://opensource.org/licenses/MIT>`_.
 
 .. image:: https://img.shields.io/travis/HumanCellAtlas/data-store-cli.svg
         :target: https://travis-ci.org/HumanCellAtlas/data-store-cli
