@@ -30,7 +30,7 @@ Each of the above commands has its own associated optional or required arguments
 Here is a list of what each type means. 
 
 - Positional arguments: These don't have a flag in front of them. If they are surrounded by brackets, they are optional.
-- Optional agruments: Note that the term optional in this sense doesn't mean that the argument is not required. It means that the argument is identified by a flag. If the argument and the flag (A word with "--" in front of it). are surrounded in brackets, this input is optional. If an arument is repeated multiple times with the later arguments surrounded in brackets, it means the parser accepts a list of these arguments. 
+- Optional arguments: Note that the term optional in this sense doesn't mean that the argument is not required. It means that the argument is identified by a flag. If the argument and the flag (A word with "--" in front of it). are surrounded in brackets, this input is optional. If an arument is repeated multiple times with the later arguments surrounded in brackets, it means the parser accepts a list of these arguments. 
 - Objects: Because the REST API sometimes consumes lists of objects, it is important to be able to pass these into the command line interface. To pass in an object, it is a number of arguments separated by slashes, as seen in the example above. An example input to this could be :code:`True/Bob/3806d74a-6ab5-4a6d-ba00-667ea858c7b5/2017-06-30T19:33:38+00:00`. If an argument within an object is optional and you don't have an input for it, you can replace it's supposed place with :code:`None`.
 
 
