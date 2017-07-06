@@ -68,6 +68,7 @@ def upload_to_cloud(files, staging_bucket, replica):
 
     return key_names
 
+
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description=__doc__)
