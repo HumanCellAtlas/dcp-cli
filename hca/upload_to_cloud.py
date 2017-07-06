@@ -11,7 +11,6 @@ import uuid
 
 import boto3
 from boto3.s3.transfer import TransferConfig
-
 from io import open
 
 from .packages.checksumming_io import ChecksummingBufferedReader, S3Etag
@@ -25,12 +24,12 @@ def encode_tags(tags):
 
 
 def _mime_type(filename):
-    try:
-        mimetypes_tuple = mimetypes.guess_type(filename)
-        last_non_none_mimetype = list(filter(lambda x: x, list(reversed(mimetypes_tuple))))[0]
-        return last_non_none_mimetype
-    except IndexError:
-        raise RuntimeError("Can't discern mime type")
+    type_, encoding = mimetypes.guess_type(filename)
+    if encoding:
+        return encoding
+    if type_:
+        return type_
+    raise RuntimeError("Can't discern mime type")
 
 
 def upload_to_cloud(files, staging_bucket, replica):
@@ -69,14 +68,14 @@ def upload_to_cloud(files, staging_bucket, replica):
 
     return key_names
 
-
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("files", nargs="+", type=lambda f: open(f, "rb"))
-    parser.add_argument("--staging-bucket", default="hca-dss-test")
+    parser.add_argument("--staging-bucket", required=True, default=os.getenv('STAGING_BUCKET'))  # "hca-dss-test"
+    parser.add_argument("--replica", default="aws")
     args = parser.parse_args()
 
-    key_names = upload_to_cloud(args.files, args.staging_bucket)
+    key_names = upload_to_cloud(args.files, args.staging_bucket, args.replica)
     for name in key_names:
         print(name)
