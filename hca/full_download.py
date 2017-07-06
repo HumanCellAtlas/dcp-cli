@@ -2,13 +2,9 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import os
 import sys
+import logging
 
 from io import open
-
-
-def eprint(*args, **kwargs):
-    """Print to stderr."""
-    print(*args, file=sys.stderr, **kwargs)
 
 
 class FullDownload:
@@ -32,24 +28,26 @@ class FullDownload:
 
         subparser.add_argument(
             "--name",
-            help="Name you're going to assign to the bundle/file you're downloading."
+            help="Name of the folder you're storing the bundle/file in (Your name for the bundle).\
+                Defaults to the uuid of the bundle or file."
         )
 
         subparser.add_argument(
             "--replica",
-            help="Which cloud to download from first. One of 'aws', 'gc', or 'azure'.",
+            help="Which cloud to download from first. One of 'aws', 'gcp', or 'azure'.",
+            choices=['aws', 'gcp', 'azure'],
             default="aws"
         )
 
     @classmethod
     def _download_files(cls, files, folder, api, replica):
-        """Use the API class to make a put-files request on each of these files."""
-        for file in files:
+        """Use the API class to make a get-files request on each of these files."""
+        for file_ in files:
 
-            file_uuid = file[cls.UUID]
-            filename = file.get("name", file_uuid)
+            file_uuid = file_[cls.UUID]
+            filename = file_.get("name", file_uuid)
 
-            eprint("File {}: Retrieving...".format(filename))
+            logging.info("File {}: Retrieving...".format(filename))
 
             request = [
                 "get-files",
@@ -60,17 +58,21 @@ class FullDownload:
             response = api.make_request(request, stream=True)
 
             if response.ok:
-                eprint("File {}: GET successful. Writing to disk.".format(filename, file_uuid))
-                with open(folder + filename, "wb") as fh:
-                    fh.write(response.content)
+                file_path = os.path.join(folder, filename)
+                logging.info("File {}: GET successful. Writing to disk.".format(filename, file_uuid))
+                with open(file_path, "wb") as fh:
+                    # Process taken from
+                    # https://stackoverflow.com/questions/16694907/how-to-download-large-file-in-python-with-requests-py
+                    for chunk in response.iter_content(chunk_size=1024):
+                        if chunk:
+                            fh.write(chunk)
                 response.close()
-                eprint("File {}: write successful. Stored at {}.".format(filename, folder + filename))
+                logging.info("File {}: GET SUCCEEDED. Stored at {}.".format(filename, file_path))
 
             else:
-                eprint("File {}: GET FAILED. This uuid is neither a bundle nor a file.".format(filename))
-                eprint(response.text)
+                logging.info("File {}: GET FAILED. This uuid is neither a bundle nor a file.".format(filename))
+                logging.info(response.text)
                 response.close()
-                response.raise_for_status()
 
         return {"completed": True}
 
@@ -81,7 +83,7 @@ class FullDownload:
         bundle_name = args.get("name", bundle_uuid)
         replica = args["replica"]
 
-        eprint("Bundle {}: Retrieving...".format(bundle_uuid))
+        logging.info("Bundle {}: Retrieving...".format(bundle_uuid))
         request = [
             "get-bundles",
             bundle_uuid,
@@ -94,19 +96,16 @@ class FullDownload:
 
         if response.ok:
             files = response.json()["bundle"]["files"]
-            folder = bundle_name + "/"
+            folder = bundle_name
             if not os.path.isdir(folder):
                 os.mkdir(folder)
-            eprint("Bundle {}: GET successful. {} files to download".format(bundle_uuid, len(files)))
+                logging.info("Bundle {}: GET SUCCEEDED. {} files to download".format(bundle_uuid, len(files)))
+            logging.info("Request response:")
+            logging.info("{}\n".format(response.content.decode()))
 
         else:
-            eprint("Bundle {}: GET FAILED. Checking if uuid is a file.".format(bundle_uuid))
-            eprint(response.text)
-            response.close()
-            response.raise_for_status()
-
-        eprint("Request response:")
-        eprint("{}\n".format(response.content.decode()))
+            logging.info("Bundle {}: GET FAILED. Checking if uuid is a file.".format(bundle_uuid))
+            logging.info(response.text)
         return files, folder
 
     @classmethod
