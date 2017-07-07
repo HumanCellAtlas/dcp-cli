@@ -325,7 +325,7 @@ def get_parser(spec):
                                             array: bool,
                                             description: str,
                                             format: str,
-                                            hierarchy: list,
+                                            hierarchy: list,  # Describes where in payload to put arg
                                             in: str,
                                             metavar: str,
                                             pattern: str,
