@@ -131,38 +131,3 @@ def get_parser(spec):
                 help=h
             )
     return parser
-
-
-get_parser.__doc__ = """Return an argparse parser and a dict containing important argument details.
-
-    :param spec: The swagger api specification used to generate parser.
-    :return parser: The parser configured to the given api spec.
-    :return param_holders: Important parameter information for each endpoint used in
-        parsing. Basic format is:
-        {
-            <endpoint-name>: {
-                description: str,
-                options: {
-                    <option-arg-name> {
-                        array: bool,
-                        description: str,
-                        format: str,
-                        hierarchy: list,
-                        in: str,
-                        metavar: str,
-                        pattern: str,
-                        required: bool,
-                        required_for: list,
-                        type: str}
-                    }
-                },
-                # Notice array b/c need to be ordered for path.
-                positional: [
-                    <Each arg has same format as option arg>
-                ],
-                seen: bool  # for cli help - need to know what
-                            # arguments are required for which
-                            # endpoints.
-            }
-        }
-    """
