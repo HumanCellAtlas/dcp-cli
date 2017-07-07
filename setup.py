@@ -5,7 +5,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="hca-cli",
-    version="0.1.0",
+    version="0.0.8",
     url='https://github.com/HumanCellAtlas/data-store-cli',
     license='Apache Software License',
     author='Human Cell Atlas contributors',
@@ -13,10 +13,7 @@ setup(
     description='Human Cell Atlas Data Storage System Command Line Interface',
     long_description=open('README.rst').read(),
     install_requires=[
-        "requests==2.17.3",
-        "jsonpointer==1.10",
-        "boto3==1.4.4",
-        "crcmod==1.7"
+        "requests==2.17.3"
     ],
     extras_require={
         ':python_version == "2.7"': ['enum34 >= 1.1.6, < 2']
