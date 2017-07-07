@@ -67,16 +67,3 @@ def upload_to_cloud(files, staging_bucket, replica):
             key_names.append(key_name)
 
     return key_names
-
-
-if __name__ == "__main__":
-
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("files", nargs="+", type=lambda f: open(f, "rb"))
-    parser.add_argument("--staging-bucket", required=True, default=os.getenv('STAGING_BUCKET'))  # "hca-dss-test"
-    parser.add_argument("--replica", default="aws")
-    args = parser.parse_args()
-
-    key_names = upload_to_cloud(args.files, args.staging_bucket, args.replica)
-    for name in key_names:
-        print(name)
