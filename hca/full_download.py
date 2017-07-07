@@ -98,7 +98,7 @@ class FullDownload:
             files = response.json()["bundle"]["files"]
             folder = bundle_name
             if not os.path.isdir(folder):
-                os.mkdir(folder)
+                os.makedirs(folder)
                 logging.info("Bundle {}: GET SUCCEEDED. {} files to download".format(bundle_uuid, len(files)))
             logging.info("Request response:")
             logging.info("{}\n".format(response.content.decode()))
