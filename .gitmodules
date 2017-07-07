@@ -1,0 +1,3 @@
+[submodule "checksum_reader"]
+	path = checksumming_io
+	url = https://github.com/HumanCellAtlas/checksumming_io.git
