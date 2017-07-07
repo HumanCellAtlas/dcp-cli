@@ -14,9 +14,9 @@ from .constants import Constants
 class API:
     """Class for interacting with the REST Api."""
 
-    def __init__(self, use_test_api=False):
+    def __init__(self, test_api_path=None):
         """Initialize the CLI API."""
-        self.use_test_api = use_test_api
+        self.test_api_path = test_api_path
         spec = self.get_spec()
         scheme = spec['schemes'][0] if 'schemes' in spec else "https"
         self.base_url = "{}://{}{}".format(scheme, spec['host'], spec['basePath'])
@@ -26,14 +26,14 @@ class API:
         """
         Load the API specification.
 
-        self.use_test_api is a boolean flag to indicate which spec to use.
+        self.test_api_path is a path to the test api path if the functionality is being tested.
             api_spec is the spec downloaded from the api on build.
             ../test/test is the mocked up spec I've been toying with.
         :return:     The dictionary containing all swagger specification definitions.
         """
-        url = os.path.join(os.path.dirname(os.path.realpath(__file__)), "api_spec.json")
-        if self.use_test_api:
-            url = os.path.join(os.path.dirname(os.path.realpath(__file__)), "../test/test.json")
+        url = self.test_api_path
+        if not url:
+            url = os.path.join(os.path.dirname(os.path.realpath(__file__)), "api_spec.json")
 
         with open(url) as fp:
             api_spec_dict = json.load(fp)
