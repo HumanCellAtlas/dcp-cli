@@ -13,7 +13,6 @@ setup(
     description='Human Cell Atlas Data Storage System Command Line Interface',
     long_description=open('README.rst').read(),
     install_requires=[
-        "Sphinx==1.6.3",
         "requests==2.17.3"
     ],
     extras_require={
