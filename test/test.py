@@ -214,6 +214,7 @@ class TestHCACLI(unittest.TestCase):
         self.assertEqual(api.parse_args(args), out)
 
     def test_parsing_array_object_literals(self):
+        """Make sure that parsing literals works within an array object."""
         api = hca.define_api.API(os.path.join(os.path.dirname(os.path.realpath(__file__)), "test.json"))
         args = ["put-bundles", "234sf", "--files", "True/n1/u1/v1", "False/n2/u2/v2", "--replica" ,"rep", "--creator-uid", "8"]
         parsed_args = api.parse_args(args)
@@ -222,6 +223,7 @@ class TestHCACLI(unittest.TestCase):
         self.assertEqual(body_payload, out)
 
     def test_json_input(self):
+        """Ensure that adding json input works."""
         api = hca.define_api.API()
         args = ["post-search", "--query", '{"hello":"world", "goodbye":"earth"}']
         parsed_args = api.parse_args(args)
