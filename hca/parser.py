@@ -163,9 +163,7 @@ def index_parameters(spec, endpoint_info):
 
 def create_help_statement(endpoint_info):
     """Make the help statement for each command line argument."""
-    h = endpoint_info['description'] + "\nRequired for endpoints with these arguments specified:\n"
-    h = h + "\n".join(endpoint_info['required_for'])
-    return h
+    return endpoint_info['description']
 
 
 def _label_path_args_required(path, endpoint_params, indexed_parameters):
