@@ -1,14 +1,19 @@
-"""
-HCA DCP CLI!
-"""
+"""HCA DCP CLI."""
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-import os, sys, logging
+import json
+import requests
+import sys
 
 from .define_api import API
 
+
 def main():
-    api = API("a", "b")
-    print("Hello HCA! :)")
-    return api.make_request(sys.argv[1:])
+    """Entrance to functionality."""
+    api = API()
+    response = api.make_request(sys.argv[1:])
+    if isinstance(response, requests.Response):
+        print(response.content.decode())
+    else:
+        print(json.dumps(response))
