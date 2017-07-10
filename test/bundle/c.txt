@@ -1,0 +1,32 @@
+123
+
+                print(object_arg)
+                args = object_arg.split(":")
+                if len(args) != len(curr_level):
+                    raise ValueError("Each argument must have a value. Use 'None' if you don't want to define it.")
+
+                obj = {}
+                for i, arg in enumerate(args):
+                    if arg == "None":
+                        continue
+                    argument_name = curr_level[i][0]
+                    argument_type = curr_level[i][1]
+                    if argument_type != "string":
+                        arg = ast.literal_eval(arg)
+                    obj[argument_name] = arg
+                inner_payload.append(obj)
+
+        # Command line argument represents a list of standard types.
+        elif type(curr_level) == list:
+            for object_arg in arg:
+                inner_payload.append(object_arg)
+
+        # Command line argument represents a standard type.
+        else:
+            inner_payload[curr_level] = arg
+
+    def _build_payloads(self, endpoint, namespace):
+        query_payload = {}
+        body_payload = {}
+        header_payload = {}
+        for (arg_name, arg) in namespace.items():
