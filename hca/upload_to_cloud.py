@@ -48,17 +48,19 @@ def _copy_from_s3(path, destination_bucket, s3, tx_cfg):
         logging.info(dest_key)
         copy_source = {
             'Bucket': src_bucket.name,
-            'Key': obj.key}
-        print(copy_source)
-        s3.meta.client.copy(
-            copy_source,
-            destination_bucket.name,
-            dest_key,
+            'Key': obj.key
+        }
+        logging.info(copy_source)
+        s3.meta.client.copy_object(
+            CopySource=copy_source,
+            Bucket=destination_bucket.name,
+            Key=dest_key,
+            TaggingDirective='COPY'
             # Config=tx_cfg,
             # ExtraArgs={"MetadataDirective": "COPY"}
         )
         key_names.append(dest_key)
-    print(key_names)
+    logging.info(key_names)
     return key_names
 
 
