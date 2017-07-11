@@ -5,8 +5,9 @@ import pprint
 import sys
 import uuid
 import logging
-
 from io import open
+
+import boto3
 
 from .constants import Constants
 from .upload_to_cloud import upload_to_cloud
@@ -31,7 +32,14 @@ class FullUpload:
         subparser.add_argument(
             cls.FILE_OR_DIR_ARGNAME,
             nargs="+",
-            help="Relative or direct path to folder with all bundle files."
+            help="Relative or direct path to folder with all bundle files. Alternatively, user can provide a url \
+            to an s3 bucket containing a bundle. S3 files must have checksum tags already calculated and assigned."
+        )
+
+        subparser.add_argument(
+            "--staging-bucket",
+            help="Bucket within replica to upload to.",
+            required=True
         )
 
         subparser.add_argument(
@@ -44,31 +52,35 @@ class FullUpload:
 
     @classmethod
     def _upload_files(cls, args):
-        filenames = []
         files_to_upload = []
+        from_cloud = False
         for path in args[cls.FILE_OR_DIR_ARGNAME]:
+            # Path is s3 url
+            if path[:5] == "s3://":
+                from_cloud = True
+                files_to_upload.append(path)
 
             # If the path is a directory, add all files in the directory to the bundle
-            if os.path.isdir(path):
+            elif os.path.isdir(path):
                 for filename in os.listdir(path):
                     full_file_name = os.path.join(path, filename)
-                    filenames.append(filename)
                     files_to_upload.append(open(full_file_name, "rb"))
             else:  # It's a file
-                filenames.append(os.path.basename(path))
                 files_to_upload.append(open(path, "rb"))
+
+        uploaded_keys = upload_to_cloud(files_to_upload, args["staging_bucket"], args["replica"], from_cloud)
+        filenames = list(map(os.path.basename, uploaded_keys))
 
         # Print to stderr, upload the files to s3 and return a list of tuples: (filename, filekey)
         logging.info("Uploading the following keys to aws:")
         for file_ in filenames:
             logging.info("\t", file_)
 
-        uploaded_keys = upload_to_cloud(files_to_upload, args["staging_bucket"], args["replica"])
-
         filename_key_list = zip(filenames, uploaded_keys)
         logging.info("\nThe following keys were uploaded successfuly:")
         for filename, key in filename_key_list:
             logging.info('\t{:<12}  {:<12}'.format(filename, key))
+        print(filename_key_list)
         return filename_key_list
 
     @classmethod
