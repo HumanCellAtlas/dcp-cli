@@ -38,30 +38,18 @@ def _copy_from_s3(path, destination_bucket, s3, tx_cfg):
     dir_path = path[bucket_end + 1:]
 
     src_bucket = s3.Bucket(bucket_name)
+    file_uuids = []
     key_names = []
     for obj in src_bucket.objects.filter(Prefix=dir_path):
         # Empty files with no name were throwing errors
         if obj.key == dir_path:
             continue
 
-        dest_key = "{}/{}".format(str(uuid.uuid4()), os.path.basename(obj.key))
-        logging.info(dest_key)
-        copy_source = {
-            'Bucket': src_bucket.name,
-            'Key': obj.key
-        }
-        logging.info(copy_source)
-        s3.meta.client.copy_object(
-            CopySource=copy_source,
-            Bucket=destination_bucket.name,
-            Key=dest_key,
-            TaggingDirective='COPY'
-            # Config=tx_cfg,
-            # ExtraArgs={"MetadataDirective": "COPY"}
-        )
-        key_names.append(dest_key)
+        file_uuids.append(str(uuid.uuid4()))
+        key_names.append(obj.key)
+
     logging.info(key_names)
-    return key_names
+    return file_uuids, key_names
 
 
 def upload_to_cloud(files, staging_bucket, replica, from_cloud=False):
@@ -78,16 +66,17 @@ def upload_to_cloud(files, staging_bucket, replica, from_cloud=False):
                             multipart_chunksize=S3Etag.etag_stride)
     s3 = boto3.resource("s3")
     destination_bucket = s3.Bucket(staging_bucket)
+    file_uuids = []
     key_names = []
 
     if from_cloud:
-        key_names = _copy_from_s3(files[0], destination_bucket, s3, tx_cfg)
+        file_uuids, key_names = _copy_from_s3(files[0], destination_bucket, s3, tx_cfg)
 
     else:
         for raw_fh in files:
             with ChecksummingBufferedReader(raw_fh) as fh:
-
-                key_name = "{}/{}".format(uuid.uuid4(), os.path.basename(fh.raw.name))
+                file_uuid = str(uuid.uuid4())
+                key_name = "{}/{}".format(file_uuid, os.path.basename(fh.raw.name))
                 destination_bucket.upload_fileobj(fh, key_name, Config=tx_cfg)
                 sums = fh.get_checksums()
                 metadata = {
@@ -102,6 +91,7 @@ def upload_to_cloud(files, staging_bucket, replica, from_cloud=False):
                                                   Key=key_name,
                                                   Tagging=dict(TagSet=encode_tags(metadata))
                                                   )
+                file_uuids.append(file_uuid)
                 key_names.append(key_name)
 
-    return key_names
+    return file_uuids, key_names
