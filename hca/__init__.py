@@ -14,6 +14,6 @@ def main():
     api = API()
     response = api.make_request(sys.argv[1:])
     if isinstance(response, requests.Response):
-        sys.stdout.write(response.content.decode())
+        print(response.content.decode())
     else:
         print(json.dumps(response))
