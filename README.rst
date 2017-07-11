@@ -40,9 +40,9 @@ Licensed under the terms of the `MIT License <https://opensource.org/licenses/MI
         :target: https://travis-ci.org/HumanCellAtlas/data-store-cli
 .. image:: https://codecov.io/github/HumanCellAtlas/data-store-cli/coverage.svg?branch=master
         :target: https://codecov.io/github/HumanCellAtlas/data-store-cli?branch=master
-.. image:: https://img.shields.io/pypi/v/hca-cli.svg
-        :target: https://pypi.python.org/pypi/hca-cli
-.. image:: https://img.shields.io/pypi/l/hca-cli.svg
-        :target: https://pypi.python.org/pypi/hca-cli
-.. image:: https://readthedocs.org/projects/hca-cli/badge/?version=latest
-        :target: https://hca-cli.readthedocs.io/
+.. image:: https://img.shields.io/pypi/v/hca.svg
+        :target: https://pypi.python.org/pypi/hca
+.. image:: https://img.shields.io/pypi/l/hca.svg
+        :target: https://pypi.python.org/pypi/hca
+.. image:: https://readthedocs.org/projects/hca/badge/?version=latest
+        :target: https://hca.readthedocs.io/
