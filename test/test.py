@@ -8,6 +8,8 @@ import sys
 import unittest
 import pprint
 
+import six
+
 pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.insert(0, pkg_root)
 
@@ -243,7 +245,9 @@ class TestHCACLI(unittest.TestCase):
             "data-bundles-examples/import/10x/pbmc8k/bundles/bundle1/sample.json"
         ]
         self.assertEqual(len(uuids), len(names))
-        self.assertItemsEqual(names, out)
+        assert_list_items_equal = (self.assertCountEqual if six.PY3
+                                   else self.assertItemsEqual)
+        assert_list_items_equal(names, out)
 
     def test_upload_files(self):
         pass
