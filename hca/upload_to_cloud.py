@@ -32,7 +32,7 @@ def _mime_type(filename):
     raise RuntimeError("Can't discern mime type")
 
 
-def _copy_from_s3(path, destination_bucket, s3, tx_cfg):
+def _copy_from_s3(path, s3, tx_cfg):
     bucket_end = path.find("/", 5)
     bucket_name = path[5: bucket_end]
     dir_path = path[bucket_end + 1:]
@@ -67,14 +67,14 @@ def upload_to_cloud(files, staging_bucket, replica, from_cloud=False):
     tx_cfg = TransferConfig(multipart_threshold=S3Etag.etag_stride,
                             multipart_chunksize=S3Etag.etag_stride)
     s3 = boto3.resource("s3")
-    destination_bucket = s3.Bucket(staging_bucket)
     file_uuids = []
     key_names = []
 
     if from_cloud:
-        file_uuids, key_names = _copy_from_s3(files[0], destination_bucket, s3, tx_cfg)
+        file_uuids, key_names = _copy_from_s3(files[0], s3, tx_cfg)
 
     else:
+        destination_bucket = s3.Bucket(staging_bucket)
         for raw_fh in files:
             with ChecksummingBufferedReader(raw_fh) as fh:
                 file_uuid = str(uuid.uuid4())

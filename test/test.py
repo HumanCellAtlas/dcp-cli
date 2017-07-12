@@ -230,6 +230,21 @@ class TestHCACLI(unittest.TestCase):
         out = {"query": {"hello": "world", "goodbye": "earth"}}
         self.assertEqual(out, parsed_args)
 
+    def test_upload_to_cloud_from_s3(self):
+        uuids, names = hca.upload_to_cloud.upload_to_cloud(
+            ["s3://hca-dss-test-src/data-bundles-examples/import/10x/pbmc8k/bundles/bundle1/"],
+            "pointless-staging-bucket",
+            "aws",
+            True
+        )
+        out = [
+            "data-bundles-examples/import/10x/pbmc8k/bundles/bundle1/assay.json",
+            "data-bundles-examples/import/10x/pbmc8k/bundles/bundle1/project.json",
+            "data-bundles-examples/import/10x/pbmc8k/bundles/bundle1/sample.json"
+        ]
+        self.assertEqual(len(uuids), len(names))
+        self.assertItemsEqual(names, out)
+
     def test_upload_files(self):
         pass
 
