@@ -40,15 +40,17 @@ def _copy_from_s3(path, destination_bucket, s3, tx_cfg):
     src_bucket = s3.Bucket(bucket_name)
     file_uuids = []
     key_names = []
+    logging.info("Key Names:")
     for obj in src_bucket.objects.filter(Prefix=dir_path):
         # Empty files with no name were throwing errors
         if obj.key == dir_path:
             continue
 
+        logging.info(obj.key)
+
         file_uuids.append(str(uuid.uuid4()))
         key_names.append(obj.key)
 
-    logging.info(key_names)
     return file_uuids, key_names
 
 

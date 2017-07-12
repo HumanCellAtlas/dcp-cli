@@ -67,7 +67,7 @@ class FullUpload:
             else:  # It's a file
                 files_to_upload.append(open(path, "rb"))
 
-        file_uuids, uploaded_keys = upload_to_cloud(files_to_upload, staging_bucket, args["replica"], from_cloud)
+        file_uuids, uploaded_keys = upload_to_cloud(files_to_upload, staging_bucket, args['replica'], from_cloud)
         filenames = list(map(os.path.basename, uploaded_keys))
 
         # Print to stderr, upload the files to s3 and return a list of tuples: (filename, filekey)
@@ -75,10 +75,10 @@ class FullUpload:
         for file_ in filenames:
             logging.info(file_)
 
-        filename_key_list = zip(filenames, file_uuids, uploaded_keys)
-        logging.info("\nThe following keys were uploaded successfuly:")
+        filename_key_list = list(zip(filenames, file_uuids, uploaded_keys))
+        logging.info("\nThe following keys were uploaded successfully:")
         for filename, file_uuid, key in filename_key_list:
-            logging.info('\t{:<12}  {:<12}'.format(filename, key))
+            logging.info('{:<12}  {:<12}'.format(filename, key))
         return filename_key_list
 
     @classmethod
@@ -105,13 +105,13 @@ class FullUpload:
             ], stream=True)
 
             if response.ok:
-                version = response.json().get("version", "blank")
+                version = response.json().get('version', "blank")
                 logging.info("File {}: registered with uuid {}".format(filename, file_uuid))
                 files.append({
-                    "name": filename,
-                    "version": version,
-                    "uuid": file_uuid,
-                    "creator_uid": creator_uid
+                    'name': filename,
+                    'version': version,
+                    'uuid': file_uuid,
+                    'creator_uid': creator_uid
                 })
                 response.close()
 
@@ -130,9 +130,9 @@ class FullUpload:
         """Use the API class to make a put-bundles request."""
         file_args = [Constants.OBJECT_SPLITTER.join([
             "True",
-            file["name"],
-            file["uuid"],
-            file["version"]]) for file in files]
+            file['name'],
+            file['uuid'],
+            file['version']]) for file in files]
         creator_uid = os.environ.get(cls.CREATOR_ID_ENVIRONMENT_VARIABLE, "1")
 
         logging.info("Bundle {}: registering...".format(bundle_uuid))
@@ -149,7 +149,7 @@ class FullUpload:
         version = None
 
         if response.ok:
-            version = response.json().get("version", "blank")
+            version = response.json().get('version', None)
             logging.info("Bundle {}: registered successfully".format(bundle_uuid))
 
         else:
@@ -179,7 +179,10 @@ class FullUpload:
         Step 3: Put all uploaded files into a bundle together.
         """
         first_url = args['file_or_dir'][0]
+        # If there's a staging bucket input, set staging bucket to that.
+        # Otherwise grab it from the s3 url.
         staging_bucket = args.get('staging_bucket', first_url[5: first_url.find("/", 5)])
+
         filename_key_list = cls._upload_files(args, staging_bucket)
         bundle_uuid, files = cls._put_files(filename_key_list, staging_bucket, api)
         final_return = cls._put_bundle(bundle_uuid, files, api, args["replica"])
