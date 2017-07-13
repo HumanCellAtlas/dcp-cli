@@ -1,6 +1,12 @@
 Changes for v0.3.0 (2017-07-12)
 ===============================
 
+v0.3.0 Support uploading bundle from staged s3 bucket to DSS. Fix upload
+from local bug.
+
+Changes for v0.3.0 (2017-07-12)
+===============================
+
 Support uploading bundle from staged s3 bucket to DSS. Fix bug in hca
 upload.
 
