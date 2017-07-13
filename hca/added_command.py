@@ -3,7 +3,7 @@ import json
 
 import requests
 
-import Constants
+from constants import Constants
 
 
 class AddObject(argparse.Action):
@@ -237,7 +237,7 @@ class AddedCommand:
     @classmethod
     def run_cli(cls, namespace):
         """Run this command using args from the cli. Override this to add higher-level commands."""
-        ordered_path_args = cls._get_ordered_path_args()
+        ordered_path_args = cls._get_ordered_path_args(namespace)
         body_payload = cls._build_body_payload(namespace)
         return cls.run(*ordered_path_args, body=body_payload, **namespace)
 
@@ -245,7 +245,11 @@ class AddedCommand:
     def run(cls, *args, **kwargs):
         """Function that will be exposed to the api users."""
         endpoint_name = cls._get_endpoint_name()
-        url = cls._get_base_url() + "/" + "/".join(args)
+        split_endpoint = endpoint_name.split("-")[1]
+
+        query_route = [split_endpoint]
+        query_route.extend(args)
+        url = cls._get_base_url() + "/" + "/".join(query_route)
         query_payload, header_payload = cls._build_non_body_payloads(kwargs)
 
         param_methods = ["get", "options", "head", "delete"]
