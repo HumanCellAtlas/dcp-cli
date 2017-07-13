@@ -8,6 +8,8 @@ import sys
 import unittest
 import pprint
 
+import six
+
 pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.insert(0, pkg_root)
 
@@ -229,6 +231,23 @@ class TestHCACLI(unittest.TestCase):
         parsed_args = api.parse_args(args)
         out = {"query": {"hello": "world", "goodbye": "earth"}}
         self.assertEqual(out, parsed_args)
+
+    def test_upload_to_cloud_from_s3(self):
+        uuids, names = hca.upload_to_cloud.upload_to_cloud(
+            ["s3://hca-dss-test-src/data-bundles-examples/import/10x/pbmc8k/bundles/bundle1/"],
+            "pointless-staging-bucket",
+            "aws",
+            True
+        )
+        out = [
+            "data-bundles-examples/import/10x/pbmc8k/bundles/bundle1/assay.json",
+            "data-bundles-examples/import/10x/pbmc8k/bundles/bundle1/project.json",
+            "data-bundles-examples/import/10x/pbmc8k/bundles/bundle1/sample.json"
+        ]
+        self.assertEqual(len(uuids), len(names))
+        assert_list_items_equal = (self.assertCountEqual if six.PY3
+                                   else self.assertItemsEqual)
+        assert_list_items_equal(names, out)
 
     def test_upload_files(self):
         pass

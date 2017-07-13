@@ -12,6 +12,9 @@ setup(
     author_email='akislyuk@chanzuckerberg.com',
     description='Human Cell Atlas Data Storage System Command Line Interface',
     long_description=open('README.rst').read(),
+    tests_require=[
+        "six==1.10.0"
+    ],
     install_requires=[
         "requests==2.17.3",
         "jsonpointer==1.10",

@@ -5,8 +5,9 @@ import pprint
 import sys
 import uuid
 import logging
-
 from io import open
+
+import boto3
 
 from .constants import Constants
 from .upload_to_cloud import upload_to_cloud
@@ -31,7 +32,13 @@ class FullUpload:
         subparser.add_argument(
             cls.FILE_OR_DIR_ARGNAME,
             nargs="+",
-            help="Relative or direct path to folder with all bundle files."
+            help="Relative or direct path to folder with all bundle files. Alternatively, user can provide a url \
+            to an s3 bucket containing a bundle. S3 files must have checksum tags already calculated and assigned."
+        )
+
+        subparser.add_argument(
+            "--staging-bucket",
+            help="Bucket within replica to upload to."
         )
 
         subparser.add_argument(
@@ -43,32 +50,35 @@ class FullUpload:
         return True
 
     @classmethod
-    def _upload_files(cls, args):
-        filenames = []
+    def _upload_files(cls, args, staging_bucket):
         files_to_upload = []
+        from_cloud = False
         for path in args[cls.FILE_OR_DIR_ARGNAME]:
+            # Path is s3 url
+            if path[:5] == "s3://":
+                from_cloud = True
+                files_to_upload.append(path)
 
             # If the path is a directory, add all files in the directory to the bundle
-            if os.path.isdir(path):
+            elif os.path.isdir(path):
                 for filename in os.listdir(path):
                     full_file_name = os.path.join(path, filename)
-                    filenames.append(filename)
                     files_to_upload.append(open(full_file_name, "rb"))
             else:  # It's a file
-                filenames.append(os.path.basename(path))
                 files_to_upload.append(open(path, "rb"))
+
+        file_uuids, uploaded_keys = upload_to_cloud(files_to_upload, staging_bucket, args['replica'], from_cloud)
+        filenames = list(map(os.path.basename, uploaded_keys))
 
         # Print to stderr, upload the files to s3 and return a list of tuples: (filename, filekey)
         logging.info("Uploading the following keys to aws:")
         for file_ in filenames:
-            logging.info("\t", file_)
+            logging.info(file_)
 
-        uploaded_keys = upload_to_cloud(files_to_upload, args["staging_bucket"], args["replica"])
-
-        filename_key_list = zip(filenames, uploaded_keys)
-        logging.info("\nThe following keys were uploaded successfuly:")
-        for filename, key in filename_key_list:
-            logging.info('\t{:<12}  {:<12}'.format(filename, key))
+        filename_key_list = list(zip(filenames, file_uuids, uploaded_keys))
+        logging.info("\nThe following keys were uploaded successfully:")
+        for filename, file_uuid, key in filename_key_list:
+            logging.info('{:<12}  {:<12}'.format(filename, key))
         return filename_key_list
 
     @classmethod
@@ -76,13 +86,14 @@ class FullUpload:
         """Use the API class to make a put-files request on each of these files."""
         bundle_uuid = str(uuid.uuid4())
         files = []
-        for filename, key in filename_key_list:
+        for filename, file_uuid, key in filename_key_list:
             logging.info("File {}: registering...".format(filename))
 
             # Generating file data
             creator_uid = os.environ.get(cls.CREATOR_ID_ENVIRONMENT_VARIABLE, "1")
             source_url = "s3://{}/{}".format(staging_bucket, key)
-            file_uuid = key[:key.find("/")]
+            logging.info(source_url)
+            # file_uuid = key[:key.find("/")]
             logging.info("File {}: assigned uuid {}".format(filename, file_uuid))
 
             response = api.make_request([
@@ -94,13 +105,13 @@ class FullUpload:
             ], stream=True)
 
             if response.ok:
-                version = response.json().get("version", "blank")
+                version = response.json().get('version', "blank")
                 logging.info("File {}: registered with uuid {}".format(filename, file_uuid))
                 files.append({
-                    "name": filename,
-                    "version": version,
-                    "uuid": file_uuid,
-                    "creator_uid": creator_uid
+                    'name': filename,
+                    'version': version,
+                    'uuid': file_uuid,
+                    'creator_uid': creator_uid
                 })
                 response.close()
 
@@ -119,9 +130,9 @@ class FullUpload:
         """Use the API class to make a put-bundles request."""
         file_args = [Constants.OBJECT_SPLITTER.join([
             "True",
-            file["name"],
-            file["uuid"],
-            file["version"]]) for file in files]
+            file['name'],
+            file['uuid'],
+            file['version']]) for file in files]
         creator_uid = os.environ.get(cls.CREATOR_ID_ENVIRONMENT_VARIABLE, "1")
 
         logging.info("Bundle {}: registering...".format(bundle_uuid))
@@ -138,7 +149,7 @@ class FullUpload:
         version = None
 
         if response.ok:
-            version = response.json().get("version", "blank")
+            version = response.json().get('version', None)
             logging.info("Bundle {}: registered successfully".format(bundle_uuid))
 
         else:
@@ -167,7 +178,12 @@ class FullUpload:
         Step 2: Put the files in the blue box with a shared bundle_uuid.
         Step 3: Put all uploaded files into a bundle together.
         """
-        filename_key_list = cls._upload_files(args)
-        bundle_uuid, files = cls._put_files(filename_key_list, args["staging_bucket"], api)
+        first_url = args['file_or_dir'][0]
+        # If there's a staging bucket input, set staging bucket to that.
+        # Otherwise grab it from the s3 url.
+        staging_bucket = args.get('staging_bucket', first_url[5: first_url.find("/", 5)])
+
+        filename_key_list = cls._upload_files(args, staging_bucket)
+        bundle_uuid, files = cls._put_files(filename_key_list, staging_bucket, api)
         final_return = cls._put_bundle(bundle_uuid, files, api, args["replica"])
         return final_return
