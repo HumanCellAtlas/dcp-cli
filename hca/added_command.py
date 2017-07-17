@@ -3,7 +3,7 @@ import json
 
 import requests
 
-from constants import Constants
+from .constants import Constants
 
 
 class AddObject(argparse.Action):
@@ -24,7 +24,8 @@ class AddedCommand(object):
         raise NotImplementedError("This function has not been implemented yet.")
 
     @classmethod
-    def _get_endpoint_name(cls):
+    def get_command_name(cls):
+        """Return the name that this command should be called to run this functionality."""
         raise NotImplementedError("This function has not been implemented yet.")
 
     @classmethod
@@ -86,12 +87,12 @@ class AddedCommand(object):
 
         :param subparsers: The parent parser that this subparser will be added to.
         """
-        endpoint_name = cls._get_endpoint_name()
+        endpoint_name = cls.get_command_name()
         endpoint_info = cls._get_endpoint_info()
 
         subparser = subparsers.add_parser(endpoint_name, help=endpoint_info['description'])
-        cls._add_positional_args(subparser, endpoint_info)
-        cls._add_optional_args(subparser, endpoint_info)
+        cls._add_positional_args(subparser)
+        cls._add_optional_args(subparser)
 
     @classmethod
     def _get_ordered_path_args(cls, namespace):
@@ -240,7 +241,7 @@ class AddedCommand(object):
     @classmethod
     def run(cls, *args, **kwargs):
         """Function that will be exposed to the api users."""
-        endpoint_name = cls._get_endpoint_name()
+        endpoint_name = cls.get_command_name()
         split_endpoint = endpoint_name.split("-")[1]
 
         query_route = [split_endpoint]
