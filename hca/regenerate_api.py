@@ -35,11 +35,12 @@ def _get_spec(test_api_path=None):
 
 def _make_name(http_method, path_split):
     """Name an endpoint."""
-    # If the api needs file/write/{sdf} functionality, will become put-file-write
+    # If the api needs file/write/{generic} functionality, will become put-file-write
     name = [http_method]
-    path_non_args = list(filter(lambda x: len(x) > 0 and x[0] != "{", path_split))
-    for non_arg in path_non_args:
-        name.append(non_arg)
+    for path_element in path_split:
+        if path_element.startswith("{"):
+            break
+        name.append(path_element)
     name = "-".join(name)
     return name
 
@@ -196,8 +197,10 @@ def _label_path_args_required(path, endpoint_params, indexed_parameters):
     """
     # Find and clean all path args.
     path_split = path.split("/")
-    path_args = list(filter(lambda x: len(x) > 0 and x[0] == "{", path_split))
-    path_args = list(map(lambda x: x[1: -1], path_args))
+    path_args = []
+    for path_element in path_split:
+        if path_element.startswith("{"):
+            path_args.append(path_element[1: -1])
 
     positional = endpoint_params['positional']
     for i in range(max(len(list(path_args)), len(list(positional)))):
