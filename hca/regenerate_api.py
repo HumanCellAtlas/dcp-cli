@@ -267,40 +267,11 @@ def _label_optional_args_required(path, endpoint_params, indexed_parameters):
                 options[param_name]['required_for'].append(path)
 
 
-def get_parser(test_api_path=None):
+def generate_python_bindings(test_api_path=None):
     """
-    Return an argparse parser and a dict containing important argument details.
+    Generate classes for each endpoint that allow for easy parser integration and api endpoint interaction.
 
-    :param spec: The swagger api specification used to generate parser.
-    :return parser: The parser configured to the given api spec.
-    :return param_holders: Important parameter information for each endpoint used in
-                           parsing. Basic format is:
-                           {
-                                <endpoint-name>: {
-                                    description: str,
-                                    options: {
-                                        <option-arg-name> {
-                                            array: bool,
-                                            description: str,
-                                            format: str,
-                                            hierarchy: list,  # Describes where in payload to put arg
-                                            in: str,
-                                            metavar: str,
-                                            pattern: str,
-                                            required: bool,
-                                            required_for: list,
-                                            type: str}
-                                        }
-                                    },
-                                    # Notice array b/c need to be ordered for path.
-                                    positional: [
-                                        <Each arg has same format as option arg>
-                                    ],
-                                    seen: bool  # for cli help - need to know what
-                                                # arguments are required for which
-                                                # endpoints.
-                                }
-                           }
+    :param test_api_path: The swagger api specification used to generate parser. If path is None, use base endpoint.
     """
     spec = _get_spec(test_api_path)
     scheme = spec['schemes'][0] if 'schemes' in spec else "https"
@@ -369,4 +340,4 @@ def get_parser(test_api_path=None):
 
 
 if __name__ == "__main__":
-    get_parser()
+    generate_python_bindings()
