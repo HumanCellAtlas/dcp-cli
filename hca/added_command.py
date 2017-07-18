@@ -1,6 +1,7 @@
 import argparse
 import json
 
+import jsonschema
 import requests
 
 from .constants import Constants
@@ -217,10 +218,23 @@ class AddedCommand(object):
         """
         endpoint_info = cls._get_endpoint_info()
         query_payload = {}
+        body_payload = {}
         header_payload = {}
         for (arg_name, arg) in namespace.items():
             # If the argument is positional, belongs in path, not a payload
             if arg_name not in endpoint_info["options"]:
+                continue
+
+            if arg_name in endpoint_info['body_params']:
+                # Check that it conforms to the right schema
+                try:
+                    jsonschema.validate(arg, endpoint_info['body_params'][arg_name])
+                except jsonschema.ValidationError as e:
+                    print(e)
+                    raise ValueError("Argument {} has an invalid input type.".format(arg_name))
+
+                # If it does, set the payload to the given input.
+                body_payload[arg_name] = arg
                 continue
 
             payload_format = endpoint_info["options"][arg_name]["in"]
@@ -229,25 +243,46 @@ class AddedCommand(object):
                 cls._add_arg(arg, query_payload, hierarchy)
             if payload_format == "header":
                 cls._add_arg(arg, header_payload, hierarchy)
-        return query_payload, header_payload
+        return query_payload, body_payload, header_payload
 
     @classmethod
     def run_cli(cls, namespace):
         """Run this command using args from the cli. Override this to add higher-level commands."""
         ordered_path_args = cls._get_ordered_path_args(namespace)
         body_payload = cls._build_body_payload(namespace)
-        return cls.run(*ordered_path_args, body=body_payload, **namespace)
+        namespace.update(body_payload)
+        return cls.run(*ordered_path_args, **namespace)
 
     @classmethod
     def run(cls, *args, **kwargs):
         """Function that will be exposed to the api users."""
         endpoint_name = cls.get_command_name()
-        split_endpoint = endpoint_name.split("-")[1]
+        endpoint_info = cls._get_endpoint_info()
 
+        split_endpoint = endpoint_name.split("-")[1]
         query_route = [split_endpoint]
-        query_route.extend(args)
+        num_positionals = len(endpoint_info['positional'])
+        for i in range(num_positionals):
+            if i < len(args) and args[i] is not None:
+                query_route.append(args[i])
+
+        # for i in range(num_positionals, len(args))
+        optionals = {}
+        i = num_positionals
+        # Not using enumerate because I'm not sure it keeps order consistent when iterating.
+        # Iterating over dictionaries with the same keys is guaranteed to be consistent ordering.
+        for optional_name in endpoint_info['options']:
+            arg = None
+            if i < len(args):
+                arg = args[i]
+            else:
+                arg = kwargs.get(optional_name, None)
+            if arg is not None:
+                optionals[optional_name] = arg
+            i += 1
+
         url = cls._get_base_url() + "/" + "/".join(query_route)
-        query_payload, header_payload = cls._build_non_body_payloads(kwargs)
+        query_payload, body_payload, header_payload = cls._build_non_body_payloads(optionals)
 
         param_methods = ["get", "options", "head", "delete"]
         json_methods = ["post", "put", "patch"]
@@ -259,16 +294,16 @@ class AddedCommand(object):
                 url,
                 params=query_payload,
                 headers=header_payload,
-                stream=kwargs.get('stream', False)
+                stream=optionals.get('stream', False)
             )
         elif method in json_methods:
             request = requests.request(
                 method,
                 url,
-                json=kwargs.get('body', None),
+                json=body_payload,
                 params=query_payload,
                 headers=header_payload,
-                stream=kwargs.get('stream', False)
+                stream=optionals.get('stream', False)
             )
         else:
             raise ValueError("Bad request type")
