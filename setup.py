@@ -18,6 +18,7 @@ setup(
     install_requires=[
         "requests==2.17.3",
         "jsonpointer==1.10",
+        "jsonschema==2.6.0",
         "Jinja2==2.9.6",
         "boto3==1.4.4",
         "crcmod==1.7"
