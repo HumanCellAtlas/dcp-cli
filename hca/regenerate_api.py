@@ -38,6 +38,8 @@ def _make_name(http_method, path_split):
     # If the api needs file/write/{generic} functionality, will become put-file-write
     name = [http_method]
     for path_element in path_split:
+        if not path_element:  # First path element is empty, so skip that one.
+            continue
         if path_element.startswith("{"):
             break
         name.append(path_element)
