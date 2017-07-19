@@ -12,7 +12,7 @@ import pprint
 import six
 
 pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-sys.path.append(pkg_root)
+sys.path.insert(0, pkg_root)
 
 import hca
 from hca import api
@@ -255,8 +255,7 @@ class TestHCACLI(unittest.TestCase):
         pass
 
     def test_python_bindings(self):
-        self.assertTrue(api.get_files().ok)
-        hca.regenerate_api.generate_python_bindings()
+        # hca.regenerate_api.generate_python_bindings()
         cli = hca.define_api.API()
 
         bundle_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "bundle")
@@ -265,9 +264,11 @@ class TestHCACLI(unittest.TestCase):
                      'staging_bucket': "org-humancellatlas-dss-test-jmackey"}
         bundle_output = hca.full_upload.FullUpload.run(namespace, cli)
 
-        # Test get-files
+        # Test get-files and head-files
         file_ = bundle_output['files'][0]
+        self.assertTrue(api.get_files().ok)
         self.assertTrue(api.get_files(file_['uuid'], replica="aws").ok)
+        # self.assertTrue(api.head_files(file_['uuid']).ok)  # Think api service might not be operating for head_files
 
         # Test get-bundles
         bundle_uuid = bundle_output['bundle_uuid']
