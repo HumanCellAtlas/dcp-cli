@@ -7,12 +7,13 @@ import requests
 import sys
 
 from .define_api import API
+from .regenerate_api import generate_python_bindings
 
 
 def main():
     """Entrance to functionality."""
-    api = API()
-    response = api.make_request(sys.argv[1:])
+    cli = API()
+    response = cli.make_request(sys.argv[1:])
     if isinstance(response, requests.Response):
         print(response.content.decode())
     else:
