@@ -69,12 +69,12 @@ def put_files(uuid, version=None, creator_uid=None, bundle_uuid=None, source_url
     - hca-dss-crc32c: CRC-32C checksum of the file
 
     :param uuid: A RFC4122-compliant ID for the bundle.
-    :param version: Timestamp of file creation in RFC3339.  If this is not provided, the latest version is returned.
-    :param creator_uid: User ID who is creating this file.
     :param bundle_uuid: A RFC4122-compliant ID for the bundle that contains this file.
+    :param creator_uid: User ID who is creating this file.
     :param source_url: Cloud URL for source data.
+    :param version: Timestamp of file creation in RFC3339.  If this is not provided, the latest version is returned.
     """
-    return PutFiles.run(uuid, version, creator_uid, bundle_uuid, source_url)
+    return PutFiles.run(uuid, bundle_uuid, creator_uid, source_url, version)
 
 
 def get_bundles(uuid=None, version=None, replica=None, ):
@@ -83,10 +83,10 @@ def get_bundles(uuid=None, version=None, replica=None, ):
     bundle is returned instead.
 
     :param uuid: Bundle unique ID.
-    :param version: Timestamp of bundle creation in RFC3339.
     :param replica: Replica to fetch from.
+    :param version: Timestamp of bundle creation in RFC3339.
     """
-    return GetBundles.run(uuid, version, replica)
+    return GetBundles.run(uuid, replica, version)
 
 
 def put_bundles(uuid, files=None, creator_uid=None, version=None, replica=None, ):
@@ -95,12 +95,12 @@ def put_bundles(uuid, files=None, creator_uid=None, version=None, replica=None, 
     provided.
 
     :param uuid: A RFC4122-compliant ID for the bundle.
+    :param creator_uid: User ID who is creating this bundle.
     :param files: indexed: True iff this file should be indexed.
         name: Name of the file.
         uuid: A RFC4122-compliant ID for the file.
         version: Timestamp of file creation in RFC3339.
-    :param creator_uid: User ID who is creating this bundle.
-    :param version: Timestamp of bundle creation in RFC3339.
     :param replica: Replica to write to.
+    :param version: Timestamp of bundle creation in RFC3339.
     """
-    return PutBundles.run(uuid, files, creator_uid, version, replica)
+    return PutBundles.run(uuid, creator_uid, files, replica, version)
