@@ -7,7 +7,6 @@ import requests
 import sys
 
 from .define_api import API
-from .regenerate_api import generate_python_bindings
 
 
 def main():
