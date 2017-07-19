@@ -1,2 +1,3 @@
+recursive-include hca *.jinja 
 include *.rst hca/*.json
 include test/*

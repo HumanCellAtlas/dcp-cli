@@ -381,6 +381,7 @@ def generate_python_bindings(test_api_path=None):
                          'base_url': base_url,
                          'command_name': endpoint_name,
                          'snake_command_name': endpoint_name.replace("-", "_"),
+                         'sorted_options': sorted(endpoint_info['options']),
                          'endpoint_info': endpoint_info}
 
         _write_jinja_file(template_file, template_vars, file_path)

@@ -6,6 +6,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import os
 import sys
 import unittest
+import uuid
 import pprint
 
 import six
@@ -14,6 +15,7 @@ pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.insert(0, pkg_root)
 
 import hca
+from hca import api
 
 
 class TestHCACLI(unittest.TestCase):
@@ -133,45 +135,45 @@ class TestHCACLI(unittest.TestCase):
 
     def test_parsing(self):
         """Test that the parser parses arguments correctly."""
-        api = hca.define_api.API(os.path.join(os.path.dirname(os.path.realpath(__file__)), "test.json"))
+        cli = hca.define_api.API(os.path.join(os.path.dirname(os.path.realpath(__file__)), "test.json"))
 
         args = ["put-files", "134", "--bundle-uuid", "asdf", "--creator-uid", "1", "--source-url", "sljdf.com"]
         out = {'source_url': 'sljdf.com', 'bundle_uuid': 'asdf', 'uuid': '134', 'creator_uid': 1}
-        self.assertEqual(api.parse_args(args), out)
+        self.assertEqual(cli.parse_args(args), out)
 
         args = ["put-files", "--bundle-uuid", "asdf", "--creator-uid", "1", "--source-url", "sljdf.com", "134"]
-        self.assertEqual(api.parse_args(args), out)
+        self.assertEqual(cli.parse_args(args), out)
 
         args = ["put-files", "--creator-uid", "1", "--source-url", "sljdf.com", "134"]
-        self.assertRaises(SystemExit, api.parse_args, args)
+        self.assertRaises(SystemExit, cli.parse_args, args)
 
         args = ["put-files", "--bundle-uuid", "asdf", "--creator-uid", "1", "--source-url", "sljdf.com"]
-        self.assertRaises(SystemExit, api.parse_args, args)
+        self.assertRaises(SystemExit, cli.parse_args, args)
 
         args = ["put-files", "--bundle-uuid", "--creator-uid", "1", "--source-url", "sljdf.com", "134"]
-        self.assertRaises(SystemExit, api.parse_args, args)
+        self.assertRaises(SystemExit, cli.parse_args, args)
 
         args = ["get-bundles"]
         out = {}
-        self.assertEqual(api.parse_args(args), out)
+        self.assertEqual(cli.parse_args(args), out)
 
         args = ["get-bundles", "uuid_arg"]
         out = {"uuid": "uuid_arg"}
-        self.assertEqual(api.parse_args(args), out)
+        self.assertEqual(cli.parse_args(args), out)
 
         args = ["get-bundles", "uuid_arg", "version_arg", "--replica", "rep"]
         out = {"uuid": "uuid_arg", "replica": "rep", "bundle_version": "version_arg"}
-        self.assertEqual(api.parse_args(args), out)
+        self.assertEqual(cli.parse_args(args), out)
 
         # Works for now but shouldn't in the future b/c --replica required when uuid and version specified.
         args = ["get-bundles", "uuid_arg", "version_arg"]
         out = {"uuid": "uuid_arg", "bundle_version": "version_arg"}
-        self.assertEqual(api.parse_args(args), out)
+        self.assertEqual(cli.parse_args(args), out)
 
         # Works for now. --replica isn't an option unless both uuid and version specified.
         args = ["get-bundles", "uuid_arg", "--replica", "rep"]
         out = {"uuid": "uuid_arg", "replica": "rep"}
-        self.assertEqual(api.parse_args(args), out)
+        self.assertEqual(cli.parse_args(args), out)
 
     def _get_first_url(self, response):
         """Get the first url we sent a request to if there were redirects."""
@@ -181,20 +183,20 @@ class TestHCACLI(unittest.TestCase):
 
     def test_requests(self):
         """Test that the parser parses arguments in the right way."""
-        api = hca.define_api.API(os.path.join(os.path.dirname(os.path.realpath(__file__)), "test.json"))
+        cli = hca.define_api.API(os.path.join(os.path.dirname(os.path.realpath(__file__)), "test.json"))
 
         args = ["get-bundles"]
-        response = api.make_request(args)
+        response = cli.make_request(args)
         self.assertEqual(self._get_first_url(response), "https://hca-dss.czi.technology/v1/bundles")
         self.assertTrue(response.ok)
 
         args = ["get-bundles", "AAAAAAAA-AAAA-AAAA-AAAA-AAAAAAAAAAAA", "--version", "1981-07-21T11:35:45+00:00", "--replica", "aws"]
-        response = api.make_request(args)
+        response = cli.make_request(args)
         self.assertFalse(response.ok)  # The key is not in there
 
         # Works for now but shouldn't in the future b/c --replica required when uuid and version specified.
         args = ["get-bundles", "AAAAAAAA-AAAA-AAAA-AAAA-AAAAAAAAAAAA", "version_arg"]
-        response = api.make_request(args)
+        response = cli.make_request(args)
         self.assertEqual(
             self._get_first_url(response),
             "https://hca-dss.czi.technology/v1/bundles/AAAAAAAA-AAAA-AAAA-AAAA-AAAAAAAAAAAA/version_arg"
@@ -203,32 +205,32 @@ class TestHCACLI(unittest.TestCase):
 
     def test_refs(self):
         """Test internal JSON reference resolution."""
-        api = hca.define_api.API(os.path.join(os.path.dirname(os.path.realpath(__file__)), "test.json"))
+        cli = hca.define_api.API(os.path.join(os.path.dirname(os.path.realpath(__file__)), "test.json"))
         args = ["put-reftest", "--name", "name", "--uuid", "uuid", "--versions", "item1", "item2"]
         out = {"name": "name", "uuid": "uuid", "versions": ["item1", "item2"]}
-        self.assertEqual(api.parse_args(args), out)
+        self.assertEqual(cli.parse_args(args), out)
 
     def test_array_cli(self):
         """Ensure that this framework can handle arrays."""
-        api = hca.define_api.API(os.path.join(os.path.dirname(os.path.realpath(__file__)), "test.json"))
+        cli = hca.define_api.API(os.path.join(os.path.dirname(os.path.realpath(__file__)), "test.json"))
         args = ["put-bundles", "uuid", "--version", "version", "--files", "uuid1/v1/n1/True", "uuid2/v2/n2/False", "--creator-uid", "3", "--replica", "rep"]
         out = {"uuid": "uuid", "version": "version", "files": ["uuid1/v1/n1/True", "uuid2/v2/n2/False"], "creator_uid": 3, "replica": "rep"}
-        self.assertEqual(api.parse_args(args), out)
+        self.assertEqual(cli.parse_args(args), out)
 
     def test_parsing_array_object_literals(self):
         """Make sure that parsing literals works within an array object."""
-        api = hca.define_api.API(os.path.join(os.path.dirname(os.path.realpath(__file__)), "test.json"))
+        cli = hca.define_api.API(os.path.join(os.path.dirname(os.path.realpath(__file__)), "test.json"))
         args = ["put-bundles", "234sf", "--files", "True/n1/u1/v1", "False/n2/u2/v2", "--replica" ,"rep", "--creator-uid", "8"]
-        parsed_args = api.parse_args(args)
+        parsed_args = cli.parse_args(args)
         out = {'files': [{'indexed': True, 'version': 'v1', 'uuid': 'u1', 'name': 'n1'}, {'indexed': False, 'version': 'v2', 'uuid': 'u2', 'name': 'n2'}], 'creator_uid': 8}
-        query_payload, body_payload, header_payload = api._build_payloads("put-bundles", parsed_args)
+        query_payload, body_payload, header_payload = cli._build_payloads("put-bundles", parsed_args)
         self.assertEqual(body_payload, out)
 
     def test_json_input(self):
         """Ensure that adding json input works."""
-        api = hca.define_api.API()
+        cli = hca.define_api.API()
         args = ["post-search", "--query", '{"hello":"world", "goodbye":"earth"}']
-        parsed_args = api.parse_args(args)
+        parsed_args = cli.parse_args(args)
         out = {"query": {"hello": "world", "goodbye": "earth"}}
         self.assertEqual(out, parsed_args)
 
@@ -255,6 +257,38 @@ class TestHCACLI(unittest.TestCase):
 
     def test_upload_files(self):
         pass
+
+    def test_python_bindings(self):
+        # hca.regenerate_api.generate_python_bindings()
+        cli = hca.define_api.API()
+
+        bundle_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "bundle")
+        namespace = {'file_or_dir': [bundle_path],
+                     'replica': "aws",
+                     'staging_bucket': "org-humancellatlas-dss-test-jmackey"}
+        bundle_output = hca.full_upload.FullUpload.run(namespace, cli)
+
+        # Test get-files and head-files
+        file_ = bundle_output['files'][0]
+        self.assertTrue(api.get_files().ok)
+        self.assertTrue(api.get_files(file_['uuid'], replica="aws").ok)
+        # self.assertTrue(api.head_files(file_['uuid']).ok)  # Think api service might not be operating for head_files
+
+        # Test get-bundles
+        bundle_uuid = bundle_output['bundle_uuid']
+        self.assertTrue(api.get_bundles().ok)
+        self.assertTrue(api.get_bundles(bundle_uuid, replica="aws").ok)
+
+        # Test put-files
+        file_uuid = str(uuid.uuid4())
+        bundle_uuid = str(uuid.uuid4())
+        source_url = "s3://org-humancellatlas-dss-test-jmackey/{}/{}".format(file_['uuid'], file_['name'])
+        self.assertTrue(api.put_files(file_uuid, creator_uid=1, bundle_uuid=bundle_uuid, source_url=source_url).ok)
+
+        # Test put-bundles
+        files = [{'indexed': True, 'name': file_['name'], 'uuid': file_['uuid'], 'version': file_['version']}]
+        resp = api.put_bundles(bundle_uuid, files=files, creator_uid=1, replica="aws")
+        self.assertTrue(resp.ok)
 
 
 if __name__ == '__main__':

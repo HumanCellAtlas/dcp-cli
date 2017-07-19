@@ -271,7 +271,7 @@ class AddedCommand(object):
         i = num_positionals
         # Not using enumerate because I'm not sure it keeps order consistent when iterating.
         # Iterating over dictionaries with the same keys is guaranteed to be consistent ordering.
-        for optional_name in endpoint_info['options']:
+        for optional_name in sorted(endpoint_info['options'].keys()):
             arg = None
             if i < len(args):
                 arg = args[i]
