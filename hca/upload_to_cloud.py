@@ -89,6 +89,8 @@ def upload_to_cloud(files, staging_bucket, replica, from_cloud=False):
                     "hca-dss-content-type": _mime_type(fh.raw.name)
                 }
 
+                raw_fh.close()
+
                 s3.meta.client.put_object_tagging(Bucket=destination_bucket.name,
                                                   Key=key_name,
                                                   Tagging=dict(TagSet=encode_tags(metadata))
