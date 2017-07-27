@@ -11,43 +11,66 @@ import boto3
 
 from .constants import Constants
 from .upload_to_cloud import upload_to_cloud
+from .. import put_bundles, put_files
+from ...added_command import AddedCommand
 
 
-class FullUpload:
+class Upload(AddedCommand):
     """Functions needed to fully add this functionality to the command line parser."""
 
-    CONSOLE_ARGUMENT = "upload"
     FILE_OR_DIR_ARGNAME = "file_or_dir"
     CREATOR_ID_ENVIRONMENT_VARIABLE = "creator_uid"
-    REPLICA_ARGNAME = "--replica"
 
     @classmethod
-    def add_parser(cls, subparsers):
-        """Call from parser.py to create the parser."""
-        subparser = subparsers.add_parser(
-            cls.CONSOLE_ARGUMENT,
-            help="Upload a file or directory to the cloud, register each of the files, and bundle them together."
-        )
+    def get_command_name(cls):
+        """Return name that this command should be called on cli and in python bindings."""
+        return "upload"
 
-        subparser.add_argument(
-            cls.FILE_OR_DIR_ARGNAME,
-            nargs="+",
-            help="Relative or direct path to folder with all bundle files. Alternatively, user can provide a url \
-            to an s3 bucket containing a bundle. S3 files must have checksum tags already calculated and assigned."
-        )
-
-        subparser.add_argument(
-            "--staging-bucket",
-            help="Bucket within replica to upload to."
-        )
-
-        subparser.add_argument(
-            "--replica",
-            help="Which cloud to upload to first. One of 'aws', 'gcp', or 'azure'.",
-            choices=['aws', 'gcp', 'azure'],
-            default="aws"
-        )
-        return True
+    @classmethod
+    def _get_endpoint_info(cls):
+        return {
+            'body_params': {},
+            'description': "Upload a file or directory to the cloud, register each file, and bundle them together.",
+            'options': {
+                'files': {
+                    'description': "List of paths to files to upload.",
+                    'type': "string",
+                    'metavar': None,
+                    'required': False,
+                    'array': True
+                },
+                'directory': {
+                    'description': "Path to directory to upload.",
+                    'type': "string",
+                    'metavar': None,
+                    'required': False,
+                    'array': False
+                },
+                'cloud_urls': {
+                    'description': "List of cloud-hosted files to upload. Currently only supports s3 files. Files \
+                                    must have checksum tags already calculated and assigned",
+                    'type': "string",
+                    'metavar': None,
+                    'required': False,
+                    'array': True
+                },
+                'staging_bucket': {  # TODO Mackey22: Check that option names are saved with snake case.
+                    'description': "Bucket within replica to upload to.",
+                    'type': "string",
+                    'metavar': None,
+                    'required': False,
+                    'array': False
+                },
+                'replica': {
+                    'description': "Which cloud to upload to first. One of 'aws', 'gcp', or 'azure'.",
+                    'type': "string",
+                    'metavar': None,
+                    'required': False,
+                    'array': False,
+                    'default': "aws",
+                }
+            }
+        }
 
     @classmethod
     def _upload_files(cls, args, staging_bucket):
@@ -82,7 +105,7 @@ class FullUpload:
         return filename_key_list
 
     @classmethod
-    def _put_files(cls, filename_key_list, staging_bucket, api):
+    def _put_files(cls, filename_key_list, staging_bucket):
         """Use the API class to make a put-files request on each of these files."""
         bundle_uuid = str(uuid.uuid4())
         files = []
@@ -90,19 +113,17 @@ class FullUpload:
             logging.info("File {}: registering...".format(filename))
 
             # Generating file data
-            creator_uid = os.environ.get(cls.CREATOR_ID_ENVIRONMENT_VARIABLE, "1")
+            creator_uid = os.environ.get(cls.CREATOR_ID_ENVIRONMENT_VARIABLE, 1)
             source_url = "s3://{}/{}".format(staging_bucket, key)
             logging.info(source_url)
             # file_uuid = key[:key.find("/")]
             logging.info("File {}: assigned uuid {}".format(filename, file_uuid))
 
-            response = api.make_request([
-                "put-files",
-                file_uuid,
-                "--bundle-uuid", bundle_uuid,
-                "--creator-uid", creator_uid,
-                "--source-url", source_url
-            ], stream=True)
+            response = put_files(file_uuid,
+                                 bundle_uuid=bundle_uuid,
+                                 creator_uid=creator_uid,
+                                 source_url=source_url,
+                                 stream=True)
 
             if response.ok:
                 version = response.json().get('version', "blank")
@@ -126,25 +147,17 @@ class FullUpload:
         return bundle_uuid, files
 
     @classmethod
-    def _put_bundle(cls, bundle_uuid, files, api, replica):
+    def _put_bundle(cls, bundle_uuid, files, replica):
         """Use the API class to make a put-bundles request."""
-        file_args = [Constants.OBJECT_SPLITTER.join([
-            "True",
-            file['name'],
-            file['uuid'],
-            file['version']]) for file in files]
-        creator_uid = os.environ.get(cls.CREATOR_ID_ENVIRONMENT_VARIABLE, "1")
+        creator_uid = os.environ.get(cls.CREATOR_ID_ENVIRONMENT_VARIABLE, 1)
+        file_args = [{'indexed': True,
+                      'name': file_['name'],
+                      'version': file_['version'],
+                      'uuid': file_['uuid']} for file_ in files]
 
         logging.info("Bundle {}: registering...".format(bundle_uuid))
-        request = [
-            "put-bundles",
-            bundle_uuid,
-            "--replica", replica,
-            "--creator-uid", creator_uid,
-            "--files"
-        ]
-        request.extend(file_args)  # file_args is already a list.
-        response = api.make_request(request)
+
+        response = put_bundles(bundle_uuid, replica=replica, creator_uid=creator_uid, files=file_args)
 
         version = None
 
@@ -170,7 +183,12 @@ class FullUpload:
         return final_return
 
     @classmethod
-    def run(cls, args, api):
+    def run_cli(cls, args):
+        """Deposit a bundle from local or remote bucket to blue box with arguments given from cli."""
+        return cls.run(args)
+
+    @classmethod
+    def run(cls, args):
         """
         Bring a bundle from local to the blue box.
 
@@ -178,12 +196,12 @@ class FullUpload:
         Step 2: Put the files in the blue box with a shared bundle_uuid.
         Step 3: Put all uploaded files into a bundle together.
         """
-        first_url = args['file_or_dir'][0]
+        first_url = args[cls.FILE_OR_DIR_ARGNAME][0]
         # If there's a staging bucket input, set staging bucket to that.
         # Otherwise grab it from the s3 url.
         staging_bucket = args.get('staging_bucket', first_url[5: first_url.find("/", 5)])
 
         filename_key_list = cls._upload_files(args, staging_bucket)
-        bundle_uuid, files = cls._put_files(filename_key_list, staging_bucket, api)
-        final_return = cls._put_bundle(bundle_uuid, files, api, args["replica"])
+        bundle_uuid, files = cls._put_files(filename_key_list, staging_bucket)
+        final_return = cls._put_bundle(bundle_uuid, files, args["replica"])
         return final_return
