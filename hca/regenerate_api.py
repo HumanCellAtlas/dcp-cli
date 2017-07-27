@@ -4,11 +4,14 @@ import json
 import os
 import shutil
 
+from io import open
+
 from jinja2 import FileSystemLoader, Environment
 import jsonpointer
 import requests
 
 from .constants import Constants
+from .error import APIException
 
 
 def _separator_to_camel_case(separated, separator):
@@ -132,6 +135,10 @@ def _recursive_indexing(spec, param, hierarchy, indexed_parameters={}, arr=False
             param['array'] = arr
             param['hierarchy'] = hierarchy_clone
             indexed_parameters[param_name] = param
+            if "-" in param_name:
+                raise APIException("The API spec defines a parameter containing a hyphen. This package does not \
+                                    handle those instances. Contact the Human Cell Atlas Data Coordination Center \
+                                    to address this issue.")
             return
 
         # If there are no properties and not within an array, we should just parse the input as json
@@ -147,6 +154,10 @@ def _recursive_indexing(spec, param, hierarchy, indexed_parameters={}, arr=False
             payload['req'] = param['req'] and prop_name in param['required']
             payload['in'] = param['in']
             object_indexed_params.append(_recursive_indexing(spec, payload, hierarchy_clone, indexed_parameters, arr))
+            if "-" in prop_name:
+                raise APIException("The API spec defines a parameter containing a hyphen. This package does not \
+                                    handle those instances. Contact the Human Cell Atlas Data Coordination Center \
+                                    to address this issue.")
         return object_indexed_params
 
     # If this within array, don't set the parameter because we set a parameter value in the array "if"
