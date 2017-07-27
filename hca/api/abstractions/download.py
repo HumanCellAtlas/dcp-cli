@@ -1,46 +1,54 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import os
-import sys
 import logging
 
 from io import open
+from .. import get_bundles, get_files
+from ...added_command import AddedCommand
 
 
-class FullDownload:
+class Download(AddedCommand):
     """Functions needed to fully add this functionality to the command line parser."""
 
-    CONSOLE_ARGUMENT = "download"
-    UUID = "uuid"
+    @classmethod
+    def get_command_name(cls):
+        """Return name that this command should be called on cli and in python bindings."""
+        return "download"
 
     @classmethod
-    def add_parser(cls, subparsers):
-        """Call from parser.py to create the parser."""
-        subparser = subparsers.add_parser(
-            cls.CONSOLE_ARGUMENT,
-            help="Download a full bundle or file to local."
-        )
-
-        subparser.add_argument(
-            cls.UUID,
-            help="UUID of the folder or file you want to download."
-        )
-
-        subparser.add_argument(
-            "--name",
-            help="Name of the folder you're storing the bundle/file in (Your name for the bundle).\
-                Defaults to the uuid of the bundle or file."
-        )
-
-        subparser.add_argument(
-            "--replica",
-            help="Which cloud to download from first. One of 'aws', 'gcp', or 'azure'.",
-            choices=['aws', 'gcp', 'azure'],
-            default="aws"
-        )
+    def _get_endpoint_info(cls):
+        return {
+            'body_params': {},
+            'description': "Download a full bundle or file to local.",
+            'positional': [{
+                'argument': "uuid",
+                'required': True,
+                'type': "string",  # See AddedCommand._get_arg_type() for expected args
+                'description': "UUID of the folder or file you want to download."
+            }],
+            'options': {
+                'name': {
+                    'description': "Name of the folder you're storing the bundle/file in (Your name for the bundle).\
+                                    Defaults to the uuid of the bundle or file.",
+                    'type': "string",
+                    'metavar': None,
+                    'required': False,
+                    'array': False
+                },
+                'replica': {
+                    'description': "Which cloud to download from first. One of 'aws', 'gcp', or 'azure'.",
+                    'type': "string",
+                    'metavar': None,
+                    'required': False,
+                    'array': False,
+                    'default': "aws",
+                }
+            }
+        }
 
     @classmethod
-    def _download_files(cls, files, folder, api, replica):
+    def _download_files(cls, files, folder, replica):
         """Use the API class to make a get-files request on each of these files."""
         for file_ in files:
 
@@ -49,17 +57,11 @@ class FullDownload:
 
             logging.info("File {}: Retrieving...".format(filename))
 
-            request = [
-                "get-files",
-                file_uuid,
-                "--replica", replica,
-            ]
-
-            response = api.make_request(request, stream=True)
+            response = get_files(file_uuid, replica=replica, stream=True)
 
             if response.ok:
                 file_path = os.path.join(folder, filename)
-                logging.info("File {}: GET successful. Writing to disk.".format(filename, file_uuid))
+                logging.info("File {}: GET SUCCEEDED. Writing to disk.".format(filename, file_uuid))
                 with open(file_path, "wb") as fh:
                     # Process taken from
                     # https://stackoverflow.com/questions/16694907/how-to-download-large-file-in-python-with-requests-py
@@ -77,22 +79,18 @@ class FullDownload:
         return {"completed": True}
 
     @classmethod
-    def _download_bundle(cls, args, api):
+    def _download_bundle(cls, args):
         """Use the API class to make a get-bundles request."""
         bundle_uuid = args["uuid"]
         bundle_name = args.get("name", bundle_uuid)
         replica = args["replica"]
 
         logging.info("Bundle {}: Retrieving...".format(bundle_uuid))
-        request = [
-            "get-bundles",
-            bundle_uuid,
-            "--replica", replica,
-        ]
+
+        response = get_bundles(bundle_uuid, replica=replica)
 
         files = [args]
         folder = ""
-        response = api.make_request(request)
 
         if response.ok:
             files = response.json()["bundle"]["files"]
@@ -109,9 +107,14 @@ class FullDownload:
         return files, folder
 
     @classmethod
-    def run(cls, args, api):
+    def run_cli(cls, args):
+        """Download a bundle/file from blue box to local with arguments given from cli."""
+        return cls.run(args)
+
+    @classmethod
+    def run(cls, args):
         """Download a bundle or file from the blue box to local."""
-        files, folder = cls._download_bundle(args, api)
-        status = cls._download_files(files, folder, api, args["replica"])
+        files, folder = cls._download_bundle(args)
+        status = cls._download_files(files, folder, args["replica"])
 
         return status
