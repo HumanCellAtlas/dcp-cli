@@ -16,7 +16,7 @@ class AddObject(argparse.Action):
         setattr(namespace, self.dest, json.loads(values))
 
 
-class AddedCommand:
+class AddedCommand(object):
     """Class containing information to reach this endpoint."""
 
     @classmethod
@@ -52,14 +52,12 @@ class AddedCommand:
     def _add_positional_args(cls, subparser):
         endpoint_info = cls._get_endpoint_info()
         for positional_arg in endpoint_info['positional']:
-            h = endpoint_info['description']
-
             argtype = cls._get_arg_type(positional_arg['type'])
 
             subparser.add_argument(
                 positional_arg['argument'],
                 nargs=None if positional_arg['required'] else "?",
-                help=h,
+                help=endpoint_info['description'],
                 type=argtype
             )
 
@@ -67,8 +65,6 @@ class AddedCommand:
     def _add_optional_args(cls, subparser):
         endpoint_info = cls._get_endpoint_info()
         for (optional_name, optional_data) in endpoint_info['options'].items():
-            h = endpoint_info['description']
-
             argtype = cls._get_arg_type(optional_data['type'])
             actiontype = cls._get_action(optional_data['type'])
 
@@ -79,7 +75,7 @@ class AddedCommand:
                 metavar=optional_data['metavar'],
                 required=optional_data['required'],
                 nargs="+" if optional_data['array'] else None,
-                help=h,
+                help=endpoint_info['description'],
                 type=argtype,
                 action=actiontype
             )
