@@ -321,6 +321,34 @@ def _write_jinja_file(template_file, template_vars, file_path):
         f.write(output_text)
 
 
+def _make_function_def_arglist(endpoint_info):
+    """
+    Determine ordering of function arguments in the python bindings.
+
+    This function is crucial because before, required query and body parameters
+    were defaulted to None when presented in the Python bindings, making them
+    seem to be not required. This function validates that all required arguments
+    will not accept zero input come in the right order.
+
+    The data structure holding these arguments is an array where each element is
+    a tuple: (argument_name, default_val (or "required" if needed))
+    """
+    required_ordered = [(pa['argument'], "required") for pa in endpoint_info['positional'] if pa['required']]
+    required_options = [(oa, "required") for oa, info in endpoint_info['options'].items() if info['required']]
+
+    non_required_ordered = [pa for pa in endpoint_info['positional'] if not pa['required']]
+    non_required_ordered = map(lambda pa: (pa['argument'], pa.get('default', None)), non_required_ordered)
+
+    non_required_options = [(oa, info) for (oa, info) in endpoint_info['options'].items() if not info['required']]
+    non_required_options = map(lambda (oa, info): (oa, info.get('default', None)), non_required_options)
+
+    function_def_arglist = []
+    for arglist in (required_ordered, required_options, non_required_ordered, non_required_options):
+        function_def_arglist.extend(arglist)
+
+    return function_def_arglist
+
+
 def generate_python_bindings(test_api_path=None):
     """
     Generate classes for each endpoint that allow for easy parser integration and api endpoint interaction.
@@ -382,6 +410,7 @@ def generate_python_bindings(test_api_path=None):
                          'command_name': endpoint_name,
                          'snake_command_name': endpoint_name.replace("-", "_"),
                          'sorted_options': sorted(endpoint_info['options']),
+                         'function_def_arglist': _make_function_def_arglist(endpoint_info),
                          'endpoint_info': endpoint_info}
 
         _write_jinja_file(template_file, template_vars, file_path)
