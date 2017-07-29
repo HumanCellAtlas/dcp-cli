@@ -2,6 +2,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import json
 import os
+import pkgutil
 import shutil
 
 from io import open
@@ -11,7 +12,6 @@ import jsonpointer
 import requests
 
 from .constants import Constants
-from .error import APIException
 
 
 def _separator_to_camel_case(separated, separator):
@@ -38,14 +38,11 @@ def _get_spec(test_api_path=None):
 
 def _make_name(http_method, path_split):
     """Name an endpoint."""
-    # If the api needs file/write/{generic} functionality, will become put-file-write
+    # If the api needs file/write/{sdf} functionality, will become put-file-write
     name = [http_method]
-    for path_element in path_split:
-        if not path_element:  # First path element is empty, so skip that one.
-            continue
-        if path_element.startswith("{"):
-            break
-        name.append(path_element)
+    path_non_args = list(filter(lambda x: len(x) > 0 and x[0] != "{", path_split))
+    for non_arg in path_non_args:
+        name.append(non_arg)
     name = "-".join(name)
     return name
 
@@ -135,10 +132,6 @@ def _recursive_indexing(spec, param, hierarchy, indexed_parameters={}, arr=False
             param['array'] = arr
             param['hierarchy'] = hierarchy_clone
             indexed_parameters[param_name] = param
-            if "-" in param_name:
-                raise APIException("The API spec defines a parameter containing a hyphen. This package does not \
-                                    handle those instances. Contact the Human Cell Atlas Data Coordination Center \
-                                    to address this issue.")
             return
 
         # If there are no properties and not within an array, we should just parse the input as json
@@ -154,10 +147,6 @@ def _recursive_indexing(spec, param, hierarchy, indexed_parameters={}, arr=False
             payload['req'] = param['req'] and prop_name in param['required']
             payload['in'] = param['in']
             object_indexed_params.append(_recursive_indexing(spec, payload, hierarchy_clone, indexed_parameters, arr))
-            if "-" in prop_name:
-                raise APIException("The API spec defines a parameter containing a hyphen. This package does not \
-                                    handle those instances. Contact the Human Cell Atlas Data Coordination Center \
-                                    to address this issue.")
         return object_indexed_params
 
     # If this within array, don't set the parameter because we set a parameter value in the array "if"
@@ -183,13 +172,22 @@ def index_parameters(spec, endpoint_info):
             # array to tell which args required. Can't overwrite.
             param['req'] = param.get('required', False)
 
-            # Make sure parameter name is not extras.
             if param['in'] == "body":
+                # Workaround for deprecation - put-search doesn't have extras wrapper for body. Just skip that.
+                if 'properties' not in param['schema']:
+                    continue
+
+                # Make sure parameter name is not extras.
                 inner_param = param['schema']
                 inner_param['in'] = "body"
                 inner_param['name'] = "irrelevant"
                 inner_param['req'] = param['req']
                 param = inner_param
+
+                # Track data types and names of each significant property in body.
+                # Contents should always be an object to make it easily extensible.
+                assert param['type'] == "object"
+                indexed_parameters['top_level_body_params'] = param['properties']
 
             _recursive_indexing(spec, param, [], indexed_parameters)
     return indexed_parameters
@@ -210,10 +208,8 @@ def _label_path_args_required(path, endpoint_params, indexed_parameters):
     """
     # Find and clean all path args.
     path_split = path.split("/")
-    path_args = []
-    for path_element in path_split:
-        if path_element.startswith("{"):
-            path_args.append(path_element[1: -1])
+    path_args = list(filter(lambda x: len(x) > 0 and x[0] == "{", path_split))
+    path_args = list(map(lambda x: x[1: -1], path_args))
 
     positional = endpoint_params['positional']
     for i in range(max(len(list(path_args)), len(list(positional)))):
@@ -258,6 +254,9 @@ def _label_optional_args_required(path, endpoint_params, indexed_parameters):
             param_data['required'] = False
 
     for (param_name, param_data) in indexed_parameters.items():
+        if param_name == "top_level_body_params":
+            continue
+
         if param_data['in'] != "path":  # Only non-positional args
             argrequired = indexed_parameters[param_name]['req']
             if param_name not in options:
@@ -281,6 +280,59 @@ def _label_optional_args_required(path, endpoint_params, indexed_parameters):
             # endpoints for which this arg is needed.
             if argrequired:
                 options[param_name]['required_for'].append(path)
+
+
+def _write_jinja_file(template_file, template_vars, file_path):
+    """
+    Fill in a jinja template to specified file_path.
+
+    :param template_file: The file name for the template.
+    :param template_vars: A dictionary specifying any input variables to the template.
+    :param file_path: The file path to write the completed function to.
+    """
+    dirname = os.path.dirname(__file__)
+
+    template_loader = FileSystemLoader(searchpath=os.path.join(dirname, "api", "templates"))
+
+    # An environment provides the data necessary to read and parse our templates. Pass in the loader object here.
+    template_env = Environment(loader=template_loader, trim_blocks=True, lstrip_blocks=True)
+
+    # Read the template file using the environment object.
+    template = template_env.get_template(template_file)
+
+    # Finally, process the template to produce our final text.
+    output_text = template.render(template_vars)
+
+    with open(file_path, "w") as f:
+        f.write(output_text)
+
+
+def _make_function_def_arglist(endpoint_info):
+    """
+    Determine ordering of function arguments in the python bindings.
+
+    This function is crucial because before, required query and body parameters
+    were defaulted to None when presented in the Python bindings, making them
+    seem to be not required. This function validates that all required arguments
+    will not accept zero input come in the right order.
+
+    The data structure holding these arguments is an array where each element is
+    a tuple: (argument_name, default_val (or "required" if needed))
+    """
+    required_ordered = [(pa['argument'], "required") for pa in endpoint_info['positional'] if pa['required']]
+    required_options = [(oa, "required") for oa, info in endpoint_info['options'].items() if info['required']]
+
+    non_required_ordered = [pa for pa in endpoint_info['positional'] if not pa['required']]
+    non_required_ordered = map(lambda pa: (pa['argument'], pa.get('default', None)), non_required_ordered)
+
+    non_required_options = [(oa, info) for (oa, info) in endpoint_info['options'].items() if not info['required']]
+    non_required_options = map(lambda (oa, info): (oa, info.get('default', None)), non_required_options)
+
+    function_def_arglist = []
+    for arglist in (required_ordered, required_options, non_required_ordered, non_required_options):
+        function_def_arglist.extend(arglist)
+
+    return function_def_arglist
 
 
 def generate_python_bindings(test_api_path=None):
@@ -307,6 +359,7 @@ def generate_python_bindings(test_api_path=None):
             if endpoint_name not in param_holders:
                 param_holders[endpoint_name] = {
                     'seen': False,
+                    'body_params': indexed_parameters.get('top_level_body_params', {}),
                     'positional': [],
                     'options': {},
                     'description': endpoint_info.get('description', "placeholder")
@@ -320,39 +373,37 @@ def generate_python_bindings(test_api_path=None):
 
     # Blow away previous files in the autogenerated folder and remake that directory
     dirname = os.path.dirname(__file__)
+    api_function_path = os.path.join(dirname, "api", "__init__.py")
+    if os.path.exists(api_function_path):
+        os.remove(api_function_path)
+        open(api_function_path, 'a').close()
+
     autogenerated_path = os.path.join(dirname, "api", "autogenerated")
     if os.path.exists(autogenerated_path):
         shutil.rmtree(autogenerated_path)
     os.mkdir(autogenerated_path)
     open(os.path.join(autogenerated_path, "__init__.py"), 'a').close()
 
+    function_payload = {'classes': []}
+
     for (endpoint_name, endpoint_info) in param_holders.items():
-
-        template_loader = FileSystemLoader(searchpath=os.path.join(dirname, "api", "templates"))
-
-        # An environment provides the data necessary to read and parse our templates. Pass in the loader object here.
-        template_env = Environment(loader=template_loader)
-
-        # This constant string specifies the template file we will use.
-        template_file = "/api.jinja"
-
-        # Read the template file using the environment object.
-        template = template_env.get_template(template_file)
-
-        # Specify any input variables to the template as a dictionary.
-        template_vars = {'class_name': _separator_to_camel_case(endpoint_name, "-"),
-                         'base_url': base_url,
-                         'command_name': endpoint_name,
-                         'endpoint_info': endpoint_info}
-
-        # Finally, process the template to produce our final text.
-        output_text = template.render(template_vars)
-
         file_name = format(endpoint_name.replace("-", "_")) + ".py"
         file_path = os.path.join(dirname, "api", "autogenerated", file_name)
 
-        with open(file_path, "w") as f:
-            f.write(output_text)
+        template_file = "/api.jinja"
+        template_vars = {'class_name': _separator_to_camel_case(endpoint_name, "-"),
+                         'base_url': base_url,
+                         'command_name': endpoint_name,
+                         'snake_command_name': endpoint_name.replace("-", "_"),
+                         'sorted_options': sorted(endpoint_info['options']),
+                         'function_def_arglist': _make_function_def_arglist(endpoint_info),
+                         'endpoint_info': endpoint_info}
+
+        _write_jinja_file(template_file, template_vars, file_path)
+        function_payload['classes'].append(template_vars)
+    template_file = "/functions.jinja"
+    file_path = os.path.join(dirname, "api", "__init__.py")
+    _write_jinja_file(template_file, function_payload, file_path)
 
 
 if __name__ == "__main__":
