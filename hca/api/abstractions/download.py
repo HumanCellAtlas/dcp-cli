@@ -4,17 +4,12 @@ import os
 import logging
 
 from io import open
-from .. import get_bundles, get_files
+from . import get_bundles, get_files
 from ...added_command import AddedCommand
 
 
 class Download(AddedCommand):
     """Functions needed to fully add this functionality to the command line parser."""
-
-    @classmethod
-    def get_command_name(cls):
-        """Return name that this command should be called on cli and in python bindings."""
-        return "download"
 
     @classmethod
     def _get_endpoint_info(cls):
@@ -29,8 +24,8 @@ class Download(AddedCommand):
             }],
             'options': {
                 'name': {
-                    'description': "Name of the folder you're storing the bundle/file in (Your name for the bundle).\
-                                    Defaults to the uuid of the bundle or file.",
+                    'description': ("Name of the folder you're storing the bundle/file in (Your name for the bundle)."
+                                    " Defaults to the uuid of the bundle or file."),
                     'type': "string",
                     'metavar': None,
                     'required': False,
@@ -52,7 +47,7 @@ class Download(AddedCommand):
         """Use the API class to make a get-files request on each of these files."""
         for file_ in files:
 
-            file_uuid = file_[cls.UUID]
+            file_uuid = file_['uuid']
             filename = file_.get("name", file_uuid)
 
             logging.info("File {}: Retrieving...".format(filename))
