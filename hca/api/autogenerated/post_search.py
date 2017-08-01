@@ -8,9 +8,5 @@ class PostSearch(AddedCommand):
         return "https://hca-dss.czi.technology/v1"
 
     @classmethod
-    def get_command_name(cls):
-        return "post-search"
-
-    @classmethod
     def _get_endpoint_info(cls):
-        return {u'function_def_arglist': [], u'body_params': {}, u'positional': [], u'seen': False, u'options': {}, u'description': u'Accepts Elasticsearch JSON query and returns matching bundle identifiers\n'}
+        return {u'positional': [], u'seen': False, u'options': {}, u'body_params': {}, u'description': u'Accepts Elasticsearch JSON query and returns matching bundle identifiers\n'}

@@ -3,7 +3,9 @@
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
+import filecmp
 import os
+import shutil
 import sys
 import unittest
 import uuid
@@ -254,21 +256,44 @@ class TestHCACLI(unittest.TestCase):
     def test_upload_files(self):
         pass
 
-    def test_python_bindings(self):
-        # hca.regenerate_api.generate_python_bindings()
-        cli = hca.define_api.API()
+    def test_python_upload_download(self):
+        dirpath = os.path.dirname(os.path.realpath(__file__))
+        bundle_path = os.path.join(dirpath, "bundle")
 
-        bundle_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "bundle")
         namespace = {'file_or_dir': [bundle_path],
                      'replica': "aws",
                      'staging_bucket': "org-humancellatlas-dss-test-jmackey"}
-        bundle_output = hca.full_upload.FullUpload.run(namespace, cli)
+
+        bundle_output = api.upload(**namespace)
+
+        downloaded_path = os.path.join(dirpath, "TestDownload")
+        api.download(bundle_output['bundle_uuid'], name=downloaded_path)
+
+        # Check that contents are the same
+        for file in os.listdir(bundle_path):
+            uploaded_file = os.path.join(bundle_path, file)
+            downloaded_file = os.path.join(downloaded_path, file)
+            self.assertTrue(filecmp.cmp(uploaded_file, downloaded_file, False))
+
+        if os.path.exists(downloaded_path):
+            shutil.rmtree(downloaded_path)
+
+    def test_python_bindings(self):
+        dirpath = os.path.dirname(os.path.realpath(__file__))
+        bundle_path = os.path.join(dirpath, "bundle")
+        namespace = {'file_or_dir': [bundle_path],
+                     'replica': "aws",
+                     'staging_bucket': "org-humancellatlas-dss-test-jmackey"}
+
+        bundle_output = api.upload(**namespace)
+
+        api.download(bundle_output['bundle_uuid'], name=os.path.join(dirpath, "TestDownload"))
 
         # Test get-files and head-files
         file_ = bundle_output['files'][0]
         self.assertTrue(api.get_files().ok)
         self.assertTrue(api.get_files(file_['uuid'], replica="aws").ok)
-        # self.assertTrue(api.head_files(file_['uuid']).ok)  # Think api service might not be operating for head_files
+        self.assertTrue(api.head_files(file_['uuid']).ok)  # Think api service might not be operating for head_files
 
         # Test get-bundles
         bundle_uuid = bundle_output['bundle_uuid']
@@ -282,9 +307,35 @@ class TestHCACLI(unittest.TestCase):
         self.assertTrue(api.put_files(file_uuid, creator_uid=1, bundle_uuid=bundle_uuid, source_url=source_url).ok)
 
         # Test put-bundles
-        files = [{'indexed': True, 'name': file_['name'], 'uuid': file_['uuid'], 'version': file_['version']}]
+        files = [{'indexed': True,
+                  'name': file_['name'],
+                  'uuid': file_['uuid'],
+                  'version': file_['version']}]
         resp = api.put_bundles(bundle_uuid, files=files, creator_uid=1, replica="aws")
         self.assertTrue(resp.ok)
+
+    def test_python_subscriptions(self):
+        query = {'bool': {}}
+        resp = api.put_subscriptions(query, "www.example.com", "aws")
+        subscription_uuid = resp.json()['uuid']
+
+        self.assertEqual(201, resp.status_code)
+        self.assertIn('uuid', resp.json())
+
+        resp = api.get_subscriptions("aws")
+        self.assertEqual(200, resp.status_code)
+        self.assertTrue(subscription_uuid in [s['uuid'] for s in resp.json()['subscriptions']])
+
+        resp = api.get_subscriptions("aws", uuid=subscription_uuid)
+        self.assertEqual(200, resp.status_code)
+        self.assertEqual(subscription_uuid, resp.json()['uuid'])
+
+        resp = api.delete_subscriptions(subscription_uuid, "aws")
+        self.assertEqual(200, resp.status_code)
+        self.assertIn('timeDeleted', resp.json())
+
+        resp = api.get_subscriptions("aws", uuid=subscription_uuid)
+        self.assertEqual(404, resp.status_code)
 
 
 if __name__ == '__main__':

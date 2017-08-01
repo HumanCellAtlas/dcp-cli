@@ -21,6 +21,8 @@ setup(
         "jsonschema==2.6.0",
         "Jinja2==2.9.6",
         "boto3==1.4.4",
+        "google-auth==1.0.1",
+        "google-api-python-client==1.6.2",
         "crcmod==1.7"
     ],
     extras_require={

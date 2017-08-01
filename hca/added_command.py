@@ -1,8 +1,13 @@
 import argparse
 import json
+import re
+import uuid
 
+import google.auth
+import google.auth.transport.requests
 import jsonschema
 import requests
+from googleapiclient import sample_tools
 
 from .constants import Constants
 
@@ -27,7 +32,8 @@ class AddedCommand(object):
     @classmethod
     def get_command_name(cls):
         """Return the name that this command should be called to run this functionality."""
-        raise NotImplementedError("This function has not been implemented yet.")
+        s1 = re.sub('(.)([A-Z][a-z]+)', r'\1-\2', cls.__name__)
+        return re.sub('([a-z0-9])([A-Z])', r'\1-\2', s1).lower()
 
     @classmethod
     def _get_endpoint_info(cls):
@@ -108,7 +114,7 @@ class AddedCommand(object):
 
         given_positional_args = []
         for positional_arg in all_positional_args_for_endpoint:
-            if positional_arg in namespace:
+            if namespace.get(positional_arg, None):
                 arg = namespace[positional_arg]
                 given_positional_args.append(arg)
             else:
@@ -208,6 +214,28 @@ class AddedCommand(object):
         return body_payload
 
     @classmethod
+    def _get_auth_header(cls, real_header=True):
+        # ttung's popup to ask people to authenticate if they haven't already
+        # For now assume that people have to have the local gsutil authentication setup b/c I'm not convinced
+        # client_secret.json has the right setup credentials for the project. Do we definitely want the project_id
+        # associated with this?
+        # sample_tools.init([], 'oauth2', 'v1', "hca cli", "console", scope='https://www.googleapis.com/auth/userinfo.email')
+
+        try:
+            credentials, project_id = google.auth.default(scopes=["https://www.googleapis.com/auth/userinfo.email"])
+
+            r = google.auth.transport.requests.Request()
+            credentials.refresh(r)
+            r.session.close()
+
+            token = credentials.token if real_header else str(uuid.uuid4())
+
+            return "Bearer {}".format(token)
+
+        except google.auth.exceptions.DefaultCredentialsError:
+            return "Bearer {}".format("no_credentials")
+
+    @classmethod
     def _build_non_body_payloads(cls, namespace):
         """
         Build query params and header params for http requests.
@@ -225,7 +253,7 @@ class AddedCommand(object):
             if arg_name not in endpoint_info["options"]:
                 continue
 
-            if arg_name in endpoint_info['body_params']:
+            if endpoint_info['body_params'].get(arg_name, None):
                 # Check that it conforms to the right schema
                 try:
                     jsonschema.validate(arg, endpoint_info['body_params'][arg_name])
@@ -243,46 +271,28 @@ class AddedCommand(object):
                 cls._add_arg(arg, query_payload, hierarchy)
             if payload_format == "header":
                 cls._add_arg(arg, header_payload, hierarchy)
+
+        header_payload['Authorization'] = cls._get_auth_header()
         return query_payload, body_payload, header_payload
 
     @classmethod
-    def run_cli(cls, namespace):
+    def run_cli(cls, args):
         """Run this command using args from the cli. Override this to add higher-level commands."""
-        ordered_path_args = cls._get_ordered_path_args(namespace)
-        body_payload = cls._build_body_payload(namespace)
-        namespace.update(body_payload)
-        return cls.run(*ordered_path_args, **namespace)
+        body_payload = cls._build_body_payload(args)
+        args.update(body_payload)
+        return cls.run(**args)
 
     @classmethod
-    def run(cls, *args, **kwargs):
+    def run(cls, args):
         """Function that will be exposed to the api users."""
         endpoint_name = cls.get_command_name()
-        endpoint_info = cls._get_endpoint_info()
 
         split_endpoint = endpoint_name.split("-")[1]
         query_route = [split_endpoint]
-        num_positionals = len(endpoint_info['positional'])
-        for i in range(num_positionals):
-            if i < len(args) and args[i] is not None:
-                query_route.append(args[i])
-
-        # for i in range(num_positionals, len(args))
-        optionals = {}
-        i = num_positionals
-        # Not using enumerate because I'm not sure it keeps order consistent when iterating.
-        # Iterating over dictionaries with the same keys is guaranteed to be consistent ordering.
-        for optional_name in sorted(endpoint_info['options'].keys()):
-            arg = None
-            if i < len(args):
-                arg = args[i]
-            else:
-                arg = kwargs.get(optional_name, None)
-            if arg is not None:
-                optionals[optional_name] = arg
-            i += 1
-
+        query_route.extend(cls._get_ordered_path_args(args))
         url = cls._get_base_url() + "/" + "/".join(query_route)
-        query_payload, body_payload, header_payload = cls._build_non_body_payloads(optionals)
+
+        query_payload, body_payload, header_payload = cls._build_non_body_payloads(args)
 
         param_methods = ["get", "options", "head", "delete"]
         json_methods = ["post", "put", "patch"]
@@ -294,7 +304,7 @@ class AddedCommand(object):
                 url,
                 params=query_payload,
                 headers=header_payload,
-                stream=optionals.get('stream', False)
+                stream=args.get('stream', False)
             )
         elif method in json_methods:
             request = requests.request(
@@ -303,7 +313,7 @@ class AddedCommand(object):
                 json=body_payload,
                 params=query_payload,
                 headers=header_payload,
-                stream=optionals.get('stream', False)
+                stream=args.get('stream', False)
             )
         else:
             raise ValueError("Bad request type")
