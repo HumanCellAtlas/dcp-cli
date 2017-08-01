@@ -9,10 +9,6 @@ class {{ class_name }}(AddedCommand):
         return "{{ base_url }}"
 
     @classmethod
-    def get_command_name(cls):
-        return "{{ command_name }}"
-
-    @classmethod
     def _get_endpoint_info(cls):
         return {{ endpoint_info }}
 

@@ -9,9 +9,8 @@ from io import open
 
 import boto3
 
-from .constants import Constants
-from .upload_to_cloud import upload_to_cloud
-from .. import put_bundles, put_files
+from ...upload_to_cloud import upload_to_cloud
+from . import put_bundles, put_files
 from ...added_command import AddedCommand
 
 
@@ -22,37 +21,38 @@ class Upload(AddedCommand):
     CREATOR_ID_ENVIRONMENT_VARIABLE = "creator_uid"
 
     @classmethod
-    def get_command_name(cls):
-        """Return name that this command should be called on cli and in python bindings."""
-        return "upload"
-
-    @classmethod
     def _get_endpoint_info(cls):
         return {
             'body_params': {},
             'description': "Upload a file or directory to the cloud, register each file, and bundle them together.",
             'options': {
-                'files': {
-                    'description': "List of paths to files to upload.",
+                cls.FILE_OR_DIR_ARGNAME: {
+                    'description': "List of paths to local/cloud files or a local directory to upload.",
                     'type': "string",
                     'metavar': None,
-                    'required': False,
+                    'required': True,
                     'array': True
-                },
-                'directory': {
-                    'description': "Path to directory to upload.",
-                    'type': "string",
-                    'metavar': None,
-                    'required': False,
-                    'array': False
-                },
-                'cloud_urls': {
-                    'description': "List of cloud-hosted files to upload. Currently only supports s3 files. Files \
-                                    must have checksum tags already calculated and assigned",
-                    'type': "string",
-                    'metavar': None,
-                    'required': False,
-                    'array': True
+                    # 'files': {
+                    #     'description': "List of paths to files to upload.",
+                    #     'type': "string",
+                    #     'metavar': None,
+                    #     'required': False,
+                    #     'array': True
+                    # },
+                    # 'directory': {
+                    #     'description': "Path to directory to upload.",
+                    #     'type': "string",
+                    #     'metavar': None,
+                    #     'required': False,
+                    #     'array': False
+                    # },
+                    # 'cloud_urls': {
+                    #     'description': ("List of cloud-hosted files to upload. Currently only supports s3 files. "
+                    #                     "Files must have checksum tags already calculated and assigned."),
+                    #     'type': "string",
+                    #     'metavar': None,
+                    #     'required': False,
+                    #     'array': True
                 },
                 'staging_bucket': {  # TODO Mackey22: Check that option names are saved with snake case.
                     'description': "Bucket within replica to upload to.",
