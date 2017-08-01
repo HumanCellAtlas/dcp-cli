@@ -329,7 +329,7 @@ def _make_function_def_arglist(endpoint_info):
     non_required_ordered = map(lambda pa: (pa['argument'], pa.get('default', None)), non_required_ordered)
 
     non_required_options = [(oa, info) for (oa, info) in endpoint_info['options'].items() if not info['required']]
-    non_required_options = map(lambda (oa, info): (oa, info.get('default', None)), non_required_options)
+    non_required_options = map(lambda el: (el[0], el[1].get('default', None)), non_required_options)
 
     function_def_arglist = []
     for arglist in (required_ordered, required_options, non_required_ordered, non_required_options):
