@@ -3,10 +3,9 @@ import json
 import re
 import uuid
 
-import google.auth
-import google.auth.transport.requests
 import jsonschema
 import requests
+from google import auth
 from googleapiclient import sample_tools
 
 from .constants import Constants
@@ -222,9 +221,9 @@ class AddedCommand(object):
         # sample_tools.init([], 'oauth2', 'v1', "hca cli", "console", scope='https://www.googleapis.com/auth/userinfo.email')
 
         try:
-            credentials, project_id = google.auth.default(scopes=["https://www.googleapis.com/auth/userinfo.email"])
+            credentials, project_id = auth.default(scopes=["https://www.googleapis.com/auth/userinfo.email"])
 
-            r = google.auth.transport.requests.Request()
+            r = auth.transport.requests.Request()
             credentials.refresh(r)
             r.session.close()
 
@@ -232,7 +231,7 @@ class AddedCommand(object):
 
             return "Bearer {}".format(token)
 
-        except google.auth.exceptions.DefaultCredentialsError:
+        except auth.exceptions.DefaultCredentialsError:
             return "Bearer {}".format("no_credentials")
 
     @classmethod
