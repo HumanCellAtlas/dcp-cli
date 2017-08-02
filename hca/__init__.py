@@ -4,13 +4,17 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import json
 import requests
+import sys
+
+from .cli import CLI
 
 
 def main():
     """Entrance to functionality."""
-    # cli = API()
-    # response = cli.make_request(sys.argv[1:])
-    response = requests.get("www.example.com")
+    print("before init")
+    cli = CLI()
+    print("in init")
+    response = cli.make_request(sys.argv[1:])
     if isinstance(response, requests.Response):
         print(response.content.decode())
     else:
