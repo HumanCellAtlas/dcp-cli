@@ -290,7 +290,9 @@ class AddedCommand(object):
         split_endpoint = endpoint_name.split("-")[1]
         query_route = [split_endpoint]
         query_route.extend(cls._get_ordered_path_args(args))
-        url = cls._get_base_url() + "/" + "/".join(query_route)
+
+        base_url = args.get('api_url', cls._get_base_url())
+        url = base_url + "/" + "/".join(query_route)
 
         query_payload, body_payload, header_payload = cls._build_non_body_payloads(args)
 
