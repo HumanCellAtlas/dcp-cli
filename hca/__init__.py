@@ -6,14 +6,15 @@ import json
 import requests
 import sys
 
-# from .define_api import API
+from .cli import CLI
 
 
 def main():
     """Entrance to functionality."""
-    # cli = API()
-    # response = cli.make_request(sys.argv[1:])
-    response = requests.get("www.example.com")
+    print("before init")
+    cli = CLI()
+    print("in init")
+    response = cli.make_request(sys.argv[1:])
     if isinstance(response, requests.Response):
         print(response.content.decode())
     else:
