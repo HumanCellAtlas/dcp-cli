@@ -6,6 +6,7 @@ import uuid
 import jsonschema
 import requests
 from google import auth
+from google.auth.transport.requests import Request
 from googleapiclient import sample_tools
 
 from .constants import Constants
@@ -223,7 +224,11 @@ class AddedCommand(object):
         try:
             credentials, project_id = auth.default(scopes=["https://www.googleapis.com/auth/userinfo.email"])
 
+<<<<<<< HEAD
             r = auth.transport.requests.Request()
+=======
+            r = Request()
+>>>>>>> 6c842ef... Fix google auth request import
             credentials.refresh(r)
             r.session.close()
 
