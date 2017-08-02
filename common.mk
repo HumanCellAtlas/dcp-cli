@@ -32,7 +32,7 @@ release:
 	    if [[ -f Changes.md ]]; then cat $$TAG_MSG <(echo) Changes.md | sponge Changes.md; git add Changes.md; fi; \
 	    if [[ -f Changes.rst ]]; then cat <(pandoc --from markdown --to rst $$TAG_MSG) <(echo) Changes.rst | sponge Changes.rst; git add Changes.rst; fi; \
 	    git commit -m ${TAG}; \
-	    git tag --sign --annotate --file $$TAG_MSG ${TAG}
+	    git tag --annotate --file $$TAG_MSG ${TAG}
 	git push --follow-tags
 	http --auth ${GH_AUTH} ${RELEASES_API} tag_name=${TAG} name=${TAG} \
 	    body="$$(git tag --list ${TAG} -n99 | perl -pe 's/^\S+\s*// if $$. == 1' | sed 's/^\s\s\s\s//')"
@@ -42,6 +42,6 @@ release:
 	$(MAKE) pypi_release
 
 pypi_release:
-	python setup.py sdist bdist_wheel upload --sign
+	python setup.py sdist bdist_wheel upload
 
 .PHONY: release
