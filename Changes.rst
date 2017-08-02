@@ -1,3 +1,11 @@
+Changes for v0.7.0 (2017-08-02)
+===============================
+
+Full python binding support for all endpoints: \* bundles \* files \*
+search \* subscriptions
+
+CLI integration on top of these python bindings
+
 Changes for v0.7.3 (2017-08-01)
 ===============================
 
