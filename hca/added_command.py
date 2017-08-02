@@ -224,11 +224,7 @@ class AddedCommand(object):
         try:
             credentials, project_id = auth.default(scopes=["https://www.googleapis.com/auth/userinfo.email"])
 
-<<<<<<< HEAD
-            r = auth.transport.requests.Request()
-=======
             r = Request()
->>>>>>> 6c842ef... Fix google auth request import
             credentials.refresh(r)
             r.session.close()
 
