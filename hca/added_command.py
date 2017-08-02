@@ -4,9 +4,9 @@ import re
 import uuid
 
 import google.auth
-import google.auth.transport.requests
 import jsonschema
 import requests
+from google.auth.transport.requests import Request
 from googleapiclient import sample_tools
 
 from .constants import Constants
@@ -224,7 +224,7 @@ class AddedCommand(object):
         try:
             credentials, project_id = google.auth.default(scopes=["https://www.googleapis.com/auth/userinfo.email"])
 
-            r = google.auth.transport.requests.Request()
+            r = Request()
             credentials.refresh(r)
             r.session.close()
 
