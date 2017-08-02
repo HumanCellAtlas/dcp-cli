@@ -4,9 +4,6 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import json
 import requests
-import sys
-
-# from .define_api import API
 
 
 def main():
