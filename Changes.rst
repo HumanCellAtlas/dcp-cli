@@ -1,3 +1,8 @@
+Changes for v0.7.3 (2017-08-01)
+===============================
+
+Add kwarg to redirect to different url.
+
 Changes for v0.7.2 (2017-08-01)
 ===============================
 
