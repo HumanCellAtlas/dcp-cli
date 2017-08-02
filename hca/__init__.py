@@ -11,9 +11,7 @@ from .cli import CLI
 
 def main():
     """Entrance to functionality."""
-    print("before init")
     cli = CLI()
-    print("in init")
     response = cli.make_request(sys.argv[1:])
     if isinstance(response, requests.Response):
         print(response.content.decode())
