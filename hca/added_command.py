@@ -5,11 +5,9 @@ import uuid
 
 import jsonschema
 import requests
-from google import auth
-from google.auth.transport.requests import Request
-from googleapiclient import sample_tools
 
 from .constants import Constants
+from .oauth_flow import get_access_token
 
 
 class AddObject(argparse.Action):
@@ -215,19 +213,19 @@ class AddedCommand(object):
 
     @classmethod
     def _get_auth_header(cls, real_header=True):
-        try:
-            credentials, project_id = auth.default(scopes=["https://www.googleapis.com/auth/userinfo.email"])
+        # THIS IS EARLY AUTH VERSION - CHANGES WILL BE MADE TO THIS IN ANOTHER BRANCH
+        # ttung's popup to ask people to authenticate if they haven't already
+        # For now assume that people have to have the local gsutil authentication setup b/c I'm not convinced
+        # client_secret.json has the right setup credentials for the project. Do we definitely want the project_id
+        # associated with this?
 
-            r = Request()
-            credentials.refresh(r)
-            r.session.close()
+        access_token_wrapper = get_access_token(
+            "oauth2",
+            "console",
+            scope="https://www.googleapis.com/auth/userinfo.email")
 
-            token = credentials.token if real_header else str(uuid.uuid4())
-
-            return "Bearer {}".format(token)
-
-        except auth.exceptions.DefaultCredentialsError:
-            return "Bearer {}".format("no_credentials")
+        token = access_token_wrapper.access_token if real_header else str(uuid.uuid4())
+        return "Bearer {}".format(token)
 
     @classmethod
     def _build_non_body_payloads(cls, namespace):
@@ -252,7 +250,8 @@ class AddedCommand(object):
                 try:
                     jsonschema.validate(arg, endpoint_info['body_params'][arg_name])
                 except jsonschema.ValidationError as e:
-                    raise ValueError("Argument {} has an invalid input type.".format(arg_name), e)
+                    print(e)
+                    raise ValueError("Argument {} has an invalid input type.".format(arg_name))
 
                 # If it does, set the payload to the given input.
                 body_payload[arg_name] = arg
