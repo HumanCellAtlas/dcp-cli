@@ -5,11 +5,9 @@ import uuid
 
 import jsonschema
 import requests
-from google import auth
-from google.auth.transport.requests import Request
-from googleapiclient import sample_tools
 
 from .constants import Constants
+from .oauth_flow import get_access_token
 
 
 class AddObject(argparse.Action):
@@ -219,21 +217,14 @@ class AddedCommand(object):
         # For now assume that people have to have the local gsutil authentication setup b/c I'm not convinced
         # client_secret.json has the right setup credentials for the project. Do we definitely want the project_id
         # associated with this?
-        # sample_tools.init([], 'oauth2', 'v1', "hca cli", "console", scope='https://www.googleapis.com/auth/userinfo.email')
 
-        try:
-            credentials, project_id = auth.default(scopes=["https://www.googleapis.com/auth/userinfo.email"])
+        access_token_wrapper = get_access_token(
+            "oauth2",
+            "console",
+            scope="https://www.googleapis.com/auth/userinfo.email")
 
-            r = Request()
-            credentials.refresh(r)
-            r.session.close()
-
-            token = credentials.token if real_header else str(uuid.uuid4())
-
-            return "Bearer {}".format(token)
-
-        except auth.exceptions.DefaultCredentialsError:
-            return "Bearer {}".format("no_credentials")
+        token = access_token_wrapper.access_token if real_header else str(uuid.uuid4())
+        return "Bearer {}".format(token)
 
     @classmethod
     def _build_non_body_payloads(cls, namespace):
