@@ -6,12 +6,19 @@ python:
 - 3.5
 - 3.6
 before_install:
+- mkdir -p ~/.config/hca
 - openssl aes-256-cbc -K $encrypted_266b385b8e6e_key -iv $encrypted_266b385b8e6e_iv
-  -in travis-gcp-service-account-credentials.json.enc -out travis-gcp-service-account-credentials.json
+  -in travis-gcp-service-account-credentials.json.enc -out ~/.config/hca/oauth2.json
   -d
 - pip install --quiet coverage flake8 pyyaml
 install:
 - make install
+- gcloud version || true
+- if [ ! -d "$HOME/google-cloud-sdk/bin" ]; then rm -rf $HOME/google-cloud-sdk; export CLOUDSDK_CORE_DISABLE_PROMPTS=1; curl https://sdk.cloud.google.com | bash; fi
+# Add gcloud to $PATH
+- source /home/travis/google-cloud-sdk/path.bash.inc
+- gcloud version
+- gcloud auth activate-service-account dss-cli-travis-dev@human-cell-atlas-travis-test.iam.gserviceaccount.com --key-file ~/.config/hca/oauth2.json
 script:
 - make test
 after_success:
