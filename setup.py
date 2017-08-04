@@ -23,6 +23,7 @@ setup(
         "boto3==1.4.4",
         "google-auth==1.0.1",
         "google-api-python-client==1.6.2",
+        "oauth2client==4.1.2",
         "crcmod==1.7"
     ],
     extras_require={
