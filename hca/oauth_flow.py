@@ -1,11 +1,11 @@
-"""Utility for making samples. 
+"""Utility for making samples.
 
 Modified from https://github.com/google/google-api-python-client/blob/master/googleapiclient/sample_tools.py
 
-Key modifications: 
+Key modifications:
 
 1. Check if os.isatty() before launching browser.
-2. Only launch browser if Credentials is none - otherwise, try to refresh token. 
+2. Only launch browser if Credentials is none - otherwise, try to refresh token.
 """
 from __future__ import absolute_import
 
