@@ -1,5 +1,6 @@
 import argparse
 import json
+import os
 import re
 import uuid
 
@@ -213,14 +214,13 @@ class AddedCommand(object):
 
     @classmethod
     def _get_auth_header(cls, real_header=True):
-        # ttung's popup to ask people to authenticate if they haven't already
-        # For now assume that people have to have the local gsutil authentication setup b/c I'm not convinced
-        # client_secret.json has the right setup credentials for the project. Do we definitely want the project_id
-        # associated with this?
+        credentials_path = os.path.join(os.path.expanduser("~"), ".config", "hca")
+        if not os.path.isdir(credentials_path):
+            os.makedirs(credentials_path)
 
         access_token_wrapper = get_access_token(
-            "oauth2",
-            "console",
+            os.path.join(credentials_path, "oauth2.json"),
+            __file__,
             scope="https://www.googleapis.com/auth/userinfo.email")
 
         token = access_token_wrapper.access_token if real_header else str(uuid.uuid4())
