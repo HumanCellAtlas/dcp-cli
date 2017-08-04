@@ -1,7 +1,5 @@
 language: python
 cache: pip
-  directories:
-    - "$HOME/google-cloud-sdk/"
 python:
 - 2.7
 - 3.4
