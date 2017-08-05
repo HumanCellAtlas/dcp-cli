@@ -1,3 +1,9 @@
+Changes for v0.9.1 (2017-08-04)
+===============================
+
+Fix auto-path set Set config to ~/.config/hca/oauth2.json Reconfigure
+auth to include sign-in pop-up if in a teletype
+
 Changes for v0.9.0 (2017-08-02)
 ===============================
 
