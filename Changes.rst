@@ -1,3 +1,11 @@
+Changes for v0.9.3 (2017-08-04)
+===============================
+
+Removing popup capability to release functioning package.
+
+Popups weren't working because client\_secrets.json is required and
+wasn't being published with the package.
+
 Changes for v0.9.2 (2017-08-04)
 ===============================
 
