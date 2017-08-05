@@ -38,12 +38,12 @@ def get_access_token(path_to_credentials_file, client_secrets_directory, scope):
         A tuple of (service, flags), where service is the service object and flags
         is the parsed command-line flags.
     """
-    parent_parsers = [tools.argparser]
-    parser = argparse.ArgumentParser(
-        description="hca cli",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        parents=parent_parsers
-    )
+    # parent_parsers = [tools.argparser]
+    # parser = argparse.ArgumentParser(
+    #     description="hca cli",
+    #     formatter_class=argparse.RawDescriptionHelpFormatter,
+    #     parents=parent_parsers
+    # )
     # flags = parser.parse_args([])
 
     # Name of a file containing the OAuth 2.0 information for this
