@@ -317,6 +317,8 @@ class TestHCACLI(unittest.TestCase):
     def test_python_subscriptions(self):
         query = {'bool': {}}
         resp = api.put_subscriptions(query, "www.example.com", "aws")
+        print(resp.json())
+        print(resp)
         subscription_uuid = resp.json()['uuid']
 
         self.assertEqual(201, resp.status_code)
