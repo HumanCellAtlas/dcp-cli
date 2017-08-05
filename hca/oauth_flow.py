@@ -38,20 +38,20 @@ def get_access_token(path_to_credentials_file, client_secrets_directory, scope):
         A tuple of (service, flags), where service is the service object and flags
         is the parsed command-line flags.
     """
-    parent_parsers = [tools.argparser]
-    parser = argparse.ArgumentParser(
-        description="hca cli",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        parents=parent_parsers
-    )
-    flags = parser.parse_args([])
+    # parent_parsers = [tools.argparser]
+    # parser = argparse.ArgumentParser(
+    #     description="hca cli",
+    #     formatter_class=argparse.RawDescriptionHelpFormatter,
+    #     parents=parent_parsers
+    # )
+    # flags = parser.parse_args([])
 
-    # Name of a file containing the OAuth 2.0 information for this
-    # application, including client_id and client_secret, which are found
-    # on the API Access tab on the Google APIs
-    # Console <http://code.google.com/apis/console>.
-    client_secrets = os.path.join(os.path.dirname(client_secrets_directory),
-                                  'client_secrets.json')
+    # # Name of a file containing the OAuth 2.0 information for this
+    # # application, including client_id and client_secret, which are found
+    # # on the API Access tab on the Google APIs
+    # # Console <http://code.google.com/apis/console>.
+    # client_secrets = os.path.join(os.path.dirname(client_secrets_directory),
+    #                               'client_secrets.json')
 
     # Prepare credentials, and authorize HTTP object with them.
     # If the credentials don't exist or are invalid run through the native client
@@ -65,24 +65,24 @@ def get_access_token(path_to_credentials_file, client_secrets_directory, scope):
     if not credentials:
         # HAS_JOSH_K_SEAL_OF_APPROVAL is an environment variable set in travis
         # that's very unique. Travis is a tty but should not expect an internet popup.
-        if sys.stdin.isatty() and 'HAS_JOSH_K_SEAL_OF_APPROVAL' not in os.environ:
-            # Set up a Flow object that will bring people to a browser to authenticate.
-            flow = client.flow_from_clientsecrets(client_secrets,
-                                                  scope=scope,
-                                                  message=tools.message_if_missing(client_secrets))
-            credentials = tools.run_flow(flow, storage, flags)
-        else:
-            try:
-                credentials = client.GoogleCredentials.get_application_default()
-                credentials.scopes = set([scope])
+        # if sys.stdin.isatty() and 'HAS_JOSH_K_SEAL_OF_APPROVAL' not in os.environ:
+        #     # Set up a Flow object that will bring people to a browser to authenticate.
+        #     flow = client.flow_from_clientsecrets(client_secrets,
+        #                                           scope=scope,
+        #                                           message=tools.message_if_missing(client_secrets))
+        #     credentials = tools.run_flow(flow, storage, flags)
+        # else:
+        try:
+            credentials = client.GoogleCredentials.get_application_default()
+            credentials.scopes = set([scope])
 
-                storage.put(credentials)
-                credentials.set_store(storage)
+            storage.put(credentials)
+            credentials.set_store(storage)
 
-            except client.ApplicationDefaultCredentialsError:
-                raise client.ApplicationDefaultCredentialsError(
-                    "Store JSON-formatted oauth2client.client.OAuth2Credentials in {}."
-                    .format(path_to_credentials_file)
-                )
+        except client.ApplicationDefaultCredentialsError:
+            raise client.ApplicationDefaultCredentialsError(
+                "Store JSON-formatted oauth2client.client.OAuth2Credentials in {}."
+                .format(path_to_credentials_file)
+            )
 
     return credentials.get_access_token()
