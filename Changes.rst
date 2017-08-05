@@ -1,3 +1,8 @@
+Changes for v0.9.2 (2017-08-04)
+===============================
+
+Add client\_secrets.json to MANIFEST directory.
+
 Changes for v0.9.1 (2017-08-04)
 ===============================
 
