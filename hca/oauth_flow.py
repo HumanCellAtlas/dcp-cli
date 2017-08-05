@@ -14,9 +14,7 @@ import os
 import sys
 from io import open
 
-from oauth2client import client
-from oauth2client import file
-from oauth2client import tools
+import oauth2client
 
 
 def get_access_token(path_to_credentials_file, client_secrets_directory, scope):
@@ -57,15 +55,24 @@ def get_access_token(path_to_credentials_file, client_secrets_directory, scope):
     # If the credentials don't exist or are invalid run through the native client
     # flow. The Storage object will ensure that if successful the good
     # credentials will get written back to a file.
+
+    # if "HCA_ACCESS_TOKEN" in os.environ:
+    #     return os.environ["HCA_ACCESS_TOKEN"]
+    # if os.path.exists("config file"):
+    #     return oauth2client.client.load("config_file").get_access_token()
+    # if sys.stdin.isatty():
+    #     run consent dialog
+    # raise Exception("unable to get credentials for API method that requires authentication")
+
     if not os.path.isfile(path_to_credentials_file):
         open(path_to_credentials_file, 'a').close()
-    storage = file.Storage(path_to_credentials_file)
+    storage = oauth2client.file.Storage(path_to_credentials_file)
     credentials = storage.get()
 
     if not credentials:
-        # HAS_JOSH_K_SEAL_OF_APPROVAL is an environment variable set in travis
+        # TRAVIS is an environment variable set in travis
         # that's very unique. Travis is a tty but should not expect an internet popup.
-        # if sys.stdin.isatty() and 'HAS_JOSH_K_SEAL_OF_APPROVAL' not in os.environ:
+        # if sys.stdin.isatty() and 'TRAVIS' not in os.environ:
         #     # Set up a Flow object that will bring people to a browser to authenticate.
         #     flow = client.flow_from_clientsecrets(client_secrets,
         #                                           scope=scope,
@@ -73,14 +80,14 @@ def get_access_token(path_to_credentials_file, client_secrets_directory, scope):
         #     credentials = tools.run_flow(flow, storage, flags)
         # else:
         try:
-            credentials = client.GoogleCredentials.get_application_default()
+            credentials = oauth2client.client.GoogleCredentials.get_application_default()
             credentials.scopes = set([scope])
 
             storage.put(credentials)
             credentials.set_store(storage)
 
-        except client.ApplicationDefaultCredentialsError:
-            raise client.ApplicationDefaultCredentialsError(
+        except oauth2client.client.ApplicationDefaultCredentialsError:
+            raise oauth2client.client.ApplicationDefaultCredentialsError(
                 "Store JSON-formatted oauth2client.client.OAuth2Credentials in {}."
                 .format(path_to_credentials_file)
             )
