@@ -15,7 +15,11 @@ from ...added_command import AddedCommand
 
 
 class Upload(AddedCommand):
-    """Functions needed to fully add this functionality to the command line parser."""
+    """
+    Functions needed to fully add this functionality to the command line parser.
+
+    This is functional at the moment but not the best ux. Will refactor that in a later diff.
+    """
 
     FILE_OR_DIR_ARGNAME = "file_or_dir"
     CREATOR_ID_ENVIRONMENT_VARIABLE = "creator_uid"
