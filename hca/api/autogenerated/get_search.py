@@ -14,4 +14,4 @@ class GetSearch(AddedCommand):
 
     @classmethod
     def _get_endpoint_info(cls):
-        return {u'positional': [], u'seen': False, u'options': {u'query': {u'hierarchy': [u'query'], u'in': u'query', u'description': u'Metadata query', u'required_for': [u'/search'], u'format': None, u'pattern': None, u'array': False, u'required': True, u'type': u'string', u'metavar': None}}, u'description': u'Returns a list of bundles matching the given simple criteria\n'}
+        return {'seen': False, 'body_params': {}, 'positional': [], 'options': {'query': {'array': False, 'required': True, 'required_for': ['/search'], 'description': 'Metadata query', 'type': 'string', 'format': None, 'pattern': None, 'metavar': None, 'in': 'query', 'hierarchy': ['query']}}, 'description': 'Returns a list of bundles matching the given simple criteria\n'}
