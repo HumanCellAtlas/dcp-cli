@@ -15,11 +15,14 @@ pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.insert(0, pkg_root)
 
 import hca
-from hca import api
+import hca.regenerate_api
 
 
 class TestHCACLI(unittest.TestCase):
     """Test the entire module."""
+
+    def setUp(self):
+        hca.regenerate_api.generate_python_bindings()
 
     def test_make_name(self):
         """Test make_name in parser.py."""
@@ -259,7 +262,7 @@ class TestHCACLI(unittest.TestCase):
         pass
 
     def test_python_bindings(self):
-        # hca.regenerate_api.generate_python_bindings()
+        from hca import api
         cli = hca.define_api.API()
 
         bundle_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "bundle")
