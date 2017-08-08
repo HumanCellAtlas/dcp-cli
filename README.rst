@@ -6,6 +6,10 @@ This repository contains a prototype for interacting with the replicated Data St
 This prototype uses a local version of the DSS API spec (using Swagger) to generate a command 
 line client that will make requests to the DSS. Please run :code:`hca --help` to see an overview of available commands.
 
+Code Generation
+---------------
+These python bindings have to be regenerated to reflect any api changes. To regenerate these, run `make bindings.` Only package maintainers should run this command and publish new package versions.
+
 Installation
 ------------
 To install this package, run :code:`pip install hca-cli`. This will automatically hook up with the api 
