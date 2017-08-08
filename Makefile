@@ -17,6 +17,7 @@ init_docs:
 	cd docs; sphinx-quickstart
 
 bindings:
+	source environment
 	python -m hca.regenerate_api
 
 docs:
