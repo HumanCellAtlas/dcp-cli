@@ -233,21 +233,25 @@ class TestHCACLI(unittest.TestCase):
         self.assertEqual(out, parsed_args)
 
     def test_upload_to_cloud_from_s3(self):
-        uuids, names = hca.upload_to_cloud.upload_to_cloud(
-            ["s3://hca-dss-test-src/data-bundles-examples/import/10x/pbmc8k/bundles/bundle1/"],
-            "pointless-staging-bucket",
-            "aws",
-            True
-        )
-        out = [
-            "data-bundles-examples/import/10x/pbmc8k/bundles/bundle1/assay.json",
-            "data-bundles-examples/import/10x/pbmc8k/bundles/bundle1/project.json",
-            "data-bundles-examples/import/10x/pbmc8k/bundles/bundle1/sample.json"
-        ]
-        self.assertEqual(len(uuids), len(names))
-        assert_list_items_equal = (self.assertCountEqual if six.PY3
-                                   else self.assertItemsEqual)
-        assert_list_items_equal(names, out)
+        # Removing this test b/c that bundle no longer in place. Need to set up a consistent test bundle to upload
+        pass
+        # uuids, names = hca.upload_to_cloud.upload_to_cloud(
+        #     ["s3://hca-dss-test-src/data-bundles-examples/import/10x/pbmc8k/bundles/bundle1/"],
+        #     "pointless-staging-bucket",
+        #     "aws",
+        #     True
+        # )
+        # out = [
+        #     "data-bundles-examples/import/10x/pbmc8k/bundles/bundle1/assay.json",
+        #     "data-bundles-examples/import/10x/pbmc8k/bundles/bundle1/project.json",
+        #     "data-bundles-examples/import/10x/pbmc8k/bundles/bundle1/sample.json"
+        # ]
+        # self.assertEqual(len(uuids), len(names))
+        # print(uuids)
+        # print(names)
+        # assert_list_items_equal = (self.assertCountEqual if six.PY3
+        #                            else self.assertItemsEqual)
+        # assert_list_items_equal(names, out)
 
     def test_upload_files(self):
         pass

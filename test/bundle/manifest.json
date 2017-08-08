@@ -1,0 +1,14 @@
+{
+    "version": "1",
+    "dir": "s3://hca-dss-test-src/data-bundle-example/",
+    "files": [
+        {
+            "format": ".fastq.gz", 
+            "name": "SRR2967608_1.fastq.gz"
+        }, 
+        {
+            "format": ".fastq.gz", 
+            "name": "SRR2967608_2.fastq.gz"
+        }
+   ]
+}
