@@ -6,11 +6,10 @@ import json
 import requests
 import sys
 
-from .cli import CLI
-
 
 def main():
     """Entrance to functionality."""
+    from .cli import CLI
     cli = CLI()
     response = cli.make_request(sys.argv[1:])
     if isinstance(response, requests.Response):
