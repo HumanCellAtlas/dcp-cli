@@ -10,6 +10,7 @@ import sys
 import unittest
 import uuid
 import pprint
+from importlib import reload
 
 import six
 
@@ -17,11 +18,14 @@ pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.insert(0, pkg_root)
 
 import hca
-from hca import api
+import hca.regenerate_api
 
 
 class TestHCACLI(unittest.TestCase):
     """Test the entire module."""
+
+    def setUp(self):
+        hca.regenerate_api.generate_python_bindings()
 
     # def test_make_name(self):
     #     """Test make_name in parser.py."""
@@ -259,6 +263,9 @@ class TestHCACLI(unittest.TestCase):
         pass
 
     def test_python_upload_download(self):
+        from hca import api
+        api = reload(api)
+
         dirpath = os.path.dirname(os.path.realpath(__file__))
         bundle_path = os.path.join(dirpath, "bundle")
 
@@ -281,6 +288,9 @@ class TestHCACLI(unittest.TestCase):
             shutil.rmtree(downloaded_path)
 
     def test_python_bindings(self):
+        from hca import api
+        api = reload(api)
+
         dirpath = os.path.dirname(os.path.realpath(__file__))
         bundle_path = os.path.join(dirpath, "bundle")
         staging_bucket = "org-humancellatlas-dss-cli-test"
@@ -318,8 +328,11 @@ class TestHCACLI(unittest.TestCase):
         self.assertTrue(resp.ok)
 
     def test_python_subscriptions(self):
+        from hca import api
+        api = reload(api)
+
         query = {'bool': {}}
-        resp = api.put_subscriptions(query, "www.example.com", "aws")
+        resp = api.put_subscriptions(query=query, callback_url="www.example.com", replica="aws")
         subscription_uuid = resp.json()['uuid']
 
         self.assertEqual(201, resp.status_code)

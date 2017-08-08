@@ -11,6 +11,7 @@ hca/api_spec.json:
 
 test: lint
 	pip install six coverage
+	source environment
 	coverage run --source=$$(python setup.py --name) ./test/test.py
 
 init_docs:
