@@ -65,7 +65,7 @@ class AddedCommand(object):
             subparser.add_argument(
                 positional_arg['argument'],
                 nargs=None if positional_arg['required'] else "?",
-                help=endpoint_info['description'],
+                help=positional_arg['description'],
                 type=argtype
             )
 
@@ -83,7 +83,7 @@ class AddedCommand(object):
                 metavar=optional_data['metavar'],
                 required=optional_data['required'],
                 nargs="+" if optional_data['array'] else None,
-                help=endpoint_info['description'],
+                help=optional_data['description'],
                 type=argtype,
                 action=actiontype
             )
