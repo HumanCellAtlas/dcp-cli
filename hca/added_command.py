@@ -1,10 +1,15 @@
 import argparse
 import json
+import os
 import re
 import uuid
 
+import httplib2
 import jsonschema
+import oauth2client
+import oauth2client.client
 import requests
+from tweak import Config
 
 from .constants import Constants
 from .oauth_flow import get_access_token
@@ -63,14 +68,14 @@ class AddedCommand(object):
             subparser.add_argument(
                 positional_arg['argument'],
                 nargs=None if positional_arg['required'] else "?",
-                help=positional_arg['description'],
+                help=endpoint_info['description'],
                 type=argtype
             )
 
     @classmethod
     def _add_optional_args(cls, subparser):
         endpoint_info = cls._get_endpoint_info()
-        for optional_name, optional_data in endpoint_info.get('options', {}).items():
+        for (optional_name, optional_data) in endpoint_info.get('options', {}).items():
             argtype = cls._get_arg_type(optional_data['type'])
             actiontype = cls._get_action(optional_data['type'])
 
@@ -81,7 +86,7 @@ class AddedCommand(object):
                 metavar=optional_data['metavar'],
                 required=optional_data['required'],
                 nargs="+" if optional_data['array'] else None,
-                help=optional_data['description'],
+                help=endpoint_info['description'],
                 type=argtype,
                 action=actiontype
             )
@@ -212,20 +217,62 @@ class AddedCommand(object):
         return body_payload
 
     @classmethod
-    def _get_auth_header(cls, real_header=True):
-        # THIS IS EARLY AUTH VERSION - CHANGES WILL BE MADE TO THIS IN ANOTHER BRANCH
-        # ttung's popup to ask people to authenticate if they haven't already
-        # For now assume that people have to have the local gsutil authentication setup b/c I'm not convinced
-        # client_secret.json has the right setup credentials for the project. Do we definitely want the project_id
-        # associated with this?
+    def _get_auth_header(cls, args, retry=False):
+        """
+        Get the full authentication header.
 
-        access_token_wrapper = get_access_token(
-            "oauth2",
-            "console",
-            scope="https://www.googleapis.com/auth/userinfo.email")
+        :param args: Dict of arguments for any given function.
+        :param retry: Boolean indicating if this is the second time trying to authenticate. If so, refresh token.
+        """
+        token = cls._get_access_token(args, retry)
+        return {'Authorization': "Bearer {}".format(token)}
 
-        token = access_token_wrapper.access_token if real_header else str(uuid.uuid4())
-        return "Bearer {}".format(token)
+    @classmethod
+    def _get_access_token(cls, args, retry):
+        config = Config(Constants.TWEAK_PROJECT_NAME)
+        if 'access_token' in args:
+            if retry:
+                raise ValueError("The access token you've supplied in the kwargs is not valid."
+                                 " Please refresh and try again. You may also run `hca login`"
+                                 " to get a more permanent hca configuration.")
+            else:
+                return args['access_token']
+        elif 'HCA_ACCESS_TOKEN' in os.environ:
+            if retry:
+                raise ValueError("Environment variable $HCA_ACCESS_TOKEN is not valid."
+                                 " Please refresh and try again. You may also delete"
+                                 " $HCA_ACCESS_TOKEN and run `hca login`"
+                                 " to get a more permanent hca configuration.")
+            else:
+                return os.environ['HCA_ACCESS_TOKEN']
+        elif 'access_token' in config:
+            # There is a refresh token
+            if retry and config.get('refresh_token', None):
+                credentials = oauth2client.client.OAuth2Credentials(
+                    access_token=None,
+                    client_id=config.client_id,
+                    client_secret=config.client_secret,
+                    scopes=["https://www.googleapis.com/auth/userinfo.email"],
+                    refresh_token=config.refresh_token,
+                    token_expiry=None,
+                    token_uri=config.token_uri,
+                    token_id=None,
+                    user_agent=None,
+                    revoke_uri=None
+                )
+                credentials.refresh(httplib2.Http())
+
+                config.access_token = credentials.access_token
+                return credentials.access_token
+            # No refresh token
+            elif retry:
+                raise ValueError("The access_token in your config file is invalid"
+                                 " and there is no refresh_token to refresh it."
+                                 " You may run `hca login` to easily reset your"
+                                 " hca configuration.")
+            # First attempt
+            else:
+                return config.access_token
 
     @classmethod
     def _build_non_body_payloads(cls, namespace):

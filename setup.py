@@ -24,6 +24,7 @@ setup(
         "google-auth==1.0.1",
         "google-api-python-client==1.6.2",
         "oauth2client==4.1.2",
+        "tweak==0.5.1",
         "crcmod==1.7"
     ],
     extras_require={
