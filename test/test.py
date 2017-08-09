@@ -266,9 +266,10 @@ class TestHCACLI(unittest.TestCase):
         cli = hca.define_api.API()
 
         bundle_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "bundle")
+        staging_bucket = "org-humancellatlas-dss-cli-test"
         namespace = {'file_or_dir': [bundle_path],
                      'replica': "aws",
-                     'staging_bucket': "org-humancellatlas-dss-test-jmackey"}
+                     'staging_bucket': staging_bucket}
         bundle_output = hca.full_upload.FullUpload.run(namespace, cli)
 
         # Test get-files and head-files
@@ -285,7 +286,7 @@ class TestHCACLI(unittest.TestCase):
         # Test put-files
         file_uuid = str(uuid.uuid4())
         bundle_uuid = str(uuid.uuid4())
-        source_url = "s3://org-humancellatlas-dss-test-jmackey/{}/{}".format(file_['uuid'], file_['name'])
+        source_url = "s3://{}/{}/{}".format(staging_bucket, file_['uuid'], file_['name'])
         self.assertTrue(api.put_files(file_uuid, creator_uid=1, bundle_uuid=bundle_uuid, source_url=source_url).ok)
 
         # Test put-bundles
