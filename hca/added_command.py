@@ -265,7 +265,6 @@ class AddedCommand(object):
             if i < len(args) and args[i] is not None:
                 query_route.append(args[i])
 
-        # for i in range(num_positionals, len(args))
         optionals = {}
         i = num_positionals
         # Not using enumerate because I'm not sure it keeps order consistent when iterating.
