@@ -7,6 +7,7 @@ python:
 - 3.6
 before_install:
 - pip install --quiet coverage flake8 pyyaml
+- source environment
 install:
 - make install
 script:
