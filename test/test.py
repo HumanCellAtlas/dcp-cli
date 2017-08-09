@@ -10,7 +10,7 @@ import sys
 import unittest
 import uuid
 import pprint
-from importlib import reload
+from six.moves import reload_module
 
 import six
 
@@ -264,7 +264,7 @@ class TestHCACLI(unittest.TestCase):
 
     def test_python_upload_download(self):
         from hca import api
-        api = reload(api)
+        api = reload_module(api)
 
         dirpath = os.path.dirname(os.path.realpath(__file__))
         bundle_path = os.path.join(dirpath, "bundle")
@@ -289,7 +289,7 @@ class TestHCACLI(unittest.TestCase):
 
     def test_python_bindings(self):
         from hca import api
-        api = reload(api)
+        api = reload_module(api)
 
         dirpath = os.path.dirname(os.path.realpath(__file__))
         bundle_path = os.path.join(dirpath, "bundle")
@@ -329,7 +329,7 @@ class TestHCACLI(unittest.TestCase):
 
     def test_python_subscriptions(self):
         from hca import api
-        api = reload(api)
+        api = reload_module(api)
 
         query = {'bool': {}}
         resp = api.put_subscriptions(query=query, callback_url="www.example.com", replica="aws")
