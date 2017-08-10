@@ -143,7 +143,7 @@ class Login(AddedCommand):
 
         print('Authentication successful.')
 
-        return credential
+        return json.loads(credential.to_json())
 
     @classmethod
     def run_cli(cls, args):
@@ -153,11 +153,16 @@ class Login(AddedCommand):
     @classmethod
     def run(cls, args):
         """Download a bundle or file from the blue box to local."""
-        config = Config(Constants.TWEAK_PROJECT_NAME)
+        client_secrets = requests.get("https://hca-dss.czi.technology/internal/application_secrets").json()
 
-        if args.get('access_token', None) or args.get('refresh_token', None):
-            config.access_token = args.get('access_token', "placeholder")
-            config.refresh_token = args.get('refresh_token', "placeholder")
+        config = Config(Constants.TWEAK_PROJECT_NAME)
+        config.client_id = client_secrets['installed']['client_id']
+        config.client_secret = client_secrets['installed']['client_secret']
+        config.token_uri = client_secrets['installed']['token_uri']
+
+        if 'access_token' in args or 'refresh_token' in args:
+            config.access_token = args.get('access_token', None)
+            config.refresh_token = args.get('refresh_token', None)
 
         elif sys.stdin.isatty():
             home_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
@@ -165,7 +170,6 @@ class Login(AddedCommand):
 
             # flow_from_clientsecrets requires a file path.
             with open(client_secrets_file_path, "w") as cs:
-                client_secrets = requests.get("https://hca-dss.czi.technology/internal/application_secrets").json()
                 cs.write(json.dumps(client_secrets))
 
             credential = cls._get_credential_from_popup(client_secrets_file_path)
@@ -174,8 +178,7 @@ class Login(AddedCommand):
             if os.path.exists(client_secrets_file_path):
                 os.remove(client_secrets_file_path)
 
-            credential_json = json.loads(credential.to_json())
-            config.access_token = credential_json['access_token']
-            config.refresh_token = credential_json['refresh_token']
+            config.access_token = credential['access_token']
+            config.refresh_token = credential['refresh_token']
 
         return {'hello': "world"}

@@ -311,7 +311,6 @@ class AddedCommand(object):
             if payload_format == "header":
                 cls._add_arg(arg, header_payload, hierarchy)
 
-        header_payload['Authorization'] = cls._get_auth_header()
         return query_payload, body_payload, header_payload
 
     @classmethod
@@ -340,23 +339,29 @@ class AddedCommand(object):
         json_methods = ["post", "put", "patch"]
         method = endpoint_name[:endpoint_name.find("-")]
 
-        if method in param_methods:
-            request = requests.request(
-                method,
-                url,
-                params=query_payload,
-                headers=header_payload,
-                stream=args.get('stream', False)
-            )
-        elif method in json_methods:
-            request = requests.request(
-                method,
-                url,
-                json=body_payload,
-                params=query_payload,
-                headers=header_payload,
-                stream=args.get('stream', False)
-            )
-        else:
+        if method not in json_methods and method not in param_methods:
             raise ValueError("Bad request type")
-        return request
+
+        request_args = {
+            'method': method,
+            'url': url,
+            'params': query_payload,
+            'headers': header_payload,
+            'json': body_payload if method in json_methods else None,
+            'stream': args.get('stream', False)
+        }
+
+        requires_auth = True  # cls._get_endpoint_info()['requires_authentication']
+
+        if requires_auth:
+            header_payload.update(cls._get_auth_header(args))
+
+        response = requests.request(**request_args)
+
+        # Maybe auth didn't work. Refresh token and try again.
+        if response.status_code == 401 and requires_auth:
+            header_payload.update(cls._get_auth_header(args, True))
+
+        response = requests.request(**request_args)
+
+        return response
