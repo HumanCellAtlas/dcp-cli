@@ -68,6 +68,9 @@ class FullUpload:
                 files_to_upload.append(open(path, "rb"))
 
         file_uuids, uploaded_keys = upload_to_cloud(files_to_upload, staging_bucket, args['replica'], from_cloud)
+        # Close file handles in files_to_upload. s3 paths are strings, so don't count those.
+        for file_handle in filter(lambda x: not isinstance(x, str), files_to_upload):
+            file_handle.close()
         filenames = list(map(os.path.basename, uploaded_keys))
 
         # Print to stderr, upload the files to s3 and return a list of tuples: (filename, filekey)
