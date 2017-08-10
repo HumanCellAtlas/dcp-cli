@@ -276,7 +276,7 @@ class TestHCACLI(unittest.TestCase):
         file_ = bundle_output['files'][0]
         self.assertTrue(api.get_files().ok)
         self.assertTrue(api.get_files(file_['uuid'], replica="aws").ok)
-        # self.assertTrue(api.head_files(file_['uuid']).ok)  # Think api service might not be operating for head_files
+        self.assertTrue(api.head_files(file_['uuid']).ok)
 
         # Test get-bundles
         bundle_uuid = bundle_output['bundle_uuid']

@@ -54,12 +54,12 @@ def _copy_from_s3(path, s3, tx_cfg):
     return file_uuids, key_names
 
 
-def upload_to_cloud(files, staging_bucket, replica, from_cloud=False):
+def upload_to_cloud(file_handles, staging_bucket, replica, from_cloud=False):
     """
     Upload files to cloud.
 
-    :param files: If from_cloud, files is a aws s3 directory path to files with appropriate metadata uploaded.
-                  Else, a list of binary files to upload.
+    :param file_handles: If from_cloud, file_handles is a aws s3 directory path to files with appropriate
+                         metadata uploaded. Else, a list of binary file_handles to upload.
     :param staging_bucket: The aws bucket to upload the files to.
     :param replica: The cloud replica to write to. One of 'aws', 'gc', or 'azure'. No functionality now.
     :return: a list of each file's unique key name.
@@ -71,11 +71,11 @@ def upload_to_cloud(files, staging_bucket, replica, from_cloud=False):
     key_names = []
 
     if from_cloud:
-        file_uuids, key_names = _copy_from_s3(files[0], s3, tx_cfg)
+        file_uuids, key_names = _copy_from_s3(file_handles[0], s3, tx_cfg)
 
     else:
         destination_bucket = s3.Bucket(staging_bucket)
-        for raw_fh in files:
+        for raw_fh in file_handles:
             with ChecksummingBufferedReader(raw_fh) as fh:
                 file_uuid = str(uuid.uuid4())
                 key_name = "{}/{}".format(file_uuid, os.path.basename(fh.raw.name))
