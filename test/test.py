@@ -291,7 +291,7 @@ class TestHCACLI(unittest.TestCase):
 
         namespace = {'file_or_dir': [bundle_path],
                      'replica': "aws",
-                     'staging_bucket': "org-humancellatlas-dss-test-jmackey"}
+                     'staging_bucket': "org-humancellatlas-dss-cli-test"}
 
         bundle_output = api.upload(**namespace)
 
@@ -315,7 +315,7 @@ class TestHCACLI(unittest.TestCase):
         staging_bucket = "org-humancellatlas-dss-cli-test"
         namespace = {'file_or_dir': [bundle_path],
                      'replica': "aws",
-                     'staging_bucket': "org-humancellatlas-dss-test-jmackey"}
+                     'staging_bucket': "org-humancellatlas-dss-cli-test"}
 
         bundle_output = api.upload(**namespace)
 
