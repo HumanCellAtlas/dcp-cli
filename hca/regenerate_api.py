@@ -431,7 +431,6 @@ def generate_python_bindings(test_api_path=None):
     _write_jinja_file(template_file, function_payload, autogen_for_abstractions_path)
 
     # Loop through all abstractions files and add their command to python bindings
-    abstraction_class_names = os.getenv("ABSTRACTIONS").split()
     function_payload = {'classes': []}
     # Don't want to add imports in the middle of the file, which is what would happen if we appended
     # the full functions template to this. Instead, add these imports to a list and we'll
@@ -449,7 +448,7 @@ def generate_python_bindings(test_api_path=None):
         clsmembers = inspect.getmembers(module, inspect.isclass)
 
         for class_name, class_obj in clsmembers:
-            if class_name not in abstraction_class_names:
+            if class_name not in Constants.composite_commands_class_names:
                 continue
 
             endpoint_info = class_obj._get_endpoint_info()
