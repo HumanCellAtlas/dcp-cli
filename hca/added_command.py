@@ -1,8 +1,8 @@
 import argparse
 import json
+import logging
 import os
 import re
-import uuid
 import warnings
 
 import httplib2
@@ -232,22 +232,29 @@ class AddedCommand(object):
         config = Config(Constants.TWEAK_PROJECT_NAME)
         if 'access_token' in args:
             if retry:
+                logging.info("Access token taken from kwargs invalid.")
                 raise ValueError("The access token you've supplied in the kwargs is not valid."
                                  " Please refresh and try again. You may also run `hca login`"
                                  " to get a more permanent hca configuration.")
             else:
+                logging.info("Found access token in kwargs.")
                 return args['access_token']
         elif 'HCA_ACCESS_TOKEN' in os.environ:
             if retry:
+                logging.info("Access token taken from $HCA_ACCESS_TOKEN environment variable is not valid.")
                 raise ValueError("Environment variable $HCA_ACCESS_TOKEN is not valid."
                                  " Please refresh and try again. You may also delete"
                                  " $HCA_ACCESS_TOKEN and run `hca login`"
                                  " to get a more permanent hca configuration.")
             else:
+                logging.info("Found access token in $HCA_ACCESS_TOKEN environment variable.")
                 return os.environ['HCA_ACCESS_TOKEN']
         elif 'access_token' in config:
+            logging.info("IN GET_ACCESS_TOKEN: access_token in config")
             # There is a refresh token
             if retry and config.get('refresh_token', None):
+                logging.info("The access token stored in {} is not valid."
+                             " Attempting with refresh token.".format(config.config_files[-1]))
                 credentials = oauth2client.client.OAuth2Credentials(
                     access_token=None,
                     client_id=config.client_id,
@@ -259,7 +266,6 @@ class AddedCommand(object):
                     user_agent=None,
                     revoke_uri=None
                 )
-
                 # Silence ResourceWarning from httplib2 socket being open for connection pooling.
                 warnings.simplefilter("ignore")
                 credentials.refresh(httplib2.Http())
@@ -268,12 +274,15 @@ class AddedCommand(object):
                 return credentials.access_token
             # No refresh token
             elif retry:
+                logging.info("The access token stored in {} is not valid and there is"
+                             " no supplied refresh token.".format(config.config_files[-1]))
                 raise ValueError("The access_token in your config file is invalid"
                                  " and there is no refresh_token to refresh it."
                                  " You may run `hca login` to easily reset your"
                                  " hca configuration.")
             # First attempt
             else:
+                logging.info("Found access token in {}.".format(config.config_files[-1]))
                 return config.access_token
 
     @classmethod
