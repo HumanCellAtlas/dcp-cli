@@ -382,11 +382,11 @@ class TestHCACLI(unittest.TestCase):
         self.assertEqual(200, resp.status_code)
         self.assertTrue(subscription_uuid in [s['uuid'] for s in resp.json()['subscriptions']])
 
-        resp = api.get_subscriptions("aws", uuid=subscription_uuid)
+        resp = api.get_subscriptions(replica="aws", uuid=subscription_uuid)
         self.assertEqual(200, resp.status_code)
         self.assertEqual(subscription_uuid, resp.json()['uuid'])
 
-        resp = api.delete_subscriptions(subscription_uuid, "aws")
+        resp = api.delete_subscriptions(uuid=subscription_uuid, replica="aws")
         self.assertEqual(200, resp.status_code)
         self.assertIn('timeDeleted', resp.json())
 
