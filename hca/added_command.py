@@ -12,7 +12,6 @@ import requests
 from tweak import Config
 
 from .constants import Constants
-from .oauth_flow import get_access_token
 
 
 class AddObject(argparse.Action):
@@ -256,7 +255,6 @@ class AddedCommand(object):
                     refresh_token=config.refresh_token,
                     token_expiry=None,
                     token_uri=config.token_uri,
-                    token_id=None,
                     user_agent=None,
                     revoke_uri=None
                 )
@@ -351,7 +349,7 @@ class AddedCommand(object):
             'stream': args.get('stream', False)
         }
 
-        requires_auth = True  # cls._get_endpoint_info()['requires_authentication']
+        requires_auth = cls._get_endpoint_info().get('requires_auth', False)
 
         if requires_auth:
             header_payload.update(cls._get_auth_header(args))
