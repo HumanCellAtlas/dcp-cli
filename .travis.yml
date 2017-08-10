@@ -12,6 +12,7 @@ before_install:
 - pip install --quiet coverage flake8 pyyaml
 install:
 - make install
+- $(python get_hca_access_token.py)  # Sets $HCA_ACCESS_TOKEN so travis can access any authenticated endpoints.
 script:
 - make test
 after_success:
