@@ -259,9 +259,6 @@ class TestHCACLI(unittest.TestCase):
         #                            else self.assertItemsEqual)
         # assert_list_items_equal(names, out)
 
-    def test_upload_files(self):
-        pass
-
     def _reload_api(self):
         """
         Ensure that when we reload api, all required methods are present.
