@@ -3,6 +3,7 @@ import json
 import os
 import re
 import uuid
+import warnings
 
 import httplib2
 import jsonschema
@@ -258,6 +259,9 @@ class AddedCommand(object):
                     user_agent=None,
                     revoke_uri=None
                 )
+
+                # Silence ResourceWarning from httplib2 socket being open for connection pooling.
+                warnings.simplefilter("ignore")
                 credentials.refresh(httplib2.Http())
 
                 config.access_token = credentials.access_token
