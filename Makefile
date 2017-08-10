@@ -11,14 +11,12 @@ hca/api_spec.json:
 
 test: lint
 	pip install six coverage
-	source environment
 	coverage run --source=$$(python setup.py --name) ./test/test.py
 
 init_docs:
 	cd docs; sphinx-quickstart
 
 bindings:
-	source environment
 	python -m hca.regenerate_api
 
 docs:

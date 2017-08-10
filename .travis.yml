@@ -10,7 +10,6 @@ before_install:
   -in travis-gcp-service-account-credentials.json.enc -out travis-gcp-service-account-credentials.json
   -d
 - pip install --quiet coverage flake8 pyyaml
-- source environment
 install:
 - make install
 script:
