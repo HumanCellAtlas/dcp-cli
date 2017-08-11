@@ -301,9 +301,11 @@ class AddedCommand(object):
             warnings.simplefilter("ignore")
             service_account_credentials.refresh(httplib2.Http())
 
-            access_token = service_account_credentials.to_json()['access_token']
+            access_token_json = json.loads(service_account_credentials.to_json())
+            access_token = access_token_json['access_token']
         else:
-            raise ValueError("Run `hca login` to load credentials. See <Insert doc here>")
+            raise ValueError("Run `hca login` or export GOOGLE_APPLICATION_CREDENTIALS environment variable"
+                             " to load credentials. See <Insert doc here>")
 
         return access_token
 
