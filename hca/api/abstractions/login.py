@@ -156,7 +156,7 @@ class Login(AddedCommand):
 
         if 'access_token' in args:
             config.access_token = args['access_token']
-            config.refresh_token = "only_access_token_was_set"
+            config.refresh_token = None
 
         elif sys.stdin.isatty():
             home_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
