@@ -4,11 +4,13 @@ import logging
 import os
 import re
 import warnings
+from io import open
 
 import httplib2
 import jsonschema
 import oauth2client
 import oauth2client.client
+import oauth2client.service_account
 import requests
 from tweak import Config
 
@@ -230,6 +232,9 @@ class AddedCommand(object):
     @classmethod
     def _get_access_token(cls, args, retry):
         config = Config(Constants.TWEAK_PROJECT_NAME)
+        access_token = None
+
+        # kwargs access_token input
         if 'access_token' in args:
             if retry:
                 logging.info("Access token taken from kwargs invalid.")
@@ -238,19 +243,10 @@ class AddedCommand(object):
                                  " to get a more permanent hca configuration.")
             else:
                 logging.info("Found access token in kwargs.")
-                return args['access_token']
-        elif 'HCA_ACCESS_TOKEN' in os.environ:
-            if retry:
-                logging.info("Access token taken from $HCA_ACCESS_TOKEN environment variable is not valid.")
-                raise ValueError("Environment variable $HCA_ACCESS_TOKEN is not valid."
-                                 " Please refresh and try again. You may also delete"
-                                 " $HCA_ACCESS_TOKEN and run `hca login`"
-                                 " to get a more permanent hca configuration.")
-            else:
-                logging.info("Found access token in $HCA_ACCESS_TOKEN environment variable.")
-                return os.environ['HCA_ACCESS_TOKEN']
+                access_token = args['access_token']
+
+        # Checking config
         elif 'access_token' in config:
-            logging.info("IN GET_ACCESS_TOKEN: access_token in config")
             # There is a refresh token
             if retry and config.get('refresh_token', None):
                 logging.info("The access token stored in {} is not valid."
@@ -271,7 +267,7 @@ class AddedCommand(object):
                 credentials.refresh(httplib2.Http())
 
                 config.access_token = credentials.access_token
-                return credentials.access_token
+                access_token = credentials.access_token
             # No refresh token
             elif retry:
                 logging.info("The access token stored in {} is not valid and there is"
@@ -283,7 +279,33 @@ class AddedCommand(object):
             # First attempt
             else:
                 logging.info("Found access token in {}.".format(config.config_files[-1]))
-                return config.access_token
+                access_token = config.access_token
+
+        # Service account handling
+        elif 'GOOGLE_APPLICATION_CREDENTIALS' in os.environ:
+            logging.info("Found GOOGLE_APPLICATION_CREDENTIALS environment variable."
+                         " Grabbing service account credentials from there.")
+            service_account_credentials_filename = os.environ['GOOGLE_APPLICATION_CREDENTIALS']
+
+            if not os.path.isfile(service_account_credentials_filename):
+                raise EnvironmentError(
+                    "File {} (pointed by GOOGLE_APPLICATION_CREDENTIALS"
+                    " environment variable) does not exist!".format(service_account_credentials_filename))
+
+            service_account_class = oauth2client.service_account.ServiceAccountCredentials
+            service_account_credentials = service_account_class.from_json_keyfile_name(
+                "/Users/jamesmackey/Downloads/test-service-account-credentials.json",
+                "https://www.googleapis.com/auth/userinfo.email")
+
+            # Silence ResourceWarning from httplib2 socket being open for connection pooling.
+            warnings.simplefilter("ignore")
+            service_account_credentials.refresh(httplib2.Http())
+
+            access_token = service_account_credentials.to_json()['access_token']
+        else:
+            raise ValueError("Run `hca login` to load credentials. See <Insert doc here>")
+
+        return access_token
 
     @classmethod
     def _build_non_body_payloads(cls, namespace):
