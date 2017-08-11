@@ -149,12 +149,12 @@ class Login(AddedCommand):
         """Download a bundle or file from the blue box to local."""
         client_secrets = requests.get("https://hca-dss.czi.technology/internal/application_secrets").json()
 
-        config = Config(Constants.TWEAK_PROJECT_NAME)
+        config = Config(Constants.TWEAK_PROJECT_NAME, autosave=True)
         config.client_id = client_secrets['installed']['client_id']
         config.client_secret = client_secrets['installed']['client_secret']
         config.token_uri = client_secrets['installed']['token_uri']
 
-        if 'access_token' in args:
+        if args.get('access_token', None):
             config.access_token = args['access_token']
             config.refresh_token = None
 
@@ -178,4 +178,4 @@ class Login(AddedCommand):
         else:
             raise Exception("You have to be in a terminal or provide an access_token for this command to work.")
 
-        return {'hello': "world"}
+        return {'completed': True}
