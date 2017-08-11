@@ -53,7 +53,9 @@ class Login(AddedCommand):
             'options': {
                 'access_token': {
                     'description':
-                        "A Google OAuth access token with https://www.googleapis.com/auth/userinfo.email scope",
+                        "A Google OAuth access token with https://www.googleapis.com/auth/userinfo.email scope"
+                        " Using this parameter will set the config access_token, but when it has expired there"
+                        " it will not automatically refresh.",
                     'type': "string",
                     'metavar': None,
                     'required': False,
@@ -152,9 +154,9 @@ class Login(AddedCommand):
         config.client_secret = client_secrets['installed']['client_secret']
         config.token_uri = client_secrets['installed']['token_uri']
 
-        if 'access_token' in args or 'refresh_token' in args:
-            config.access_token = args.get('access_token', None)
-            config.refresh_token = args.get('refresh_token', None)
+        if 'access_token' in args:
+            config.access_token = args['access_token']
+            config.refresh_token = "only_access_token_was_set"
 
         elif sys.stdin.isatty():
             home_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
@@ -172,5 +174,8 @@ class Login(AddedCommand):
 
             config.access_token = credential['access_token']
             config.refresh_token = credential['refresh_token']
+
+        else:
+            raise Exception("You have to be in a terminal or provide an access_token for this command to work.")
 
         return {'hello': "world"}
