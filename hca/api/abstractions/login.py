@@ -58,14 +58,6 @@ class Login(AddedCommand):
                     'metavar': None,
                     'required': False,
                     'array': False
-                },
-                'refresh_token': {
-                    'description':
-                        "A Google OAuth refresh token with https://www.googleapis.com/auth/userinfo.email scope",
-                    'type': "string",
-                    'metavar': None,
-                    'required': False,
-                    'array': False,
                 }
             }
         }
