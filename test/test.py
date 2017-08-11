@@ -179,10 +179,6 @@ class TestHCACLI(unittest.TestCase):
         args = ["put-files", "--bundle-uuid", "--creator-uid", "1", "--source-url", "sljdf.com", "134"]
         self.assertRaises(SystemExit, cli.parse_args, args)
 
-        args = ["get-bundles"]
-        out = {}
-        self.assertEqual(cli.parse_args(args), out)
-
         args = ["get-bundles", "uuid_arg"]
         out = {"uuid": "uuid_arg"}
         self.assertEqual(cli.parse_args(args), out)
@@ -212,11 +208,6 @@ class TestHCACLI(unittest.TestCase):
         import hca.cli
 
         cli = hca.cli.CLI(os.path.join(os.path.dirname(os.path.realpath(__file__)), "test.json"))
-
-        args = ["get-bundles"]
-        response = cli.make_request(args)
-        self.assertEqual(self._get_first_url(response), "https://hca-dss.czi.technology/v1/bundles")
-        self.assertTrue(response.ok)
 
         args = ["get-bundles", "AAAAAAAA-AAAA-AAAA-AAAA-AAAAAAAAAAAA", "--version", "1981-07-21T11:35:45+00:00", "--replica", "aws"]
         response = cli.make_request(args)
