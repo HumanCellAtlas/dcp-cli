@@ -18,12 +18,8 @@ def override_oauth_config():
         # Reload config after changes made.
         config = Config(constants.Constants.TWEAK_PROJECT_NAME)
 
-        new_config_keys = set(config.keys())
-        old_config_keys = set(backup.keys())
-        added_config_keys = new_config_keys.difference(old_config_keys)
-
-        for key in added_config_keys:
-            del config[key]
+        for key in config:
+            config[key] = None
 
         for key, value in backup.items():
             config[key] = value
