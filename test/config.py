@@ -15,5 +15,9 @@ def override_oauth_config():
     try:
         yield
     finally:
+        # Reload config after changes made.
+        config = Config(constants.Constants.TWEAK_PROJECT_NAME)
+        for key in config:
+            del config[key]
         for key, value in backup.items():
             config[key] = value
