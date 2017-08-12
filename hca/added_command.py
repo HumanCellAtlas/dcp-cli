@@ -246,7 +246,8 @@ class AddedCommand(object):
                 access_token = args['access_token']
 
         # Checking config
-        elif 'access_token' in config:
+        elif config.get('access_token', None):
+            print(config['access_token'])
             # There is a refresh token
             if retry and config.get('refresh_token', None):
                 logging.info("The access token stored in {} is not valid."
