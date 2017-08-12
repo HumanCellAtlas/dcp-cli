@@ -10,12 +10,9 @@ before_install:
   -in travis-gcp-service-account-credentials.json.enc -out travis-gcp-service-account-credentials.json
   -d
 - pip install --quiet coverage flake8 pyyaml
-- echo $GOOGLE_APPLICATION_CREDENTIALS
 install:
-- echo $GOOGLE_APPLICATION_CREDENTIALS
 - make install
 script:
-- echo $GOOGLE_APPLICATION_CREDENTIALS
 - make test
 after_success:
 - bash <(curl -s https://codecov.io/bash)

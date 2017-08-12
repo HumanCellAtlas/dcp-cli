@@ -231,8 +231,6 @@ class AddedCommand(object):
 
     @classmethod
     def _get_access_token(cls, args, retry):
-        print(os.environ)
-        print("GOOGLE_APPLICATION_CREDENTIALS is", os.getenv('GOOGLE_APPLICATION_CREDENTIALS', "not here"))
         config = Config(Constants.TWEAK_PROJECT_NAME)
         access_token = None
 
