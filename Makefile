@@ -18,6 +18,7 @@ init_docs:
 
 bindings:
 	python -m hca.regenerate_api
+	find hca -name "*.pyc" -delete
 
 docs:
 	$(MAKE) -C docs html
