@@ -77,7 +77,7 @@ class AddedCommand(object):
     @classmethod
     def _add_optional_args(cls, subparser):
         endpoint_info = cls._get_endpoint_info()
-        for (optional_name, optional_data) in endpoint_info.get('options', {}).items():
+        for optional_name, optional_data in endpoint_info.get('options', {}).items():
             argtype = cls._get_arg_type(optional_data['type'])
             actiontype = cls._get_action(optional_data['type'])
 
@@ -323,7 +323,7 @@ class AddedCommand(object):
         query_payload = {}
         body_payload = {}
         header_payload = {}
-        for (arg_name, arg) in namespace.items():
+        for arg_name, arg in namespace.items():
             # If the argument is positional, belongs in path, not a payload
             if arg_name not in endpoint_info["options"]:
                 continue
