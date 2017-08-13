@@ -19,13 +19,11 @@ sys.path.insert(0, pkg_root)
 
 import hca
 import hca.regenerate_api
+from hca import api
 
 
 class TestHCACLI(unittest.TestCase):
     """Test the entire module."""
-
-    def setUp(self):
-        hca.regenerate_api.generate_python_bindings()
 
     @unittest.skip("CLI deprecated for this pr - coming in next one.")
     def test_make_name(self):
@@ -266,30 +264,7 @@ class TestHCACLI(unittest.TestCase):
                                    else self.assertItemsEqual)
         assert_list_items_equal(names, out)
 
-    def _reload_api(self):
-        """
-        Ensure that when we reload api, all required methods are present.
-
-        Just reloading api package isn't enough, because the reload method will look
-        first for the compiled python files to load from. This became an issue
-        because api.upload and api.download were not being reloaded (only in Python2 -
-        apparently Python3 reload handles this problem). This method deletes
-        the compiled api init file if it exists before reloading.
-        """
-        pkg_home_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-        api_init_compiled_path = os.path.join(pkg_home_dir, "hca", "api", "__init__.pyc")
-        try:
-            os.remove(api_init_compiled_path)
-        except IOError:
-            pass
-
-        from hca import api
-        api = reload_module(api)
-        return api
-
     def test_python_upload_download(self):
-        api = self._reload_api()
-
         dirpath = os.path.dirname(os.path.realpath(__file__))
         bundle_path = os.path.join(dirpath, "bundle")
 
@@ -312,8 +287,6 @@ class TestHCACLI(unittest.TestCase):
             shutil.rmtree(downloaded_path)
 
     def test_python_bindings(self):
-        api = self._reload_api()
-
         dirpath = os.path.dirname(os.path.realpath(__file__))
         bundle_path = os.path.join(dirpath, "bundle")
         staging_bucket = "org-humancellatlas-dss-cli-test"
@@ -349,8 +322,6 @@ class TestHCACLI(unittest.TestCase):
         self.assertTrue(resp.ok)
 
     def test_python_subscriptions(self):
-        api = self._reload_api()
-
         query = {'bool': {}}
         resp = api.put_subscriptions(query=query, callback_url="www.example.com", replica="aws")
         subscription_uuid = resp.json()['uuid']
