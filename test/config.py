@@ -16,10 +16,14 @@ def override_oauth_config():
         yield
     finally:
         # Reload config after changes made.
-        config = Config(constants.Constants.TWEAK_PROJECT_NAME)
+        config = Config(constants.Constants.TWEAK_PROJECT_NAME, autosave=True, save_on_exit=False)
 
-        for key in config:
-            config[key] = None
+        new_config_keys = set(config.keys())
+        old_config_keys = set(backup.keys())
+        added_config_keys = new_config_keys.difference(old_config_keys)
+
+        for key in added_config_keys:
+            del config[key]
 
         for key, value in backup.items():
             config[key] = value
