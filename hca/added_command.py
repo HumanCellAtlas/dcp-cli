@@ -397,7 +397,6 @@ class AddedCommand(object):
         # Maybe auth didn't work. Refresh token and try again.
         if response.status_code == 401 and requires_auth:
             header_payload.update(cls._get_auth_header(args, True))
-
-        response = requests.request(**request_args)
+            response = requests.request(**request_args)
 
         return response
