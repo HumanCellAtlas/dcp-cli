@@ -389,6 +389,8 @@ class TestHCACLI(unittest.TestCase):
                           **kwargs)
 
     def test_python_subscriptions(self):
+        print("environment variables")
+        print(os.environ)
         query = {'bool': {}}
         resp = api.put_subscriptions(query=query, callback_url="www.example.com", replica="aws")
         subscription_uuid = resp.json()['uuid']
