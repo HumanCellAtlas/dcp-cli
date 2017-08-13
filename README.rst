@@ -8,7 +8,7 @@ line client that will make requests to the DSS. Please run :code:`hca --help` to
 
 Code Generation
 ---------------
-These python bindings have to be regenerated to reflect any api changes. To regenerate these, run `make bindings.` Only package maintainers should run this command and publish new package versions.
+These python bindings have to be regenerated to reflect any api changes. To regenerate these, run `make bindings`. Only package maintainers should run this command and publish new package versions.
 
 Installation
 ------------

@@ -215,13 +215,6 @@ class AddedCommand(object):
 
     @classmethod
     def _get_auth_header(cls, real_header=True):
-        # THIS IS EARLY AUTH VERSION - CHANGES WILL BE MADE TO THIS IN ANOTHER BRANCH
-        # ttung's popup to ask people to authenticate if they haven't already
-        # For now assume that people have to have the local gsutil authentication setup b/c I'm not convinced
-        # client_secret.json has the right setup credentials for the project. Do we definitely want the project_id
-        # associated with this?
-        # sample_tools.init([], 'oauth2', 'v1', "hca cli", "console", scope='https://www.googleapis.com/auth/userinfo.email')
-
         try:
             credentials, project_id = auth.default(scopes=["https://www.googleapis.com/auth/userinfo.email"])
 
@@ -259,8 +252,7 @@ class AddedCommand(object):
                 try:
                     jsonschema.validate(arg, endpoint_info['body_params'][arg_name])
                 except jsonschema.ValidationError as e:
-                    print(e)
-                    raise ValueError("Argument {} has an invalid input type.".format(arg_name))
+                    raise ValueError("Argument {} has an invalid input type.".format(arg_name), e)
 
                 # If it does, set the payload to the given input.
                 body_payload[arg_name] = arg

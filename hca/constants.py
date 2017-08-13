@@ -7,9 +7,7 @@ class Constants:
     """Class to keep constants together."""
 
     # List of all higher-level command classes that do more than provide baseline interaction with api.
-    # In regenerate_api.py, when looping through classes in the composite_commands module, the classes
-    # that are imported are included too. To ensure those aren't imported, explicitly state which classes
-    # to import and generate python bindings/cli commands for.
+    # This is used in regenerate_api.py to have a definitive list of composite commands to import.
     composite_commands_class_names = ["Upload", "Download"]
 
     # The character to split the variables within an object when they're listed.
