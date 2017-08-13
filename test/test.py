@@ -418,7 +418,6 @@ class TestHCACLI(unittest.TestCase):
 
     def test_python_login(self):
         from tweak import Config
-        api = self._reload_api()
 
         access_token = "test_access_token"
         out = {'completed': True}
