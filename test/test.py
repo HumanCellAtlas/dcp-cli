@@ -391,6 +391,9 @@ class TestHCACLI(unittest.TestCase):
     def test_python_subscriptions(self):
         print("environment variables")
         print(os.environ)
+        print("google creds")
+        with open("travis-gcp-service-account-credentials.json") as fh: 
+            print(fh.read())
         query = {'bool': {}}
         resp = api.put_subscriptions(query=query, callback_url="www.example.com", replica="aws")
         subscription_uuid = resp.json()['uuid']
