@@ -327,13 +327,11 @@ class TestHCACLI(unittest.TestCase):
 
         # Test get-files and head-files
         file_ = bundle_output['files'][0]
-        self.assertTrue(api.get_files().ok)
         self.assertTrue(api.get_files(file_['uuid'], replica="aws").ok)
         self.assertTrue(api.head_files(file_['uuid']).ok)
 
         # Test get-bundles
         bundle_uuid = bundle_output['bundle_uuid']
-        self.assertTrue(api.get_bundles().ok)
         self.assertTrue(api.get_bundles(bundle_uuid, replica="aws").ok)
 
         # Test put-files
