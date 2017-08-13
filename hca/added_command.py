@@ -295,7 +295,7 @@ class AddedCommand(object):
 
             service_account_class = oauth2client.service_account.ServiceAccountCredentials
             service_account_credentials = service_account_class.from_json_keyfile_name(
-                "/Users/jamesmackey/Downloads/test-service-account-credentials.json",
+                service_account_credentials_filename,
                 "https://www.googleapis.com/auth/userinfo.email")
 
             # Silence ResourceWarning from httplib2 socket being open for connection pooling.
