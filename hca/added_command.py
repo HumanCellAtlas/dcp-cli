@@ -333,8 +333,7 @@ class AddedCommand(object):
                 try:
                     jsonschema.validate(arg, endpoint_info['body_params'][arg_name])
                 except jsonschema.ValidationError as e:
-                    print(e)
-                    raise ValueError("Argument {} has an invalid input type.".format(arg_name))
+                    raise ValueError("Argument {} has an invalid input type.".format(arg_name), e)
 
                 # If it does, set the payload to the given input.
                 body_payload[arg_name] = arg
