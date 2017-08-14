@@ -163,7 +163,7 @@ class Login(AddedCommand):
             client_secrets_file_path = os.path.join(home_dir, "util", "client_secrets.json")
 
             # flow_from_clientsecrets requires a file path.
-            with open(client_secrets_file_path, "w") as cs:
+            with open(client_secrets_file_path, "wb") as cs:
                 cs.write(json.dumps(client_secrets))
 
             credential = cls._get_credential_from_popup(client_secrets_file_path)
