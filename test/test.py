@@ -160,6 +160,7 @@ class TestHCACLI(unittest.TestCase):
     def test_parsing(self):
         """Test that the parser parses arguments correctly."""
         import hca.cli
+        import hca.error
 
         cli = hca.cli.CLI(os.path.join(os.path.dirname(os.path.realpath(__file__)), "test.json"))
 
@@ -171,13 +172,13 @@ class TestHCACLI(unittest.TestCase):
         self.assertEqual(cli.parse_args(args), out)
 
         args = ["put-files", "--creator-uid", "1", "--source-url", "sljdf.com", "134"]
-        self.assertRaises(SystemExit, cli.parse_args, args)
+        self.assertRaises(hca.error.PrintingException, cli.parse_args, args)
 
         args = ["put-files", "--bundle-uuid", "asdf", "--creator-uid", "1", "--source-url", "sljdf.com"]
-        self.assertRaises(SystemExit, cli.parse_args, args)
+        self.assertRaises(hca.error.PrintingException, cli.parse_args, args)
 
         args = ["put-files", "--bundle-uuid", "--creator-uid", "1", "--source-url", "sljdf.com", "134"]
-        self.assertRaises(SystemExit, cli.parse_args, args)
+        self.assertRaises(hca.error.PrintingException, cli.parse_args, args)
 
         args = ["get-bundles", "uuid_arg"]
         out = {"uuid": "uuid_arg"}
