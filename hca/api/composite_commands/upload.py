@@ -190,7 +190,7 @@ class Upload(AddedCommand):
         return final_return
 
     @classmethod
-    def run_cli(cls, args):
+    def run_from_cli(cls, args):
         """Deposit a bundle from local or remote bucket to blue box with arguments given from cli."""
         return cls.run(args)
 

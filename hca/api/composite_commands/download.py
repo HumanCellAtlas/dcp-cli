@@ -102,7 +102,7 @@ class Download(AddedCommand):
         return files, folder
 
     @classmethod
-    def run_cli(cls, args):
+    def run_from_cli(cls, args):
         """Download a bundle/file from blue box to local with arguments given from cli."""
         return cls.run(args)
 

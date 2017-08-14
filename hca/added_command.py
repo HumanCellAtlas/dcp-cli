@@ -269,7 +269,7 @@ class AddedCommand(object):
         return query_payload, body_payload, header_payload
 
     @classmethod
-    def run_cli(cls, args):
+    def run_from_cli(cls, args):
         """Run this command using args from the cli. Override this to add higher-level commands."""
         body_payload = cls._build_body_payload(args)
         args.update(body_payload)

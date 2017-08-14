@@ -53,7 +53,7 @@ class CLI:
 
         command = self.commands.get(endpoint, None)
         if command:
-            return command.run_cli(namespace)
+            return command.run_from_cli(namespace)
         return Exception("This command doesn't exist!")
 
 
