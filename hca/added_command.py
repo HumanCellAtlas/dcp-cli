@@ -221,7 +221,7 @@ class AddedCommand(object):
     @classmethod
     def _get_auth_header(cls, args, retry=False):
         """
-        Get the full authentication header.
+        Called in run when a user calls an authenticated method. retry=True if authenticated method returns 401.
 
         :param args: Dict of arguments for any given function.
         :param retry: Boolean indicating if this is the second time trying to authenticate. If so, refresh token.
