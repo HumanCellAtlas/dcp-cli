@@ -14,5 +14,7 @@ def main():
     response = cli.make_request(sys.argv[1:])
     if isinstance(response, requests.Response):
         print(response.content.decode())
+    elif type(response) == str:
+        print(response)
     else:
         print(json.dumps(response))
