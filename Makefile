@@ -23,7 +23,7 @@ bindings:
 docs: bindings
 	$(MAKE) -C docs html
 
-install:
+install: bindings
 	-rm -rf dist
 	python setup.py bdist_wheel
 	pip install --upgrade dist/*.whl
