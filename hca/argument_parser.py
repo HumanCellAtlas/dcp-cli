@@ -2,6 +2,7 @@ import argparse
 
 from .error import PrintingException
 
+
 class NonPrintingParser(argparse.ArgumentParser):
     """ArgumentParser that will return help and error strings instead of printing."""
 
