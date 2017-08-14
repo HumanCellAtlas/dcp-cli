@@ -23,6 +23,8 @@ from hca import regenerate_api  # noqa
 from hca import constants  # noqa
 from test.config import override_oauth_config  # noqa
 
+dirpath = os.path.dirname(os.path.realpath(__file__))
+
 
 class TestHCACLI(unittest.TestCase):
     """Test the entire module."""
@@ -158,6 +160,25 @@ class TestHCACLI(unittest.TestCase):
                     'hierarchy': ['bundle_uuid']
             }}}
         )
+
+    def test_get_files_cli(self):
+        """Testing 2 things: 1. Printing bytes to stdout; 2. Iterative content download."""
+        import subprocess
+
+        file_path = os.path.join(dirpath, "bundle", "SRR2967608_1.fastq.gz")
+
+        self.assertGreater(os.stat(file_path).st_size, constants.Constants.CHUNK_SIZE)
+
+        args = {'file_or_dir': [file_path],
+                'replica': "aws",
+                'staging_bucket': "org-humancellatlas-dss-cli-test"}
+        response = api.upload(**args)
+
+        file_uuid = response['files'][0]['uuid']
+
+        process = subprocess.Popen(["hca", "get-files", file_uuid, "--replica", "aws"], stdout=subprocess.PIPE)
+        out, _ = process.communicate()
+        self.assertIsInstance(out, bytes)
 
     def test_parsing(self):
         """Test that the parser parses arguments correctly."""
