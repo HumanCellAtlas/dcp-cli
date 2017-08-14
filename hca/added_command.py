@@ -212,7 +212,7 @@ class AddedCommand(object):
             if arg_name not in endpoint_info["options"]:
                 continue
 
-            payload_format = endpoint_info["options"][arg_name]["in"]
+            payload_format = endpoint_info['options'][arg_name].get('in', None)
             if payload_format == "body":
                 hierarchy = endpoint_info["options"][arg_name]["hierarchy"]
                 cls._add_arg(arg, body_payload, hierarchy)
