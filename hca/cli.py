@@ -37,23 +37,23 @@ class CLI:
         command_class.add_parser(subparsers)
         self.commands[command_class.get_command_name()] = command_class
 
-    def parse_args(self, args):
+    def parse_args(self, command_line_input):
         """Parse the input arguments into a map from parameter name -> value."""
-        namespace = vars(self.parser.parse_args(args))
-        namespace = {k: namespace[k] for k in namespace if namespace[k] is not None}
-        return namespace
+        args = vars(self.parser.parse_args(command_line_input))
+        args = {k: args[k] for k in args if args[k] is not None}
+        return args
 
-    def make_request(self, args, stream=False):
+    def make_request(self, command_line_input, stream=False):
         """Function to actually make request to api."""
-        if not args:
+        if not command_line_input:
             self.parser.print_help()
             self.parser.exit(1)
-        namespace = self.parse_args(args)
-        endpoint = args[0]
+        args = self.parse_args(command_line_input)
+        endpoint = command_line_input[0]
 
         command = self.commands.get(endpoint, None)
         if command:
-            return command.run_from_cli(namespace)
+            return command.run_from_cli(args)
         return Exception("This command doesn't exist!")
 
 
