@@ -10,7 +10,6 @@ import sys
 import unittest
 import uuid
 import pprint
-from builtins import str
 from six.moves import reload_module
 
 import six
@@ -202,26 +201,27 @@ class TestHCACLI(unittest.TestCase):
     def test_cli_printing(self):
         import hca.cli
         cli = hca.cli.CLI()
+        string = str if six.PY3 else basestring
 
         # No args given
         request = cli.make_request([])
-        self.assertIsInstance(request, str)
+        self.assertIsInstance(request, string)
 
         # Base parser help
         request = cli.make_request(["-h"])
-        self.assertIsInstance(request, str)
+        self.assertIsInstance(request, string)
 
         # Endpoint parser help
         request = cli.make_request(["put-bundles", "-h"])
-        self.assertIsInstance(request, str)
+        self.assertIsInstance(request, string)
 
         # Base args given incorrectly
         request = cli.make_request(["idontbelonghere"])
-        self.assertIsInstance(request, str)
+        self.assertIsInstance(request, string)
 
         # Endpoint args given incorrectly
         request = cli.make_request(["put-bundles", "idontbelonghere"])
-        self.assertIsInstance(request, str)
+        self.assertIsInstance(request, string)
 
     def _get_first_url(self, response):
         """Get the first url we sent a request to if there were redirects."""
