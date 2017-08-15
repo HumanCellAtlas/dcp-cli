@@ -160,6 +160,7 @@ class TestHCACLI(unittest.TestCase):
     def test_parsing(self):
         """Test that the parser parses arguments correctly."""
         import hca.cli
+        import hca.error
 
         cli = hca.cli.CLI(os.path.join(os.path.dirname(os.path.realpath(__file__)), "test.json"))
 
@@ -171,13 +172,13 @@ class TestHCACLI(unittest.TestCase):
         self.assertEqual(cli.parse_args(args), out)
 
         args = ["put-files", "--creator-uid", "1", "--source-url", "sljdf.com", "134"]
-        self.assertRaises(SystemExit, cli.parse_args, args)
+        self.assertRaises(hca.error.PrintingException, cli.parse_args, args)
 
         args = ["put-files", "--bundle-uuid", "asdf", "--creator-uid", "1", "--source-url", "sljdf.com"]
-        self.assertRaises(SystemExit, cli.parse_args, args)
+        self.assertRaises(hca.error.PrintingException, cli.parse_args, args)
 
         args = ["put-files", "--bundle-uuid", "--creator-uid", "1", "--source-url", "sljdf.com", "134"]
-        self.assertRaises(SystemExit, cli.parse_args, args)
+        self.assertRaises(hca.error.PrintingException, cli.parse_args, args)
 
         args = ["get-bundles", "uuid_arg"]
         out = {"uuid": "uuid_arg"}
@@ -196,6 +197,31 @@ class TestHCACLI(unittest.TestCase):
         args = ["get-bundles", "uuid_arg", "--replica", "rep"]
         out = {"uuid": "uuid_arg", "replica": "rep"}
         self.assertEqual(cli.parse_args(args), out)
+
+    def test_cli_printing(self):
+        import hca.cli
+        cli = hca.cli.CLI()
+        string = str if six.PY3 else basestring
+
+        # No args given
+        request = cli.make_request([])
+        self.assertIsInstance(request, string)
+
+        # Base parser help
+        request = cli.make_request(["-h"])
+        self.assertIsInstance(request, string)
+
+        # Endpoint parser help
+        request = cli.make_request(["put-bundles", "-h"])
+        self.assertIsInstance(request, string)
+
+        # Base args given incorrectly
+        request = cli.make_request(["idontbelonghere"])
+        self.assertIsInstance(request, string)
+
+        # Endpoint args given incorrectly
+        request = cli.make_request(["put-bundles", "idontbelonghere"])
+        self.assertIsInstance(request, string)
 
     def _get_first_url(self, response):
         """Get the first url we sent a request to if there were redirects."""
