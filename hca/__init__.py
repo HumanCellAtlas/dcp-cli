@@ -26,17 +26,13 @@ def main():
     if isinstance(response, requests.Response):
         for chunk in response.iter_content(chunk_size=Constants.CHUNK_SIZE, decode_unicode=True):
             if chunk:  # filter out keep-alive new chunks
-                _write_binary_to_stdout(chunk)
+                if six.PY3:
+                    sys.stdout.buffer.write(chunk)
+                else:
+                    sys.stdout.write(chunk)  
     elif isinstance(response, dict):
         print(json.dumps(response))
     elif isinstance(response, str):
         print(response)
     else:  # Unicode
         print(response.decode())
-
-
-def _write_binary_to_stdout(content):
-    if six.PY3:
-        sys.stdout.buffer.write(content)
-    else:
-        sys.stdout.write(content)
