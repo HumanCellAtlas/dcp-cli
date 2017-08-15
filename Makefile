@@ -20,7 +20,7 @@ bindings:
 	git clean -df hca/api
 	pip install -r requirements.txt
 	python -m hca.regenerate_api
-	cat hca/api/__init__.py
+	find hca -name '*.pyc' -delete
 
 docs: bindings
 	$(MAKE) -C docs html
