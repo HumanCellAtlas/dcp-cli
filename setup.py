@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 
-import glob
+import os, glob
 from setuptools import setup, find_packages
+
+install_requires = [line.rstrip() for line in open(os.path.join(os.path.dirname(__file__), "requirements.txt"))]
 
 setup(
     name="hca",
@@ -12,21 +14,7 @@ setup(
     author_email='akislyuk@chanzuckerberg.com',
     description='Human Cell Atlas Data Storage System Command Line Interface',
     long_description=open('README.rst').read(),
-    tests_require=[
-        "six==1.10.0"
-    ],
-    install_requires=[
-        "boto3==1.4.4",
-        "crcmod==1.7",
-        "httplib2==0.10.3",
-        "Jinja2==2.9.6",
-        "jsonpointer==1.10",
-        "jsonschema==2.6.0",
-        "oauth2client==4.1.2",
-        "requests==2.17.3",
-        "six==1.10.0",
-        "tweak==0.5.1"
-    ],
+    install_requires=install_requires,
     extras_require={
         ':python_version == "2.7"': ['enum34 >= 1.1.6, < 2']
     },

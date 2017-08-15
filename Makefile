@@ -17,6 +17,7 @@ init_docs:
 	cd docs; sphinx-quickstart
 
 bindings:
+	pip install -r requirements.txt
 	find hca -name "*.pyc" -delete
 	python -m hca.regenerate_api
 
