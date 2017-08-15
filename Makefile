@@ -17,17 +17,16 @@ init_docs:
 	cd docs; sphinx-quickstart
 
 bindings:
-	python -m hca.regenerate_api
 	find hca -name "*.pyc" -delete
+	python -m hca.regenerate_api
 
 docs: bindings
 	$(MAKE) -C docs html
 
-install:
+install: bindings
 	-rm -rf dist
 	python setup.py bdist_wheel
 	pip install --upgrade dist/*.whl
-	$(MAKE) bindings
 
 .PHONY: test release docs
 
