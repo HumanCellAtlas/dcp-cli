@@ -23,8 +23,6 @@ from hca import regenerate_api  # noqa
 from hca import constants  # noqa
 from test.config import override_oauth_config  # noqa
 
-dirpath = os.path.dirname(os.path.realpath(__file__))
-
 
 class TestHCACLI(unittest.TestCase):
     """Test the entire module."""
@@ -165,6 +163,7 @@ class TestHCACLI(unittest.TestCase):
         """Testing 2 things: 1. Printing bytes to stdout; 2. Iterative content download."""
         import subprocess
 
+        dirpath = os.path.dirname(os.path.realpath(__file__))
         file_path = os.path.join(dirpath, "bundle", "SRR2967608_1.fastq.gz")
 
         self.assertGreater(os.stat(file_path).st_size, constants.Constants.CHUNK_SIZE)
