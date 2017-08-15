@@ -12,6 +12,7 @@ import uuid
 import pprint
 from six.moves import reload_module
 
+import requests
 import six
 
 pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
@@ -360,6 +361,14 @@ class TestHCACLI(unittest.TestCase):
                   'version': file_['version']}]
         resp = api.put_bundles(bundle_uuid, files=files, creator_uid=1, replica="aws")
         self.assertTrue(resp.ok)
+
+    def test_python_api_url(self):
+        kwargs = {'uuid': "fake_uuid",
+                  'replica': "aws",
+                  'api_url': "https://thisisafakeurljslfjlshsfs.com"}
+        self.assertRaises(requests.exceptions.ConnectionError,
+                          api.get_files,
+                          **kwargs)
 
     def test_python_subscriptions(self):
         query = {'bool': {}}
