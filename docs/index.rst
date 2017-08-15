@@ -4,12 +4,7 @@
 API documentation
 =================
 
-.. automodule:: hca.define_api
-   :members:
-   :special-members:
-   :exclude-members: __weakref__
-
-.. automodule:: hca.parser
+.. automodule:: hca.api
    :members:
    :special-members:
    :exclude-members: __weakref__
