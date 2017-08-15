@@ -23,12 +23,11 @@ bindings:
 docs: bindings
 	$(MAKE) -C docs html
 
-install_helper:
+install:
 	-rm -rf dist
 	python setup.py bdist_wheel
 	pip install --upgrade dist/*.whl
-
-install: install_helper bindings
+	$(MAKE) bindings
 
 .PHONY: test release docs
 
