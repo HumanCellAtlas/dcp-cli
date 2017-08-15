@@ -20,7 +20,7 @@ bindings:
 	python -m hca.regenerate_api
 	find hca -name "*.pyc" -delete
 
-docs:
+docs: bindings
 	$(MAKE) -C docs html
 
 install:
