@@ -17,11 +17,10 @@ init_docs:
 	cd docs; sphinx-quickstart
 
 bindings:
-	find hca
+	git clean -df hca/api
 	pip install -r requirements.txt
-	find hca -name "*.pyc" -delete
 	python -m hca.regenerate_api
-	find hca
+	cat hca/api/__init__.py
 
 docs: bindings
 	$(MAKE) -C docs html
