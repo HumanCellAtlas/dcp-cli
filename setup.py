@@ -17,7 +17,7 @@ setup(
     ],
     install_requires=[
         "boto3==1.4.4",
-        "crcmod==1.7"
+        "crcmod==1.7",
         "httplib2==0.10.3",
         "Jinja2==2.9.6",
         "jsonpointer==1.10",
@@ -25,7 +25,7 @@ setup(
         "oauth2client==4.1.2",
         "requests==2.17.3",
         "six==1.10.0",
-        "tweak==0.5.1",
+        "tweak==0.5.1"
     ],
     extras_require={
         ':python_version == "2.7"': ['enum34 >= 1.1.6, < 2']
