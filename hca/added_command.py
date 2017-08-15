@@ -59,20 +59,20 @@ class AddedCommand(object):
     @classmethod
     def _add_positional_args(cls, subparser):
         endpoint_info = cls._get_endpoint_info()
-        for positional_arg in endpoint_info['positional']:
+        for positional_arg in endpoint_info.get('positional', []):
             argtype = cls._get_arg_type(positional_arg['type'])
 
             subparser.add_argument(
                 positional_arg['argument'],
                 nargs=None if positional_arg['required'] else "?",
-                help=endpoint_info['description'],
+                help=positional_arg['description'],
                 type=argtype
             )
 
     @classmethod
     def _add_optional_args(cls, subparser):
         endpoint_info = cls._get_endpoint_info()
-        for (optional_name, optional_data) in endpoint_info['options'].items():
+        for optional_name, optional_data in endpoint_info.get('options', {}).items():
             argtype = cls._get_arg_type(optional_data['type'])
             actiontype = cls._get_action(optional_data['type'])
 
@@ -83,7 +83,7 @@ class AddedCommand(object):
                 metavar=optional_data['metavar'],
                 required=optional_data['required'],
                 nargs="+" if optional_data['array'] else None,
-                help=endpoint_info['description'],
+                help=optional_data['description'],
                 type=argtype,
                 action=actiontype
             )
@@ -110,7 +110,7 @@ class AddedCommand(object):
         :return: The url to send requests to (minus query string).
         """
         endpoint_info = cls._get_endpoint_info()
-        all_positional_args_for_endpoint = [arg['argument'] for arg in endpoint_info['positional']]
+        all_positional_args_for_endpoint = [arg['argument'] for arg in endpoint_info.get('positional', [])]
 
         given_positional_args = []
         for positional_arg in all_positional_args_for_endpoint:
@@ -269,11 +269,11 @@ class AddedCommand(object):
         return query_payload, body_payload, header_payload
 
     @classmethod
-    def run_cli(cls, args):
+    def run_from_cli(cls, args):
         """Run this command using args from the cli. Override this to add higher-level commands."""
         body_payload = cls._build_body_payload(args)
         args.update(body_payload)
-        return cls.run(**args)
+        return cls.run(args)
 
     @classmethod
     def run(cls, args):

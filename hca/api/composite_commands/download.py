@@ -44,7 +44,7 @@ class Download(AddedCommand):
 
     @classmethod
     def _download_files(cls, files, folder, replica):
-        """Use the API class to make a get-files request on each of these files."""
+        """Use the python bindings to make a get-files request on each of these files."""
         for file_ in files:
 
             file_uuid = file_['uuid']
@@ -75,7 +75,7 @@ class Download(AddedCommand):
 
     @classmethod
     def _download_bundle(cls, args):
-        """Use the API class to make a get-bundles request."""
+        """Use the python bindings to make a get-bundles request."""
         bundle_uuid = args["uuid"]
         bundle_name = args.get("name", bundle_uuid)
         replica = args["replica"]
@@ -102,7 +102,7 @@ class Download(AddedCommand):
         return files, folder
 
     @classmethod
-    def run_cli(cls, args):
+    def run_from_cli(cls, args):
         """Download a bundle/file from blue box to local with arguments given from cli."""
         return cls.run(args)
 

@@ -113,7 +113,7 @@ class Upload(AddedCommand):
 
     @classmethod
     def _put_files(cls, filename_key_list, staging_bucket):
-        """Use the API class to make a put-files request on each of these files."""
+        """Make a put-files request on each of these files using the python bindings."""
         bundle_uuid = str(uuid.uuid4())
         files = []
         for filename, file_uuid, key in filename_key_list:
@@ -155,7 +155,7 @@ class Upload(AddedCommand):
 
     @classmethod
     def _put_bundle(cls, bundle_uuid, files, replica):
-        """Use the API class to make a put-bundles request."""
+        """Make a put-bundles request using the python bindings."""
         creator_uid = os.environ.get(cls.CREATOR_ID_ENVIRONMENT_VARIABLE, 1)
         file_args = [{'indexed': True,
                       'name': file_['name'],
@@ -190,7 +190,7 @@ class Upload(AddedCommand):
         return final_return
 
     @classmethod
-    def run_cli(cls, args):
+    def run_from_cli(cls, args):
         """Deposit a bundle from local or remote bucket to blue box with arguments given from cli."""
         return cls.run(args)
 
