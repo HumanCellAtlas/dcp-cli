@@ -235,8 +235,8 @@ class AddedCommand(object):
         if 'access_token' in args.get('kwargs', {}):
             if retry:
                 logging.info("Access token taken from kwargs invalid.")
-                raise ValueError("The access token you've supplied in the kwargs is not valid."
-                                 " Please refresh and try again. You may also run `hca login`"
+                raise ValueError("The supplied access token is not valid."
+                                 " Please refresh or run `hca login`"
                                  " to get a more permanent hca configuration.")
             else:
                 logging.info("Found access token in kwargs.")
