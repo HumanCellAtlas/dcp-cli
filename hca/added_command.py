@@ -377,7 +377,7 @@ class AddedCommand(object):
             'params': query_payload,
             'headers': header_payload,
             'json': body_payload if method in json_methods else None,
-            'stream': args.get('stream', False)
+            'stream': args.get('stream', True)  # Default to stream
         }
 
         requires_auth = cls._get_endpoint_info().get('requires_auth', False)

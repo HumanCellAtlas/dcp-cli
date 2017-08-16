@@ -15,3 +15,4 @@ class Constants:
     OBJECT_SPLITTER = "/"
     TWEAK_PROJECT_NAME = "hca"
     APPLICATION_SECRETS_ENDPOINT = "https://hca-dss.czi.technology/internal/application_secrets"
+    CHUNK_SIZE = (2 ** 20) * 16  # 16 MB
