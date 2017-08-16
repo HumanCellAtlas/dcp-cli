@@ -14,3 +14,4 @@ class Constants:
     # In the put-bundles command, the files should be specified as <V1><OBJECT_SPLITTER><V2><OBJECT_SPLITTER><V3>...
     OBJECT_SPLITTER = "/"
     TWEAK_PROJECT_NAME = "hca"
+    APPLICATION_SECRETS_ENDPOINT = "https://hca-dss.czi.technology/internal/application_secrets"

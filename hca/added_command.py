@@ -8,10 +8,10 @@ from io import open
 
 import httplib2
 import jsonschema
-import oauth2client
-import oauth2client.client
-import oauth2client.service_account
 import requests
+from google.auth.transport.requests import Request as GoogleAuthRequest
+from google.oauth2.credentials import Credentials as OAuth2Credentials
+from google.oauth2.service_account import Credentials as ServiceAccountCredentials
 from tweak import Config
 
 from .constants import Constants
@@ -231,7 +231,7 @@ class AddedCommand(object):
 
     @classmethod
     def _get_access_token(cls, args, retry):
-        config = Config(Constants.TWEAK_PROJECT_NAME)
+        config = Config(Constants.TWEAK_PROJECT_NAME, autosave=True)
         access_token = None
 
         # kwargs access_token input
@@ -251,20 +251,18 @@ class AddedCommand(object):
             if retry and config.get('refresh_token', None):
                 logging.info("The access token stored in {} is not valid."
                              " Attempting with refresh token.".format(config.config_files[-1]))
-                credentials = oauth2client.client.OAuth2Credentials(
+                credentials = OAuth2Credentials(
                     access_token=None,
                     client_id=config.client_id,
                     client_secret=config.client_secret,
                     scopes=["https://www.googleapis.com/auth/userinfo.email"],
                     refresh_token=config.refresh_token,
-                    token_expiry=None,
                     token_uri=config.token_uri,
-                    user_agent=None,
-                    revoke_uri=None
                 )
-                # Silence ResourceWarning from httplib2 socket being open for connection pooling.
-                warnings.simplefilter(action="ignore", module="httplib2")
-                credentials.refresh(httplib2.Http())
+
+                r = GoogleAuthRequest()
+                credentials.refresh(r)
+                r.session.close()
 
                 config.access_token = credentials.access_token
                 access_token = credentials.access_token
@@ -292,17 +290,17 @@ class AddedCommand(object):
                     "File {} (pointed by GOOGLE_APPLICATION_CREDENTIALS"
                     " environment variable) does not exist!".format(service_account_credentials_filename))
 
-            service_account_class = oauth2client.service_account.ServiceAccountCredentials
-            service_account_credentials = service_account_class.from_json_keyfile_name(
+            service_account_credentials = ServiceAccountCredentials.from_service_account_file(
                 service_account_credentials_filename,
-                "https://www.googleapis.com/auth/userinfo.email")
+                scopes=["https://www.googleapis.com/auth/userinfo.email"]
+            )
 
-            # Silence ResourceWarning from httplib2 socket being open for connection pooling.
-            warnings.simplefilter("ignore")
-            service_account_credentials.refresh(httplib2.Http())
+            r = GoogleAuthRequest()
+            service_account_credentials.refresh(r)
+            r.session.close()
 
-            access_token_json = json.loads(service_account_credentials.to_json())
-            access_token = access_token_json['access_token']
+            access_token = service_account_credentials.token
+
         else:
             raise ValueError("Run `hca login` or export GOOGLE_APPLICATION_CREDENTIALS environment variable"
                              " to load credentials. See <Insert doc here>")
