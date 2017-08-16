@@ -16,9 +16,6 @@ from io import open
 from .packages.checksumming_io import ChecksummingBufferedReader, S3Etag
 
 
-logging.basicConfig(level=logging.INFO)
-
-
 def encode_tags(tags):
     return [dict(Key=k, Value=v) for k, v in tags.items()]
 
