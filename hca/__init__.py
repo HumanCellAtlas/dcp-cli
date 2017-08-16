@@ -29,7 +29,7 @@ def main():
                 if six.PY3:
                     sys.stdout.buffer.write(chunk)
                 else:
-                    sys.stdout.write(chunk)  
+                    sys.stdout.write(chunk)
     elif isinstance(response, dict):
         print(json.dumps(response))
     elif isinstance(response, str):
