@@ -17,9 +17,9 @@ def main():
 
     if isinstance(response, requests.Response):
         print(response.content.decode())
-    elif six.PY2 and type(response) == unicode:
-        print(response.decode())
-    elif type(response) == str:
-        print(response)
-    else:
+    elif isinstance(response, dict):
         print(json.dumps(response))
+    elif isinstance(response, str):
+        print(response)
+    else:  # Unicode
+        print(response.decode())
