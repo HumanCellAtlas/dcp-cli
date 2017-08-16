@@ -1,30 +1,20 @@
 #!/usr/bin/env python
 
-import glob
+import os, glob
 from setuptools import setup, find_packages
+
+install_requires = [line.rstrip() for line in open(os.path.join(os.path.dirname(__file__), "requirements.txt"))]
 
 setup(
     name="hca",
-    version="0.9.0",
+    version="0.9.3",
     url='https://github.com/HumanCellAtlas/data-store-cli',
     license='Apache Software License',
     author='Human Cell Atlas contributors',
     author_email='akislyuk@chanzuckerberg.com',
     description='Human Cell Atlas Data Storage System Command Line Interface',
     long_description=open('README.rst').read(),
-    tests_require=[
-        "six==1.10.0"
-    ],
-    install_requires=[
-        "requests==2.17.3",
-        "jsonpointer==1.10",
-        "jsonschema==2.6.0",
-        "Jinja2==2.9.6",
-        "boto3==1.4.4",
-        "google-auth==1.0.1",
-        "google-api-python-client==1.6.2",
-        "crcmod==1.7"
-    ],
+    install_requires=install_requires,
     extras_require={
         ':python_version == "2.7"': ['enum34 >= 1.1.6, < 2']
     },

@@ -370,6 +370,8 @@ def generate_python_bindings(test_api_path=None):
             endpoint_info = spec['paths'][path][http_method]
             endpoint_name = _make_name(http_method, path_split)
             indexed_parameters = index_parameters(spec, endpoint_info)
+            # Currently assumes only using one possible oauth scope (Google email) needed.
+            requires_auth = 'security' in endpoint_info
 
             # Start tracking params if there's no current store.
             if endpoint_name not in param_holders:
@@ -378,10 +380,13 @@ def generate_python_bindings(test_api_path=None):
                     'body_params': indexed_parameters.get('top_level_body_params', {}),
                     'positional': [],
                     'options': {},
+                    'requires_auth': requires_auth,
                     'description': endpoint_info.get('description', "placeholder")
                 }
             else:
                 param_holders[endpoint_name]['seen'] = True
+                previously_requires_auth = param_holders[endpoint_name]['requires_auth']
+                param_holders[endpoint_name]['requires_auth'] = previously_requires_auth or requires_auth
 
             # Add args to their base_route-indexed param_data object with requirement indications.
             _label_path_args_required(path, param_holders[endpoint_name], indexed_parameters)

@@ -17,13 +17,15 @@ init_docs:
 	cd docs; sphinx-quickstart
 
 bindings:
+	git clean -df hca/api
+	pip install -r requirements.txt
 	python -m hca.regenerate_api
-	find hca -name "*.pyc" -delete
+	find hca -name '*.pyc' -delete
 
 docs: bindings
 	$(MAKE) -C docs html
 
-install:
+install: bindings
 	-rm -rf dist
 	python setup.py bdist_wheel
 	pip install --upgrade dist/*.whl

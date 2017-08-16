@@ -18,9 +18,10 @@ import six
 pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.insert(0, pkg_root)
 
-import hca
 from hca import api
-from hca import regenerate_api
+from hca import regenerate_api  # noqa
+from hca import constants  # noqa
+from test.config import override_oauth_config  # noqa
 
 
 class TestHCACLI(unittest.TestCase):
@@ -257,6 +258,23 @@ class TestHCACLI(unittest.TestCase):
         out = {"name": "name", "uuid": "uuid", "versions": ["item1", "item2"]}
         self.assertEqual(cli.parse_args(args), out)
 
+    def test_cli_login(self):
+        from tweak import Config
+        import hca.cli
+
+        cli = hca.cli.CLI()
+
+        access_token = "test_access_token"
+        out = {'completed': True}
+        args = ["login", "--access-token", access_token]
+
+        with override_oauth_config():
+            response = cli.make_request(args)
+            config = Config(constants.Constants.TWEAK_PROJECT_NAME)
+
+            self.assertEqual(response, out)
+            self.assertEqual(config.access_token, access_token)
+
     def test_array_cli(self):
         """Ensure that this framework can handle arrays."""
         import hca.cli
@@ -382,16 +400,29 @@ class TestHCACLI(unittest.TestCase):
         self.assertEqual(200, resp.status_code)
         self.assertTrue(subscription_uuid in [s['uuid'] for s in resp.json()['subscriptions']])
 
-        resp = api.get_subscriptions("aws", uuid=subscription_uuid)
+        resp = api.get_subscriptions(replica="aws", uuid=subscription_uuid)
         self.assertEqual(200, resp.status_code)
         self.assertEqual(subscription_uuid, resp.json()['uuid'])
 
-        resp = api.delete_subscriptions(subscription_uuid, "aws")
+        resp = api.delete_subscriptions(uuid=subscription_uuid, replica="aws")
         self.assertEqual(200, resp.status_code)
         self.assertIn('timeDeleted', resp.json())
 
         resp = api.get_subscriptions("aws", uuid=subscription_uuid)
         self.assertEqual(404, resp.status_code)
+
+    def test_python_login(self):
+        from tweak import Config
+
+        access_token = "test_access_token"
+        out = {'completed': True}
+
+        with override_oauth_config():
+            login = api.login(access_token=access_token)
+            config = Config(constants.Constants.TWEAK_PROJECT_NAME)
+
+            self.assertEqual(login, out)
+            self.assertEqual(config.access_token, access_token)
 
 
 if __name__ == '__main__':

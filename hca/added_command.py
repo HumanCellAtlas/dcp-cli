@@ -1,13 +1,15 @@
 import argparse
 import json
+import logging
+import os
 import re
-import uuid
 
 import jsonschema
 import requests
-from google import auth
-from google.auth.transport.requests import Request
-from googleapiclient import sample_tools
+from google.auth.transport.requests import Request as GoogleAuthRequest
+from google.oauth2.credentials import Credentials as OAuth2Credentials
+from google.oauth2.service_account import Credentials as ServiceAccountCredentials
+from tweak import Config
 
 from .constants import Constants
 
@@ -207,27 +209,100 @@ class AddedCommand(object):
             if arg_name not in endpoint_info["options"]:
                 continue
 
-            payload_format = endpoint_info["options"][arg_name]["in"]
+            payload_format = endpoint_info['options'][arg_name].get('in', None)
             if payload_format == "body":
                 hierarchy = endpoint_info["options"][arg_name]["hierarchy"]
                 cls._add_arg(arg, body_payload, hierarchy)
         return body_payload
 
     @classmethod
-    def _get_auth_header(cls, real_header=True):
-        try:
-            credentials, project_id = auth.default(scopes=["https://www.googleapis.com/auth/userinfo.email"])
+    def _get_auth_header(cls, args, retry=False):
+        """
+        Called in run when a user calls an authenticated method. retry=True if authenticated method returns 401.
 
-            r = Request()
-            credentials.refresh(r)
+        :param args: Dict of arguments for any given function.
+        :param retry: Boolean indicating if this is the second time trying to authenticate. If so, refresh token.
+        """
+        token = cls._get_access_token(args, retry)
+        return {'Authorization': "Bearer {}".format(token)}
+
+    @classmethod
+    def _get_access_token(cls, args, retry):
+        config = Config(Constants.TWEAK_PROJECT_NAME, autosave=True)
+        access_token = None
+
+        # kwargs access_token input
+        if 'access_token' in args.get('kwargs', {}):
+            if retry:
+                logging.info("Access token taken from kwargs invalid.")
+                raise ValueError("The supplied access token is not valid."
+                                 " Please refresh or run `hca login`"
+                                 " to get a more permanent hca configuration.")
+            else:
+                logging.info("Found access token in kwargs.")
+                access_token = args['kwargs']['access_token']
+
+        # Checking config
+        elif config.get('access_token', None):
+            # There is a refresh token
+            if retry and config.get('refresh_token', None):
+                logging.info("The access token stored in {} is not valid."
+                             " Attempting with refresh token.".format(config.config_files[-1]))
+                credentials = OAuth2Credentials(
+                    access_token=None,
+                    client_id=config.client_id,
+                    client_secret=config.client_secret,
+                    scopes=["https://www.googleapis.com/auth/userinfo.email"],
+                    refresh_token=config.refresh_token,
+                    token_uri=config.token_uri,
+                )
+
+                r = GoogleAuthRequest()
+                credentials.refresh(r)
+                r.session.close()
+
+                config.access_token = credentials.access_token
+                access_token = credentials.access_token
+            # No refresh token
+            elif retry:
+                logging.info("The access token stored in {} is not valid and there is"
+                             " no supplied refresh token.".format(config.config_files[-1]))
+                raise ValueError("The access_token in your config file is invalid"
+                                 " and there is no refresh_token to refresh it."
+                                 " You may run `hca login` to easily reset your"
+                                 " hca configuration.")
+            # First attempt
+            else:
+                logging.info("Found access token in {}.".format(config.config_files[-1]))
+                access_token = config.access_token
+
+        # Service account handling
+        elif 'GOOGLE_APPLICATION_CREDENTIALS' in os.environ:
+            logging.info("Found GOOGLE_APPLICATION_CREDENTIALS environment variable."
+                         " Grabbing service account credentials from there.")
+            service_account_credentials_filename = os.environ['GOOGLE_APPLICATION_CREDENTIALS']
+
+            if not os.path.isfile(service_account_credentials_filename):
+                raise EnvironmentError(
+                    "File {} (pointed by GOOGLE_APPLICATION_CREDENTIALS"
+                    " environment variable) does not exist!".format(service_account_credentials_filename))
+
+            service_account_credentials = ServiceAccountCredentials.from_service_account_file(
+                service_account_credentials_filename,
+                scopes=["https://www.googleapis.com/auth/userinfo.email"]
+            )
+
+            r = GoogleAuthRequest()
+            service_account_credentials.refresh(r)
             r.session.close()
 
-            token = credentials.token if real_header else str(uuid.uuid4())
+            access_token = service_account_credentials.token
 
-            return "Bearer {}".format(token)
+        else:
+            raise ValueError("Run `hca login` or export GOOGLE_APPLICATION_CREDENTIALS environment variable"
+                             " to load credentials. See <Insert doc here>")
 
-        except auth.exceptions.DefaultCredentialsError:
-            return "Bearer {}".format("no_credentials")
+        return access_token
 
     @classmethod
     def _build_non_body_payloads(cls, namespace):
@@ -242,7 +317,7 @@ class AddedCommand(object):
         query_payload = {}
         body_payload = {}
         header_payload = {}
-        for (arg_name, arg) in namespace.items():
+        for arg_name, arg in namespace.items():
             # If the argument is positional, belongs in path, not a payload
             if arg_name not in endpoint_info["options"]:
                 continue
@@ -265,7 +340,6 @@ class AddedCommand(object):
             if payload_format == "header":
                 cls._add_arg(arg, header_payload, hierarchy)
 
-        header_payload['Authorization'] = cls._get_auth_header()
         return query_payload, body_payload, header_payload
 
     @classmethod
@@ -294,23 +368,28 @@ class AddedCommand(object):
         json_methods = ["post", "put", "patch"]
         method = endpoint_name[:endpoint_name.find("-")]
 
-        if method in param_methods:
-            request = requests.request(
-                method,
-                url,
-                params=query_payload,
-                headers=header_payload,
-                stream=args.get('stream', False)
-            )
-        elif method in json_methods:
-            request = requests.request(
-                method,
-                url,
-                json=body_payload,
-                params=query_payload,
-                headers=header_payload,
-                stream=args.get('stream', False)
-            )
-        else:
+        if method not in json_methods and method not in param_methods:
             raise ValueError("Bad request type")
-        return request
+
+        request_args = {
+            'method': method,
+            'url': url,
+            'params': query_payload,
+            'headers': header_payload,
+            'json': body_payload if method in json_methods else None,
+            'stream': args.get('stream', False)
+        }
+
+        requires_auth = cls._get_endpoint_info().get('requires_auth', False)
+
+        if requires_auth:
+            header_payload.update(cls._get_auth_header(args))
+
+        response = requests.request(**request_args)
+
+        # Maybe auth didn't work. Refresh token and try again.
+        if response.status_code == requests.codes.unauthorized and requires_auth:
+            header_payload.update(cls._get_auth_header(args, True))
+            response = requests.request(**request_args)
+
+        return response

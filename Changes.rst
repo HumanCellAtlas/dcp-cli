@@ -1,3 +1,22 @@
+Changes for v0.9.3 (2017-08-04)
+===============================
+
+Removing popup capability to release functioning package.
+
+Popups weren't working because client\_secrets.json is required and
+wasn't being published with the package.
+
+Changes for v0.9.2 (2017-08-04)
+===============================
+
+Add client\_secrets.json to MANIFEST directory.
+
+Changes for v0.9.1 (2017-08-04)
+===============================
+
+Fix auto-path set Set config to ~/.config/hca/oauth2.json Reconfigure
+auth to include sign-in pop-up if in a teletype
+
 Changes for v0.9.0 (2017-08-02)
 ===============================
 
