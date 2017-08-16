@@ -232,7 +232,7 @@ class AddedCommand(object):
         access_token = None
 
         # kwargs access_token input
-        if 'access_token' in args:
+        if 'access_token' in args.get('kwargs', {}):
             if retry:
                 logging.info("Access token taken from kwargs invalid.")
                 raise ValueError("The access token you've supplied in the kwargs is not valid."
@@ -240,7 +240,7 @@ class AddedCommand(object):
                                  " to get a more permanent hca configuration.")
             else:
                 logging.info("Found access token in kwargs.")
-                access_token = args['access_token']
+                access_token = args['kwargs']['access_token']
 
         # Checking config
         elif config.get('access_token', None):
