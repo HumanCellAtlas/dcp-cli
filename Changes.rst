@@ -1,3 +1,9 @@
+Changes for v0.9.5 (2017-08-16)
+===============================
+
+Stream printing to console & print bytes Jmackey popup auth Publish
+python bindings to readthedocs
+
 Changes for v0.9.3 (2017-08-04)
 ===============================
 
