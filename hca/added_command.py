@@ -3,10 +3,7 @@ import json
 import logging
 import os
 import re
-import warnings
-from io import open
 
-import httplib2
 import jsonschema
 import requests
 from google.auth.transport.requests import Request as GoogleAuthRequest
@@ -391,7 +388,7 @@ class AddedCommand(object):
         response = requests.request(**request_args)
 
         # Maybe auth didn't work. Refresh token and try again.
-        if response.status_code == 401 and requires_auth:
+        if response.status_code == requests.codes.unauthorized and requires_auth:
             header_payload.update(cls._get_auth_header(args, True))
             response = requests.request(**request_args)
 
