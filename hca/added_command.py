@@ -263,7 +263,7 @@ class AddedCommand(object):
                     revoke_uri=None
                 )
                 # Silence ResourceWarning from httplib2 socket being open for connection pooling.
-                warnings.simplefilter("ignore")
+                warnings.simplefilter(action="ignore", module="httplib2")
                 credentials.refresh(httplib2.Http())
 
                 config.access_token = credentials.access_token
