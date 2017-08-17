@@ -1,3 +1,9 @@
+Changes for v0.10.0 (2017-08-17)
+================================
+
+Let readthedocs publish api spec (#38) Log to stderr and fix
+Oauth2Client inputs
+
 Changes for v0.9.5 (2017-08-16)
 ===============================
 
