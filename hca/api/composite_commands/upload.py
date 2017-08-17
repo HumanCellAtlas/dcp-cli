@@ -4,10 +4,7 @@ import os
 import pprint
 import sys
 import uuid
-import logging
 from io import open
-
-import boto3
 
 from ...upload_to_cloud import upload_to_cloud
 from . import put_bundles, put_files
@@ -101,14 +98,14 @@ class Upload(AddedCommand):
         filenames = list(map(os.path.basename, uploaded_keys))
 
         # Print to stderr, upload the files to s3 and return a list of tuples: (filename, filekey)
-        logging.info("Uploading the following keys to aws:")
+        sys.stderr.write("\nUploading the following keys to aws:")
         for file_ in filenames:
-            logging.info(file_)
+            sys.stderr.write("\n{}".format(file_))
 
         filename_key_list = list(zip(filenames, file_uuids, uploaded_keys))
-        logging.info("\nThe following keys were uploaded successfully:")
+        sys.stderr.write("\nThe following keys were uploaded successfully:")
         for filename, file_uuid, key in filename_key_list:
-            logging.info('{:<12}  {:<12}'.format(filename, key))
+            sys.stderr.write('\n{:<12}  {:<12}'.format(filename, key))
         return filename_key_list
 
     @classmethod
@@ -117,14 +114,14 @@ class Upload(AddedCommand):
         bundle_uuid = str(uuid.uuid4())
         files = []
         for filename, file_uuid, key in filename_key_list:
-            logging.info("File {}: registering...".format(filename))
+            sys.stderr.write("\nFile {}: registering...".format(filename))
 
             # Generating file data
             creator_uid = os.environ.get(cls.CREATOR_ID_ENVIRONMENT_VARIABLE, 1)
             source_url = "s3://{}/{}".format(staging_bucket, key)
-            logging.info(source_url)
+            sys.stderr.write("\n{}".format(source_url))
             # file_uuid = key[:key.find("/")]
-            logging.info("File {}: assigned uuid {}".format(filename, file_uuid))
+            sys.stderr.write("\nFile {}: assigned uuid {}".format(filename, file_uuid))
 
             response = put_files(file_uuid,
                                  bundle_uuid=bundle_uuid,
@@ -134,7 +131,7 @@ class Upload(AddedCommand):
 
             if response.ok:
                 version = response.json().get('version', "blank")
-                logging.info("File {}: registered with uuid {}".format(filename, file_uuid))
+                sys.stderr.write("\nFile {}: registered with uuid {}".format(filename, file_uuid))
                 files.append({
                     'name': filename,
                     'version': version,
@@ -144,13 +141,13 @@ class Upload(AddedCommand):
                 response.close()
 
             else:
-                logging.info("File {}: registration FAILED".format(filename))
-                logging.info(response.text)
+                sys.stderr.write("\nFile {}: registration FAILED".format(filename))
+                sys.stderr.write("\n{}".format(response.text))
                 response.close()
                 response.raise_for_status()
 
-            logging.info("Request response")
-            logging.info("{}".format(response.content.decode()))
+            sys.stderr.write("\nRequest response")
+            sys.stderr.write("\n{}".format(response.content.decode()))
         return bundle_uuid, files
 
     @classmethod
@@ -162,7 +159,7 @@ class Upload(AddedCommand):
                       'version': file_['version'],
                       'uuid': file_['uuid']} for file_ in files]
 
-        logging.info("Bundle {}: registering...".format(bundle_uuid))
+        sys.stderr.write("\nBundle {}: registering...".format(bundle_uuid))
 
         response = put_bundles(bundle_uuid, replica=replica, creator_uid=creator_uid, files=file_args)
 
@@ -170,15 +167,15 @@ class Upload(AddedCommand):
 
         if response.ok:
             version = response.json().get('version', None)
-            logging.info("Bundle {}: registered successfully".format(bundle_uuid))
+            sys.stderr.write("\nBundle {}: registered successfully".format(bundle_uuid))
 
         else:
-            logging.info("Bundle {}: registration FAILED".format(bundle_uuid))
-            logging.info(response.text)
+            sys.stderr.write("\nBundle {}: registration FAILED".format(bundle_uuid))
+            sys.stderr.write("\n{}".format(response.text))
             response.raise_for_status()
 
-        logging.info("Request response:")
-        logging.info("{}\n".format(response.content.decode()))
+        sys.stderr.write("\nRequest response:")
+        sys.stderr.write("\n{}".format(response.content.decode()))
         final_return = {
             "bundle_uuid": bundle_uuid,
             "creator_uid": creator_uid,
