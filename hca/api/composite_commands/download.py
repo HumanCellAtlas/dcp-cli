@@ -1,7 +1,7 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import os
-import logging
+import sys
 
 from io import open
 from . import get_bundles, get_files
@@ -50,13 +50,13 @@ class Download(AddedCommand):
             file_uuid = file_['uuid']
             filename = file_.get("name", file_uuid)
 
-            logging.info("File {}: Retrieving...".format(filename))
+            sys.stderr.write("\nFile {}: Retrieving...".format(filename))
 
             response = get_files(file_uuid, replica=replica, stream=True)
 
             if response.ok:
                 file_path = os.path.join(folder, filename)
-                logging.info("File {}: GET SUCCEEDED. Writing to disk.".format(filename, file_uuid))
+                sys.stderr.write("\nFile {}: GET SUCCEEDED. Writing to disk.".format(filename, file_uuid))
                 with open(file_path, "wb") as fh:
                     # Process taken from
                     # https://stackoverflow.com/questions/16694907/how-to-download-large-file-in-python-with-requests-py
@@ -64,11 +64,11 @@ class Download(AddedCommand):
                         if chunk:
                             fh.write(chunk)
                 response.close()
-                logging.info("File {}: GET SUCCEEDED. Stored at {}.".format(filename, file_path))
+                sys.stderr.write("\nFile {}: GET SUCCEEDED. Stored at {}.".format(filename, file_path))
 
             else:
-                logging.info("File {}: GET FAILED. This uuid is neither a bundle nor a file.".format(filename))
-                logging.info(response.text)
+                sys.stderr.write("\nFile {}: GET FAILED. This uuid is neither a bundle nor a file.".format(filename))
+                sys.stderr.write("\n{}".format(response.text))
                 response.close()
 
         return {"completed": True}
@@ -80,7 +80,7 @@ class Download(AddedCommand):
         bundle_name = args.get("name", bundle_uuid)
         replica = args["replica"]
 
-        logging.info("Bundle {}: Retrieving...".format(bundle_uuid))
+        sys.stderr.write("\nBundle {}: Retrieving...".format(bundle_uuid))
 
         response = get_bundles(bundle_uuid, replica=replica)
 
@@ -92,13 +92,13 @@ class Download(AddedCommand):
             folder = bundle_name
             if not os.path.isdir(folder):
                 os.makedirs(folder)
-                logging.info("Bundle {}: GET SUCCEEDED. {} files to download".format(bundle_uuid, len(files)))
-            logging.info("Request response:")
-            logging.info("{}\n".format(response.content.decode()))
+                sys.stderr.write("\nBundle {}: GET SUCCEEDED. {} files to download".format(bundle_uuid, len(files)))
+            sys.stderr.write("\nRequest response:")
+            sys.stderr.write("\n{}\n".format(response.content.decode()))
 
         else:
-            logging.info("Bundle {}: GET FAILED. Checking if uuid is a file.".format(bundle_uuid))
-            logging.info(response.text)
+            sys.stderr.write("\nBundle {}: GET FAILED. Checking if uuid is a file.".format(bundle_uuid))
+            sys.stderr.write("\n{}".format(response.text))
         return files, folder
 
     @classmethod

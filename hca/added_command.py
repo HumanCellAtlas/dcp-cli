@@ -249,7 +249,7 @@ class AddedCommand(object):
                 logging.info("The access token stored in {} is not valid."
                              " Attempting with refresh token.".format(config.config_files[-1]))
                 credentials = OAuth2Credentials(
-                    access_token=None,
+                    token=None,
                     client_id=config.client_id,
                     client_secret=config.client_secret,
                     scopes=["https://www.googleapis.com/auth/userinfo.email"],
@@ -261,8 +261,8 @@ class AddedCommand(object):
                 credentials.refresh(r)
                 r.session.close()
 
-                config.access_token = credentials.access_token
-                access_token = credentials.access_token
+                config.access_token = credentials.token
+                access_token = credentials.token
             # No refresh token
             elif retry:
                 logging.info("The access token stored in {} is not valid and there is"
