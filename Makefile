@@ -22,10 +22,10 @@ bindings:
 	python -m hca.regenerate_api
 	find hca -name '*.pyc' -delete
 
-docs: bindings
+docs:
 	$(MAKE) -C docs html
 
-install: bindings
+install:
 	-rm -rf dist
 	python setup.py bdist_wheel
 	pip install --upgrade dist/*.whl
