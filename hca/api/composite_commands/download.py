@@ -3,8 +3,8 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import os
 import sys
 
+import hca.api
 from io import open
-from . import get_bundles, get_files
 from ...added_command import AddedCommand
 
 
@@ -52,7 +52,7 @@ class Download(AddedCommand):
 
             sys.stderr.write("\nFile {}: Retrieving...".format(filename))
 
-            response = get_files(file_uuid, replica=replica, stream=True)
+            response = hca.api.get_files(file_uuid, replica=replica, stream=True)
 
             if response.ok:
                 file_path = os.path.join(folder, filename)
@@ -82,7 +82,7 @@ class Download(AddedCommand):
 
         sys.stderr.write("\nBundle {}: Retrieving...".format(bundle_uuid))
 
-        response = get_bundles(bundle_uuid, replica=replica)
+        response = hca.api.get_bundles(bundle_uuid, replica=replica)
 
         files = [args]
         folder = ""
