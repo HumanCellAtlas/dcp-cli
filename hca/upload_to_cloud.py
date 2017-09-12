@@ -26,7 +26,7 @@ def _mime_type(filename):
         return encoding
     if type_:
         return type_
-    raise RuntimeError("Can't discern mime type")
+    return "application/octet-stream"
 
 
 def _copy_from_s3(path, s3, tx_cfg):
