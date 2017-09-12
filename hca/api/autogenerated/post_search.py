@@ -10,4 +10,4 @@ class PostSearch(AddedCommand):
 
     @classmethod
     def _get_endpoint_info(cls):
-        return {'seen': False, 'body_params': {}, 'positional': [], 'options': {}, 'requires_auth': False, 'description': 'Accepts Elasticsearch JSON query and returns matching bundle identifiers\n'}
+        return {u'description': u'Accepts Elasticsearch JSON query and returns matching bundle identifiers\n', u'body_params': {}, u'positional': [], u'seen': False, u'requires_auth': False, u'options': {}}
