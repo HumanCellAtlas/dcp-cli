@@ -19,9 +19,9 @@ import six
 pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.insert(0, pkg_root)
 
-from hca import api
-from hca import regenerate_api  # noqa
-from hca import constants  # noqa
+import hca.api
+import hca.regenerate_api
+import hca.constants
 from test.config import override_oauth_config  # noqa
 
 
@@ -33,13 +33,13 @@ class TestHCACLI(unittest.TestCase):
         http_method = "get"
         path_split = ["bundles"]
         self.assertEqual(
-            regenerate_api._make_name(http_method, path_split),
+            hca.regenerate_api._make_name(http_method, path_split),
             "get-bundles"
         )
 
         path_split.append("cmd")
         self.assertEqual(
-            regenerate_api._make_name(http_method, path_split),
+            hca.regenerate_api._make_name(http_method, path_split),
             "get-bundles-cmd"
         )
 
@@ -70,7 +70,7 @@ class TestHCACLI(unittest.TestCase):
             },
             "summary": "Query bundles"
         }
-        self.assertEqual(regenerate_api.index_parameters(None, params), {})
+        self.assertEqual(hca.regenerate_api.index_parameters(None, params), {})
 
         params["parameters"] = [
             {
@@ -82,7 +82,7 @@ class TestHCACLI(unittest.TestCase):
             }
         ]
         self.assertEqual(
-            regenerate_api.index_parameters(None, params),
+            hca.regenerate_api.index_parameters(None, params),
             {"uuid": {
                 "description": "Bundle unique ID.",
                 "in": "path",
@@ -118,7 +118,7 @@ class TestHCACLI(unittest.TestCase):
           }
         ]
         self.assertEqual(
-            regenerate_api.index_parameters(None, params),
+            hca.regenerate_api.index_parameters(None, params),
             {"timestamp": {
                 "description": "Timestamp of file creation in RFC3339.",
                 "in": "body",
@@ -167,12 +167,12 @@ class TestHCACLI(unittest.TestCase):
         dirpath = os.path.dirname(os.path.realpath(__file__))
         file_path = os.path.join(dirpath, "bundle", "SRR2967608_1.fastq.gz")
 
-        self.assertGreater(os.stat(file_path).st_size, constants.Constants.CHUNK_SIZE)
+        self.assertGreater(os.stat(file_path).st_size, hca.constants.Constants.CHUNK_SIZE)
 
         args = {'file_or_dir': [file_path],
                 'replica': "aws",
                 'staging_bucket': "org-humancellatlas-dss-cli-test"}
-        response = api.upload(**args)
+        response = hca.api.upload(**args)
 
         file_uuid = response['files'][0]['uuid']
 
@@ -294,7 +294,7 @@ class TestHCACLI(unittest.TestCase):
 
         with override_oauth_config():
             response = cli.make_request(args)
-            config = Config(constants.Constants.TWEAK_PROJECT_NAME)
+            config = Config(hca.constants.Constants.TWEAK_PROJECT_NAME)
 
             self.assertEqual(response, out)
             self.assertEqual(config.access_token, access_token)
@@ -355,10 +355,10 @@ class TestHCACLI(unittest.TestCase):
                      'replica': "aws",
                      'staging_bucket': "org-humancellatlas-dss-cli-test"}
 
-        bundle_output = api.upload(**namespace)
+        bundle_output = hca.api.upload(**namespace)
 
         downloaded_path = os.path.join(dirpath, "TestDownload")
-        api.download(bundle_output['bundle_uuid'], name=downloaded_path)
+        hca.api.download(bundle_output['bundle_uuid'], name=downloaded_path)
 
         # Check that contents are the same
         for file in os.listdir(bundle_path):
@@ -377,31 +377,31 @@ class TestHCACLI(unittest.TestCase):
                      'replica': "aws",
                      'staging_bucket': "org-humancellatlas-dss-cli-test"}
 
-        bundle_output = api.upload(**namespace)
+        bundle_output = hca.api.upload(**namespace)
 
-        api.download(bundle_output['bundle_uuid'], name=os.path.join(dirpath, "TestDownload"))
+        hca.api.download(bundle_output['bundle_uuid'], name=os.path.join(dirpath, "TestDownload"))
 
         # Test get-files and head-files
         file_ = bundle_output['files'][0]
-        self.assertTrue(api.get_files(file_['uuid'], replica="aws").ok)
-        self.assertTrue(api.head_files(file_['uuid']).ok)
+        self.assertTrue(hca.api.get_files(file_['uuid'], replica="aws").ok)
+        self.assertTrue(hca.api.head_files(file_['uuid']).ok)
 
         # Test get-bundles
         bundle_uuid = bundle_output['bundle_uuid']
-        self.assertTrue(api.get_bundles(bundle_uuid, replica="aws").ok)
+        self.assertTrue(hca.api.get_bundles(bundle_uuid, replica="aws").ok)
 
         # Test put-files
         file_uuid = str(uuid.uuid4())
         bundle_uuid = str(uuid.uuid4())
         source_url = "s3://{}/{}/{}".format(staging_bucket, file_['uuid'], file_['name'])
-        self.assertTrue(api.put_files(file_uuid, creator_uid=1, bundle_uuid=bundle_uuid, source_url=source_url).ok)
+        self.assertTrue(hca.api.put_files(file_uuid, creator_uid=1, bundle_uuid=bundle_uuid, source_url=source_url).ok)
 
         # Test put-bundles
         files = [{'indexed': True,
                   'name': file_['name'],
                   'uuid': file_['uuid'],
                   'version': file_['version']}]
-        resp = api.put_bundles(bundle_uuid, files=files, creator_uid=1, replica="aws")
+        resp = hca.api.put_bundles(bundle_uuid, files=files, creator_uid=1, replica="aws")
         self.assertTrue(resp.ok)
 
     def test_python_api_url(self):
@@ -409,30 +409,30 @@ class TestHCACLI(unittest.TestCase):
                   'replica': "aws",
                   'api_url': "https://thisisafakeurljslfjlshsfs.com"}
         self.assertRaises(requests.exceptions.ConnectionError,
-                          api.get_files,
+                          hca.api.get_files,
                           **kwargs)
 
     def test_python_subscriptions(self):
         query = {'bool': {}}
-        resp = api.put_subscriptions(query=query, callback_url="www.example.com", replica="aws")
+        resp = hca.api.put_subscriptions(query=query, callback_url="www.example.com", replica="aws")
         subscription_uuid = resp.json()['uuid']
 
         self.assertEqual(201, resp.status_code)
         self.assertIn('uuid', resp.json())
 
-        resp = api.get_subscriptions("aws")
+        resp = hca.api.get_subscriptions("aws")
         self.assertEqual(200, resp.status_code)
         self.assertTrue(subscription_uuid in [s['uuid'] for s in resp.json()['subscriptions']])
 
-        resp = api.get_subscriptions(replica="aws", uuid=subscription_uuid)
+        resp = hca.api.get_subscriptions(replica="aws", uuid=subscription_uuid)
         self.assertEqual(200, resp.status_code)
         self.assertEqual(subscription_uuid, resp.json()['uuid'])
 
-        resp = api.delete_subscriptions(uuid=subscription_uuid, replica="aws")
+        resp = hca.api.delete_subscriptions(uuid=subscription_uuid, replica="aws")
         self.assertEqual(200, resp.status_code)
         self.assertIn('timeDeleted', resp.json())
 
-        resp = api.get_subscriptions("aws", uuid=subscription_uuid)
+        resp = hca.api.get_subscriptions("aws", uuid=subscription_uuid)
         self.assertEqual(404, resp.status_code)
 
     def test_python_login(self):
@@ -442,8 +442,8 @@ class TestHCACLI(unittest.TestCase):
         out = {'completed': True}
 
         with override_oauth_config():
-            login = api.login(access_token=access_token)
-            config = Config(constants.Constants.TWEAK_PROJECT_NAME)
+            login = hca.api.login(access_token=access_token)
+            config = Config(hca.constants.Constants.TWEAK_PROJECT_NAME)
 
             self.assertEqual(login, out)
             self.assertEqual(config.access_token, access_token)

@@ -429,12 +429,6 @@ def generate_python_bindings(test_api_path=None):
     file_path = os.path.join(dirname, "api", "__init__.py")
     _write_jinja_file(template_file, function_payload, file_path)
 
-    # Need to autogenerate essentially the same bindings for the composite_command functions to utilize
-    # to avoid circular imports.
-    template_file = "/composite_command_functions.jinja"
-    autogen_for_composite_commands_path = os.path.join(dirname, "api", "composite_commands", "__init__.py")
-    _write_jinja_file(template_file, function_payload, autogen_for_composite_commands_path)
-
     # Loop through all composite_commands files and add their command to python bindings
     function_payload = {'classes': []}
     # Don't want to add imports in the middle of the file, which is what would happen if we appended

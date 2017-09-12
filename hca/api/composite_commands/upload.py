@@ -1,13 +1,12 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import os
-import pprint
 import sys
 import uuid
 from io import open
 
+import hca.api
 from ...upload_to_cloud import upload_to_cloud
-from . import put_bundles, put_files
 from ...added_command import AddedCommand
 
 
@@ -123,11 +122,13 @@ class Upload(AddedCommand):
             # file_uuid = key[:key.find("/")]
             sys.stderr.write("\nFile {}: assigned uuid {}".format(filename, file_uuid))
 
-            response = put_files(file_uuid,
-                                 bundle_uuid=bundle_uuid,
-                                 creator_uid=creator_uid,
-                                 source_url=source_url,
-                                 stream=True)
+            response = hca.api.put_files(
+                file_uuid,
+                bundle_uuid=bundle_uuid,
+                creator_uid=creator_uid,
+                source_url=source_url,
+                stream=True,
+            )
 
             if response.ok:
                 version = response.json().get('version', "blank")
@@ -161,7 +162,7 @@ class Upload(AddedCommand):
 
         sys.stderr.write("\nBundle {}: registering...".format(bundle_uuid))
 
-        response = put_bundles(bundle_uuid, replica=replica, creator_uid=creator_uid, files=file_args)
+        response = hca.api.put_bundles(bundle_uuid, replica=replica, creator_uid=creator_uid, files=file_args)
 
         version = None
 
