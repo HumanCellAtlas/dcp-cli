@@ -7,10 +7,9 @@ import filecmp
 import os
 import shutil
 import sys
+import tempfile
 import unittest
 import uuid
-import pprint
-from six.moves import reload_module
 from io import open
 
 import requests
@@ -368,6 +367,27 @@ class TestHCACLI(unittest.TestCase):
 
         if os.path.exists(downloaded_path):
             shutil.rmtree(downloaded_path)
+
+    def test_python_upload_lg_file(self):
+        with tempfile.NamedTemporaryFile(suffix=".bin") as fh:
+            fh.write(os.urandom(64 * 1024 * 1024 + 1))
+            fh.flush()
+
+            namespace = {'file_or_dir': [fh.name],
+                         'replica': "aws",
+                         'staging_bucket': "org-humancellatlas-dss-cli-test"}
+
+            bundle_output = hca.api.upload(**namespace)
+
+            tempdir = tempfile.mkdtemp()
+            try:
+                hca.api.download(bundle_output['bundle_uuid'], name=tempdir)
+
+                downloaded_file = os.path.join(tempdir, os.path.basename(fh.name))
+                self.assertTrue(filecmp.cmp(fh.name, downloaded_file, False))
+            finally:
+                if os.path.exists(tempdir):
+                    shutil.rmtree(tempdir)
 
     def test_python_bindings(self):
         dirpath = os.path.dirname(os.path.realpath(__file__))

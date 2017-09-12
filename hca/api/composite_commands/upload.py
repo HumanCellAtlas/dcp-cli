@@ -2,10 +2,14 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import os
 import sys
+import time
 import uuid
 from io import open
 
+import requests
+
 import hca.api
+from ... import infra
 from ...upload_to_cloud import upload_to_cloud
 from ...added_command import AddedCommand
 
@@ -19,6 +23,8 @@ class Upload(AddedCommand):
 
     FILE_OR_DIR_ARGNAME = "file_or_dir"
     CREATOR_ID_ENVIRONMENT_VARIABLE = "creator_uid"
+    BACKOFF_FACTOR = 1.618
+    """The time we wait while we poll during an async upload increases by this factor each iteration."""
 
     @classmethod
     def _get_endpoint_info(cls):
@@ -108,8 +114,10 @@ class Upload(AddedCommand):
         return filename_key_list
 
     @classmethod
-    def _put_files(cls, filename_key_list, staging_bucket):
+    def _put_files(cls, filename_key_list, staging_bucket, timeout_seconds=1200):
         """Make a put-files request on each of these files using the python bindings."""
+        logger = infra.get_logger(Upload)
+
         bundle_uuid = str(uuid.uuid4())
         files = []
         for filename, file_uuid, key in filename_key_list:
@@ -130,17 +138,34 @@ class Upload(AddedCommand):
                 stream=True,
             )
 
-            if response.ok:
+            if response.status_code in (requests.codes.ok, requests.codes.created, requests.codes.accepted):
                 version = response.json().get('version', "blank")
-                sys.stderr.write("\nFile {}: registered with uuid {}".format(filename, file_uuid))
                 files.append({
                     'name': filename,
                     'version': version,
                     'uuid': file_uuid,
                     'creator_uid': creator_uid
                 })
-                response.close()
 
+            if response.status_code in (requests.codes.ok, requests.codes.created):
+                sys.stderr.write("\nFile {}: registered with uuid {}".format(filename, file_uuid))
+                response.close()
+            elif response.status_code == requests.codes.accepted:
+                logger.debug("Server indicated async copy")
+
+                timeout = time.time() + timeout_seconds
+                wait = 1.0
+                while time.time() < timeout:
+                    get_resp = hca.api.head_files(file_uuid, version)
+                    if get_resp.ok:
+                        break
+                    time.sleep(wait)
+                    wait = min(60.0, wait * Upload.BACKOFF_FACTOR)
+                else:
+                    # timed out. :(
+                    raise RuntimeError("File {}: registration FAILED".format(filename))
+
+                logger.debug("Successfully fetched file")
             else:
                 sys.stderr.write("\nFile {}: registration FAILED".format(filename))
                 sys.stderr.write("\n{}".format(response.text))
