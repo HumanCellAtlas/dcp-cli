@@ -434,7 +434,7 @@ class TestHCACLI(unittest.TestCase):
 
     def test_python_subscriptions(self):
         query = {'bool': {}}
-        resp = hca.api.put_subscriptions(query=query, callback_url="www.example.com", replica="aws")
+        resp = hca.api.put_subscriptions(es_query=query, callback_url="www.example.com", replica="aws")
         subscription_uuid = resp.json()['uuid']
 
         self.assertEqual(201, resp.status_code)
