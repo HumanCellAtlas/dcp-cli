@@ -10,4 +10,4 @@ class PostSearch(AddedCommand):
 
     @classmethod
     def _get_endpoint_info(cls):
-        return {u'description': u'Accepts Elasticsearch JSON query and returns matching bundle identifiers\n', u'body_params': {}, u'positional': [], u'seen': False, u'requires_auth': False, u'options': {}}
+        return {u'description': u'Accepts Elasticsearch JSON query and returns matching bundle identifiers\n', u'body_params': {u'es_query': {u'description': u'Elasticsearch query', u'hierarchy': [u'es_query'], u'req': True, u'in': u'body', u'array': False, u'type': u'object', u'name': u'es_query'}}, u'positional': [], u'seen': False, u'requires_auth': False, u'options': {u'replica': {u'hierarchy': [u'replica'], u'in': u'query', u'description': u'Replica to search.', u'required_for': [u'/search'], u'format': None, u'pattern': None, u'array': False, u'required': True, u'type': u'string', u'metavar': None}, u'es_query': {u'hierarchy': [u'es_query'], u'in': u'body', u'description': u'Elasticsearch query', u'required_for': [u'/search'], u'format': None, u'pattern': None, u'array': False, u'required': True, u'type': u'object', u'metavar': None}}}
