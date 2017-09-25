@@ -1,7 +1,6 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import os
-import sys
 import time
 import uuid
 from io import open
@@ -80,6 +79,7 @@ class Upload(AddedCommand):
 
     @classmethod
     def _upload_files(cls, args, staging_bucket):
+        logger = infra.get_logger(Upload)
         files_to_upload = []
         from_cloud = False
         for path in args[cls.FILE_OR_DIR_ARGNAME]:
@@ -103,14 +103,13 @@ class Upload(AddedCommand):
         filenames = list(map(os.path.basename, uploaded_keys))
 
         # Print to stderr, upload the files to s3 and return a list of tuples: (filename, filekey)
-        sys.stderr.write("\nUploading the following keys to aws:")
-        for file_ in filenames:
-            sys.stderr.write("\n{}".format(file_))
+        logger.info("%s", "Uploading the following keys to aws:")
+        logger.info("%s", " " + " ".join(filenames))
 
         filename_key_list = list(zip(filenames, file_uuids, uploaded_keys))
-        sys.stderr.write("\nThe following keys were uploaded successfully:")
-        for filename, file_uuid, key in filename_key_list:
-            sys.stderr.write('\n{:<12}  {:<12}'.format(filename, key))
+        logger.info("%s", "The following keys were uploaded successfully:")
+        logger.info("%s", " " + " ".join(["\n{:<12}  {:<12}".format(filename, key)
+                                          for filename, file_uuid, key in filename_key_list]))
         return filename_key_list
 
     @classmethod
@@ -121,14 +120,13 @@ class Upload(AddedCommand):
         bundle_uuid = str(uuid.uuid4())
         files = []
         for filename, file_uuid, key in filename_key_list:
-            sys.stderr.write("\nFile {}: registering...".format(filename))
+            logger.info("%s", "File {}: registering...".format(filename))
 
             # Generating file data
             creator_uid = os.environ.get(cls.CREATOR_ID_ENVIRONMENT_VARIABLE, 1)
             source_url = "s3://{}/{}".format(staging_bucket, key)
-            sys.stderr.write("\n{}".format(source_url))
-            # file_uuid = key[:key.find("/")]
-            sys.stderr.write("\nFile {}: assigned uuid {}".format(filename, file_uuid))
+            logger.info("%s", "File {}: registering from {} -> uuid {}".format(
+                filename, source_url, file_uuid))
 
             response = hca.api.put_files(
                 file_uuid,
@@ -137,6 +135,8 @@ class Upload(AddedCommand):
                 source_url=source_url,
                 stream=True,
             )
+
+            logger.debug("%s", "File {}: Response: {}".format(filename, response.content.decode()))
 
             if response.status_code in (requests.codes.ok, requests.codes.created, requests.codes.accepted):
                 version = response.json().get('version', "blank")
@@ -148,10 +148,10 @@ class Upload(AddedCommand):
                 })
 
             if response.status_code in (requests.codes.ok, requests.codes.created):
-                sys.stderr.write("\nFile {}: registered with uuid {}".format(filename, file_uuid))
+                logger.info("%s", "File {}: Sync copy -> {}".format(filename, version))
                 response.close()
             elif response.status_code == requests.codes.accepted:
-                logger.debug("Server indicated async copy")
+                logger.info("%s", "File {}: Async copy -> {}".format(filename, version))
 
                 timeout = time.time() + timeout_seconds
                 wait = 1.0
@@ -164,44 +164,40 @@ class Upload(AddedCommand):
                 else:
                     # timed out. :(
                     raise RuntimeError("File {}: registration FAILED".format(filename))
-
-                logger.debug("Successfully fetched file")
+                logger.debug("%s", "Successfully fetched file")
             else:
-                sys.stderr.write("\nFile {}: registration FAILED".format(filename))
-                sys.stderr.write("\n{}".format(response.text))
+                logger.error("%s", "File {}: Registration FAILED".format(filename))
+                logger.error("%s", "Response: {}".format(response.text))
                 response.close()
                 response.raise_for_status()
 
-            sys.stderr.write("\nRequest response")
-            sys.stderr.write("\n{}".format(response.content.decode()))
         return bundle_uuid, files
 
     @classmethod
     def _put_bundle(cls, bundle_uuid, files, replica):
         """Make a put-bundles request using the python bindings."""
+        logger = infra.get_logger(Upload)
+
         creator_uid = os.environ.get(cls.CREATOR_ID_ENVIRONMENT_VARIABLE, 1)
         file_args = [{'indexed': True,
                       'name': file_['name'],
                       'version': file_['version'],
                       'uuid': file_['uuid']} for file_ in files]
 
-        sys.stderr.write("\nBundle {}: registering...".format(bundle_uuid))
+        logger.info("%s", "Bundle {}: Registering...".format(bundle_uuid))
 
         response = hca.api.put_bundles(bundle_uuid, replica=replica, creator_uid=creator_uid, files=file_args)
 
-        version = None
+        logger.debug("%s", "Bundle {}: Response: {}".format(bundle_uuid, response.content.decode()))
 
         if response.ok:
-            version = response.json().get('version', None)
-            sys.stderr.write("\nBundle {}: registered successfully".format(bundle_uuid))
-
+            version = response.json().get('version')
+            logger.info("%s", "Bundle {}: Registered successfully".format(bundle_uuid))
         else:
-            sys.stderr.write("\nBundle {}: registration FAILED".format(bundle_uuid))
-            sys.stderr.write("\n{}".format(response.text))
+            logger.info("%s", "Bundle {}: Registration failed".format(bundle_uuid))
+            logger.info("%s", "Response: {}".format(response.text))
             response.raise_for_status()
 
-        sys.stderr.write("\nRequest response:")
-        sys.stderr.write("\n{}".format(response.content.decode()))
         final_return = {
             "bundle_uuid": bundle_uuid,
             "creator_uid": creator_uid,
