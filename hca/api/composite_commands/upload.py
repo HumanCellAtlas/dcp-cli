@@ -136,40 +136,41 @@ class Upload(AddedCommand):
                 stream=True,
             )
 
-            logger.debug("%s", "File {}: Response: {}".format(filename, response.content.decode()))
+            try:
+                logger.debug("%s", "File {}: Response: {}".format(filename, response.content.decode()))
 
-            if response.status_code in (requests.codes.ok, requests.codes.created, requests.codes.accepted):
-                version = response.json().get('version', "blank")
-                files.append({
-                    'name': filename,
-                    'version': version,
-                    'uuid': file_uuid,
-                    'creator_uid': creator_uid
-                })
+                if response.status_code in (requests.codes.ok, requests.codes.created, requests.codes.accepted):
+                    version = response.json().get('version', "blank")
+                    files.append({
+                        'name': filename,
+                        'version': version,
+                        'uuid': file_uuid,
+                        'creator_uid': creator_uid
+                    })
 
-            if response.status_code in (requests.codes.ok, requests.codes.created):
-                logger.info("%s", "File {}: Sync copy -> {}".format(filename, version))
-                response.close()
-            elif response.status_code == requests.codes.accepted:
-                logger.info("%s", "File {}: Async copy -> {}".format(filename, version))
+                if response.status_code in (requests.codes.ok, requests.codes.created):
+                    logger.info("%s", "File {}: Sync copy -> {}".format(filename, version))
+                elif response.status_code == requests.codes.accepted:
+                    logger.info("%s", "File {}: Async copy -> {}".format(filename, version))
 
-                timeout = time.time() + timeout_seconds
-                wait = 1.0
-                while time.time() < timeout:
-                    get_resp = hca.api.head_files(file_uuid, version)
-                    if get_resp.ok:
-                        break
-                    time.sleep(wait)
-                    wait = min(60.0, wait * Upload.BACKOFF_FACTOR)
+                    timeout = time.time() + timeout_seconds
+                    wait = 1.0
+                    while time.time() < timeout:
+                        get_resp = hca.api.head_files(file_uuid, version)
+                        if get_resp.ok:
+                            break
+                        time.sleep(wait)
+                        wait = min(60.0, wait * Upload.BACKOFF_FACTOR)
+                    else:
+                        # timed out. :(
+                        raise RuntimeError("File {}: registration FAILED".format(filename))
+                    logger.debug("%s", "Successfully fetched file")
                 else:
-                    # timed out. :(
-                    raise RuntimeError("File {}: registration FAILED".format(filename))
-                logger.debug("%s", "Successfully fetched file")
-            else:
-                logger.error("%s", "File {}: Registration FAILED".format(filename))
-                logger.error("%s", "Response: {}".format(response.text))
+                    logger.error("%s", "File {}: Registration FAILED".format(filename))
+                    logger.error("%s", "Response: {}".format(response.text))
+                    response.raise_for_status()
+            finally:
                 response.close()
-                response.raise_for_status()
 
         return bundle_uuid, files
 
@@ -187,16 +188,18 @@ class Upload(AddedCommand):
         logger.info("%s", "Bundle {}: Registering...".format(bundle_uuid))
 
         response = hca.api.put_bundles(bundle_uuid, replica=replica, creator_uid=creator_uid, files=file_args)
+        try:
+            logger.debug("%s", "Bundle {}: Response: {}".format(bundle_uuid, response.content.decode()))
 
-        logger.debug("%s", "Bundle {}: Response: {}".format(bundle_uuid, response.content.decode()))
-
-        if response.ok:
-            version = response.json().get('version')
-            logger.info("%s", "Bundle {}: Registered successfully".format(bundle_uuid))
-        else:
-            logger.info("%s", "Bundle {}: Registration failed".format(bundle_uuid))
-            logger.info("%s", "Response: {}".format(response.text))
-            response.raise_for_status()
+            if response.ok:
+                version = response.json().get('version')
+                logger.info("%s", "Bundle {}: Registered successfully".format(bundle_uuid))
+            else:
+                logger.info("%s", "Bundle {}: Registration failed".format(bundle_uuid))
+                logger.info("%s", "Response: {}".format(response.text))
+                response.raise_for_status()
+        finally:
+            response.close()
 
         final_return = {
             "bundle_uuid": bundle_uuid,

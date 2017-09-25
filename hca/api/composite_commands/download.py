@@ -55,21 +55,22 @@ class Download(AddedCommand):
 
             response = hca.api.get_files(file_uuid, replica=replica, stream=True)
 
-            if response.ok:
-                file_path = os.path.join(folder, filename)
-                logger.info("%s", "File {}: GET SUCCEEDED. Writing to disk.".format(filename))
-                with open(file_path, "wb") as fh:
-                    # Process taken from
-                    # https://stackoverflow.com/questions/16694907/how-to-download-large-file-in-python-with-requests-py
-                    for chunk in response.iter_content(chunk_size=1024):
-                        if chunk:
-                            fh.write(chunk)
-                response.close()
-                logger.info("%s", "File {}: GET SUCCEEDED. Stored at {}.".format(filename, file_path))
+            try:
+                if response.ok:
+                    file_path = os.path.join(folder, filename)
+                    logger.info("%s", "File {}: GET SUCCEEDED. Writing to disk.".format(filename))
+                    with open(file_path, "wb") as fh:
+                        # Process taken from
+                        # https://stackoverflow.com/questions/16694907/how-to-download-large-file-in-python-with-requests-py
+                        for chunk in response.iter_content(chunk_size=1024):
+                            if chunk:
+                                fh.write(chunk)
+                    logger.info("%s", "File {}: GET SUCCEEDED. Stored at {}.".format(filename, file_path))
 
-            else:
-                logger.error("%s", "File {}: GET FAILED.".format(filename))
-                logger.error("%s", "Response: {}".format(response.text))
+                else:
+                    logger.error("%s", "File {}: GET FAILED.".format(filename))
+                    logger.error("%s", "Response: {}".format(response.text))
+            finally:
                 response.close()
 
         return {"completed": True}
@@ -86,21 +87,23 @@ class Download(AddedCommand):
         logger.info("%s", "File {}: Retrieving...".format(bundle_uuid))
 
         response = hca.api.get_bundles(bundle_uuid, replica=replica)
+        try:
+            files = [args]
+            folder = ""
 
-        files = [args]
-        folder = ""
+            if response.ok:
+                files = response.json()["bundle"]["files"]
+                folder = bundle_name
+                if not os.path.isdir(folder):
+                    os.makedirs(folder)
+                logger.info("%s", "Bundle {}: GET SUCCEEDED.  {} files to download".format(bundle_uuid, len(files)))
 
-        if response.ok:
-            files = response.json()["bundle"]["files"]
-            folder = bundle_name
-            if not os.path.isdir(folder):
-                os.makedirs(folder)
-            logger.info("%s", "Bundle {}: GET SUCCEEDED.  {} files to download".format(bundle_uuid, len(files)))
-
-        else:
-            logger.error("%s", "Bundle {}: GET FAILED.".format(bundle_uuid))
-            logger.error("%s", "Response: {}".format(response.text))
-        return files, folder
+            else:
+                logger.error("%s", "Bundle {}: GET FAILED.".format(bundle_uuid))
+                logger.error("%s", "Response: {}".format(response.text))
+            return files, folder
+        finally:
+            response.close()
 
     @classmethod
     def run_from_cli(cls, args):
