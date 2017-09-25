@@ -10,6 +10,13 @@ Development
 -----------
 To develop on the CLI, first run `pip install -r requirements.txt`.
 
+Testing
+-------
+Before you run tests, do an `hca login`.  This will pop up a browser and get you to authenticate with Google.
+Use an email from one of the whitelisted domains (in `DSS_SUBSCRIPTION_AUTHORIZED_DOMAINS_ARRAY` from `here <github.com/HumanCellAtlas/data-store/environment>`_).
+
+Then `make test`.
+
 Code Generation
 ---------------
 These python bindings have to be regenerated to reflect any api changes. To regenerate these, run `make bindings`. Only package maintainers should run this command and publish new package versions.
