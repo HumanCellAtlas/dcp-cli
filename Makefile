@@ -9,13 +9,13 @@ hca/api_spec.json:
 	curl https://hca-dss.czi.technology/v1/swagger.json > hca/api_spec.json
 
 test: lint install
-	coverage run --source=$$(python setup.py --name) ./test/test.py
+	coverage run --source=$$(python setup.py --name) -m unittest discover
 
 init_docs:
 	cd docs; sphinx-quickstart
 
 bindings:
-	git clean -df hca/api
+	git clean -df hca/dss
 	python -m hca.regenerate_api
 	find hca -name '*.pyc' -delete
 

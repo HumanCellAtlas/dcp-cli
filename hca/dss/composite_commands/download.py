@@ -2,7 +2,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import os
 
-import hca.api
+import hca.dss
 from io import open
 from ... import infra
 from ...added_command import AddedCommand
@@ -53,7 +53,7 @@ class Download(AddedCommand):
 
             logger.info("%s", "File {}: Retrieving...".format(filename))
 
-            response = hca.api.get_files(file_uuid, replica=replica, stream=True)
+            response = hca.dss.get_files(file_uuid, replica=replica, stream=True)
 
             try:
                 if response.ok:
@@ -86,7 +86,7 @@ class Download(AddedCommand):
 
         logger.info("%s", "File {}: Retrieving...".format(bundle_uuid))
 
-        response = hca.api.get_bundles(bundle_uuid, replica=replica)
+        response = hca.dss.get_bundles(bundle_uuid, replica=replica)
         try:
             files = [args]
             folder = ""

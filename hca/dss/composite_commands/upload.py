@@ -7,7 +7,7 @@ from io import open
 
 import requests
 
-import hca.api
+import hca.dss
 from ... import infra
 from ...upload_to_cloud import upload_to_cloud
 from ...added_command import AddedCommand
@@ -128,7 +128,7 @@ class Upload(AddedCommand):
             logger.info("%s", "File {}: registering from {} -> uuid {}".format(
                 filename, source_url, file_uuid))
 
-            response = hca.api.put_files(
+            response = hca.dss.put_files(
                 file_uuid,
                 bundle_uuid=bundle_uuid,
                 creator_uid=creator_uid,
@@ -156,7 +156,7 @@ class Upload(AddedCommand):
                     timeout = time.time() + timeout_seconds
                     wait = 1.0
                     while time.time() < timeout:
-                        get_resp = hca.api.head_files(file_uuid, version)
+                        get_resp = hca.dss.head_files(file_uuid, version)
                         if get_resp.ok:
                             break
                         time.sleep(wait)
@@ -187,7 +187,7 @@ class Upload(AddedCommand):
 
         logger.info("%s", "Bundle {}: Registering...".format(bundle_uuid))
 
-        response = hca.api.put_bundles(bundle_uuid, replica=replica, creator_uid=creator_uid, files=file_args)
+        response = hca.dss.put_bundles(bundle_uuid, replica=replica, creator_uid=creator_uid, files=file_args)
         try:
             logger.debug("%s", "Bundle {}: Response: {}".format(bundle_uuid, response.content.decode()))
 
