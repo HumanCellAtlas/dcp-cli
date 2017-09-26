@@ -13,7 +13,7 @@ from .error import PrintingException
 class CLI:
     """Class for interacting with users through a CLI."""
 
-    def __init__(self, test_api_path=None):
+    def __init__(self):
         """Initialize the CLI API."""
         self.parser = NonPrintingParser()  # Need to add description based on spec.
         self.commands = {}
