@@ -6,8 +6,8 @@ import requests
 from google_auth_oauthlib.flow import InstalledAppFlow as GoogleAuthFlow
 from tweak import Config
 
-from ...added_command import AddedCommand
-from ...constants import Constants
+from ..added_command import AddedCommand
+from ..constants import Constants
 
 
 class Login(AddedCommand):

@@ -9,12 +9,12 @@ import sys
 
 import six
 
-from .constants import Constants
+from .dss.constants import Constants
 
 
 def main():
     """Entrance to functionality."""
-    from .cli import CLI
+    from .dss.cli import CLI
     cli = CLI()
 
     # Windows includes carriage returns

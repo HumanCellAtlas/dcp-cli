@@ -13,7 +13,7 @@ import boto3
 from boto3.s3.transfer import TransferConfig
 from io import open
 
-from .packages.checksumming_io import ChecksummingBufferedReader, S3Etag
+from ..packages.checksumming_io import ChecksummingBufferedReader, S3Etag
 
 
 def encode_tags(tags):

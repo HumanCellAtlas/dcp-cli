@@ -3,7 +3,7 @@ from contextlib import contextmanager
 
 from tweak import Config
 
-from hca import constants
+from hca.dss import constants
 
 
 @contextmanager

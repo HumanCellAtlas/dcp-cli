@@ -8,9 +8,9 @@ from io import open
 import requests
 
 import hca.dss
-from ... import infra
-from ...upload_to_cloud import upload_to_cloud
-from ...added_command import AddedCommand
+from .. import infra
+from ..upload_to_cloud import upload_to_cloud
+from ..added_command import AddedCommand
 
 
 class Upload(AddedCommand):
