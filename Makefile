@@ -5,8 +5,8 @@ constants: hca/api_spec.json
 lint:
 	./setup.py flake8
 
-hca/api_spec.json:
-	curl https://hca-dss.czi.technology/v1/swagger.json > hca/api_spec.json
+hca/dss/api_spec.json:
+	curl https://hca-dss.czi.technology/v1/swagger.json > hca/dss/api_spec.json
 
 test: lint install
 	coverage run --source=$$(python setup.py --name) -m unittest discover
@@ -16,8 +16,8 @@ init_docs:
 
 bindings:
 	git clean -df hca/dss
-	python -m hca.regenerate_api
-	find hca -name '*.pyc' -delete
+	python -m hca.dss.regenerate_api
+	find hca/dss -name '*.pyc' -delete
 
 docs:
 	$(MAKE) -C docs html

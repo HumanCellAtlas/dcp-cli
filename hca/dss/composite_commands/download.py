@@ -4,8 +4,8 @@ import os
 
 import hca.dss
 from io import open
-from ... import infra
-from ...added_command import AddedCommand
+from .. import infra
+from ..added_command import AddedCommand
 
 
 class Download(AddedCommand):
