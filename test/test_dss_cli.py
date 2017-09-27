@@ -172,12 +172,12 @@ class TestDssCLI(unittest.TestCase):
         file_uuid = response['files'][0]['uuid']
 
         process = subprocess.Popen(["hca", "get-files", file_uuid, "--replica", "aws"], stdout=subprocess.PIPE)
-        out, _ = process.communicate()
-        self.assertIsInstance(out, bytes)
+        stdout, stderr = process.communicate()
+        self.assertIsInstance(stdout, bytes)
         with open(file_path, "rb") as bytes_fh:
             file_content = bytes_fh.read()
-            if file_content != out:
-                self.fail("output does not match file content: \"%s\"" % out)
+            if file_content != stdout:
+                self.fail("output does not match file content: \"%s\"" % stdout)
 
     def test_parsing(self):
         """Test that the parser parses arguments correctly."""
@@ -185,11 +185,13 @@ class TestDssCLI(unittest.TestCase):
         cli = hca.dss.cli.CLI()
 
         args = ["put-files", "134", "--bundle-uuid", "asdf", "--creator-uid", "1", "--source-url", "sljdf.com"]
-        out = {'source_url': 'sljdf.com', 'bundle_uuid': 'asdf', 'uuid': '134', 'creator_uid': 1}
-        self.assertEqual(cli.parse_args(args), out)
+        expected = {'source_url': 'sljdf.com', 'bundle_uuid': 'asdf', 'uuid': '134', 'creator_uid': 1}
+        func, api_args = cli.parse_args(args)
+        self.assertEqual(api_args, expected)
 
         args = ["put-files", "--bundle-uuid", "asdf", "--creator-uid", "1", "--source-url", "sljdf.com", "134"]
-        self.assertEqual(cli.parse_args(args), out)
+        func, api_args = cli.parse_args(args)
+        self.assertEqual(api_args, expected)
 
         args = ["put-files", "--creator-uid", "1", "--source-url", "sljdf.com", "134"]
         process = subprocess.Popen(["hca"] + args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -209,22 +211,26 @@ class TestDssCLI(unittest.TestCase):
         six.assertRegex(self, stderr.decode('utf8'), '--bundle-uuid: expected one argument')
 
         args = ["get-bundles", "uuid_arg"]
-        out = {"uuid": "uuid_arg"}
-        self.assertEqual(cli.parse_args(args), out)
+        expected = {"uuid": "uuid_arg"}
+        func, api_args = cli.parse_args(args)
+        self.assertEqual(api_args, expected)
 
         args = ["get-bundles", "uuid_arg", "--version", "version_arg", "--replica", "rep"]
-        out = {"uuid": "uuid_arg", "replica": "rep", "version": "version_arg"}
-        self.assertEqual(cli.parse_args(args), out)
+        expected = {"uuid": "uuid_arg", "replica": "rep", "version": "version_arg"}
+        func, api_args = cli.parse_args(args)
+        self.assertEqual(api_args, expected)
 
         # Works for now but shouldn't in the future b/c --replica required when uuid and version specified.
         args = ["get-bundles", "uuid_arg", "--version", "version_arg"]
-        out = {"uuid": "uuid_arg", "version": "version_arg"}
-        self.assertEqual(cli.parse_args(args), out)
+        expected = {"uuid": "uuid_arg", "version": "version_arg"}
+        func, api_args = cli.parse_args(args)
+        self.assertEqual(api_args, expected)
 
         # Works for now. --replica isn't an option unless both uuid and version specified.
         args = ["get-bundles", "uuid_arg", "--replica", "rep"]
-        out = {"uuid": "uuid_arg", "replica": "rep"}
-        self.assertEqual(cli.parse_args(args), out)
+        expected = {"uuid": "uuid_arg", "replica": "rep"}
+        func, api_args = cli.parse_args(args)
+        self.assertEqual(api_args, expected)
 
     def _get_first_url(self, response):
         """Get the first url we sent a request to if there were redirects."""
@@ -280,7 +286,8 @@ class TestDssCLI(unittest.TestCase):
         cli = hca.dss.cli.CLI()
         args = ["put-bundles", "uuid", "--version", "version", "--files", "uuid1/v1/n1/True", "uuid2/v2/n2/False", "--creator-uid", "3", "--replica", "rep"]
         out = {"uuid": "uuid", "version": "version", "files": ["uuid1/v1/n1/True", "uuid2/v2/n2/False"], "creator_uid": 3, "replica": "rep"}
-        self.assertEqual(cli.parse_args(args), out)
+        func, api_args = cli.parse_args(args)
+        self.assertEqual(api_args, out)
 
     def test_parsing_array_object_literals(self):
         """Make sure that parsing literals works within an array object."""
@@ -288,7 +295,7 @@ class TestDssCLI(unittest.TestCase):
 
         cli = hca.dss.cli.CLI()
         args = ["put-bundles", "234sf", "--files", "True/n1/u1/v1", "False/n2/u2/v2", "--replica" ,"rep", "--creator-uid", "8"]
-        parsed_args = cli.parse_args(args)
+        func, parsed_args = cli.parse_args(args)
         out = {'files': [{'indexed': True, 'version': 'v1', 'uuid': 'u1', 'name': 'n1'}, {'indexed': False, 'version': 'v2', 'uuid': 'u2', 'name': 'n2'}], 'creator_uid': 8}
         body_payload = PutBundles._build_body_payload(parsed_args)
         self.assertEqual(body_payload, out)
