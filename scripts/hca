@@ -2,10 +2,10 @@
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-import os, sys, logging
+import logging
 
-import hca
+from hca.cli import CLI
 
 logging.basicConfig(level=logging.ERROR)
 
-hca.main()
+CLI().run()
