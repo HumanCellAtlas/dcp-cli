@@ -8,7 +8,7 @@ line client that will make requests to the DSS. Please run :code:`hca --help` to
 
 Development
 -----------
-To develop on the CLI, first run `pip install -r requirements.txt`.
+To develop on the CLI, first run `pip install -r requirements-dev.txt`.
 
 Testing
 -------
