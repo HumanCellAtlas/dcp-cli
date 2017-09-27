@@ -1,16 +1,12 @@
-import argparse
-import json
-import logging
-import os
-import re
+import argparse, json, logging, os, re, sys
 
-import jsonschema
-import requests
+import jsonschema, requests, six
 from google.auth.transport.requests import Request as GoogleAuthRequest
 from google.oauth2.credentials import Credentials as OAuth2Credentials
 from google.oauth2.service_account import Credentials as ServiceAccountCredentials
 from tweak import Config
 
+import hca.dss.cli
 from .constants import Constants
 
 
@@ -344,11 +340,13 @@ class AddedCommand(object):
         return query_payload, body_payload, header_payload
 
     @classmethod
-    def run_from_cli(cls, args):
+    def run_from_cli(cls, argparser_args):
         """Run this command using args from the cli. Override this to add higher-level commands."""
-        body_payload = cls._build_body_payload(args)
-        args.update(body_payload)
-        return cls.run(args)
+        args_dict = hca.dss.cli.parse_args(argparser_args)
+        body_payload = cls._build_body_payload(args_dict)
+        args_dict.update(body_payload)
+        response = cls.run(args_dict)
+        cls._render_output(response)
 
     @classmethod
     def run(cls, args):
@@ -394,3 +392,19 @@ class AddedCommand(object):
             response = requests.request(**request_args)
 
         return response
+
+    @classmethod
+    def _render_output(cls, response):
+        if isinstance(response, requests.Response):
+            for chunk in response.iter_content(chunk_size=Constants.CHUNK_SIZE, decode_unicode=True):
+                if chunk:  # filter out keep-alive new chunks
+                    if six.PY3:
+                        sys.stdout.buffer.write(chunk)
+                    else:
+                        sys.stdout.write(chunk)
+        elif isinstance(response, dict):
+            print(json.dumps(response))
+        elif isinstance(response, str):
+            print(response)
+        else:  # Unicode
+            print(response.decode())
