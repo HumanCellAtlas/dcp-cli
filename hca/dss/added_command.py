@@ -102,6 +102,7 @@ class AddedCommand(object):
         subparser = subparsers.add_parser(endpoint_name, help=endpoint_info['description'])
         cls._add_positional_args(subparser)
         cls._add_optional_args(subparser)
+        subparser.set_defaults(func=cls.run_from_cli)
 
     @classmethod
     def _get_ordered_path_args(cls, namespace):
