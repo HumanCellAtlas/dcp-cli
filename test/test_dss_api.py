@@ -132,10 +132,10 @@ class TestDssApi(unittest.TestCase):
 
         with override_oauth_config():
             login = hca.dss.login(access_token=access_token)
-            config = Config(hca.dss.constants.Constants.TWEAK_PROJECT_NAME)
+            config = Config(hca.TWEAK_PROJECT_NAME)
 
             self.assertEqual(login, out)
-            self.assertEqual(config.access_token, access_token)
+            self.assertEqual(config.login.access_token, access_token)
 
 
 if __name__ == '__main__':

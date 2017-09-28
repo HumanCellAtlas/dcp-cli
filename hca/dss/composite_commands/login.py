@@ -6,6 +6,7 @@ import requests
 from google_auth_oauthlib.flow import InstalledAppFlow as GoogleAuthFlow
 from tweak import Config
 
+import hca
 from ..added_command import AddedCommand
 from ..constants import Constants
 
@@ -45,17 +46,18 @@ class Login(AddedCommand):
 
     @classmethod
     def run(cls, args):
-        """Download a bundle or file from the blue box to local."""
+        """Authenticate to the Data Store using OAuth2."""
         client_secrets = requests.get(Constants.APPLICATION_SECRETS_ENDPOINT).json()
 
-        config = Config(Constants.TWEAK_PROJECT_NAME, autosave=True)
-        config.client_id = client_secrets['installed']['client_id']
-        config.client_secret = client_secrets['installed']['client_secret']
-        config.token_uri = client_secrets['installed']['token_uri']
+        config = Config(hca.TWEAK_PROJECT_NAME, autosave=True)
+        config.login = {}
+        config.login.client_id = client_secrets['installed']['client_id']
+        config.login.client_secret = client_secrets['installed']['client_secret']
+        config.login.token_uri = client_secrets['installed']['token_uri']
 
         if args.get('access_token', None):
-            config.access_token = args['access_token']
-            config.refresh_token = None
+            config.login.access_token = args['access_token']
+            config.login.refresh_token = None
 
         elif sys.stdin.isatty():
             flow = GoogleAuthFlow.from_client_config(
@@ -64,8 +66,8 @@ class Login(AddedCommand):
             )
             credential = flow.run_local_server()
 
-            config.access_token = credential.token
-            config.refresh_token = credential.refresh_token
+            config.login.access_token = credential.token
+            config.login.refresh_token = credential.refresh_token
 
         else:
             raise Exception("You have to be in a terminal or provide an access_token for this command to work.")

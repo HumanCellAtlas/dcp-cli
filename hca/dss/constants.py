@@ -13,6 +13,5 @@ class Constants:
     # The character to split the variables within an object when they're listed.
     # In the put-bundles command, the files should be specified as <V1><OBJECT_SPLITTER><V2><OBJECT_SPLITTER><V3>...
     OBJECT_SPLITTER = "/"
-    TWEAK_PROJECT_NAME = "hca"
-    APPLICATION_SECRETS_ENDPOINT = "https://hca-dss.czi.technology/internal/application_secrets"
+    APPLICATION_SECRETS_ENDPOINT = "https://dss.dev.data.humancellatlas.org/internal/application_secrets"
     CHUNK_SIZE = (2 ** 20) * 16  # 16 MB
