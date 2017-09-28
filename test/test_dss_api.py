@@ -72,7 +72,7 @@ class TestDssApi(unittest.TestCase):
         # Test get-files and head-files
         file_ = bundle_output['files'][0]
         self.assertTrue(hca.dss.get_files(file_['uuid'], replica="aws").ok)
-        self.assertTrue(hca.dss.head_files(file_['uuid']).ok)
+        self.assertTrue(hca.dss.head_files(file_['uuid'], replica="aws").ok)
 
         # Test get-bundles
         bundle_uuid = bundle_output['bundle_uuid']
