@@ -232,8 +232,7 @@ class AddedCommand(object):
 
     @classmethod
     def _get_access_token(cls, args, retry):
-        config = Config(Constants.TWEAK_PROJECT_NAME, autosave=True)
-        access_token = None
+        config = Config(hca.TWEAK_PROJECT_NAME, autosave=True)
 
         # kwargs access_token input
         if 'access_token' in args.get('kwargs', {}):
@@ -247,25 +246,25 @@ class AddedCommand(object):
                 access_token = args['kwargs']['access_token']
 
         # Checking config
-        elif config.get('access_token', None):
+        elif config.get('login', None) and config.login.get('access_token', None):
             # There is a refresh token
-            if retry and config.get('refresh_token', None):
+            if retry and config.login.get('refresh_token', None):
                 logging.info("The access token stored in {} is not valid."
                              " Attempting with refresh token.".format(config.config_files[-1]))
                 credentials = OAuth2Credentials(
                     token=None,
-                    client_id=config.client_id,
-                    client_secret=config.client_secret,
+                    client_id=config.login.client_id,
+                    client_secret=config.login.client_secret,
                     scopes=["https://www.googleapis.com/auth/userinfo.email"],
-                    refresh_token=config.refresh_token,
-                    token_uri=config.token_uri,
+                    refresh_token=config.login.refresh_token,
+                    token_uri=config.login.token_uri,
                 )
 
                 r = GoogleAuthRequest()
                 credentials.refresh(r)
                 r.session.close()
 
-                config.access_token = credentials.token
+                config.login.access_token = credentials.token
                 access_token = credentials.token
             # No refresh token
             elif retry:
@@ -278,7 +277,7 @@ class AddedCommand(object):
             # First attempt
             else:
                 logging.info("Found access token in {}.".format(config.config_files[-1]))
-                access_token = config.access_token
+                access_token = config.login.access_token
 
         # Service account handling
         elif 'GOOGLE_APPLICATION_CREDENTIALS' in os.environ:

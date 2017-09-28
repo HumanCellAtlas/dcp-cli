@@ -3,23 +3,23 @@ from contextlib import contextmanager
 
 from tweak import Config
 
-from hca.dss import constants
+import hca
 
 
 @contextmanager
 def override_oauth_config():
-    config = Config(constants.Constants.TWEAK_PROJECT_NAME)
+    config = Config(hca.TWEAK_PROJECT_NAME)
     backup = {}
-    for key in config:
-        backup[key] = config[key]
+    login = config.get('login', {})
+    for key in login:
+        backup[key] = login[key]
     try:
         yield
     finally:
         # Reload config after changes made.
-        config = Config(constants.Constants.TWEAK_PROJECT_NAME, autosave=True, save_on_exit=False)
+        config = Config(hca.TWEAK_PROJECT_NAME, autosave=True, save_on_exit=False)
 
-        for key in config:
-            config[key] = None
+        config.login = {}
 
         for key, value in backup.items():
-            config[key] = value
+            config.login[key] = value
