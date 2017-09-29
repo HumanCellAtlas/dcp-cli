@@ -1,3 +1,9 @@
+Changes for v1.0.0 (2017-09-29)
+===============================
+
+Use "hca dss " to invoke DSS commands. Hardware DSS to use staging
+deployment. Rename hca.api -> hca.dss. Rename query to es\_query (#58).
+
 Changes for v0.11.0 (2017-09-12)
 ================================
 
