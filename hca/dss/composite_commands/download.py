@@ -6,6 +6,7 @@ import hca.dss
 from io import open
 from .. import infra
 from ..added_command import AddedCommand
+from ..cli import parse_args
 
 
 class Download(AddedCommand):
@@ -79,7 +80,6 @@ class Download(AddedCommand):
     def _download_bundle(cls, args):
         """Use the python bindings to make a get-bundles request."""
         logger = infra.get_logger(Download)
-
         bundle_uuid = args["uuid"]
         bundle_name = args.get("name", bundle_uuid)
         replica = args["replica"]
@@ -106,9 +106,10 @@ class Download(AddedCommand):
             response.close()
 
     @classmethod
-    def run_from_cli(cls, args):
-        """Download a bundle/file from blue box to local with arguments given from cli."""
-        return cls.run(args)
+    def run_from_cli(cls, argparser_args):
+        """Run this command using args from the cli. Override this to add higher-level commands."""
+        args_dict = parse_args(argparser_args)
+        return cls.run(args_dict)
 
     @classmethod
     def run(cls, args):

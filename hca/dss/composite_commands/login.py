@@ -9,6 +9,7 @@ from tweak import Config
 from ... import TWEAK_PROJECT_NAME
 from ..added_command import AddedCommand
 from ..constants import Constants
+from ..cli import parse_args
 
 
 class Login(AddedCommand):
@@ -40,9 +41,10 @@ class Login(AddedCommand):
         }
 
     @classmethod
-    def run_cli(cls, args):
-        """Download a bundle/file from blue box to local with arguments given from cli."""
-        return cls.run(args)
+    def run_from_cli(cls, argparser_args):
+        """Run this command using args from the cli. Override this to add higher-level commands."""
+        args_dict = parse_args(argparser_args)
+        return cls.run(args_dict)
 
     @classmethod
     def run(cls, args):

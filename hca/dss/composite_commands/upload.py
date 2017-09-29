@@ -11,6 +11,7 @@ import hca.dss
 from .. import infra
 from ..upload_to_cloud import upload_to_cloud
 from ..added_command import AddedCommand
+from ..cli import parse_args
 
 
 class Upload(AddedCommand):
@@ -212,9 +213,10 @@ class Upload(AddedCommand):
         return final_return
 
     @classmethod
-    def run_from_cli(cls, args):
-        """Deposit a bundle from local or remote bucket to blue box with arguments given from cli."""
-        return cls.run(args)
+    def run_from_cli(cls, argparser_args):
+        """Run this command using args from the cli. Override this to add higher-level commands."""
+        args_dict = parse_args(argparser_args)
+        return cls.run(args_dict)
 
     @classmethod
     def run(cls, args):
