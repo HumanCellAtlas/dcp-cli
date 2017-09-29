@@ -9,6 +9,7 @@ import sys
 import os
 
 from .dss import cli as dss_cli
+from .staging import cli as staging_cli
 
 
 class CLI:
@@ -40,14 +41,16 @@ class CLI:
         help_parser.set_defaults(func=self._help)
 
         dss_cli.add_commands(top_subparsers)
+        staging_cli.add_commands(top_subparsers)
 
     def _help(self, args):
         self.top_parser.print_usage()
         print("""
 Commands:
 
-    help    print this message
-    dss     manipulate HCA Data Store
+    help     print this message
+    dss      manipulate HCA Data Store
+    staging  stage files and manage staging areas
 
 Use "hca <command> -h" to get detailed command help.
         """)
