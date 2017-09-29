@@ -13,7 +13,8 @@ from google.oauth2.credentials import Credentials as OAuth2Credentials
 from google.oauth2.service_account import Credentials as ServiceAccountCredentials
 from tweak import Config
 
-import hca.dss.cli
+from .. import TWEAK_PROJECT_NAME
+from .cli import parse_args
 from .constants import Constants
 
 
@@ -232,7 +233,7 @@ class AddedCommand(object):
 
     @classmethod
     def _get_access_token(cls, args, retry):
-        config = Config(hca.TWEAK_PROJECT_NAME, autosave=True)
+        config = Config(TWEAK_PROJECT_NAME, autosave=True)
 
         # kwargs access_token input
         if 'access_token' in args.get('kwargs', {}):
@@ -348,7 +349,7 @@ class AddedCommand(object):
     @classmethod
     def run_from_cli(cls, argparser_args):
         """Run this command using args from the cli. Override this to add higher-level commands."""
-        args_dict = hca.dss.cli.parse_args(argparser_args)
+        args_dict = parse_args(argparser_args)
         body_payload = cls._build_body_payload(args_dict)
         args_dict.update(body_payload)
         response = cls.run(args_dict)
