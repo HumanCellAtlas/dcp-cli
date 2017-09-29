@@ -5,11 +5,11 @@ import unittest, os, sys, filecmp, shutil, tempfile, uuid
 
 import requests
 
-pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-sys.path.insert(0, pkg_root)
+pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))  # noqa
+sys.path.insert(0, pkg_root)  # noqa
 
-import hca.dss  # noqa
-from test.config import override_oauth_config  # noqa
+import hca.dss
+from . import reset_tweak_changes
 
 
 class TestDssApi(unittest.TestCase):
@@ -124,18 +124,18 @@ class TestDssApi(unittest.TestCase):
         resp = hca.dss.get_subscriptions("aws", uuid=subscription_uuid)
         self.assertEqual(404, resp.status_code)
 
+    @reset_tweak_changes
     def test_python_login(self):
         from tweak import Config
 
         access_token = "test_access_token"
         out = {'completed': True}
 
-        with override_oauth_config():
-            login = hca.dss.login(access_token=access_token)
-            config = Config(hca.TWEAK_PROJECT_NAME)
+        login = hca.dss.login(access_token=access_token)
+        config = Config(hca.TWEAK_PROJECT_NAME)
 
-            self.assertEqual(login, out)
-            self.assertEqual(config.login.access_token, access_token)
+        self.assertEqual(login, out)
+        self.assertEqual(config.login.access_token, access_token)
 
 
 if __name__ == '__main__':
