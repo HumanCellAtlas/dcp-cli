@@ -6,7 +6,7 @@ import requests
 from google_auth_oauthlib.flow import InstalledAppFlow as GoogleAuthFlow
 from tweak import Config
 
-import hca
+from ... import TWEAK_PROJECT_NAME
 from ..added_command import AddedCommand
 from ..constants import Constants
 
@@ -49,7 +49,7 @@ class Login(AddedCommand):
         """Authenticate to the Data Store using OAuth2."""
         client_secrets = requests.get(Constants.APPLICATION_SECRETS_ENDPOINT).json()
 
-        config = Config(hca.TWEAK_PROJECT_NAME, autosave=True)
+        config = Config(TWEAK_PROJECT_NAME, autosave=True)
         config.login = {}
         config.login.client_id = client_secrets['installed']['client_id']
         config.login.client_secret = client_secrets['installed']['client_secret']

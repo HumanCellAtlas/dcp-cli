@@ -8,7 +8,7 @@ import argparse
 import sys
 import os
 
-import dss.cli
+from .dss import cli as dss_cli
 
 
 class CLI:
@@ -39,7 +39,7 @@ class CLI:
         help_parser = top_subparsers.add_parser('help', add_help=False)
         help_parser.set_defaults(func=self._help)
 
-        dss.cli.add_commands(top_subparsers)
+        dss_cli.add_commands(top_subparsers)
 
     def _help(self, args):
         self.top_parser.print_usage()
