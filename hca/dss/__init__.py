@@ -24,7 +24,7 @@ def delete_subscriptions(uuid, replica, **kwargs):
     return DeleteSubscriptions.run(locals())
 
 
-def get_bundles(uuid, replica, version=None, directurls=None, **kwargs):
+def get_bundles(uuid, version=None, replica=None, directurls=None, **kwargs):
     """
     Given a bundle UUID, return the latest version of that bundle.  If the version is provided, that version of the
     bundle is returned instead.
@@ -37,7 +37,7 @@ def get_bundles(uuid, replica, version=None, directurls=None, **kwargs):
     return GetBundles.run(locals())
 
 
-def get_files(uuid, replica, version=None, **kwargs):
+def get_files(uuid, replica=None, version=None, **kwargs):
     """
     Given a file UUID, return the latest version of that file.  If the version is provided, that version of the file
     is returned instead.
@@ -64,13 +64,12 @@ def get_subscriptions(replica, uuid=None, **kwargs):
     return GetSubscriptions.run(locals())
 
 
-def head_files(uuid, replica, version=None, **kwargs):
+def head_files(uuid, version=None, **kwargs):
     """
     Given a file UUID, return the metadata for the latest version of that file.  If the version is provided, that
     version's metadata is returned instead.  The metadata is returned in the headers.
 
     :param uuid: A RFC4122-compliant ID for the file.
-    :param replica: Replica to fetch from.
     :param version: Timestamp of file creation in RFC3339.  If this is not provided, the latest version is returned.
     """
     return HeadFiles.run(locals())
