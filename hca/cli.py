@@ -4,9 +4,11 @@
 Human Cell Atlas Command Line Interface
 """
 
-import argparse, sys, os
+import argparse
+import sys
+import os
 
-import hca.dss.cli
+import dss.cli
 
 
 class CLI:
@@ -37,7 +39,7 @@ class CLI:
         help_parser = top_subparsers.add_parser('help', add_help=False)
         help_parser.set_defaults(func=self._help)
 
-        hca.dss.cli.add_commands(top_subparsers)
+        dss.cli.add_commands(top_subparsers)
 
     def _help(self, args):
         self.top_parser.print_usage()

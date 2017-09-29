@@ -1,6 +1,13 @@
-import argparse, json, logging, os, re, sys
+import argparse
+import json
+import logging
+import os
+import re
+import sys
 
-import jsonschema, requests, six
+import jsonschema
+import requests
+import six
 from google.auth.transport.requests import Request as GoogleAuthRequest
 from google.oauth2.credentials import Credentials as OAuth2Credentials
 from google.oauth2.service_account import Credentials as ServiceAccountCredentials
