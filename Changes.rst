@@ -1,3 +1,9 @@
+Changes for v1.1.0 (2017-09-30)
+===============================
+
+Command: "hca staging select " Command: "hca staging areas" Command:
+"hca staging upload <files" Command: "hca staging help"
+
 Changes for v1.0.0 (2017-09-29)
 ===============================
 

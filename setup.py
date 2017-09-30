@@ -7,7 +7,7 @@ install_requires = [line.rstrip() for line in open(os.path.join(os.path.dirname(
 
 setup(
     name="hca",
-    version="1.0.0",
+    version="1.1.0",
     url='https://github.com/HumanCellAtlas/data-store-cli',
     license='Apache Software License',
     author='Human Cell Atlas contributors',
