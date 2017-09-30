@@ -28,22 +28,42 @@ class TestStagingCliUploadCommand(unittest.TestCase):
         encoded_creds = base64.b64encode(json.dumps(creds).encode('ascii')).decode('ascii')
         self.urn = "hca:sta:aws:{}:{}:{}".format(self.stage, self.area_uuid, encoded_creds)
 
-    @mock_s3
-    @reset_tweak_changes
-    def test_upload(self):
+    def setup_tweak_config(self):
         config = tweak.Config(hca.TWEAK_PROJECT_NAME)
         config.staging = {
             'areas': {self.area_uuid: self.urn},
             'current_area': self.area_uuid
         }
         config.save()
+
+    @mock_s3
+    @reset_tweak_changes
+    def test_upload_with_target_filename_option(self):
+        self.setup_tweak_config()
         s3 = boto3.resource('s3')
         s3.Bucket('org-humancellatlas-staging-test').create()
 
         with CapturingIO('stdout') as stdout:
-            UploadCommand(Namespace(file_path="LICENSE", target_filename="POO"))
+            UploadCommand(Namespace(file_paths=['LICENSE'], target_filename='POO'))
 
         obj = s3.Bucket('org-humancellatlas-staging-test').Object("{}/POO".format(self.area_uuid))
         with open('LICENSE', 'rb') as fh:
             expected_contents = fh.read()
             self.assertEqual(obj.get()['Body'].read(), expected_contents)
+
+    @mock_s3
+    @reset_tweak_changes
+    def test_multiple_uploads(self):
+        self.setup_tweak_config()
+        s3 = boto3.resource('s3')
+        s3.Bucket('org-humancellatlas-staging-test').create()
+
+        files = ['LICENSE', 'README.rst']
+        with CapturingIO('stdout') as stdout:
+            UploadCommand(Namespace(file_paths=files, target_filename=None))
+
+        for filename in files:
+            obj = s3.Bucket('org-humancellatlas-staging-test').Object("{}/{}".format(self.area_uuid, filename))
+            with open(filename, 'rb') as fh:
+                expected_contents = fh.read()
+                self.assertEqual(obj.get()['Body'].read(), expected_contents)
