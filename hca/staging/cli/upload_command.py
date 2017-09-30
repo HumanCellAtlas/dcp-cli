@@ -81,20 +81,20 @@ class UploadCommand:
             'upload',
             description="Upload a file to the currently selected staging area."
         )
-        upload_parser.add_argument('file_path',
+        upload_parser.add_argument('file_paths', nargs='+', metavar="<file_path>",
                                    help="Path to file to be uploaded.")
         upload_parser.add_argument('-t', '--target-filename', metavar="<filename>", default=None,
-                                   help="Filename to use in staging bucket (if you wish to change it during upload).")
+                                   help="Filename to use in staging bucket (if you wish to change it during upload)." +
+                                   " Only valid when one file is being uploaded.")
         upload_parser.set_defaults(func=UploadCommand)
 
     def __init__(self, args):
-        self.config = ConfigStore()
-        if not self.config.current_area():
-            sys.stderr.write("\nThere is not staging area selected.\n" +
-                             "Please select one with \"hca staging select <urn_or_alias>\"\n\n")
+        self._load_config()
+        self._check_args(args)
         self.urn = StagingAreaURN(self.config.areas()[self.config.current_area()])
         self.s3agent = S3Agent(self.urn.credentials())
-        self._stage_file(args.file_path, args.target_filename)
+        for file_path in args.file_paths:
+            self._stage_file(file_path, args.target_filename)
 
     def _stage_file(self, file_path, target_filename=None):
         file_s3_key = "%s/%s" % (self.urn.uuid, target_filename or os.path.basename(file_path))
@@ -103,3 +103,14 @@ class UploadCommand:
         content_type = 'application/json' if re.search('.json$', file_path) else 'hca-data-file'
         S3Agent().upload_file(file_path, bucket_name, file_s3_key, content_type)
         print("\n")
+
+    def _load_config(self):
+        self.config = ConfigStore()
+        if not self.config.current_area():
+            sys.stderr.write("\nThere is not staging area selected.\n" +
+                             "Please select one with \"hca staging select <urn_or_alias>\"\n\n")
+
+    def _check_args(self, args):
+        if args.target_filename and len(args.file_paths) > 1:
+            print("--target-filename option may only be used when one file is being uploaded.")
+            exit(1)
