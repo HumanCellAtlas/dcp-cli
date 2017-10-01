@@ -1,3 +1,8 @@
+Changes for v1.1.1 (2017-10-01)
+===============================
+
+Fix staging area credentials handling
+
 Changes for v1.1.0 (2017-09-30)
 ===============================
 
