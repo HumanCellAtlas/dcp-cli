@@ -92,7 +92,7 @@ class UploadCommand:
         self._load_config()
         self._check_args(args)
         self.urn = StagingAreaURN(self.config.areas()[self.config.current_area()])
-        self.s3agent = S3Agent(self.urn.credentials())
+        self.s3agent = S3Agent(aws_credentials=self.urn.credentials())
         for file_path in args.file_paths:
             self._stage_file(file_path, args.target_filename)
 
@@ -101,7 +101,7 @@ class UploadCommand:
         print("Uploading %s to staging area %s..." % (os.path.basename(file_path), file_s3_key))
         bucket_name = self.STAGING_BUCKET_TEMPLATE % (self.urn.deployment_stage,)
         content_type = 'application/json' if re.search('.json$', file_path) else 'hca-data-file'
-        S3Agent().upload_file(file_path, bucket_name, file_s3_key, content_type)
+        self.s3agent.upload_file(file_path, bucket_name, file_s3_key, content_type)
         print("\n")
 
     def _load_config(self):
