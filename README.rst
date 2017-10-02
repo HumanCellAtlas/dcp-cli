@@ -13,7 +13,7 @@ To develop on the CLI, first run `pip install -r requirements-dev.txt`.
 Testing
 -------
 Before you run tests, do an `hca login`.  This will pop up a browser and get you to authenticate with Google.
-Use an email from one of the whitelisted domains (in `DSS_SUBSCRIPTION_AUTHORIZED_DOMAINS_ARRAY` from `here <github.com/HumanCellAtlas/data-store/environment>`_).
+Use an email from one of the whitelisted domains (in `DSS_SUBSCRIPTION_AUTHORIZED_DOMAINS_ARRAY` from `the HCA configuration <https://github.com/HumanCellAtlas/data-store/blob/master/environment>`_).
 
 Then `make test`.
 
