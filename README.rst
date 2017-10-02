@@ -1,7 +1,6 @@
-HCA DSS CLI
-===========
-This repository contains a prototype for interacting with the replicated Data Storage System
-(hereafter the DSS) of the Human Cell Atlas.
+HCA CLI
+=======
+This repository contains a prototype for interacting with components of the `Human Cell Atlas <https://humancellatlas.org/>`_.
 
 This prototype uses a local version of the DSS API spec (using Swagger) to generate a command
 line client that will make requests to the DSS. Please run :code:`hca --help` to see an overview of available commands.
@@ -13,7 +12,7 @@ To develop on the CLI, first run `pip install -r requirements-dev.txt`.
 Testing
 -------
 Before you run tests, do an `hca login`.  This will pop up a browser and get you to authenticate with Google.
-Use an email from one of the whitelisted domains (in `DSS_SUBSCRIPTION_AUTHORIZED_DOMAINS_ARRAY` from `here <github.com/HumanCellAtlas/data-store/environment>`_).
+Use an email from one of the whitelisted domains (in `DSS_SUBSCRIPTION_AUTHORIZED_DOMAINS_ARRAY` from `here <https://github.com/HumanCellAtlas/data-store/environment>`_).
 
 Then `make test`.
 
