@@ -43,16 +43,16 @@ Then :code:`make test`.
 
 Bugs
 ~~~~
-Please report bugs, issues, feature requests, etc. on `GitHub <https://github.com/HumanCellAtlas/data-store-cli/issues>`_.
+Please report bugs, issues, feature requests, etc. on `GitHub <https://github.com/HumanCellAtlas/dcp-cli/issues>`_.
 
 License
 -------
 Licensed under the terms of the `MIT License <https://opensource.org/licenses/MIT>`_.
 
-.. image:: https://img.shields.io/travis/HumanCellAtlas/data-store-cli.svg
-        :target: https://travis-ci.org/HumanCellAtlas/data-store-cli
-.. image:: https://codecov.io/github/HumanCellAtlas/data-store-cli/coverage.svg?branch=master
-        :target: https://codecov.io/github/HumanCellAtlas/data-store-cli?branch=master
+.. image:: https://img.shields.io/travis/HumanCellAtlas/dcp-cli.svg
+        :target: https://travis-ci.org/HumanCellAtlas/dcp-cli
+.. image:: https://codecov.io/github/HumanCellAtlas/dcp-cli/coverage.svg?branch=master
+        :target: https://codecov.io/github/HumanCellAtlas/dcp-cli?branch=master
 .. image:: https://img.shields.io/pypi/v/hca.svg
         :target: https://pypi.python.org/pypi/hca
 .. image:: https://img.shields.io/pypi/l/hca.svg
