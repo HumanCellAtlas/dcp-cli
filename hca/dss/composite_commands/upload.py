@@ -160,8 +160,12 @@ class Upload(AddedCommand):
                         get_resp = hca.dss.head_files(file_uuid, version)
                         if get_resp.ok:
                             break
-                        time.sleep(wait)
-                        wait = min(60.0, wait * Upload.BACKOFF_FACTOR)
+                        elif get_resp.status_code == requests.codes.not_found:
+                            time.sleep(wait)
+                            wait = min(60.0, wait * Upload.BACKOFF_FACTOR)
+                        else:
+                            raise RuntimeError(
+                                "File {}: Unexpected server response during registration".format(filename))
                     else:
                         # timed out. :(
                         raise RuntimeError("File {}: registration FAILED".format(filename))
