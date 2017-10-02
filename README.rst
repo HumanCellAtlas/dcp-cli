@@ -1,45 +1,45 @@
 HCA CLI
 =======
-This repository contains a prototype for interacting with components of the `Human Cell Atlas <https://humancellatlas.org/>`_.
+This repository contains a command line interface (CLI) and Python library for interacting with the Data Coordination
+Platform (DCP) of the Human Cell Atlas (HCA). Currently it allows interaction with the Staging Service and Data Storage
+Service (DSS).
 
-This prototype uses a local version of the DSS API spec (using Swagger) to generate a command
-line client that will make requests to the DSS. Please run :code:`hca --help` to see an overview of available commands.
+Installation
+------------
+:code:`pip install hca`.
+
+Usage
+-----
+The hca package installs a command-line utility :code:`hca`.
+
+To see the list of commands you can use, type :code:`hca --help`.  Commands are grouped into major categories that
+roughly correspond to DCP system components, e.g. DSS, Staging Service.  To get detailed help for a particular
+command group type, e.g. :code:`hca dss --help`.
+
+When it is necessary to provide a list of things to a command put them in a single string separated with slashes, e.g.
+:code:`True/Bob/3806d74a-6ab5-4a6d-ba00-667ea858c7b5/2017-06-30T19:33:38+00:00`.
 
 Development
 -----------
 To develop on the CLI, first run `pip install -r requirements-dev.txt`.
 
-Testing
--------
-Before you run tests, do an `hca login`.  This will pop up a browser and get you to authenticate with Google.
-Use an email from one of the whitelisted domains (in `DSS_SUBSCRIPTION_AUTHORIZED_DOMAINS_ARRAY` from `here <https://github.com/HumanCellAtlas/data-store/blob/master/environment>`_).
-
-Then `make test`.
+To use the command line interface with a local or test DSS, open <directory_holding_hca_module>/hca/api_spec.json.
+Change :code:`host` to the host you want (if you're running on a local DSS, this will likely be :code:`localhost:5000`)
+and the first argument of :code:`schemes` should be the scheme you want (:code:`http` if running locally,
+:code:`https` otherwise).
 
 Code Generation
 ---------------
-These python bindings have to be regenerated to reflect any api changes. To regenerate these, run `make bindings`. Only package maintainers should run this command and publish new package versions.
+Some parts of the CLI are auto-generated from the OpenAPI (Swagger) Specifications (OAS).  The Python bindings have to
+be regenerated to reflect any api changes. To regenerate these, run `make bindings`.  Only package maintainers should
+run this command and publish new package versions.
 
-Installation
-------------
-To install this package, run :code:`pip install hca-cli`. This will automatically hook up with the api endpoint as defined in the package published last.
+Testing
+-------
+Before you run tests, do an `hca login`.  This will pop up a browser and get you to authenticate with Google.
+Use an email from one of the whitelisted domains (in `DSS_SUBSCRIPTION_AUTHORIZED_DOMAINS_ARRAY` from `here <https://github.com/HumanCellAtlas/data-store/environment>`_).
 
-To use the command line interface with a local or test DSS, open <directory_holding_hca_module>/hca/api_spec.json. Change :code:`host` to the host you want (if you're running on a local DSS, this will likely be :code:`localhost:5000`) and the first argument of :code:`schemes` should be the scheme you want (:code:`http` if running locally, :code:`https` otherwise).
-
-Usage
------
-The command-line utility hca is the entry point to the CLI provided by this package.
-
-Each of the above commands has its own associated optional or required arguments. To see these, type :code:`hca <command> -h`. These arguments are listed in a style common to most argparse parsers. For instance:
-
-:code:`hca put-bundles [-h] [--version VERSION] --replica REPLICA --files INDEXED/NAME/UUID/VERSION [INDEXED/NAME/UUID/VERSION ...] --creator-uid CREATOR_UID uuid`
-
-Here is a list of what each type means.
-
-- Positional arguments: These don't have a flag in front of them. If they are surrounded by brackets, they are optional.
-- Optional arguments: Note that the term optional in this sense doesn't mean that the argument is not required. It means that the argument is identified by a flag. If the argument and the flag (A word with "--" in front of it). are surrounded in brackets, this input is optional. If an arument is repeated multiple times with the later arguments surrounded in brackets, it means the parser accepts a list of these arguments.
-- Objects: Because the REST API sometimes consumes lists of objects, it is important to be able to pass these into the command line interface. To pass in an object, it is a number of arguments separated by slashes, as seen in the example above. An example input to this could be :code:`True/Bob/3806d74a-6ab5-4a6d-ba00-667ea858c7b5/2017-06-30T19:33:38+00:00`. If an argument within an object is optional and you don't have an input for it, you can replace it's supposed place with :code:`None`.
-
+Then :code:`make test`.
 
 Bugs
 ~~~~
