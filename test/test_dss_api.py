@@ -36,7 +36,6 @@ class TestDssApi(unittest.TestCase):
         if os.path.exists(downloaded_path):
             shutil.rmtree(downloaded_path)
 
-    @unittest.skip("Temporarily disable.  DSS updates broke it and by staging commands soon anyway.")
     def test_python_upload_lg_file(self):
         with tempfile.NamedTemporaryFile(suffix=".bin") as fh:
             fh.write(os.urandom(64 * 1024 * 1024 + 1))
