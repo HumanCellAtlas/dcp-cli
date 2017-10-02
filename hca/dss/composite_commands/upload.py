@@ -157,7 +157,7 @@ class Upload(AddedCommand):
                     timeout = time.time() + timeout_seconds
                     wait = 1.0
                     while time.time() < timeout:
-                        get_resp = hca.dss.head_files(file_uuid, version)
+                        get_resp = hca.dss.head_files(file_uuid, "aws", version)
                         if get_resp.ok:
                             break
                         elif get_resp.status_code == requests.codes.not_found:
