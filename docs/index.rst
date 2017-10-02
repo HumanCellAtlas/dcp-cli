@@ -4,7 +4,7 @@
 API documentation
 =================
 
-.. automodule:: hca.api
+.. automodule:: hca.dss.api
    :members:
    :special-members:
    :exclude-members: __weakref__
