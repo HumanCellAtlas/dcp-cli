@@ -7,7 +7,7 @@ class PutFiles(AddedCommand):
 
     @classmethod
     def _get_base_url(cls):
-        return "https://dss.staging.data.humancellatlas.org/v1"
+        return "https://dss.dev.data.humancellatlas.org/v1"
 
     @classmethod
     def _get_endpoint_info(cls):
