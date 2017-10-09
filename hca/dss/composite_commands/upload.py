@@ -220,7 +220,9 @@ class Upload(AddedCommand):
     def run_from_cli(cls, argparser_args):
         """Run this command using args from the cli. Override this to add higher-level commands."""
         args_dict = parse_args(argparser_args)
-        return cls.run(args_dict)
+        response = cls.run(args_dict)
+        cls._render_output(response)
+        return response
 
     @classmethod
     def run(cls, args):
