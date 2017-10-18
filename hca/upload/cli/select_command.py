@@ -1,19 +1,19 @@
 import re
 
 from .config_store import ConfigStore
-from .staging_area_urn import StagingAreaURN
+from .upload_area_urn import UploadAreaURN
 
 
 class SelectCommand:
 
     @classmethod
-    def add_parser(cls, staging_subparsers):
-        select_parser = staging_subparsers.add_parser(
+    def add_parser(cls, upload_subparsers):
+        select_parser = upload_subparsers.add_parser(
             'select',
-            description="Select staging area to which you wish to upload files."
+            description="Select upload area to which you wish to upload files."
         )
         select_parser.add_argument('urn_or_alias',
-                                   help="Full URN of a staging area, or short alias.")
+                                   help="Full URN of an upload area, or short alias.")
         select_parser.set_defaults(func=SelectCommand)
 
     def __init__(self, args):
@@ -25,7 +25,7 @@ class SelectCommand:
         self.config.save()
 
     def _save_and_select_area_by_urn(self, urn_string):
-        urn = StagingAreaURN(urn_string)
+        urn = UploadAreaURN(urn_string)
         self.config.add_area(urn)
         self._select_area(urn.uuid)
 
@@ -43,9 +43,9 @@ class SelectCommand:
 
     def _select_area(self, area_uuid):
         self.config.select_area(area_uuid)
-        print("Staging area %s selected." % area_uuid)
+        print("Upload area %s selected." % area_uuid)
         alias = self._find_unique_prefix(area_uuid)
-        print("In future you may refer to this staging area using the alias \"%s\"" % (alias,))
+        print("In future you may refer to this upload area using the alias \"%s\"" % (alias,))
 
     def _find_unique_prefix(self, area_uuid):
         for prefix_len in range(1, len(area_uuid)):

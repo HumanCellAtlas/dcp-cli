@@ -9,7 +9,7 @@ import sys
 import os
 
 from .dss import cli as dss_cli
-from .staging import cli as staging_cli
+from .upload import cli as staging_cli
 
 
 class CLI:
@@ -50,7 +50,7 @@ Commands:
 
     help     print this message
     dss      manipulate HCA Data Store
-    staging  stage files and manage staging areas
+    upload   upload files and manage upload areas
 
 Use "hca <command> -h" to get detailed command help.
         """)

@@ -6,9 +6,9 @@ from .config_store import ConfigStore
 class ListAreasCommand:
 
     @classmethod
-    def add_parser(cls, staging_subparsers):
-        list_areas_parser = staging_subparsers.add_parser('areas',
-                                                          description="List staging areas I know about.")
+    def add_parser(cls, upload_subparsers):
+        list_areas_parser = upload_subparsers.add_parser('areas',
+                                                         description="List upload areas I know about.")
         list_areas_parser.set_defaults(func=ListAreasCommand)
 
     def __init__(self, args):
