@@ -26,7 +26,7 @@ class TestUploadCliUploadCommand(unittest.TestCase):
         self.area_uuid = str(uuid.uuid4())
         creds = {'AWS_ACCESS_KEY_ID': 'foo', 'AWS_SECRET_ACCESS_KEY': 'bar'}
         encoded_creds = base64.b64encode(json.dumps(creds).encode('ascii')).decode('ascii')
-        self.urn = "hca:sta:aws:{}:{}:{}".format(self.stage, self.area_uuid, encoded_creds)
+        self.urn = "dcp:upl:aws:{}:{}:{}".format(self.stage, self.area_uuid, encoded_creds)
 
     def setup_tweak_config(self):
         config = tweak.Config(hca.TWEAK_PROJECT_NAME)

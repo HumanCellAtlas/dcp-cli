@@ -21,7 +21,7 @@ class TestUploadCliSelectCommand(unittest.TestCase):
     def setUp(self):
         self.area_uuid = str(uuid.uuid4())
         creds = "foo"
-        self.urn = "hca:sta:aws:dev:{}:{}".format(self.area_uuid, creds)
+        self.urn = "dcp:upl:aws:dev:{}:{}".format(self.area_uuid, creds)
 
     @reset_tweak_changes
     def test_when_given_an_unrecognized_urn_it_stores_it_in_upload_area_list(self):
@@ -47,12 +47,12 @@ class TestUploadCliSelectCommand(unittest.TestCase):
         config = tweak.Config(hca.TWEAK_PROJECT_NAME)
         config.upload = {
             'areas': {
-                'deadbeef-dead-dead-dead-beeeeeeeeeef': 'hca:sta:aws:dev:deadbeef-dead-dead-dead-beeeeeeeeeef:creds',
+                'deadbeef-dead-dead-dead-beeeeeeeeeef': 'dcp:upl:aws:dev:deadbeef-dead-dead-dead-beeeeeeeeeef:creds',
             }
         }
         config.save()
         area_uuid = 'deafbeef-deaf-deaf-deaf-beeeeeeeeeef'
-        urn = 'hca:sta:aws:dev:{}:creds'.format(area_uuid)
+        urn = 'dcp:upl:aws:dev:{}:creds'.format(area_uuid)
 
         with CapturingIO('stdout') as stdout:
             args = Namespace(urn_or_alias=urn)
@@ -74,8 +74,8 @@ class TestUploadCliSelectCommand(unittest.TestCase):
         config = tweak.Config(hca.TWEAK_PROJECT_NAME)
         config.upload = {
             'areas': {
-                'deadbeef-dead-dead-dead-beeeeeeeeeef': 'hca:sta:aws:dev:deadbeef-dead-dead-dead-beeeeeeeeeef:creds',
-                'deafbeef-deaf-deaf-deaf-beeeeeeeeeef': 'hca:sta:aws:dev:deafbeef-deaf-deaf-deaf-beeeeeeeeeef:creds',
+                'deadbeef-dead-dead-dead-beeeeeeeeeef': 'dcp:upl:aws:dev:deadbeef-dead-dead-dead-beeeeeeeeeef:creds',
+                'deafbeef-deaf-deaf-deaf-beeeeeeeeeef': 'dcp:upl:aws:dev:deafbeef-deaf-deaf-deaf-beeeeeeeeeef:creds',
             }
         }
         config.save()
@@ -93,8 +93,8 @@ class TestUploadCliSelectCommand(unittest.TestCase):
         config = tweak.Config(hca.TWEAK_PROJECT_NAME)
         config.upload = {
             'areas': {
-                a_uuid: "hca:sta:aws:dev:%s" % (a_uuid,),
-                b_uuid: "hca:sta:aws:dev:%s" % (b_uuid,),
+                a_uuid: "dcp:upl:aws:dev:%s" % (a_uuid,),
+                b_uuid: "dcp:upl:aws:dev:%s" % (b_uuid,),
             }
         }
         config.save()

@@ -20,7 +20,7 @@ class TestUploadCliListAreasCommand(unittest.TestCase):
     def setUp(self):
         self.area_uuid = str(uuid.uuid4())
         creds = "foo"
-        self.urn = "hca:sta:aws:dev:{}:{}".format(self.area_uuid, creds)
+        self.urn = "dcp:upl:aws:dev:{}:{}".format(self.area_uuid, creds)
 
     @reset_tweak_changes
     def test_it_list_areas_when_there_are_some(self):
@@ -29,8 +29,8 @@ class TestUploadCliListAreasCommand(unittest.TestCase):
         config = tweak.Config(hca.TWEAK_PROJECT_NAME)
         config.upload = {
             'areas': {
-                a_uuid: "hca:sta:aws:dev:%s" % (a_uuid,),
-                b_uuid: "hca:sta:aws:dev:%s" % (b_uuid,),
+                a_uuid: "dcp:upl:aws:dev:%s" % (a_uuid,),
+                b_uuid: "dcp:upl:aws:dev:%s" % (b_uuid,),
             },
             'current_area': a_uuid
         }
