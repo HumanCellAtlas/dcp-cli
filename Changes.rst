@@ -1,3 +1,9 @@
+Changes for v2.0.0 (2017-10-18)
+===============================
+
+Rename 'staging' commands 'upload' Format the result, if any, in json if
+--json-output is set. (#67)
+
 Changes for v1.1.3 (2017-10-02)
 ===============================
 
