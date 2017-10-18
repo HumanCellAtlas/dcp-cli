@@ -12,10 +12,10 @@ pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')) 
 sys.path.insert(0, pkg_root)  # noqa
 
 import hca
-from hca.staging.cli.list_areas_command import ListAreasCommand
+from hca.upload.cli.list_areas_command import ListAreasCommand
 
 
-class TestStagingCliListAreasCommand(unittest.TestCase):
+class TestUploadCliListAreasCommand(unittest.TestCase):
 
     def setUp(self):
         self.area_uuid = str(uuid.uuid4())
@@ -27,7 +27,7 @@ class TestStagingCliListAreasCommand(unittest.TestCase):
         a_uuid = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
         b_uuid = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'
         config = tweak.Config(hca.TWEAK_PROJECT_NAME)
-        config.staging = {
+        config.upload = {
             'areas': {
                 a_uuid: "hca:sta:aws:dev:%s" % (a_uuid,),
                 b_uuid: "hca:sta:aws:dev:%s" % (b_uuid,),
@@ -43,10 +43,10 @@ class TestStagingCliListAreasCommand(unittest.TestCase):
         six.assertRegex(self, stdout.captured(), b_uuid)
 
     @reset_tweak_changes
-    def test_it_doesnt_error_when_the_staging_tweak_config_is_not_setup(self):
+    def test_it_doesnt_error_when_the_upload_tweak_config_is_not_setup(self):
         config = tweak.Config(hca.TWEAK_PROJECT_NAME, autosave=True)
-        if 'staging' in config:
-            del config['staging']
+        if 'upload' in config:
+            del config['upload']
 
         try:
             with CapturingIO('stdout') as stdout:

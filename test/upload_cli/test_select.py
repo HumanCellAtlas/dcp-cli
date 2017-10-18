@@ -13,10 +13,10 @@ pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')) 
 sys.path.insert(0, pkg_root)  # noqa
 
 import hca
-from hca.staging.cli.select_command import SelectCommand
+from hca.upload.cli.select_command import SelectCommand
 
 
-class TestStagingCliSelectCommand(unittest.TestCase):
+class TestUploadCliSelectCommand(unittest.TestCase):
 
     def setUp(self):
         self.area_uuid = str(uuid.uuid4())
@@ -24,28 +24,28 @@ class TestStagingCliSelectCommand(unittest.TestCase):
         self.urn = "hca:sta:aws:dev:{}:{}".format(self.area_uuid, creds)
 
     @reset_tweak_changes
-    def test_when_given_an_unrecognized_urn_it_stores_it_in_staging_area_list(self):
+    def test_when_given_an_unrecognized_urn_it_stores_it_in_upload_area_list(self):
         with CapturingIO('stdout') as stdout:
             args = Namespace(urn_or_alias=self.urn)
             SelectCommand(args)
 
         config = tweak.Config(hca.TWEAK_PROJECT_NAME)
-        self.assertIn(self.area_uuid, config.staging.areas)
-        self.assertEqual(self.urn, config.staging.areas[self.area_uuid])
+        self.assertIn(self.area_uuid, config.upload.areas)
+        self.assertEqual(self.urn, config.upload.areas[self.area_uuid])
 
     @reset_tweak_changes
-    def test_when_given_a_urn_it_sets_current_staging_area(self):
+    def test_when_given_a_urn_it_sets_current_upload_area(self):
         with CapturingIO('stdout') as stdout:
             args = Namespace(urn_or_alias=self.urn)
             SelectCommand(args)
 
         config = tweak.Config(hca.TWEAK_PROJECT_NAME)
-        self.assertEqual(self.area_uuid, config.staging.current_area)
+        self.assertEqual(self.area_uuid, config.upload.current_area)
 
     @reset_tweak_changes
     def test_when_given_a_urn_it_prints_an_alias(self):
         config = tweak.Config(hca.TWEAK_PROJECT_NAME)
-        config.staging = {
+        config.upload = {
             'areas': {
                 'deadbeef-dead-dead-dead-beeeeeeeeeef': 'hca:sta:aws:dev:deadbeef-dead-dead-dead-beeeeeeeeeef:creds',
             }
@@ -72,7 +72,7 @@ class TestStagingCliSelectCommand(unittest.TestCase):
     @reset_tweak_changes
     def test_when_given_an_alias_that_matches_more_than_one_area_it_prints_a_warning(self):
         config = tweak.Config(hca.TWEAK_PROJECT_NAME)
-        config.staging = {
+        config.upload = {
             'areas': {
                 'deadbeef-dead-dead-dead-beeeeeeeeeef': 'hca:sta:aws:dev:deadbeef-dead-dead-dead-beeeeeeeeeef:creds',
                 'deafbeef-deaf-deaf-deaf-beeeeeeeeeef': 'hca:sta:aws:dev:deafbeef-deaf-deaf-deaf-beeeeeeeeeef:creds',
@@ -91,7 +91,7 @@ class TestStagingCliSelectCommand(unittest.TestCase):
         a_uuid = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
         b_uuid = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'
         config = tweak.Config(hca.TWEAK_PROJECT_NAME)
-        config.staging = {
+        config.upload = {
             'areas': {
                 a_uuid: "hca:sta:aws:dev:%s" % (a_uuid,),
                 b_uuid: "hca:sta:aws:dev:%s" % (b_uuid,),
@@ -104,4 +104,4 @@ class TestStagingCliSelectCommand(unittest.TestCase):
             SelectCommand(args)
 
         config = tweak.Config(hca.TWEAK_PROJECT_NAME)
-        self.assertEqual(b_uuid, config.staging.current_area)
+        self.assertEqual(b_uuid, config.upload.current_area)

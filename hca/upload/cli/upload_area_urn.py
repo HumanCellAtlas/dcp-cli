@@ -2,7 +2,7 @@ import base64
 import json
 
 
-class StagingAreaURN:
+class UploadAreaURN:
 
     def __init__(self, urn):
         self.urn = urn

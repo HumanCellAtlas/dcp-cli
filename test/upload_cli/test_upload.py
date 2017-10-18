@@ -16,10 +16,10 @@ pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')) 
 sys.path.insert(0, pkg_root)  # noqa
 
 import hca
-from hca.staging.cli.upload_command import UploadCommand
+from hca.upload.cli.upload_command import UploadCommand
 
 
-class TestStagingCliUploadCommand(unittest.TestCase):
+class TestUploadCliUploadCommand(unittest.TestCase):
 
     def setUp(self):
         self.stage = 'test'
@@ -30,7 +30,7 @@ class TestStagingCliUploadCommand(unittest.TestCase):
 
     def setup_tweak_config(self):
         config = tweak.Config(hca.TWEAK_PROJECT_NAME)
-        config.staging = {
+        config.upload = {
             'areas': {self.area_uuid: self.urn},
             'current_area': self.area_uuid
         }
@@ -41,12 +41,12 @@ class TestStagingCliUploadCommand(unittest.TestCase):
     def test_upload_with_target_filename_option(self):
         self.setup_tweak_config()
         s3 = boto3.resource('s3')
-        s3.Bucket('org-humancellatlas-staging-test').create()
+        s3.Bucket('org-humancellatlas-upload-test').create()
 
         with CapturingIO('stdout') as stdout:
             UploadCommand(Namespace(file_paths=['LICENSE'], target_filename='POO'))
 
-        obj = s3.Bucket('org-humancellatlas-staging-test').Object("{}/POO".format(self.area_uuid))
+        obj = s3.Bucket('org-humancellatlas-upload-test').Object("{}/POO".format(self.area_uuid))
         with open('LICENSE', 'rb') as fh:
             expected_contents = fh.read()
             self.assertEqual(obj.get()['Body'].read(), expected_contents)
@@ -56,14 +56,14 @@ class TestStagingCliUploadCommand(unittest.TestCase):
     def test_multiple_uploads(self):
         self.setup_tweak_config()
         s3 = boto3.resource('s3')
-        s3.Bucket('org-humancellatlas-staging-test').create()
+        s3.Bucket('org-humancellatlas-upload-test').create()
 
         files = ['LICENSE', 'README.rst']
         with CapturingIO('stdout') as stdout:
             UploadCommand(Namespace(file_paths=files, target_filename=None))
 
         for filename in files:
-            obj = s3.Bucket('org-humancellatlas-staging-test').Object("{}/{}".format(self.area_uuid, filename))
+            obj = s3.Bucket('org-humancellatlas-upload-test').Object("{}/{}".format(self.area_uuid, filename))
             with open(filename, 'rb') as fh:
                 expected_contents = fh.read()
                 self.assertEqual(obj.get()['Body'].read(), expected_contents)
