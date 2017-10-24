@@ -1,6 +1,6 @@
 import sys
 
-from ..config_store import ConfigStore
+from ..upload_area import UploadArea
 
 
 class ListAreasCommand:
@@ -12,9 +12,8 @@ class ListAreasCommand:
         list_areas_parser.set_defaults(func=ListAreasCommand)
 
     def __init__(self, args):
-        config = ConfigStore()
-        for uuid in config.areas():
-            sys.stdout.write(uuid)
-            if config.current_area() == uuid:
+        for area in UploadArea.all():
+            sys.stdout.write(area.uuid)
+            if area.is_selected:
                 sys.stdout.write(" <- selected")
-            sys.stdout.write("\n")
+        sys.stdout.write("\n")
