@@ -1,6 +1,6 @@
 import sys
 
-from .config_store import ConfigStore
+from ..config_store import ConfigStore
 
 
 class ListAreasCommand:

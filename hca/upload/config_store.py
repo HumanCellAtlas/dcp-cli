@@ -1,6 +1,6 @@
 import tweak
 
-from ... import TWEAK_PROJECT_NAME
+from .. import TWEAK_PROJECT_NAME
 
 
 class ConfigStore:

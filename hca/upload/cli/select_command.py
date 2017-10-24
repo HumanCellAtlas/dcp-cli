@@ -1,7 +1,7 @@
 import re
 
-from .config_store import ConfigStore
-from .upload_area_urn import UploadAreaURN
+from ..config_store import ConfigStore
+from ..upload_area_urn import UploadAreaURN
 
 
 class SelectCommand:

@@ -5,8 +5,8 @@ import sys
 import boto3
 from boto3.s3.transfer import TransferConfig
 
-from .config_store import ConfigStore
-from .upload_area_urn import UploadAreaURN
+from ..config_store import ConfigStore
+from ..upload_area_urn import UploadAreaURN
 
 KB = 1024
 MB = KB * KB
