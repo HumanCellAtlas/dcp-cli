@@ -4,7 +4,8 @@ import unittest
 import uuid
 from argparse import Namespace
 
-import tweak, six
+import tweak
+import six
 
 from ... import CapturingIO, reset_tweak_changes
 
@@ -23,7 +24,7 @@ class TestUploadCliListAreasCommand(unittest.TestCase):
         self.urn = "dcp:upl:aws:dev:{}:{}".format(self.area_uuid, creds)
 
     @reset_tweak_changes
-    def test_it_list_areas_when_there_are_some(self):
+    def test_it_lists_areas_when_there_are_some(self):
         a_uuid = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
         b_uuid = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'
         config = tweak.Config(hca.TWEAK_PROJECT_NAME)
@@ -39,17 +40,5 @@ class TestUploadCliListAreasCommand(unittest.TestCase):
         with CapturingIO('stdout') as stdout:
             ListAreasCommand(Namespace())
 
-        six.assertRegex(self, stdout.captured(), a_uuid)
+        six.assertRegex(self, stdout.captured(), "%s <- selected" % a_uuid)
         six.assertRegex(self, stdout.captured(), b_uuid)
-
-    @reset_tweak_changes
-    def test_it_doesnt_error_when_the_upload_tweak_config_is_not_setup(self):
-        config = tweak.Config(hca.TWEAK_PROJECT_NAME, autosave=True)
-        if 'upload' in config:
-            del config['upload']
-
-        try:
-            with CapturingIO('stdout') as stdout:
-                ListAreasCommand(Namespace())
-        except Exception as e:
-            self.fail("Expected no exception, got %s" % (e,))
