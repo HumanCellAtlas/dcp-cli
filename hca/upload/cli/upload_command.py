@@ -2,73 +2,9 @@ import os
 import re
 import sys
 
-import boto3
-from boto3.s3.transfer import TransferConfig
-
 from ..config_store import ConfigStore
 from ..upload_area_urn import UploadAreaURN
-
-KB = 1024
-MB = KB * KB
-
-
-def sizeof_fmt(num, suffix='B'):
-    """
-    From https://stackoverflow.com/a/1094933
-    """
-    for unit in ['', 'Ki', 'Mi', 'Gi', 'Ti', 'Pi', 'Ei', 'Zi']:
-        if abs(num) < 1024.0:
-            return "%d %s%s" % (num, unit, suffix)
-        num /= 1024.0
-    return "%.1f %s%s" % (num, 'Yi', suffix)
-
-
-class S3Agent:
-
-    CLEAR_TO_EOL = "\x1b[0K"
-
-    def __init__(self, aws_credentials={}):
-        session = boto3.session.Session(**aws_credentials)
-        self.s3 = session.resource('s3')
-
-    def upload_progress_callback(self, bytes_transferred):
-        self.cumulative_bytes_transferred += bytes_transferred
-        percent_complete = (self.cumulative_bytes_transferred * 100) / self.file_size
-        sys.stdout.write("\r%s of %s transferred (%.0f%%)%s" %
-                         (sizeof_fmt(self.cumulative_bytes_transferred),
-                          sizeof_fmt(self.file_size),
-                          percent_complete,
-                          self.CLEAR_TO_EOL))
-        sys.stdout.flush()
-
-    def upload_file(self, local_path, target_bucket, target_key, content_type):
-        self.file_size = os.stat(local_path).st_size
-        bucket = self.s3.Bucket(target_bucket)
-        obj = bucket.Object(target_key)
-        with open(local_path, 'rb') as fh:
-            self.cumulative_bytes_transferred = 0
-            obj.upload_fileobj(fh,
-                               ExtraArgs={'ContentType': content_type,
-                                          'ACL': 'bucket-owner-full-control'},
-                               Callback=self.upload_progress_callback,
-                               Config=self.transfer_config(self.file_size)
-                               )
-
-    @classmethod
-    def transfer_config(cls, file_size):
-        etag_stride = cls._s3_chunk_size(file_size)
-        return TransferConfig(multipart_threshold=etag_stride,
-                              multipart_chunksize=etag_stride)
-
-    @staticmethod
-    def _s3_chunk_size(file_size):
-        if file_size <= 10000 * 64 * MB:
-            return 64 * MB
-        else:
-            div = file_size // 10000
-            if div * 10000 < file_size:
-                div += 1
-            return ((div + (MB - 1)) // MB) * MB
+from ..s3_agent import S3Agent
 
 
 class UploadCommand:
