@@ -1,6 +1,8 @@
 import base64
 import json
 
+from .exceptions import UploadException
+
 
 class UploadAreaURN:
 
@@ -17,7 +19,7 @@ class UploadAreaURN:
             self.uuid = urnbits[4]
             self.encoded_credentials = urnbits[5]
         else:
-            raise RuntimeError("Bad URN: %s" % (urn,))
+            raise UploadException("Bad URN: %s" % (urn,))
 
     def credentials(self):
         uppercase_credentials = json.loads(base64.b64decode(self.encoded_credentials).decode('ascii'))

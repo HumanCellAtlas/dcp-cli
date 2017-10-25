@@ -24,7 +24,7 @@ class TestUploadCliSelectCommand(unittest.TestCase):
         self.urn = "dcp:upl:aws:dev:{}:{}".format(self.area_uuid, creds)
 
     @reset_tweak_changes
-    def test_when_given_an_unrecognized_urn_it_stores_it_in_upload_area_list(self):
+    def test_when_given_an_unrecognized_urn_it_stores_it_in_upload_area_list_and_sets_it_as_current_area(self):
         with CapturingIO('stdout') as stdout:
             args = Namespace(urn_or_alias=self.urn)
             SelectCommand(args)
@@ -32,14 +32,6 @@ class TestUploadCliSelectCommand(unittest.TestCase):
         config = tweak.Config(hca.TWEAK_PROJECT_NAME)
         self.assertIn(self.area_uuid, config.upload.areas)
         self.assertEqual(self.urn, config.upload.areas[self.area_uuid])
-
-    @reset_tweak_changes
-    def test_when_given_a_urn_it_sets_current_upload_area(self):
-        with CapturingIO('stdout') as stdout:
-            args = Namespace(urn_or_alias=self.urn)
-            SelectCommand(args)
-
-        config = tweak.Config(hca.TWEAK_PROJECT_NAME)
         self.assertEqual(self.area_uuid, config.upload.current_area)
 
     @reset_tweak_changes

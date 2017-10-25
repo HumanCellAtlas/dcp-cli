@@ -1,7 +1,9 @@
-import io, sys
+import io
+import sys
 from functools import wraps
 
-import six, tweak
+import six
+import tweak
 
 import hca
 
