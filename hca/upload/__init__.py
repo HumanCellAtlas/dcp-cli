@@ -1,6 +1,13 @@
+import os
+import re
+
+from .config_store import ConfigStore
 from .upload_area import UploadArea
 from .upload_area_urn import UploadAreaURN
 from .exceptions import UploadException
+from .s3_agent import S3Agent
+
+UPLOAD_BUCKET_TEMPLATE = "org-humancellatlas-upload-%s"
 
 
 def select_area(**kwargs):
@@ -26,3 +33,19 @@ def list_areas():
     Returns a list of dicts with elements {uuid: <string> , is_selected: <bool>}
     """
     return [{'uuid': area.uuid, 'is_selected': area.is_selected} for area in UploadArea.all()]
+
+
+def upload_file(file_path, target_filename=None, report_progress=False):
+    """
+    Upload a file to the currently selected Upload Area
+
+    :param file_path: <string> Path to file on local filesystem.
+    :param target_filename: <string> Rename file during upload (optional).
+    :param report_progress: <bool> Display progress % during upload (optional).
+    """
+    upload_area = UploadArea(uuid=ConfigStore().current_area())
+    file_s3_key = "%s/%s" % (upload_area.uuid, target_filename or os.path.basename(file_path))
+    bucket_name = UPLOAD_BUCKET_TEMPLATE % upload_area.urn.deployment_stage
+    content_type = 'application/json' if re.search('.json$', file_path) else 'hca-data-file'
+    s3agent = S3Agent(aws_credentials=upload_area.urn.credentials)
+    s3agent.upload_file(file_path, bucket_name, file_s3_key, content_type, report_progress=report_progress)

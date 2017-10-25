@@ -37,18 +37,19 @@ class S3Agent:
                           self.CLEAR_TO_EOL))
         sys.stdout.flush()
 
-    def upload_file(self, local_path, target_bucket, target_key, content_type):
+    def upload_file(self, local_path, target_bucket, target_key, content_type, report_progress=False):
         self.file_size = os.stat(local_path).st_size
         bucket = self.s3.Bucket(target_bucket)
         obj = bucket.Object(target_key)
+        upload_fileobj_args = {
+            'ExtraArgs': {'ContentType': content_type, 'ACL': 'bucket-owner-full-control'},
+            'Config': self.transfer_config(self.file_size)
+        }
+        if report_progress:
+            upload_fileobj_args['Callback'] = self.upload_progress_callback
         with open(local_path, 'rb') as fh:
             self.cumulative_bytes_transferred = 0
-            obj.upload_fileobj(fh,
-                               ExtraArgs={'ContentType': content_type,
-                                          'ACL': 'bucket-owner-full-control'},
-                               Callback=self.upload_progress_callback,
-                               Config=self.transfer_config(self.file_size)
-                               )
+            obj.upload_fileobj(fh, **upload_fileobj_args)
 
     @classmethod
     def transfer_config(cls, file_size):

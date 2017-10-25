@@ -21,6 +21,7 @@ class UploadAreaURN:
         else:
             raise UploadException("Bad URN: %s" % (urn,))
 
+    @property
     def credentials(self):
         uppercase_credentials = json.loads(base64.b64decode(self.encoded_credentials).decode('ascii'))
         return {k.lower(): v for k, v in uppercase_credentials.items()}

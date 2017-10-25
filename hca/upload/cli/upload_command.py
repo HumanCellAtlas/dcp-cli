@@ -1,10 +1,8 @@
 import os
-import re
 import sys
 
 from ..config_store import ConfigStore
-from ..upload_area_urn import UploadAreaURN
-from ..s3_agent import S3Agent
+from .. import upload_file
 
 
 class UploadCommand:
@@ -27,17 +25,13 @@ class UploadCommand:
     def __init__(self, args):
         self._load_config()
         self._check_args(args)
-        self.urn = UploadAreaURN(self.config.areas()[self.config.current_area()])
-        self.s3agent = S3Agent(aws_credentials=self.urn.credentials())
         for file_path in args.file_paths:
             self._upload_file(file_path, args.target_filename)
 
     def _upload_file(self, file_path, target_filename=None):
-        file_s3_key = "%s/%s" % (self.urn.uuid, target_filename or os.path.basename(file_path))
-        print("Uploading %s to upload area %s..." % (os.path.basename(file_path), file_s3_key))
-        bucket_name = self.UPLOAD_BUCKET_TEMPLATE % (self.urn.deployment_stage,)
-        content_type = 'application/json' if re.search('.json$', file_path) else 'hca-data-file'
-        self.s3agent.upload_file(file_path, bucket_name, file_s3_key, content_type)
+        current_area_uuid = ConfigStore().current_area()
+        print("Uploading %s to upload area %s..." % (os.path.basename(file_path), current_area_uuid))
+        upload_file(file_path, target_filename)
         print("\n")
 
     def _load_config(self):
