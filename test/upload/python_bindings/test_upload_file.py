@@ -18,6 +18,7 @@ import hca
 from hca import upload
 from hca.upload.upload_area import UploadArea
 from hca.upload.upload_area_urn import UploadAreaURN
+from .. import UPLOAD_BUCKET_NAME_TEMPLATE, TEST_UPLOAD_BUCKET
 
 
 class TestUploadFileUpload(unittest.TestCase):
@@ -35,7 +36,8 @@ class TestUploadFileUpload(unittest.TestCase):
         config = tweak.Config(hca.TWEAK_PROJECT_NAME)
         config.upload = {
             'areas': {self.area_uuid: self.urn},
-            'current_area': self.area_uuid
+            'current_area': self.area_uuid,
+            'bucket_name_template': UPLOAD_BUCKET_NAME_TEMPLATE
         }
         config.save()
 
@@ -44,12 +46,12 @@ class TestUploadFileUpload(unittest.TestCase):
     def test_file_upload(self):
         self.setup_tweak_config()
         s3 = boto3.resource('s3')
-        s3.Bucket('org-humancellatlas-upload-test').create()
+        s3.Bucket(TEST_UPLOAD_BUCKET).create()
         area = UploadArea(uuid=self.area_uuid)
 
         upload.upload_file('LICENSE')
 
-        obj = s3.Bucket('org-humancellatlas-upload-test').Object("{}/LICENSE".format(self.area_uuid))
+        obj = s3.Bucket(TEST_UPLOAD_BUCKET).Object("{}/LICENSE".format(self.area_uuid))
         with open('LICENSE', 'rb') as fh:
             expected_contents = fh.read()
             self.assertEqual(obj.get()['Body'].read(), expected_contents)
@@ -59,12 +61,12 @@ class TestUploadFileUpload(unittest.TestCase):
     def test_file_upload_with_target_filename_option(self):
         self.setup_tweak_config()
         s3 = boto3.resource('s3')
-        s3.Bucket('org-humancellatlas-upload-test').create()
+        s3.Bucket(TEST_UPLOAD_BUCKET).create()
         area = UploadArea(uuid=self.area_uuid)
 
         upload.upload_file('LICENSE', target_filename='POO')
 
-        obj = s3.Bucket('org-humancellatlas-upload-test').Object("{}/POO".format(self.area_uuid))
+        obj = s3.Bucket(TEST_UPLOAD_BUCKET).Object("{}/POO".format(self.area_uuid))
         with open('LICENSE', 'rb') as fh:
             expected_contents = fh.read()
             self.assertEqual(obj.get()['Body'].read(), expected_contents)

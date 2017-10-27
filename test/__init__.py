@@ -1,4 +1,5 @@
 import io
+import os
 import sys
 from functools import wraps
 
@@ -6,6 +7,9 @@ import six
 import tweak
 
 import hca
+
+if 'DEPLOYMENT_STAGE' not in os.environ:
+    os.environ['DEPLOYMENT_STAGE'] = 'test'
 
 
 class CapturingIO:
