@@ -1,7 +1,7 @@
 import os
 import re
 
-from .config_store import ConfigStore
+from .upload_config import UploadConfig
 from .upload_area import UploadArea
 from .upload_area_urn import UploadAreaURN
 from .exceptions import UploadException
@@ -43,7 +43,7 @@ def upload_file(file_path, target_filename=None, report_progress=False):
     :param target_filename: <string> Rename file during upload (optional).
     :param report_progress: <bool> Display progress % during upload (optional).
     """
-    upload_area = UploadArea(uuid=ConfigStore().current_area())
+    upload_area = UploadArea(uuid=UploadConfig().current_area())
     file_s3_key = "%s/%s" % (upload_area.uuid, target_filename or os.path.basename(file_path))
     bucket_name = UPLOAD_BUCKET_TEMPLATE % upload_area.urn.deployment_stage
     content_type = 'application/json' if re.search('.json$', file_path) else 'hca-data-file'

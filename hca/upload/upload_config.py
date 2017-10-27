@@ -3,7 +3,7 @@ import tweak
 from .. import TWEAK_PROJECT_NAME
 
 
-class ConfigStore:
+class UploadConfig:
     """
     Wrapper around Tweak configuration.
     """

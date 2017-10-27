@@ -1,6 +1,6 @@
 import re
 
-from .config_store import ConfigStore
+from .upload_config import UploadConfig
 from .upload_area_urn import UploadAreaURN
 from .exceptions import UploadException
 
@@ -9,11 +9,11 @@ class UploadArea:
 
     @classmethod
     def all(cls):
-        return [cls(uuid=uuid) for uuid in ConfigStore().areas()]
+        return [cls(uuid=uuid) for uuid in UploadConfig().areas()]
 
     @classmethod
     def areas_matching_alias(cls, alias):
-        return [cls(uuid=uuid) for uuid in ConfigStore().areas() if re.match(alias, uuid)]
+        return [cls(uuid=uuid) for uuid in UploadConfig().areas() if re.match(alias, uuid)]
 
     def __init__(self, **kwargs):
         """
@@ -24,20 +24,20 @@ class UploadArea:
         """
         if 'uuid' in kwargs:
             self.uuid = kwargs['uuid']
-            areas = ConfigStore().areas()
+            areas = UploadConfig().areas()
             if self.uuid not in areas:
                 raise UploadException("I'm not aware of upload area \"%s\"" % self.uuid)
             self.urn = UploadAreaURN(areas[self.uuid])
         elif 'urn' in kwargs:
             self.urn = kwargs['urn']
             self.uuid = self.urn.uuid
-            ConfigStore().add_area(self.urn)
+            UploadConfig().add_area(self.urn)
         else:
             raise UploadException("You must provide a uuid or URN")
 
     @property
     def is_selected(self):
-        return ConfigStore().current_area() == self.uuid
+        return UploadConfig().current_area() == self.uuid
 
     @property
     def unique_prefix(self):
@@ -48,5 +48,5 @@ class UploadArea:
                 return prefix
 
     def select(self):
-        config = ConfigStore()
+        config = UploadConfig()
         config.select_area(self.uuid)
