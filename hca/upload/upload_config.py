@@ -8,6 +8,8 @@ class UploadConfig:
     Wrapper around Tweak configuration.
     """
 
+    DEFAULT_BUCKET_NAME_TEMPLATE = "org-humancellatlas-upload-{deployment_stage}"
+
     def __init__(self):
         self._load_config()
 
@@ -32,6 +34,13 @@ class UploadConfig:
 
     def current_area(self):
         return self._config.upload.current_area
+
+    @property
+    def bucket_name_template(self):
+        if 'bucket_name_template' not in self._config.upload:
+            self._config.upload.bucket_name_template = self.DEFAULT_BUCKET_NAME_TEMPLATE
+            self.save()
+        return self._config.upload.bucket_name_template
 
     def save(self):
         self._config.save()
