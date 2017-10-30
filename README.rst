@@ -1,7 +1,7 @@
 HCA CLI
 =======
 This repository contains a command line interface (CLI) and Python library for interacting with the Data Coordination
-Platform (DCP) of the Human Cell Atlas (HCA). Currently it allows interaction with the Staging Service and Data Storage
+Platform (DCP) of the Human Cell Atlas (HCA). Currently it allows interaction with the Upload Service and Data Storage
 Service (DSS).
 
 Installation
