@@ -1,3 +1,8 @@
+Changes for v2.1.0 (2017-10-30)
+===============================
+
+Expose Python bindings for Upload Service
+
 Changes for v2.0.0 (2017-10-18)
 ===============================
 
