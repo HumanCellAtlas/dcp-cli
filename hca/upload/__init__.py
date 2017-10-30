@@ -6,6 +6,7 @@ from .upload_area import UploadArea
 from .upload_area_urn import UploadAreaURN
 from .exceptions import UploadException
 from .s3_agent import S3Agent
+from .api_client import ApiClient
 
 
 def select_area(**kwargs):
@@ -24,12 +25,21 @@ def select_area(**kwargs):
     area.select()
 
 
+def list_current_area():
+    """
+    Returns array of dicts describing the files in the currently selected Upload Area.
+    """
+    return list_area(UploadConfig().current_area())
+
+
+def list_area(area_uuid):
+    """
+    Returns array of dicts describing the files in the Upload Area with the supplied UUID.
+    """
+    return UploadArea(uuid=area_uuid).list()
+
+
 def list_areas():
-    """
-    Return a list of all the Upload Areas that we have previously used.
-    Indicating which one is currently selected for the next upload.
-    Returns a list of dicts with elements {uuid: <string> , is_selected: <bool>}
-    """
     return [{'uuid': area.uuid, 'is_selected': area.is_selected} for area in UploadArea.all()]
 
 

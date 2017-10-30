@@ -1,8 +1,9 @@
 import re
 
+from .api_client import ApiClient
+from .exceptions import UploadException
 from .upload_config import UploadConfig
 from .upload_area_urn import UploadAreaURN
-from .exceptions import UploadException
 
 
 class UploadArea:
@@ -50,3 +51,7 @@ class UploadArea:
     def select(self):
         config = UploadConfig()
         config.select_area(self.uuid)
+
+    def list(self):
+        client = ApiClient(self.urn.deployment_stage)
+        return client.list_area(self.uuid)
