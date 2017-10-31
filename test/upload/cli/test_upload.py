@@ -45,8 +45,7 @@ class TestUploadCliUploadCommand(unittest.TestCase):
         s3 = boto3.resource('s3')
         s3.Bucket(TEST_UPLOAD_BUCKET).create()
 
-        with CapturingIO('stdout') as stdout:
-            UploadCommand(Namespace(file_paths=['LICENSE'], target_filename='POO'))
+        UploadCommand(Namespace(file_paths=['LICENSE'], target_filename='POO', quiet=True))
 
         obj = s3.Bucket(TEST_UPLOAD_BUCKET).Object("{}/POO".format(self.area_uuid))
         with open('LICENSE', 'rb') as fh:
@@ -61,8 +60,7 @@ class TestUploadCliUploadCommand(unittest.TestCase):
         s3.Bucket(TEST_UPLOAD_BUCKET).create()
 
         files = ['LICENSE', 'README.rst']
-        with CapturingIO('stdout') as stdout:
-            UploadCommand(Namespace(file_paths=files, target_filename=None))
+        UploadCommand(Namespace(file_paths=files, target_filename=None, quiet=True))
 
         for filename in files:
             obj = s3.Bucket(TEST_UPLOAD_BUCKET).Object("{}/{}".format(self.area_uuid, filename))
