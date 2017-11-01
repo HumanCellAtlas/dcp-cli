@@ -38,7 +38,7 @@ class UploadArea:
 
     @property
     def is_selected(self):
-        return UploadConfig().current_area() == self.uuid
+        return UploadConfig().current_area == self.uuid
 
     @property
     def unique_prefix(self):

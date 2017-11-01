@@ -30,7 +30,7 @@ class UploadCommand:
             self._upload_file(file_path, args.target_filename, report_progress=(not args.quiet))
 
     def _upload_file(self, file_path, target_filename=None, report_progress=True):
-        current_area_uuid = UploadConfig().current_area()
+        current_area_uuid = UploadConfig().current_area
         if report_progress:
             print("Uploading %s to upload area %s..." % (os.path.basename(file_path), current_area_uuid))
         upload_file(file_path, target_filename, report_progress=report_progress)
@@ -39,7 +39,7 @@ class UploadCommand:
 
     def _load_config(self):
         self.config = UploadConfig()
-        if not self.config.current_area():
+        if not self.config.current_area:
             sys.stderr.write("\nThere is not upload area selected.\n" +
                              "Please select one with \"hca upload select <urn_or_alias>\"\n\n")
 

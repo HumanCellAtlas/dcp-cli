@@ -29,7 +29,7 @@ def list_current_area():
     """
     Returns array of dicts describing the files in the currently selected Upload Area.
     """
-    return list_area(UploadConfig().current_area())
+    return list_area(UploadConfig().current_area)
 
 
 def list_area(area_uuid):
@@ -51,7 +51,7 @@ def upload_file(file_path, target_filename=None, report_progress=False):
     :param target_filename: <string> Rename file during upload (optional).
     :param report_progress: <bool> Display progress % during upload (optional).
     """
-    upload_area = UploadArea(uuid=UploadConfig().current_area())
+    upload_area = UploadArea(uuid=UploadConfig().current_area)
     file_s3_key = "%s/%s" % (upload_area.uuid, target_filename or os.path.basename(file_path))
     bucket_name = UploadConfig().bucket_name_template.format(deployment_stage=upload_area.urn.deployment_stage)
     content_type = 'application/json' if re.search('.json$', file_path) else 'hca-data-file'

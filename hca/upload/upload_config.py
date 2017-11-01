@@ -32,6 +32,7 @@ class UploadConfig:
         self._config.upload.current_area = area_uuid
         self.save()
 
+    @property
     def current_area(self):
         return self._config.upload.current_area
 
