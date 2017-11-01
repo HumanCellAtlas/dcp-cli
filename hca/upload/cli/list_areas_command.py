@@ -16,4 +16,4 @@ class ListAreasCommand:
             sys.stdout.write(area.uuid)
             if area.is_selected:
                 sys.stdout.write(" <- selected")
-        sys.stdout.write("\n")
+            sys.stdout.write("\n")
