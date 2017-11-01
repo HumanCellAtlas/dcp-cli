@@ -25,6 +25,19 @@ def select_area(**kwargs):
     area.select()
 
 
+def forget_area(uuid_or_alias):
+    """
+    Remove an area from our cache of upload areas.
+    """
+    matching_areas = UploadArea.areas_matching_alias(alias=uuid_or_alias)
+    if len(matching_areas) == 0:
+        raise UploadException("Sorry I don't recognize area \"%s\"" % (uuid_or_alias,))
+    elif len(matching_areas) == 1:
+        matching_areas[0].forget()
+    else:
+        raise UploadException("\"%s\" matches more than one area, please provide more characters." % (uuid_or_alias,))
+
+
 def list_current_area():
     """
     Returns array of dicts describing the files in the currently selected Upload Area.

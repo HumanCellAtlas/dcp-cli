@@ -14,7 +14,7 @@ class UploadConfig:
         self._load_config()
 
     def _load_config(self):
-        self._config = tweak.Config(TWEAK_PROJECT_NAME)
+        self._config = tweak.Config(TWEAK_PROJECT_NAME, save_on_exit=False)
         if 'upload' not in self._config:
             self._config.upload = {}
         if 'areas' not in self._config.upload:
@@ -31,6 +31,13 @@ class UploadConfig:
     def select_area(self, area_uuid):
         self._config.upload.current_area = area_uuid
         self.save()
+
+    def forget_area(self, area_uuid):
+        if self._config.upload.current_area == area_uuid:
+            self._config.upload.current_area = None
+        if area_uuid in self._config.upload.areas:
+            del self._config.upload.areas[area_uuid]
+            self.save()
 
     @property
     def current_area(self):

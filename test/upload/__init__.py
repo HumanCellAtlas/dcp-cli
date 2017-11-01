@@ -27,12 +27,13 @@ def mock_current_upload_area():
     return area
 
 
-def mock_upload_area():
+def mock_upload_area(area_uuid=None):
     """
     Create a UUID and URN for a fake upload area, store it in Tweak config.
     """
     stage = os.environ['DEPLOYMENT_STAGE']
-    area_uuid = str(uuid.uuid4())
+    if not area_uuid:
+        area_uuid = str(uuid.uuid4())
     creds = {'AWS_ACCESS_KEY_ID': 'foo', 'AWS_SECRET_ACCESS_KEY': 'bar'}
     encoded_creds = base64.b64encode(json.dumps(creds).encode('ascii')).decode('ascii')
     urn = "dcp:upl:aws:{}:{}:{}".format(stage, area_uuid, encoded_creds)

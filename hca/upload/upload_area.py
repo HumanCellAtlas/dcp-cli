@@ -52,6 +52,9 @@ class UploadArea:
         config = UploadConfig()
         config.select_area(self.uuid)
 
+    def forget(self):
+        UploadConfig().forget_area(self.uuid)
+
     def list(self):
         client = ApiClient(self.urn.deployment_stage)
         return client.list_area(self.uuid)
