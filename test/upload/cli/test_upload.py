@@ -23,7 +23,7 @@ from .. import UPLOAD_BUCKET_NAME_TEMPLATE, TEST_UPLOAD_BUCKET
 class TestUploadCliUploadCommand(unittest.TestCase):
 
     def setUp(self):
-        self.stage = 'test'
+        self.stage = os.environ['DEPLOYMENT_STAGE']
         self.area_uuid = str(uuid.uuid4())
         creds = {'AWS_ACCESS_KEY_ID': 'foo', 'AWS_SECRET_ACCESS_KEY': 'bar'}
         encoded_creds = base64.b64encode(json.dumps(creds).encode('ascii')).decode('ascii')
@@ -45,9 +45,24 @@ class TestUploadCliUploadCommand(unittest.TestCase):
         s3 = boto3.resource('s3')
         s3.Bucket(TEST_UPLOAD_BUCKET).create()
 
-        UploadCommand(Namespace(file_paths=['LICENSE'], target_filename='POO', quiet=True))
+        UploadCommand(Namespace(file_paths=['LICENSE'], target_filename='POO', dcp_type=None, quiet=True))
 
         obj = s3.Bucket(TEST_UPLOAD_BUCKET).Object("{}/POO".format(self.area_uuid))
+        with open('LICENSE', 'rb') as fh:
+            expected_contents = fh.read()
+            self.assertEqual(obj.get()['Body'].read(), expected_contents)
+
+    @mock_s3
+    @reset_tweak_changes
+    def test_upload_with_dcp_type_option(self):
+        self.setup_tweak_config()
+        s3 = boto3.resource('s3')
+        s3.Bucket(TEST_UPLOAD_BUCKET).create()
+
+        UploadCommand(Namespace(file_paths=['LICENSE'], target_filename=None, dcp_type="metadata/sample", quiet=True))
+
+        obj = s3.Bucket(TEST_UPLOAD_BUCKET).Object("{}/LICENSE".format(self.area_uuid))
+        self.assertEqual(obj.content_type, 'text/plain; dcp-type="metadata/sample"')
         with open('LICENSE', 'rb') as fh:
             expected_contents = fh.read()
             self.assertEqual(obj.get()['Body'].read(), expected_contents)
@@ -60,7 +75,7 @@ class TestUploadCliUploadCommand(unittest.TestCase):
         s3.Bucket(TEST_UPLOAD_BUCKET).create()
 
         files = ['LICENSE', 'README.rst']
-        UploadCommand(Namespace(file_paths=files, target_filename=None, quiet=True))
+        UploadCommand(Namespace(file_paths=files, target_filename=None, dcp_type=None, quiet=True))
 
         for filename in files:
             obj = s3.Bucket(TEST_UPLOAD_BUCKET).Object("{}/{}".format(self.area_uuid, filename))

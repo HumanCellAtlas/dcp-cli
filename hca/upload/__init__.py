@@ -51,13 +51,14 @@ def list_areas():
     return [{'uuid': area.uuid, 'is_selected': area.is_selected} for area in UploadArea.all()]
 
 
-def upload_file(file_path, target_filename=None, report_progress=False):
+def upload_file(file_path, target_filename=None, report_progress=False, dcp_type=None):
     """
     Upload a file to the currently selected Upload Area
 
     :param file_path: <string> Path to file on local filesystem.
     :param target_filename: <string> Rename file during upload (optional).
     :param report_progress: <bool> Display progress % during upload (optional).
+    :param dcp_type: <string> Override value of Content-Type dcp-type parameter (optional).
     """
     area = UploadArea(uuid=UploadConfig().current_area)
-    area.upload_file(file_path, target_filename, report_progress)
+    area.upload_file(file_path, target_filename=target_filename, report_progress=report_progress, dcp_type=dcp_type)
