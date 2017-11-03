@@ -1,3 +1,11 @@
+Changes for v2.2.0 (2017-11-03)
+===============================
+
+New commands/python bindings: hca upload list - list your currently
+selected upload area hca upload forget - remove knowledge of an upload
+area Additional functionality: hca upload file: New optional argument
+--quiet Now sets a dcp-type parameter on Content-Type when uploading.
+
 Changes for v2.1.0 (2017-10-30)
 ===============================
 
