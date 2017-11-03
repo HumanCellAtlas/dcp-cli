@@ -13,7 +13,7 @@ class MediaType:
     def from_string(cls, media_type):
         split_on_semicolons = media_type.split(';')
         type_info = split_on_semicolons.pop(0)
-        type_info = re.match("(?P<top_level_type>.+)/(?P<subtype>[^+]+)(?P<suffix>\+.+)?", type_info)
+        type_info = re.match("(?P<top_level_type>.+)/(?P<subtype>[^+]+)(\+(?P<suffix>.+))?", type_info)
         parameters = {}
         for parameter in split_on_semicolons:
             param_match = re.match('(.+)=(.+)', parameter.strip())
@@ -50,7 +50,7 @@ class MediaType:
     def main_type(self):
         maintype = "{type}/{subtype}".format(type=self.top_level_type, subtype=self.subtype)
         if self.suffix:
-            maintype += self.suffix
+            maintype += "+" + self.suffix
         return maintype
 
     @staticmethod
