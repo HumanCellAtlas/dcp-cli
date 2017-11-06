@@ -1,4 +1,3 @@
-import magic
 import os
 import re
 

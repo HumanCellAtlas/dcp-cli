@@ -10,7 +10,7 @@ import boto3
 import tweak
 from moto import mock_s3
 
-from ... import CapturingIO, reset_tweak_changes
+from ... import reset_tweak_changes
 
 pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))  # noqa
 sys.path.insert(0, pkg_root)  # noqa
