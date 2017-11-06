@@ -29,6 +29,7 @@ def forget_area(uuid_or_alias):
         raise UploadException("Sorry I don't recognize area \"%s\"" % (uuid_or_alias,))
     elif len(matching_areas) == 1:
         matching_areas[0].forget()
+        return matching_areas[0]
     else:
         raise UploadException("\"%s\" matches more than one area, please provide more characters." % (uuid_or_alias,))
 

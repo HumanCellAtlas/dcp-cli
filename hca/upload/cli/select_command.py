@@ -32,5 +32,6 @@ class SelectCommand:
             print("Sorry I don't recognize area \"%s\"" % (alias,))
         elif len(matching_areas) == 1:
             matching_areas[0].select()
+            print("Upload area %s selected." % matching_areas[0].uuid)
         else:
             print("\"%s\" matches more than one area, please provide more characters." % (alias,))
