@@ -16,7 +16,8 @@ class ForgetCommand:
     def __init__(self, args):
         alias = args.uuid_or_alias
         try:
-            forget_area(alias)
+            area = forget_area(alias)
+            print("Forgetting about area {uuid}".format(uuid=area.uuid))
         except UploadException as e:
             print(str(e))
             exit(1)
