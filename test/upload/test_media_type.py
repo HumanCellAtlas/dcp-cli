@@ -27,6 +27,10 @@ class TestMediaType(unittest.TestCase):
         'application/json; dcp-type="metadata/sample"; other-param=foo; quoted-param="bar/baz"': {
             'top_level_type': 'application', 'subtype': 'json',
             'parameters': {'dcp-type': 'metadata/sample', 'other-param': 'foo', 'quoted-param': 'bar/baz'}
+        },
+        'application/octet-stream; param-with-semicolon-in-value="!#%&~<>@;$*+-"; param2=value2': {
+            'top_level_type': 'application', 'subtype': 'octet-stream',
+            'parameters': {'param-with-semicolon-in-value': '!#%&~<>@;$*+-', 'param2': 'value2'}
         }
     }
 

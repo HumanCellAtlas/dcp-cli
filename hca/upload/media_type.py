@@ -6,21 +6,59 @@ import sys
 
 class MediaType:
 
-    RFC7320_TOKEN_CHARSET = "!#$%&'*+-.^_`|~\w"
     DCP_METADATA_JSON_FILES = ('assay', 'project', 'sample')
+    RFC7320_TOKEN_CHARSET = r"!#$%&'*+\-.^_`|~\w"
+    _TYPE_REGEX = re.compile(
+        r"(?P<top_level_type>.+)"  # 'application'
+        r"/"                       # '/'
+        r"(?P<subtype>[^+]+)"      # 'json'
+        r"("                       # stat of suffix group
+        r"\+(?P<suffix>.+)"        # '+zip'
+        r")?"                      # end optional suffix group
+    )
+    _PARAM_REGEX = re.compile(
+        r"\s*"                               # optional whitespace
+        r"(?P<key>"                          # start of group 'key'
+        r"[" + RFC7320_TOKEN_CHARSET + "]+"  # key
+        r")"                                 # end of group 'key'
+        r"\s*=\s*"                           # '='
+        r"(?P<value>"                        # start of group 'value'
+        r'"[^"]*"'                           # Any doublequoted string
+        r"|"                                 # or
+        "[" + RFC7320_TOKEN_CHARSET + "]*"   # A word of token-chars (doesn't need quoting)
+        r")"                                 # end of group 'value'
+        r"\s*(;|$)"                          # Ending either at semicolon, or EOS.
+    )
 
     @classmethod
     def from_string(cls, media_type):
-        split_on_semicolons = media_type.split(';')
-        type_info = split_on_semicolons.pop(0)
-        type_info = re.match("(?P<top_level_type>.+)/(?P<subtype>[^+]+)(\+(?P<suffix>.+))?", type_info)
-        parameters = {}
-        for parameter in split_on_semicolons:
-            param_match = re.match('(.+)=(.+)', parameter.strip())
-            parameters[param_match.group(1)] = param_match.group(2).strip('"')
+        first_semi_position = media_type.find(';')
+        if first_semi_position == -1:
+            type_info = media_type
+            parameters = {}
+        else:
+            type_info = media_type[0:first_semi_position]
+            parameters = MediaType._parse_parameters(media_type[first_semi_position + 1:])
+
+        type_info = MediaType._TYPE_REGEX.match(type_info)
+
         return cls(
             type_info.group('top_level_type'), type_info.group('subtype'),
             suffix=type_info.group('suffix'), parameters=parameters)
+
+    @staticmethod
+    def _parse_parameters(params_string):
+        parameters = {}
+        cursor = 0
+        string_length = len(params_string)
+
+        while 0 <= cursor < string_length:
+            match = MediaType._PARAM_REGEX.match(params_string, cursor)
+            if not match:
+                break
+            parameters[match.group('key')] = match.group('value').strip('"')
+            cursor = match.end(0)
+        return parameters
 
     @classmethod
     def from_file(cls, file_path, dcp_type=None):
