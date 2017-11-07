@@ -23,4 +23,4 @@ class ListAreaCommand:
                 if 'checksums' in f:
                     for checksum in ('S3_Etag', 'CEC32C', 'SHA1', 'SHA256'):
                         if checksum.lower() in f['checksums']:
-                            print("\t%-12s %s" % (checksum, checksum.lower()))
+                            print("\t%-12s %s" % (checksum, f['checksums'][checksum.lower()]))
