@@ -8,12 +8,6 @@ Installation
 ------------
 :code:`pip install hca`.
 
-Install the libmagic library.  On Linux machines this library is already present.
-
-On Mac OS X using the homebrew package manager:
-
-:code:`brew install libmagic`
-
 Usage
 -----
 The hca package installs a command-line utility :code:`hca`.

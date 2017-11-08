@@ -44,7 +44,7 @@ class TestUploadFileUpload(unittest.TestCase):
         upload.upload_file('LICENSE', target_filename='POO')
 
         obj = s3.Bucket(TEST_UPLOAD_BUCKET).Object("{}/POO".format(area.uuid))
-        self.assertEqual(obj.content_type, 'text/plain; dcp-type=data')
+        self.assertEqual(obj.content_type, 'application/octet-stream; dcp-type=data')
         with open('LICENSE', 'rb') as fh:
             expected_contents = fh.read()
             self.assertEqual(obj.get()['Body'].read(), expected_contents)
