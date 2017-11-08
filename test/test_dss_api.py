@@ -26,6 +26,10 @@ class TestDssApi(unittest.TestCase):
 
         downloaded_path = os.path.join(dirpath, "TestDownload")
         hca.dss.download(bundle_output['bundle_uuid'], name=downloaded_path)
+        for file_info in hca.dss.Download._download_bundle(dict(
+                uuid=bundle_output['bundle_uuid'],
+                replica="aws"))[0]:
+            self.assertNotEqual(file_info['content-type'], "binary/octet-stream")
 
         # Check that contents are the same
         for file in os.listdir(bundle_path):
