@@ -24,12 +24,13 @@ class MediaType:
         r")"                                 # end of group 'key'
         r"\s*=\s*"                           # '='
         r"(?P<value>"                        # start of group 'value'
-        r'"[^"]*"'                           # Any doublequoted string
+        r'"(?:[^\\"]|\\.)*"'                 # Any doublequoted string
         r"|"                                 # or
         "[" + RFC7320_TOKEN_CHARSET + "]*"   # A word of token-chars (doesn't need quoting)
         r")"                                 # end of group 'value'
         r"\s*(;|$)"                          # Ending either at semicolon, or EOS.
     )
+    _QUOTED_PAIR_REGEX = re.compile(r"[\\].")
 
     @classmethod
     def from_string(cls, media_type):
@@ -57,7 +58,8 @@ class MediaType:
             match = MediaType._PARAM_REGEX.match(params_string, cursor)
             if not match:
                 break
-            parameters[match.group('key')] = match.group('value').strip('"')
+            value = match.group('value')
+            parameters[match.group('key')] = MediaType._unquote(value)
             cursor = match.end(0)
         return parameters
 
@@ -131,4 +133,55 @@ class MediaType:
         if re.match("^[{charset}]*$".format(charset=MediaType.RFC7320_TOKEN_CHARSET), value):
             return value
         else:
-            return '"{}"'.format(value)
+            return MediaType._quote(value)
+
+    _Translator = {
+        '"': '\\"',
+        '\\': '\\\\'
+    }
+
+    @staticmethod
+    def _quote(string):
+        """
+        https://tools.ietf.org/html/rfc7230#section-3.2.6
+
+        The backslash octet ("\") can be used as a single-octet quoting
+        mechanism within quoted-string and comment constructs.  Recipients
+        that process the value of a quoted-string MUST handle a quoted-pair
+        as if it were replaced by the octet following the backslash.
+
+          quoted-pair    = "\" ( HTAB / SP / VCHAR / obs-text )
+
+        A sender SHOULD NOT generate a quoted-pair in a quoted-string except
+        where necessary to quote DQUOTE and backslash octets occurring within
+        that string.
+        """
+        return '"' + ''.join(map(MediaType._Translator.get, string, string)) + '"'
+
+    @staticmethod
+    def _unquote(string):
+        # If there aren't any doublequotes, then there can't be any special characters.
+        if len(string) < 2:
+            return string
+        if string[0] != '"' or string[-1] != '"':
+            return string
+
+        string = string[1:-1]  # Remove the "s
+
+        # Check for special sequences.  Examples:
+        #    \"   --> "
+        cursor = 0
+        strlen = len(string)
+        result = []
+        while 0 <= cursor < strlen:
+            match = MediaType._QUOTED_PAIR_REGEX.search(string, cursor)
+            if match:
+                backslash_location = match.start(0)
+                result.append(string[cursor:backslash_location])
+                result.append(string[backslash_location + 1])
+                cursor = backslash_location + 2
+            else:
+                result.append(string[cursor:])
+                break
+
+        return ''.join(result)

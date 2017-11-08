@@ -31,6 +31,10 @@ class TestMediaType(unittest.TestCase):
         'application/octet-stream; param-with-semicolon-in-value="!#%&~<>@;$*+-"; param2=value2': {
             'top_level_type': 'application', 'subtype': 'octet-stream',
             'parameters': {'param-with-semicolon-in-value': '!#%&~<>@;$*+-', 'param2': 'value2'}
+        },
+        'application/octet-stream; param-with-escaped-quote-in-value="foo\\"bar"; param2=value2': {
+            'top_level_type': 'application', 'subtype': 'octet-stream',
+            'parameters': {'param-with-escaped-quote-in-value': 'foo"bar', 'param2': 'value2'}
         }
     }
 
