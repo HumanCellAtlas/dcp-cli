@@ -1,7 +1,8 @@
 import operator
 import os
 import re
-import sys
+
+import puremagic
 
 
 class MediaType:
@@ -94,26 +95,18 @@ class MediaType:
     @staticmethod
     def _media_type_from_magic(file_path):
         """
-        Use libmagic to generate a media-type for the file, then correct its mistakes.
+        Use puremagic to generate a media-type for the file, then correct its mistakes.
         """
-        libmagic = MediaType._load_libmagic()
-        media_type = libmagic.from_file(file_path, mime=True)
-        if media_type == 'text/plain':  # libmagic doesn't recognize JSON
+        types = puremagic.magic_file(file_path)
+        if len(types) == 0:
+            return 'application/octet-stream'
+        media_type = types[0][1]
+        if media_type == 'application/x-ipynb+json':  # All JSON files are not Jupiter notebooks
             if file_path.endswith('.json'):
                 media_type = 'application/json'
         elif media_type == 'application/x-gzip':  # deprecated
             media_type = 'application/gzip'
         return media_type
-
-    @staticmethod
-    def _load_libmagic():
-        try:
-            import magic
-        except ImportError:
-            sys.stderr.write("\nThe 'hca upload file' command requires the 'libmagic' library to be installed.\n"
-                             "Please install it, e.g. on Mac OS X: brew install libmagic\n\n")
-            sys.exit(1)
-        return magic
 
     @staticmethod
     def _dcp_media_type_param(media_type, filename):

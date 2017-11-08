@@ -63,7 +63,7 @@ class TestUploadCliUploadCommand(unittest.TestCase):
         UploadCommand(Namespace(file_paths=['LICENSE'], target_filename=None, quiet=True))
 
         obj = s3.Bucket(TEST_UPLOAD_BUCKET).Object("{}/LICENSE".format(self.area_uuid))
-        self.assertEqual(obj.content_type, 'text/plain; dcp-type=data')
+        self.assertEqual(obj.content_type, 'application/octet-stream; dcp-type=data')
         with open('LICENSE', 'rb') as fh:
             expected_contents = fh.read()
             self.assertEqual(obj.get()['Body'].read(), expected_contents)
