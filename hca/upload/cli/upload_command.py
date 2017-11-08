@@ -20,8 +20,6 @@ class UploadCommand:
         upload_parser.add_argument('-t', '--target-filename', metavar="<filename>", default=None,
                                    help="Filename to use in upload area (if you wish to change it during upload)." +
                                    " Only valid when one file is being uploaded.")
-        upload_parser.add_argument('-m', '--dcp-type', metavar="<dcp-type>", default=None,
-                                   help="Set value of Content-Type dcp-type parameter.")
         upload_parser.add_argument('-q', '--quiet', action='store_true', help="Suppress normal output.")
         upload_parser.set_defaults(func=UploadCommand)
 
@@ -29,14 +27,13 @@ class UploadCommand:
         self._load_config()
         self._check_args(args)
         for file_path in args.file_paths:
-            self._upload_file(file_path, target_filename=args.target_filename,
-                              report_progress=(not args.quiet), dcp_type=args.dcp_type)
+            self._upload_file(file_path, target_filename=args.target_filename, report_progress=(not args.quiet))
 
-    def _upload_file(self, file_path, target_filename=None, report_progress=True, dcp_type=None):
+    def _upload_file(self, file_path, target_filename=None, report_progress=True):
         current_area_uuid = UploadConfig().current_area
         if report_progress:
             print("Uploading %s to upload area %s..." % (os.path.basename(file_path), current_area_uuid))
-        upload_file(file_path, target_filename, report_progress=report_progress, dcp_type=dcp_type)
+        upload_file(file_path, target_filename, report_progress=report_progress, dcp_type="data")
         if report_progress:
             print("\n")
 
