@@ -74,14 +74,20 @@ def upload_to_cloud(file_handles, staging_bucket, replica, from_cloud=False):
             with ChecksummingBufferedReader(raw_fh) as fh:
                 file_uuid = str(uuid.uuid4())
                 key_name = "{}/{}".format(file_uuid, os.path.basename(fh.raw.name))
-                destination_bucket.upload_fileobj(fh, key_name, Config=tx_cfg)
+                destination_bucket.upload_fileobj(
+                    fh,
+                    key_name,
+                    Config=tx_cfg,
+                    ExtraArgs={
+                        'ContentType': _mime_type(fh.raw.name),
+                    }
+                )
                 sums = fh.get_checksums()
                 metadata = {
                     "hca-dss-s3_etag": sums["s3_etag"],
                     "hca-dss-sha1": sums["sha1"],
                     "hca-dss-sha256": sums["sha256"],
                     "hca-dss-crc32c": sums["crc32c"],
-                    "hca-dss-content-type": _mime_type(fh.raw.name)
                 }
 
                 s3.meta.client.put_object_tagging(Bucket=destination_bucket.name,
