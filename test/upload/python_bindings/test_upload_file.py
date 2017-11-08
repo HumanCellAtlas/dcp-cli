@@ -28,7 +28,7 @@ class TestUploadFileUpload(unittest.TestCase):
         upload.upload_file(file_path)
 
         obj = s3.Bucket(TEST_UPLOAD_BUCKET).Object("{}/assay.json".format(area.uuid))
-        self.assertEqual(obj.content_type, 'application/json; dcp-type="metadata/assay"')
+        self.assertEqual(obj.content_type, 'application/json; dcp-type=data')
         with open(file_path, 'rb') as fh:
             expected_contents = fh.read()
             self.assertEqual(obj.get()['Body'].read(), expected_contents)

@@ -45,10 +45,11 @@ class TestUploadCliUploadCommand(unittest.TestCase):
         s3 = boto3.resource('s3')
         s3.Bucket(TEST_UPLOAD_BUCKET).create()
 
-        UploadCommand(Namespace(file_paths=['LICENSE'], target_filename='POO', dcp_type=None, quiet=True))
+        UploadCommand(Namespace(file_paths=['test/bundle/sample.json'], target_filename='FOO', quiet=True))
 
-        obj = s3.Bucket(TEST_UPLOAD_BUCKET).Object("{}/POO".format(self.area_uuid))
-        with open('LICENSE', 'rb') as fh:
+        obj = s3.Bucket(TEST_UPLOAD_BUCKET).Object("{}/FOO".format(self.area_uuid))
+        self.assertEqual(obj.content_type, 'application/json; dcp-type=data')
+        with open('test/bundle/sample.json', 'rb') as fh:
             expected_contents = fh.read()
             self.assertEqual(obj.get()['Body'].read(), expected_contents)
 
@@ -59,10 +60,10 @@ class TestUploadCliUploadCommand(unittest.TestCase):
         s3 = boto3.resource('s3')
         s3.Bucket(TEST_UPLOAD_BUCKET).create()
 
-        UploadCommand(Namespace(file_paths=['LICENSE'], target_filename=None, dcp_type="metadata/sample", quiet=True))
+        UploadCommand(Namespace(file_paths=['LICENSE'], target_filename=None, quiet=True))
 
         obj = s3.Bucket(TEST_UPLOAD_BUCKET).Object("{}/LICENSE".format(self.area_uuid))
-        self.assertEqual(obj.content_type, 'text/plain; dcp-type="metadata/sample"')
+        self.assertEqual(obj.content_type, 'text/plain; dcp-type=data')
         with open('LICENSE', 'rb') as fh:
             expected_contents = fh.read()
             self.assertEqual(obj.get()['Body'].read(), expected_contents)
