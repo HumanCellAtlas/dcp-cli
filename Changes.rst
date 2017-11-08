@@ -1,3 +1,11 @@
+Changes for v2.3.0 (2017-11-08)
+===============================
+
+More RFC-compliant support of media-type parameters. Upload dcp-type for
+files defaults to "data". Fix: "upload list --long" now prints checksums
+correctly. Loosen dependency requirements. "hca dss upload" sets S3
+content-type when uploading to fake staging area.
+
 Changes for v2.2.0 (2017-11-03)
 ===============================
 
