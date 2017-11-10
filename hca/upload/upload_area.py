@@ -1,9 +1,10 @@
 import os
 import re
 
+from dcplib.media_types import DcpMediaType
+
 from .api_client import ApiClient
 from .exceptions import UploadException
-from .media_type import MediaType
 from .s3_agent import S3Agent
 from .upload_config import UploadConfig
 from .upload_area_urn import UploadAreaURN
@@ -65,6 +66,6 @@ class UploadArea:
     def upload_file(self, file_path, dcp_type=None, target_filename=None, report_progress=False):
         file_s3_key = "%s/%s" % (self.uuid, target_filename or os.path.basename(file_path))
         bucket_name = UploadConfig().bucket_name_template.format(deployment_stage=self.urn.deployment_stage)
-        content_type = str(MediaType.from_file(file_path, dcp_type))
+        content_type = str(DcpMediaType.from_file(file_path, dcp_type))
         s3agent = S3Agent(aws_credentials=self.urn.credentials)
         s3agent.upload_file(file_path, bucket_name, file_s3_key, content_type, report_progress=report_progress)
