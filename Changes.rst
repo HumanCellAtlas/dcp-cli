@@ -1,3 +1,8 @@
+Changes for v2.3.1 (2017-11-10)
+===============================
+
+Improved ``hca upload file`` determination of content-type.
+
 Changes for v2.3.0 (2017-11-08)
 ===============================
 
