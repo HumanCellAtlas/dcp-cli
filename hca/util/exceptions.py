@@ -1,5 +1,3 @@
-import json
-
 from requests.exceptions import HTTPError
 
 class SwaggerAPIException(HTTPError):

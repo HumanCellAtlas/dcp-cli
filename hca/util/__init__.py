@@ -2,6 +2,8 @@
 This file contains utility functions for the DCP CLI.
 """
 
+from __future__ import absolute_import, division, print_function, unicode_literals
+
 import os, types, collections, typing, json, errno, base64, argparse
 
 try:
@@ -16,6 +18,67 @@ from .. import get_config, logger
 from .compat import USING_PYTHON2
 from .exceptions import SwaggerAPIException
 from ._docs import _pagination_docstring, _streaming_docstring, _md2rst
+
+class _ClientMethodFactory(object):
+    def __init__(self, client, parameters, path_parameters, http_method, method_name, method_data, body_props):
+        self.__dict__.update(locals())
+        self._context_manager_response = None
+
+    def _request(self, req_args, url=None, stream=False):
+        supplied_path_params = [p for p in req_args if p in self.path_parameters and req_args[p] is not None]
+        if url is None:
+            url = self.client.host + self.client.http_paths[self.method_name][frozenset(supplied_path_params)]
+            url = url.format(**req_args)
+        logger.debug("%s %s %s", self.http_method, url, req_args)
+        query = {k: v for k, v in req_args.items()
+                 if self.parameters.get(k, {}).get("in") == "query" and v is not None}
+        body = {k: v for k, v in req_args.items() if k in self.body_props and v is not None}
+        if "security" in self.method_data:
+            session = self.client.get_authenticated_session()
+        else:
+            session = self.client.get_session()
+
+        # TODO: (akislyuk) if using service account credentials, use manual refresh here
+        json_input = body if self.body_props else None
+        res = session.request(self.http_method, url, params=query, json=json_input, stream=stream)
+        if res.status_code >= 400:
+            raise SwaggerAPIException(response=res)
+        return res
+
+    def _consume_response(self, response):
+        if self.http_method.upper() == "HEAD":
+            return response
+        elif response.headers["content-type"].startswith("application/json"):
+            return response.json()
+        else:
+            return response.content
+
+    def __call__(self, client, **kwargs):
+        return self._consume_response(self._request(kwargs))
+
+    def _cli_call(self, cli_args):
+        return self._consume_response(self._request(vars(cli_args)))
+
+    def stream(self, **kwargs):
+        self._context_manager_response = self._request(kwargs, stream=True)
+        return self
+
+    def __enter__(self, **kwargs):
+        assert self._context_manager_response is not None
+        return self._context_manager_response
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self._context_manager_response.close()
+        self._context_manager_response = None
+
+class _PaginatingClientMethodFactory(_ClientMethodFactory):
+    def iterate(self, **kwargs):
+        page = None
+        while page is None or page.links.get("next", {}).get("url"):
+            page = self._request(kwargs, url=page.links["next"]["url"] if page else None)
+            for result in page.json()["results"]:
+                    yield result
+
 
 class SwaggerClient(object):
     scheme = "https"
@@ -198,58 +261,8 @@ class SwaggerClient(object):
         method_supports_pagination = True if str(requests.codes.partial) in method_data["responses"] else False
         highlight_streaming_support = True if str(requests.codes.found) in method_data["responses"] else False
 
-        class ClientMethodFactory(object):
-            def _request(factory, req_args, url=None, stream=False):
-                supplied_path_params = [p for p in req_args if p in path_parameters and req_args[p] is not None]
-                if url is None:
-                    url = self.host + self.http_paths[method_name][frozenset(supplied_path_params)]
-                    url = url.format(**req_args)
-                logger.debug("%s %s %s", http_method, url, req_args)
-                query = {k: v for k, v in req_args.items()
-                         if parameters.get(k, {}).get("in") == "query" and v is not None}
-                body = {k: v for k, v in req_args.items() if k in body_props and v is not None}
-                session = self.get_authenticated_session() if "security" in method_data else self.get_session()
-
-                # TODO: (akislyuk) if using service account credentials, use manual refresh here
-                res = session.request(http_method, url, params=query, json=body if body_props else None, stream=stream)
-                if res.status_code >= 400:
-                    raise SwaggerAPIException(response=res)
-                return res
-
-            def _consume_response(factory, response):
-                if http_method.upper() == "HEAD":
-                    return response
-                elif response.headers["content-type"].startswith("application/json"):
-                    return response.json()
-                else:
-                    return response.content
-
-            def __call__(factory, client, **kwargs):
-                return factory._consume_response(factory._request(kwargs))
-
-            def _cli_call(factory, cli_args):
-                return factory._consume_response(factory._request(vars(cli_args)))
-
-            def stream(factory, **kwargs):
-                factory._context_manager_response = factory._request(kwargs, stream=True)
-                return factory
-
-            def __enter__(factory, **kwargs):
-                assert hasattr(factory, "_context_manager_response")
-                return factory._context_manager_response
-
-            def __exit__(factory, exc_type, exc_val, exc_tb):
-                factory._context_manager_response.close()
-
-            if method_supports_pagination:
-                def iterate(factory, **kwargs):
-                    page = None
-                    while page is None or page.links.get("next", {}).get("url"):
-                        page = factory._request(kwargs, url=page.links["next"]["url"] if page else None)
-                        for result in page.json()["results"]:
-                            yield result
-
-        client_method = ClientMethodFactory()
+        factory = _PaginatingClientMethodFactory if method_supports_pagination else _ClientMethodFactory
+        client_method = factory(self, parameters, path_parameters, http_method, method_name, method_data, body_props)
         client_method.__name__ = method_name
         client_method.__qualname__ = self.__class__.__name__ + "." + method_name
 
