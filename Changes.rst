@@ -1,3 +1,8 @@
+Changes for v2.3.2 (2017-11-21)
+===============================
+
+Fix incompatibility with older pip versions
+
 Changes for v2.3.1 (2017-11-10)
 ===============================
 
