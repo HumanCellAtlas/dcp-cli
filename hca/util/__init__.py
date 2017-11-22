@@ -1,5 +1,84 @@
 """
-This file contains utility functions for the DCP CLI.
+This module contains utilities for the DCP CLI and API bindings. These
+utility classes and functions are used under the hood by both the DCP
+API bindings library and by its CLI. There is no need to use these
+utilities directly unless you are extending DCP client functionality.
+
+``SwaggerClient`` is a base class for a general purpose Swagger API
+client connection manager. User classes such as ``hca.dss.DSSClient``
+extend it as follows:
+
+  class APIClient(SwaggerClient):
+      def __init__(self, *args, **kwargs):
+          super(APIClient, self).__init__(*args, **kwargs)
+          self.commands += [self.special_cli_command]
+
+      def special_cli_command(self, required_argument, optional_argument=""):
+          return {}
+
+Each user class should have a configuration subtree keyed by its name
+(such as ``APIClient`` above) under the DCP-wide config manager
+(available via ``hca.get_config()``; the static defaults for the
+config manager are stored in ``hca/default_config.json``). Within that
+subtree, the key ``swagger_url`` should point to the HTTPS URL
+containing the Swagger API definition that the client is providing an
+interface for. On first use, this API definition will be downloaded
+and saved into the user config directory (for example,
+/Users/Alice/.config/hca) with a name determined by the base64
+encoding of ``swagger_url``. On subsequent uses, this file will be
+loaded instead to get the Swagger API definition.
+
+The Swagger API definition is then used to dynamically construct and
+attach API client methods as class methods, decorate them with API
+metadata such as docstrings and I/O signatures. Method names are
+determined using a mapping heuristic:
+
+  GET /foo/bar -> APIClient.get_foo_bar()
+  POST /widgets/{id} -> APIClient.post_widget()
+
+Client methods (provided by _ClientMethodFactory) build the HTTP
+request payload by matching their keyword argument inputs to the
+Swagger API definition, and use the ``requests`` library to call the
+API. JSON body input and output is assumed by default:
+
+  json_results = APIClient().post_widget(id="foo", qs_param="x", body_param=123)
+
+The ``stream()`` method can be used instead to stream the raw body as
+bytes, or to otherwise provide access to the ``requests.Response``
+object:
+
+  with APIClient().get_foo_bar.stream() as response:
+      while True:
+          chunk = response.raw.read(1024)
+          ...
+          if not chunk:
+              break
+
+Results from API routes that support GitHub/RFC 5988 style pagination
+can be paged like this:
+
+  for result in APIClient().get_foo_bar.iterate():
+      ...
+
+Routes that require authentication trigger the use of the auth
+middleware provided by requests_oauthlib (work in progress).
+
+CLI parsers for argparse can be generated and injected into a parent
+``argparse.ArgumentParser`` object by passing a subparsers object to
+SwaggerClient.build_argparse_subparsers. The resulting CLI entry point
+can be called like this:
+
+  $ dss post_widget --id ID
+
+In addition to bindings to API methods in the Swagger definition,
+SwaggerClient designates certain methods as *commands*, which means
+they are part of the public bindings API and are also provided as CLI
+subcommands. The SwaggerClient class provides two such commands, login
+and logout, which manage the cached authentication credentials for the
+client. Subclasses can add more commands by adding them to the
+``SwaggerClient.commands`` array, as shown with
+``special_cli_command`` in the example above.
+
 """
 
 from __future__ import absolute_import, division, print_function, unicode_literals
@@ -79,7 +158,6 @@ class _PaginatingClientMethodFactory(_ClientMethodFactory):
             for result in page.json()["results"]:
                     yield result
 
-
 class SwaggerClient(object):
     scheme = "https"
     _authenticated_session = None
@@ -114,12 +192,13 @@ class SwaggerClient(object):
     @property
     def swagger_spec(self):
         if not self._swagger_spec:
+            swagger_url = self.config[self.__class__.__name__].swagger_url
             if "swagger_filename" in self.config:
                 swagger_filename = self.config.swagger_filename
                 if not swagger_filename.startswith("/"):
                     swagger_filename = os.path.join(os.path.dirname(__file__), swagger_filename)
             else:
-                swagger_filename = base64.urlsafe_b64encode(self.config.swagger_url.encode()).decode() + ".json"
+                swagger_filename = base64.urlsafe_b64encode(swagger_url.encode()).decode() + ".json"
                 swagger_filename = os.path.join(self.config.user_config_dir, swagger_filename)
             if not os.path.exists(swagger_filename):
                 try:
@@ -128,7 +207,7 @@ class SwaggerClient(object):
                     if not (e.errno == errno.EEXIST and os.path.isdir(self.config.user_config_dir)):
                         raise
                 with open(swagger_filename, "wb") as fh:
-                    fh.write(requests.get(self.config.swagger_url).content)
+                    fh.write(requests.get(swagger_url).content)
             with open(swagger_filename) as fh:
                 self.__class__._swagger_spec = json.load(fh)
         return self._swagger_spec
