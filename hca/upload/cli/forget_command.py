@@ -2,12 +2,15 @@ from .. import forget_area, UploadException
 
 
 class ForgetCommand:
-
+    """
+    Forget about upload area.
+    """
     @classmethod
     def add_parser(cls, upload_subparsers):
         forget_parser = upload_subparsers.add_parser(
             'forget',
-            description="Forget about upload area."
+            description=cls.__doc__,
+            help=cls.__doc__
         )
         forget_parser.add_argument('uuid_or_alias',
                                    help="Full or partial (alias) UUID of an upload area.")

@@ -3,16 +3,19 @@ from ..upload_area import UploadArea
 
 
 class SelectCommand:
-
+    """
+    Select upload area to which you wish to upload files.
+    """
     @classmethod
     def add_parser(cls, upload_subparsers):
         select_parser = upload_subparsers.add_parser(
             'select',
-            description="Select upload area to which you wish to upload files."
+            help=cls.__doc__,
+            description=cls.__doc__
         )
         select_parser.add_argument('urn_or_alias',
                                    help="Full URN of an upload area, or short alias.")
-        select_parser.set_defaults(func=SelectCommand)
+        select_parser.set_defaults(entry_point=SelectCommand)
 
     def __init__(self, args):
         if args.urn_or_alias.find(':') == -1:  # alias
