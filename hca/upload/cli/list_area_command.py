@@ -2,11 +2,13 @@ from .. import list_current_area
 
 
 class ListAreaCommand:
-
+    """
+    List contents of currently selected upload area.
+    """
     @classmethod
     def add_parser(cls, staging_subparsers):
         list_area_parser = staging_subparsers.add_parser(
-            'list', description="List contents of currently selected upload area.")
+            'list', description=cls.__doc__, help=cls.__doc__)
         list_area_parser.set_defaults(func=ListAreaCommand)
         list_area_parser.add_argument('-l', '--long', action='store_true', help="Long listing - show file details.")
 

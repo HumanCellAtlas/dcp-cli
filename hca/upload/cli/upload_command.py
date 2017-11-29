@@ -6,14 +6,17 @@ from .. import upload_file
 
 
 class UploadCommand:
-
+    """
+    Upload a file to the currently selected upload area.
+    """
     UPLOAD_BUCKET_TEMPLATE = "org-humancellatlas-upload-%s"
 
     @classmethod
     def add_parser(cls, upload_subparsers):
         upload_parser = upload_subparsers.add_parser(
             'file',
-            description="Upload a file to the currently selected upload area."
+            help=cls.__doc__,
+            description=cls.__doc__
         )
         upload_parser.add_argument('file_paths', nargs='+', metavar="<file_path>",
                                    help="Path to file to be uploaded.")

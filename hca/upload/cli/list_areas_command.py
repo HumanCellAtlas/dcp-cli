@@ -4,12 +4,15 @@ from ..upload_area import UploadArea
 
 
 class ListAreasCommand:
-
+    """
+    List upload areas I know about.
+    """
     @classmethod
     def add_parser(cls, upload_subparsers):
         list_areas_parser = upload_subparsers.add_parser('areas',
-                                                         description="List upload areas I know about.")
-        list_areas_parser.set_defaults(func=ListAreasCommand)
+                                                         help=cls.__doc__,
+                                                         description=cls.__doc__)
+        list_areas_parser.set_defaults(entry_point=ListAreasCommand)
 
     def __init__(self, args):
         for area in UploadArea.all():
