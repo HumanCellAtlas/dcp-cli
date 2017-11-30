@@ -1,11 +1,13 @@
 #!/usr/bin/env python
+# PYTHON_ARGCOMPLETE_OK
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-import logging
-
-from hca.cli import CLI
+import os, sys, logging, pkgutil, importlib
 
 logging.basicConfig(level=logging.ERROR)
+logging.getLogger("botocore.vendored.requests").setLevel(logging.ERROR)
 
-CLI().run()
+from hca import cli
+
+cli.main()

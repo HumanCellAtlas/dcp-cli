@@ -1,12 +1,11 @@
 import io
 import os
 import sys
+import pickle
 from functools import wraps
 
-import six
-import tweak
-
 import hca
+from hca.util.compat import USING_PYTHON2
 
 if 'DEPLOYMENT_STAGE' not in os.environ:
     os.environ['DEPLOYMENT_STAGE'] = 'test'
@@ -15,7 +14,11 @@ if 'DEPLOYMENT_STAGE' not in os.environ:
 class CapturingIO:
     def __init__(self, stream_name='stdout'):
         self.stream_name = stream_name
-        self.buffer = six.StringIO()
+        if USING_PYTHON2:
+            from cStringIO import StringIO
+            self.buffer = StringIO()
+        else:
+            self.buffer = io.TextIOWrapper(io.BytesIO(), sys.stdout.encoding)
         self.orig_stream = getattr(sys, stream_name)
 
     def __enter__(self):
