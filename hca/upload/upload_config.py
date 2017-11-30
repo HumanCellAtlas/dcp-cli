@@ -1,6 +1,4 @@
-import tweak
-
-from .. import TWEAK_PROJECT_NAME
+from .. import get_config
 
 
 class UploadConfig:
@@ -14,7 +12,7 @@ class UploadConfig:
         self._load_config()
 
     def _load_config(self):
-        self._config = tweak.Config(TWEAK_PROJECT_NAME, save_on_exit=False)
+        self._config = get_config()
         if 'upload' not in self._config:
             self._config.upload = {}
         if 'areas' not in self._config.upload:

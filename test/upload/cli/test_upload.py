@@ -30,7 +30,7 @@ class TestUploadCliUploadCommand(unittest.TestCase):
         self.urn = "dcp:upl:aws:{}:{}:{}".format(self.stage, self.area_uuid, encoded_creds)
 
     def setup_tweak_config(self):
-        config = tweak.Config(hca.TWEAK_PROJECT_NAME)
+        config = hca.get_config()
         config.upload = {
             'areas': {self.area_uuid: self.urn},
             'current_area': self.area_uuid,

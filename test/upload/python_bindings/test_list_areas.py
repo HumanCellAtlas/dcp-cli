@@ -25,7 +25,7 @@ class TestUploadListAreas(unittest.TestCase):
     def test_list_areas_lists_areas_when_there_are_some(self):
         a_uuid = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
         b_uuid = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'
-        config = tweak.Config(hca.TWEAK_PROJECT_NAME)
+        config = hca.get_config()
         config.upload = {
             'areas': {
                 a_uuid: "dcp:upl:aws:dev:%s" % (a_uuid,),
@@ -45,7 +45,7 @@ class TestUploadListAreas(unittest.TestCase):
 
     @reset_tweak_changes
     def test_list_areas_doesnt_error_when_the_upload_tweak_config_is_not_setup(self):
-        config = tweak.Config(hca.TWEAK_PROJECT_NAME, autosave=True)
+        config = hca.get_config()
         if 'upload' in config:
             del config['upload']
         try:

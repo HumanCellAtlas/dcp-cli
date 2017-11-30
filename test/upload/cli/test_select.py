@@ -29,14 +29,14 @@ class TestUploadCliSelectCommand(unittest.TestCase):
             args = Namespace(urn_or_alias=self.urn)
             SelectCommand(args)
 
-        config = tweak.Config(hca.TWEAK_PROJECT_NAME)
+        config = hca.get_config()
         self.assertIn(self.area_uuid, config.upload.areas)
         self.assertEqual(self.urn, config.upload.areas[self.area_uuid])
         self.assertEqual(self.area_uuid, config.upload.current_area)
 
     @reset_tweak_changes
     def test_when_given_a_urn_it_prints_an_alias(self):
-        config = tweak.Config(hca.TWEAK_PROJECT_NAME)
+        config = hca.get_config()
         config.upload = {
             'areas': {
                 'deadbeef-dead-dead-dead-beeeeeeeeeef': 'dcp:upl:aws:dev:deadbeef-dead-dead-dead-beeeeeeeeeef:creds',
@@ -63,7 +63,7 @@ class TestUploadCliSelectCommand(unittest.TestCase):
 
     @reset_tweak_changes
     def test_when_given_an_alias_that_matches_more_than_one_area_it_prints_a_warning(self):
-        config = tweak.Config(hca.TWEAK_PROJECT_NAME)
+        config = hca.get_config()
         config.upload = {
             'areas': {
                 'deadbeef-dead-dead-dead-beeeeeeeeeef': 'dcp:upl:aws:dev:deadbeef-dead-dead-dead-beeeeeeeeeef:creds',
@@ -82,7 +82,7 @@ class TestUploadCliSelectCommand(unittest.TestCase):
     def test_when_given_an_alias_that_matches_one_area_it_selects_it(self):
         a_uuid = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
         b_uuid = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'
-        config = tweak.Config(hca.TWEAK_PROJECT_NAME)
+        config = hca.get_config()
         config.upload = {
             'areas': {
                 a_uuid: "dcp:upl:aws:dev:%s" % (a_uuid,),
@@ -95,5 +95,5 @@ class TestUploadCliSelectCommand(unittest.TestCase):
             args = Namespace(urn_or_alias='bbb')
             SelectCommand(args)
 
-        config = tweak.Config(hca.TWEAK_PROJECT_NAME)
+        config = hca.get_config()
         self.assertEqual(b_uuid, config.upload.current_area)

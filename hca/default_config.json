@@ -1,0 +1,5 @@
+{
+  "log_level": "INFO",
+  "swagger_url": "https://dss.dev.data.humancellatlas.org/v1/swagger.json",
+  "client_id": "foo"
+}
