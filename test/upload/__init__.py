@@ -13,7 +13,7 @@ TEST_UPLOAD_BUCKET = UPLOAD_BUCKET_NAME_TEMPLATE.format(deployment_stage=os.envi
 
 
 def setup_tweak_config():
-    config = tweak.Config(hca.TWEAK_PROJECT_NAME)
+    config = hca.get_config()
     config.upload = {
         'areas': {},
         'bucket_name_template': UPLOAD_BUCKET_NAME_TEMPLATE

@@ -33,18 +33,15 @@ class CapturingIO:
 def reset_tweak_changes(f):
     @wraps(f)
     def save_and_restore_tweak_config(*args, **kwargs):
-        config = tweak.Config(hca.TWEAK_PROJECT_NAME)
-        backup = {}
-        for key in config:
-            backup[key] = config[key]
+        config = hca.get_config()
+        backup = pickle.dumps(config)
         try:
             f(*args, **kwargs)
         finally:
+            # The save method of the previous config manager will be called as an atexit handler.
+            # Invalidate its config file path so it fails to save the old config.
+            hca._config._user_config_home = "/tmp"
             # Reload config after changes made.
-            config = tweak.Config(hca.TWEAK_PROJECT_NAME, autosave=True, save_on_exit=False)
-            for key in list(config.keys()):
-                del config[key]
-            for key, value in backup.items():
-                config[key] = value
-            config.save()
+            hca._config = pickle.loads(backup)
+            hca.get_config().save()
     return save_and_restore_tweak_config

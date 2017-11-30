@@ -27,7 +27,7 @@ class TestUploadCliListAreasCommand(unittest.TestCase):
     def test_it_lists_areas_when_there_are_some(self):
         a_uuid = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
         b_uuid = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'
-        config = tweak.Config(hca.TWEAK_PROJECT_NAME)
+        config = hca.get_config()
         config.upload = {
             'areas': {
                 a_uuid: "dcp:upl:aws:dev:%s" % (a_uuid,),
