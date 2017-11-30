@@ -11,18 +11,8 @@ install:
 	python setup.py bdist_wheel
 	pip install --upgrade dist/*.whl
 
-constants: hca/api_spec.json
-
-hca/dss/api_spec.json:
-	curl https://hca-dss.czi.technology/v1/swagger.json > hca/dss/api_spec.json
-
 init_docs:
 	cd docs; sphinx-quickstart
-
-bindings:
-	git clean -df hca/dss
-	python -m hca.dss.regenerate_api
-	find hca/dss -name '*.pyc' -delete
 
 docs:
 	$(MAKE) -C docs html
