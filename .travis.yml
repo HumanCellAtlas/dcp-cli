@@ -6,9 +6,7 @@ python:
 - 3.5
 - 3.6
 before_install:
-- openssl aes-256-cbc -K $encrypted_266b385b8e6e_key -iv $encrypted_266b385b8e6e_iv
-  -in travis-gcp-service-account-credentials.json.enc -out travis-gcp-service-account-credentials.json
-  -d
+- echo $GCP_SERVICE_ACCOUNT_CREDENTIALS | base64 --decode | gunzip > travis-gcp-service-account-credentials.json
 install:
 - pip install -r requirements-dev.txt
 - make install
