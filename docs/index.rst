@@ -6,8 +6,7 @@ API documentation
 
 .. automodule:: hca.dss
    :members:
-   :special-members:
-   :exclude-members: __weakref__
+   :inherited-members:
 
 Table of Contents
 =================
