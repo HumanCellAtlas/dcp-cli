@@ -75,7 +75,7 @@ class DSSClient(SwaggerClient):
         logger.info("Uploading %i files from %s to %s", len(files_to_upload), src_dir, staging_bucket)
         file_uuids, uploaded_keys = upload_to_cloud(files_to_upload, staging_bucket=staging_bucket, replica=replica,
                                                     from_cloud=False)
-        for file_handle in filter(lambda x: not isinstance(x, str), files_to_upload):
+        for file_handle in files_to_upload:
             file_handle.close()
         filenames = list(map(os.path.basename, uploaded_keys))
         filename_key_list = list(zip(filenames, file_uuids, uploaded_keys))
