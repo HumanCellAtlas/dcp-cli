@@ -3,4 +3,5 @@ moto
 coverage
 pyyaml
 requests_mock
+backports.tempfile
 -r requirements.txt

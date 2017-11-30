@@ -16,7 +16,11 @@ setup(
     long_description=open('README.rst').read(),
     install_requires=install_requires,
     extras_require={
-        ':python_version == "2.7"': ['enum34 >= 1.1.6, < 2']
+        ':python_version == "2.7"': [
+            'enum34 >= 1.1.6, < 2',
+            'funcsigs >= 1.0.2, < 2'
+        ],
+        ':python_version < "3.5"': ['typing >= 3.6.2, < 4'],
     },
     packages=find_packages(exclude=['test']),
     scripts=glob.glob('scripts/*'),
