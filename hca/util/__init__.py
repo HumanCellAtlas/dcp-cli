@@ -306,19 +306,9 @@ class SwaggerClient(object):
     def _save_auth_token_refresh_result(self, result):
         self.config.oauth2_token = result
 
-    def _build_client_method(self, http_method, http_path, method_data):
-        method_name_parts = [http_method] + [p for p in http_path.split("/")[1:] if not p.startswith("{")]
-        method_name = "_".join(method_name_parts)
-        if method_name.endswith("s") and (http_method.upper() in {"POST", "PUT"} or http_path.endswith("/{uuid}")):
-            method_name = method_name[:-1]
-
-        method_args = collections.OrderedDict()
-        parameters = {p["name"]: p for p in method_data["parameters"]}
-
-        path_parameters = [p_name for p_name, p_data in parameters.items() if p_data["in"] == "path"]
-        self.http_paths[method_name][frozenset(path_parameters)] = http_path
-
+    def _process_method_args(self, parameters):
         body_props = {}
+        method_args = collections.OrderedDict()
         for parameter in parameters.values():
             if parameter["in"] == "body":
                 for prop_name, prop_data in parameter["schema"]["properties"].items():
@@ -336,6 +326,20 @@ class SwaggerClient(object):
                                   annotation=annotation)
                 method_args[parameter["name"]] = dict(param=param, doc=parameter.get("description"),
                                                       choices=parameter.get("enum"))
+        return body_props, method_args
+
+    def _build_client_method(self, http_method, http_path, method_data):
+        method_name_parts = [http_method] + [p for p in http_path.split("/")[1:] if not p.startswith("{")]
+        method_name = "_".join(method_name_parts)
+        if method_name.endswith("s") and (http_method.upper() in {"POST", "PUT"} or http_path.endswith("/{uuid}")):
+            method_name = method_name[:-1]
+
+        parameters = {p["name"]: p for p in method_data["parameters"]}
+
+        path_parameters = [p_name for p_name, p_data in parameters.items() if p_data["in"] == "path"]
+        self.http_paths[method_name][frozenset(path_parameters)] = http_path
+
+        body_props, method_args = self._process_method_args(parameters)
 
         method_supports_pagination = True if str(requests.codes.partial) in method_data["responses"] else False
         highlight_streaming_support = True if str(requests.codes.found) in method_data["responses"] else False
