@@ -1,3 +1,5 @@
+import textwrap
+
 from requests.exceptions import HTTPError
 
 class SwaggerAPIException(HTTPError):
@@ -9,15 +11,20 @@ class SwaggerAPIException(HTTPError):
 
         self.code = self.response.status_code
         self.reason = self.response.reason
-        self.details = None
+        self.details, self.title, self.stacktrace = None, None, None
         if self.response.content:
             try:
                 self.details = self.response.json()
+                self.reason = self.details.get("code")
+                self.title = self.details.get("title")
+                self.stacktrace = self.details.get("stacktrace")
             except Exception:
                 self.details = self.response.text
 
     def __str__(self):
         if self.details:
-            return "{}, code {}. Details:\n{}".format(self.reason, self.code, self.response.text)
-        else:
-            return "{}, code {}".format(self.response.reason, self.response.status_code)
+            if self.stacktrace:
+                st = textwrap.indent(self.stacktrace, "  ")
+                return "{}: {} (HTTP {}). Details:\n{}".format(self.reason, self.title, self.code, st)
+            return "{}: {} (HTTP {}). Details:\n{}".format(self.reason, self.title, self.code, self.response.text)
+        return "{}, code {}".format(self.response.reason, self.response.status_code)
