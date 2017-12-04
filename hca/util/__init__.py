@@ -313,19 +313,20 @@ class SwaggerClient(object):
             if parameter["in"] == "body":
                 for prop_name, prop_data in parameter["schema"]["properties"].items():
                     anno = self._type_map[prop_data["type"]]
-                    if prop_name not in parameter["schema"]["required"]:
+                    if prop_name not in parameter["schema"].get("required", []):
                         anno = typing.Optional[anno]
                     param = Parameter(prop_name, Parameter.POSITIONAL_OR_KEYWORD, default=prop_data.get("default"),
                                       annotation=anno)
                     method_args[prop_name] = dict(param=param, doc=prop_data.get("description"),
-                                                  choices=parameter.get("enum"))
+                                                  choices=parameter.get("enum"),
+                                                  required=prop_name in parameter["schema"].get("required", []))
                     body_props[prop_name] = parameter["schema"]
             else:
                 annotation = str if parameter.get("required") else typing.Optional[str]
                 param = Parameter(parameter["name"], Parameter.POSITIONAL_OR_KEYWORD, default=parameter.get("default"),
                                   annotation=annotation)
                 method_args[parameter["name"]] = dict(param=param, doc=parameter.get("description"),
-                                                      choices=parameter.get("enum"))
+                                                      choices=parameter.get("enum"), required=parameter.get("required"))
         return body_props, method_args
 
     def _build_client_method(self, http_method, http_path, method_data):
@@ -400,7 +401,8 @@ class SwaggerClient(object):
                 argparse_type = json.loads if param.annotation in {typing.List, typing.Mapping} else param.annotation
                 subparser.add_argument("--" + param_name.replace("_", "-").replace("/", "-"), dest=param_name,
                                        type=argparse_type, nargs=nargs, help=method_data["args"][param_name]["doc"],
-                                       choices=method_data["args"][param_name]["choices"])
+                                       choices=method_data["args"][param_name]["choices"],
+                                       required=method_data["args"][param_name]["required"])
             subparser.set_defaults(entry_point=method_data["entry_point"])
 
         for command in self.commands:
