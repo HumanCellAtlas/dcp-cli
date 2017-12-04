@@ -37,7 +37,8 @@ run this command and publish new package versions.
 Testing
 -------
 Before you run tests, do an `hca dss login`.  This will pop up a browser and get you to authenticate with Google.
-Use an email from one of the whitelisted domains (in `DSS_SUBSCRIPTION_AUTHORIZED_DOMAINS_ARRAY` from `here <https://github.com/HumanCellAtlas/data-store/environment>`_).
+Use an email from one of the whitelisted domains (in `DSS_SUBSCRIPTION_AUTHORIZED_DOMAINS_ARRAY` from
+`here <https://github.com/HumanCellAtlas/data-store/blob/master/environment#L55>`_).
 
 Then :code:`make test`.
 
