@@ -3,9 +3,9 @@ import sys
 
 from ..upload_config import UploadConfig
 from .. import upload_file
+from .common import UploadCLICommand
 
-
-class UploadCommand:
+class UploadCommand(UploadCLICommand):
     """
     Upload a file to the currently selected upload area.
     """

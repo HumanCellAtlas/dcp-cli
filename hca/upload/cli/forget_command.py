@@ -1,7 +1,8 @@
 from .. import forget_area, UploadException
+from .common import UploadCLICommand
 
 
-class ForgetCommand:
+class ForgetCommand(UploadCLICommand):
     """
     Forget about upload area.
     """

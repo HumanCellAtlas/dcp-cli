@@ -1,8 +1,9 @@
 from ..upload_area_urn import UploadAreaURN
 from ..upload_area import UploadArea
+from .common import UploadCLICommand
 
 
-class SelectCommand:
+class SelectCommand(UploadCLICommand):
     """
     Select upload area to which you wish to upload files.
     """

@@ -1,9 +1,10 @@
 import sys
 
 from ..upload_area import UploadArea
+from .common import UploadCLICommand
 
 
-class ListAreasCommand:
+class ListAreasCommand(UploadCLICommand):
     """
     List upload areas I know about.
     """

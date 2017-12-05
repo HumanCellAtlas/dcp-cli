@@ -3,6 +3,7 @@ from .list_areas_command import ListAreasCommand
 from .list_area_command import ListAreaCommand
 from .upload_command import UploadCommand
 from .forget_command import ForgetCommand
+from .common import UploadCLICommand
 
 
 def add_commands(subparsers):

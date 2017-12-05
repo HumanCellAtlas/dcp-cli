@@ -17,7 +17,7 @@ from botocore.exceptions import NoRegionError
 
 from .version import __version__
 from .dss import cli as dss_cli
-from .upload import cli as staging_cli
+from .upload import cli as upload_cli
 from .util.compat import USING_PYTHON2
 from . import logger, get_config
 
@@ -50,7 +50,7 @@ def main(args=None):
         parser.print_help()
     parser.add_parser_func(help)
 
-    staging_cli.add_commands(parser._subparsers)
+    upload_cli.add_commands(parser._subparsers)
     dss_cli.add_commands(parser._subparsers)
 
     argcomplete.autocomplete(parser)
@@ -88,5 +88,5 @@ def main(args=None):
         if isinstance(result, bytes):
             out_stream = sys.stdout if USING_PYTHON2 else sys.stdout.buffer
             out_stream.write(result)
-        else:
+        elif not isinstance(result, upload_cli.UploadCLICommand):
             print(json.dumps(result, indent=2, default=lambda x: str(x)))

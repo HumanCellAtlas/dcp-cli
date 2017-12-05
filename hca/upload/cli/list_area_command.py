@@ -1,7 +1,8 @@
 from .. import list_current_area
+from .common import UploadCLICommand
 
 
-class ListAreaCommand:
+class ListAreaCommand(UploadCLICommand):
     """
     List contents of currently selected upload area.
     """
@@ -9,7 +10,7 @@ class ListAreaCommand:
     def add_parser(cls, staging_subparsers):
         list_area_parser = staging_subparsers.add_parser(
             'list', description=cls.__doc__, help=cls.__doc__)
-        list_area_parser.set_defaults(func=ListAreaCommand)
+        list_area_parser.set_defaults(entry_point=ListAreaCommand)
         list_area_parser.add_argument('-l', '--long', action='store_true', help="Long listing - show file details.")
 
     def __init__(self, args):
