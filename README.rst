@@ -14,25 +14,17 @@ The hca package installs a command-line utility :code:`hca`.
 
 To see the list of commands you can use, type :code:`hca --help`.  Commands are grouped into major categories that
 roughly correspond to DCP system components, e.g. DSS, Staging Service.  To get detailed help for a particular
-command group type, e.g. :code:`hca dss --help`.
-
-When it is necessary to provide a list of things to a command put them in a single string separated with slashes, e.g.
-:code:`True/Bob/3806d74a-6ab5-4a6d-ba00-667ea858c7b5/2017-06-30T19:33:38+00:00`.
+command group type, e.g. :code:`hca upload --help`.
 
 Development
 -----------
-To develop on the CLI, first run `pip install -r requirements-dev.txt`.
+To develop on the CLI, first run `pip install -r requirements-dev.txt`. You can install your locally modified copy of
+the hca package by running `make install` in the repository root directory.
 
-To use the command line interface with a local or test DSS, open <directory_holding_hca_module>/hca/api_spec.json.
-Change :code:`host` to the host you want (if you're running on a local DSS, this will likely be :code:`localhost:5000`)
-and the first argument of :code:`schemes` should be the scheme you want (:code:`http` if running locally,
-:code:`https` otherwise).
-
-Code Generation
----------------
-Some parts of the CLI are auto-generated from the OpenAPI (Swagger) Specifications (OAS).  The Python bindings have to
-be regenerated to reflect any api changes. To regenerate these, run `make bindings`.  Only package maintainers should
-run this command and publish new package versions.
+To use the command line interface with a local or test DSS, first run `hca` (or `scripts/hca` if you want to use the
+package in place from the repository root directory). This will create the file `~/.config/hca/config.json`, which you
+can modify to update the value of `DSSClient.swagger_url` to point to the URL of the Swagger definition served by your
+DSS deployment.
 
 Testing
 -------
