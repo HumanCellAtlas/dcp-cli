@@ -1,3 +1,14 @@
+Changes for v3.0.0 (2017-12-04)
+===============================
+
+-  Refactor CLI to use new dynamic SwaggerClient utility class
+
+-  Add structured error response data to exceptions
+
+-  Documentation updates
+
+-  New configuration manager
+
 Changes for v2.3.2 (2017-11-21)
 ===============================
 
