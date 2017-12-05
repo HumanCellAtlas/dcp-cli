@@ -1,3 +1,8 @@
+Changes for v3.0.4 (2017-12-04)
+===============================
+
+-  Fix regression in Upload CLI behavior, part 2
+
 Changes for v3.0.3 (2017-12-04)
 ===============================
 
