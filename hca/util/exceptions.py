@@ -1,5 +1,3 @@
-import textwrap
-
 from requests.exceptions import HTTPError
 
 class SwaggerAPIException(HTTPError):
@@ -24,7 +22,6 @@ class SwaggerAPIException(HTTPError):
     def __str__(self):
         if self.details:
             if self.stacktrace:
-                st = textwrap.indent(self.stacktrace, "  ")
-                return "{}: {} (HTTP {}). Details:\n{}".format(self.reason, self.title, self.code, st)
+                return "{}: {} (HTTP {}). Details:\n{}".format(self.reason, self.title, self.code, self.stacktrace)
             return "{}: {} (HTTP {}). Details:\n{}".format(self.reason, self.title, self.code, self.response.text)
         return "{}, code {}".format(self.response.reason, self.response.status_code)
