@@ -24,7 +24,7 @@ class UploadCommand(UploadCLICommand):
                                    help="Filename to use in upload area (if you wish to change it during upload)." +
                                    " Only valid when one file is being uploaded.")
         upload_parser.add_argument('-q', '--quiet', action='store_true', help="Suppress normal output.")
-        upload_parser.set_defaults(func=UploadCommand)
+        upload_parser.set_defaults(entry_point=UploadCommand)
 
     def __init__(self, args):
         self._load_config()

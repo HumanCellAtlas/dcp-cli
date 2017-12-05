@@ -15,7 +15,7 @@ class ForgetCommand(UploadCLICommand):
         )
         forget_parser.add_argument('uuid_or_alias',
                                    help="Full or partial (alias) UUID of an upload area.")
-        forget_parser.set_defaults(func=ForgetCommand)
+        forget_parser.set_defaults(entry_point=ForgetCommand)
 
     def __init__(self, args):
         alias = args.uuid_or_alias
