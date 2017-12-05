@@ -1,3 +1,8 @@
+Changes for v3.0.2 (2017-12-04)
+===============================
+
+Fix structured exception printing on Python 2.7
+
 Changes for v3.0.1 (2017-12-04)
 ===============================
 
