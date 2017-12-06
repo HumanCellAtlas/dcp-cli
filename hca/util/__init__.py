@@ -95,7 +95,7 @@ from requests_oauthlib import OAuth2Session
 
 from .. import get_config, logger
 from .compat import USING_PYTHON2
-from .exceptions import SwaggerAPIException
+from .exceptions import SwaggerAPIException, SwaggerClientInternalError
 from ._docs import _pagination_docstring, _streaming_docstring, _md2rst
 
 class _ClientMethodFactory(object):
@@ -384,9 +384,9 @@ class SwaggerClient(object):
         if param_data.default is Parameter.empty:
             return dict(required=True)
         elif isinstance(param_data.default, (list, tuple)):
-            return dict(nargs="+", required=True)
+            return dict(nargs="+", required=True, default=param_data.default)
         else:
-            return dict(type=type(param_data.default))
+            return dict(type=type(param_data.default), default=param_data.default)
 
     def build_argparse_subparsers(self, subparsers):
         for method_name, method_data in self.methods.items():
@@ -407,6 +407,8 @@ class SwaggerClient(object):
 
         for command in self.commands:
             sig = signature(command)
+            if not getattr(command, "__doc__", None):
+                raise SwaggerClientInternalError("Command {} has no docstring".format(command))
             doc = command.__doc__.strip().format(prog=subparsers._prog_prefix)
             command_subparser = subparsers.add_parser(command.__name__,
                                                       help=doc.splitlines()[0],

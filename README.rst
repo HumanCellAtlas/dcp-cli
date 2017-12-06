@@ -26,6 +26,14 @@ package in place from the repository root directory). This will create the file 
 can modify to update the value of `DSSClient.swagger_url` to point to the URL of the Swagger definition served by your
 DSS deployment.
 
+To use the Python interface with a local or test DSS, set the ``host`` attribute of the API client:
+
+.. code-block:: python
+
+    client = hca.dss.DSSClient()
+    client.host = "https://dss.example.com/v1"
+    res = client.post_search(...)
+
 Testing
 -------
 Before you run tests, do an `hca dss login`.  This will pop up a browser and get you to authenticate with Google.
