@@ -1,3 +1,8 @@
+Changes for v3.0.5 (2017-12-06)
+===============================
+
+-  Fix handling of argument defaults in command line parsers
+
 Changes for v3.0.4 (2017-12-04)
 ===============================
 
