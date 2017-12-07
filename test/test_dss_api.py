@@ -9,12 +9,14 @@ sys.path.insert(0, pkg_root)  # noqa
 import hca.dss
 from hca.util.compat import USING_PYTHON2
 from test import reset_tweak_changes
+from contextlib import contextmanager
 
 if USING_PYTHON2:
     import backports.tempfile
     TemporaryDirectory = backports.tempfile.TemporaryDirectory
 else:
     TemporaryDirectory = tempfile.TemporaryDirectory
+
 
 class TestDssApi(unittest.TestCase):
     staging_bucket = "org-humancellatlas-dss-cli-test"
@@ -36,19 +38,31 @@ class TestDssApi(unittest.TestCase):
                 downloaded_file = os.path.join(dest_dir, file)
                 self.assertTrue(filecmp.cmp(uploaded_file, downloaded_file, False))
 
-    def test_python_upload_lg_file(self):
+    @contextmanager
+    def upload(self, client, file_size):
         with TemporaryDirectory() as src_dir, TemporaryDirectory() as dest_dir:
-            with tempfile.NamedTemporaryFile(dir=src_dir, suffix=".bin") as fh:
-                fh.write(os.urandom(64 * 1024 * 1024 + 1))
-                fh.flush()
+            with tempfile.NamedTemporaryFile(dir=src_dir, suffix=".bin") as source_file:
+                source_file.write(os.urandom(file_size))
+                source_file.flush()
 
-                client = hca.dss.DSSClient()
-                bundle_output = client.upload(src_dir=src_dir, replica="aws", staging_bucket=self.staging_bucket)
+                upload_result = client.upload(src_dir=src_dir, replica="aws", staging_bucket=self.staging_bucket)
+                yield (source_file, upload_result, dest_dir)
 
-                client.download(bundle_output['bundle_uuid'], replica="aws", dest_name=dest_dir)
+    def test_python_upload_lg_file(self):
+        client = hca.dss.DSSClient()
+        with self.upload(client, 64 * 1024 * 1024 + 1) as tup:
+            source_file, upload_result, dest_dir = tup
 
-                downloaded_file = os.path.join(dest_dir, os.path.basename(fh.name))
-                self.assertTrue(filecmp.cmp(fh.name, downloaded_file, False))
+            client.download(upload_result['bundle_uuid'], replica="aws", dest_name=dest_dir)
+
+            downloaded_file = os.path.join(dest_dir, os.path.basename(source_file.name))
+            self.assertTrue(filecmp.cmp(source_file.name, downloaded_file, False))
+
+    def test_python_delete_bundle(self):
+        client = hca.dss.DSSClient()
+        with self.upload(client, 64) as tup:
+            _, upload_result, _ = tup
+            self.assertEquals(client.delete(upload_result['bundle_uuid'], "aws", None, "reason"), {})
 
     def test_python_bindings(self):
         bundle_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "bundle")

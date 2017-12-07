@@ -98,6 +98,7 @@ from .compat import USING_PYTHON2
 from .exceptions import SwaggerAPIException, SwaggerClientInternalError
 from ._docs import _pagination_docstring, _streaming_docstring, _md2rst
 
+
 class _ClientMethodFactory(object):
     def __init__(self, client, parameters, path_parameters, http_method, method_name, method_data, body_props):
         self.__dict__.update(locals())
@@ -150,6 +151,7 @@ class _ClientMethodFactory(object):
         self._context_manager_response.close()
         self._context_manager_response = None
 
+
 class _PaginatingClientMethodFactory(_ClientMethodFactory):
     def iterate(self, **kwargs):
         page = None
@@ -157,6 +159,7 @@ class _PaginatingClientMethodFactory(_ClientMethodFactory):
             page = self._request(kwargs, url=page.links["next"]["url"] if page else None)
             for result in page.json()["results"]:
                     yield result
+
 
 class SwaggerClient(object):
     scheme = "https"
@@ -171,6 +174,7 @@ class SwaggerClient(object):
         "array": typing.List,
         "object": typing.Mapping
     }
+
     def __init__(self, config=None, **session_kwargs):
         self.config = config or get_config()
         self._session_kwargs = session_kwargs

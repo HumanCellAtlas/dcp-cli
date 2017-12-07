@@ -12,11 +12,13 @@ from ..util.exceptions import SwaggerAPIException
 from .. import logger
 from .upload_to_cloud import upload_to_cloud
 
+
 class DSSClient(SwaggerClient):
     """
     Client for the Data Storage Service API.
     """
     UPLOAD_BACKOFF_FACTOR = 1.618
+
     def __init__(self, *args, **kwargs):
         super(DSSClient, self).__init__(*args, **kwargs)
         self.commands += [self.download, self.upload]
@@ -47,7 +49,7 @@ class DSSClient(SwaggerClient):
                     file_path = os.path.join(dest_name, filename)
                     logger.info("%s", "File {}: GET SUCCEEDED. Writing to disk.".format(filename))
                     with open(file_path, "wb") as fh:
-                        for chunk in response.iter_content(chunk_size=1024*1024):
+                        for chunk in response.iter_content(chunk_size=1024 * 1024):
                             if chunk:
                                 fh.write(chunk)
                     logger.info("%s", "File {}: GET SUCCEEDED. Stored at {}.".format(filename, file_path))
@@ -137,3 +139,40 @@ class DSSClient(SwaggerClient):
             "version": response["version"],
             "files": files_uploaded
         }
+
+    def delete(self, bundle_uuid, replica, version, reason, timeout_seconds=5):
+        """
+        Delete a bundle from the data-store
+        :param bundle_uuid: (required) the bundle to delete
+        :param replica: (required) the replica to delete the bundle from
+        :param version: (optional) bundle version; if specified deletes the specific version; if not, the whole bundle
+        :param reason: (optional) the reason for the deletion
+        :param timeout_seconds: (optional) timeout for the deletion request
+        :return:
+        """
+        human_readable_identifier = \
+            f"bundle version {bundle_uuid}.{version}" if version else f"all bundles with UUID {bundle_uuid}"
+        logger.info(f"Deleting {human_readable_identifier}")
+
+        creator_uid = self.config.get("creator_uid", 0)
+
+        request_body = dict(creator_uid=creator_uid)
+
+        if reason:
+            request_body['reason'] = reason
+
+        request = dict(
+            bundle_uuid=bundle_uuid,
+            replica=replica,
+            json_body=request_body,
+        )
+
+        if version:
+            request['version'] = version
+
+        response = self.delete_bundle._request(request)
+
+        if response.ok:
+            return {}
+        else:
+            raise RuntimeError(f"Deletion of {human_readable_identifier} failed!")
