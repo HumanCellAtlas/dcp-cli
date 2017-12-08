@@ -24,6 +24,6 @@ class ListAreaCommand(UploadCLICommand):
                     'Content-Type', f['content_type']
                 ))
                 if 'checksums' in f:
-                    for checksum in ('S3_Etag', 'CEC32C', 'SHA1', 'SHA256'):
+                    for checksum in ('S3_Etag', 'CRC32C', 'SHA1', 'SHA256'):
                         if checksum.lower() in f['checksums']:
                             print("\t%-12s %s" % (checksum, f['checksums'][checksum.lower()]))
