@@ -19,6 +19,15 @@ from test import CapturingIO, reset_tweak_changes
 
 
 class TestDssCLI(unittest.TestCase):
+    def test_post_search_cli(self):
+        query = json.dumps({})
+        replica = "aws"
+        args = ["dss", "post-search", "--es-query", query, "--replica", replica, "--output-format", "raw"]
+        with CapturingIO('stdout') as stdout:
+            hca.cli.main(args)
+        result = json.loads(stdout.captured())
+        self.assertIn("results", result)
+
     def test_get_files_cli(self):
         filename = "SRR2967608_1.fastq.gz"
         dirpath = os.path.join(os.path.dirname(os.path.realpath(__file__)), "bundle")

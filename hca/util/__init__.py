@@ -388,6 +388,13 @@ class SwaggerClient(object):
         else:
             return dict(type=type(param_data.default), default=param_data.default)
 
+    def _get_param_argparse_type(self, anno):
+        if anno in {typing.List, typing.Mapping}:
+            return json.loads
+        elif isinstance(getattr(anno, "__args__", None), tuple) and anno == typing.Optional[anno.__args__[0]]:
+            return anno.__args__[0]
+        return anno
+
     def build_argparse_subparsers(self, subparsers):
         for method_name, method_data in self.methods.items():
             subcommand_name = method_name.replace("_", "-")
@@ -398,9 +405,9 @@ class SwaggerClient(object):
                     continue
                 logger.debug("Registering %s %s %s", method_name, param_name, param.annotation)
                 nargs = "+" if param.annotation == typing.List else None
-                argparse_type = json.loads if param.annotation in {typing.List, typing.Mapping} else param.annotation
                 subparser.add_argument("--" + param_name.replace("_", "-").replace("/", "-"), dest=param_name,
-                                       type=argparse_type, nargs=nargs, help=method_data["args"][param_name]["doc"],
+                                       type=self._get_param_argparse_type(param.annotation), nargs=nargs,
+                                       help=method_data["args"][param_name]["doc"],
                                        choices=method_data["args"][param_name]["choices"],
                                        required=method_data["args"][param_name]["required"])
             subparser.set_defaults(entry_point=method_data["entry_point"])
