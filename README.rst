@@ -21,10 +21,15 @@ Development
 To develop on the CLI, first run `pip install -r requirements-dev.txt`. You can install your locally modified copy of
 the hca package by running `make install` in the repository root directory.
 
-To use the command line interface with a local or test DSS, first run `hca` (or `scripts/hca` if you want to use the
-package in place from the repository root directory). This will create the file `~/.config/hca/config.json`, which you
+To use the command line interface with a local or test DSS, first run ``hca`` (or ``scripts/hca`` if you want to use the
+package in place from the repository root directory). This will create the file ``~/.config/hca/config.json``, which you
 can modify to update the value of `DSSClient.swagger_url` to point to the URL of the Swagger definition served by your
-DSS deployment.
+DSS deployment. You can also layer a minimal config file on top of the default ``config.json`` using the
+``HCA_CONFIG_FILE`` environment variable, for example::
+
+    export SWAGGER_URL="https://dss.staging.data.humancellatlas.org/v1/swagger.json"
+    jq -n .DSSClient.swagger_url=env.SWAGGER_URL > ~/.config/hca/config.staging.json
+    export HCA_CONFIG_FILE=~/.config/hca/config.staging.json
 
 To use the Python interface with a local or test DSS, set the ``host`` attribute of the API client:
 
@@ -36,8 +41,8 @@ To use the Python interface with a local or test DSS, set the ``host`` attribute
 
 Testing
 -------
-Before you run tests, do an `hca dss login`.  This will pop up a browser and get you to authenticate with Google.
-Use an email from one of the whitelisted domains (in `DSS_SUBSCRIPTION_AUTHORIZED_DOMAINS_ARRAY` from
+Before you run tests, first run ``hca dss login``.  This will pop up a browser and get you to authenticate with Google.
+Use an email from one of the whitelisted domains (in ``DSS_SUBSCRIPTION_AUTHORIZED_DOMAINS_ARRAY`` from
 `here <https://github.com/HumanCellAtlas/data-store/blob/master/environment#L55>`_).
 
 Then :code:`make test`.
