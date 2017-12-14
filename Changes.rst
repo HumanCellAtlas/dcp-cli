@@ -1,3 +1,13 @@
+Changes for v3.1.0 (2017-12-14)
+===============================
+
+-  Use staging DSS by default
+
+-  Fix typevar passthrough to argparse with typing.Optional kwargs
+
+-  Upload: fix typo that prevented CRC32Cs being display in long
+   listings
+
 Changes for v3.0.5 (2017-12-06)
 ===============================
 
