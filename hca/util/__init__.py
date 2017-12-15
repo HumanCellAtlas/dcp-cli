@@ -206,8 +206,11 @@ class SwaggerClient(object):
                 except OSError as e:
                     if not (e.errno == errno.EEXIST and os.path.isdir(self.config.user_config_dir)):
                         raise
+                res = requests.get(swagger_url)
+                res.raise_for_status()
+                assert "swagger" in res.json()
                 with open(swagger_filename, "wb") as fh:
-                    fh.write(requests.get(swagger_url).content)
+                    fh.write(res.content)
             with open(swagger_filename) as fh:
                 self.__class__._swagger_spec = json.load(fh)
         return self._swagger_spec
