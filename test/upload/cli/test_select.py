@@ -55,6 +55,10 @@ class TestUploadCliSelectCommand(unittest.TestCase):
     @reset_tweak_changes
     def test_when_given_an_alias_that_matches_no_areas_it_prints_a_warning(self):
 
+        config = hca.get_config()
+        config.upload = {'areas': {}}
+        config.save()
+
         with CapturingIO('stdout') as stdout:
             args = Namespace(urn_or_alias='aaa')
             SelectCommand(args)
