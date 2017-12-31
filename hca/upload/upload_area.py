@@ -63,9 +63,10 @@ class UploadArea:
         client = ApiClient(self.urn.deployment_stage)
         return client.list_area(self.uuid)
 
-    def upload_file(self, file_path, dcp_type=None, target_filename=None, report_progress=False):
+    def upload_file(self, file_path, dcp_type=None, target_filename=None, use_transfer_acceleration=True,
+                    report_progress=False):
         file_s3_key = "%s/%s" % (self.uuid, target_filename or os.path.basename(file_path))
         bucket_name = UploadConfig().bucket_name_template.format(deployment_stage=self.urn.deployment_stage)
         content_type = str(DcpMediaType.from_file(file_path, dcp_type))
-        s3agent = S3Agent(aws_credentials=self.urn.credentials)
+        s3agent = S3Agent(aws_credentials=self.urn.credentials, transfer_acceleration=use_transfer_acceleration)
         s3agent.upload_file(file_path, bucket_name, file_s3_key, content_type, report_progress=report_progress)

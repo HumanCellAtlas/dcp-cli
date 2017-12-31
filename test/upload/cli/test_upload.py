@@ -5,9 +5,9 @@ import sys
 import unittest
 import uuid
 from argparse import Namespace
+from mock import patch, Mock
 
 import boto3
-import tweak
 from moto import mock_s3
 
 from ... import reset_tweak_changes
@@ -45,7 +45,12 @@ class TestUploadCliUploadCommand(unittest.TestCase):
         s3 = boto3.resource('s3')
         s3.Bucket(TEST_UPLOAD_BUCKET).create()
 
-        UploadCommand(Namespace(file_paths=['test/bundle/sample.json'], target_filename='FOO', quiet=True))
+        args = Namespace(
+            file_paths=['test/bundle/sample.json'],
+            target_filename='FOO',
+            no_transfer_acceleration=False,
+            quiet=True)
+        UploadCommand(args)
 
         obj = s3.Bucket(TEST_UPLOAD_BUCKET).Object("{}/FOO".format(self.area_uuid))
         self.assertEqual(obj.content_type, 'application/json; dcp-type=data')
@@ -60,7 +65,8 @@ class TestUploadCliUploadCommand(unittest.TestCase):
         s3 = boto3.resource('s3')
         s3.Bucket(TEST_UPLOAD_BUCKET).create()
 
-        UploadCommand(Namespace(file_paths=['LICENSE'], target_filename=None, quiet=True))
+        args = Namespace(file_paths=['LICENSE'], target_filename=None, no_transfer_acceleration=False, quiet=True)
+        UploadCommand(args)
 
         obj = s3.Bucket(TEST_UPLOAD_BUCKET).Object("{}/LICENSE".format(self.area_uuid))
         self.assertEqual(obj.content_type, 'application/octet-stream; dcp-type=data')
@@ -70,13 +76,34 @@ class TestUploadCliUploadCommand(unittest.TestCase):
 
     @mock_s3
     @reset_tweak_changes
+    @patch('hca.upload.s3_agent.S3Agent.upload_file')   # Don't actually try to upload
+    def test_no_transfer_acceleration_option_sets_up_botocore_config_correctly(self, upload_file_stub):
+        self.setup_tweak_config()
+        import botocore
+
+        with patch('hca.upload.s3_agent.Config', new=Mock(wraps=botocore.config.Config)) as mock_config:
+
+            args = Namespace(file_paths=['LICENSE'], target_filename=None, quiet=True)
+            args.no_transfer_acceleration = False
+            UploadCommand(args)
+            mock_config.assert_called_once_with(s3={'use_accelerate_endpoint': True})
+
+            mock_config.reset_mock()
+            args.no_transfer_acceleration = True
+            UploadCommand(args)
+            mock_config.assert_called_once_with()
+
+    @mock_s3
+    @reset_tweak_changes
     def test_multiple_uploads(self):
         self.setup_tweak_config()
         s3 = boto3.resource('s3')
         s3.Bucket(TEST_UPLOAD_BUCKET).create()
 
         files = ['LICENSE', 'README.rst']
-        UploadCommand(Namespace(file_paths=files, target_filename=None, dcp_type=None, quiet=True))
+        args = Namespace(file_paths=files, target_filename=None, no_transfer_acceleration=False,
+                         dcp_type=None, quiet=True)
+        UploadCommand(args)
 
         for filename in files:
             obj = s3.Bucket(TEST_UPLOAD_BUCKET).Object("{}/{}".format(self.area_uuid, filename))
