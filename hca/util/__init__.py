@@ -292,8 +292,9 @@ class SwaggerClient(object):
                                                             **self._session_kwargs)
             else:
                 if "oauth2_token" not in self.config:
-                    raise Exception('Please configure {prog} authentication credentials using "{prog} login" '
-                                    'or set the GOOGLE_APPLICATION_CREDENTIALS environment variable')
+                    msg = ('Please configure {prog} authentication credentials using "{prog} login" '
+                           'or set the GOOGLE_APPLICATION_CREDENTIALS environment variable')
+                    raise Exception(msg.format(prog=self.__module__.replace(".", " ")))
                 self._authenticated_session = OAuth2Session(
                     client_id=oauth2_client_data["client_id"],
                     token=self.config.oauth2_token,
