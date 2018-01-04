@@ -1,3 +1,12 @@
+Changes for v3.1.1 (2018-01-03)
+===============================
+
+-  Add docs for config management options
+
+-  Parameterize program name in Swagger client error message
+
+-  Avoid wedging config when first run is performed offline
+
 Changes for v3.1.0 (2017-12-14)
 ===============================
 
