@@ -16,6 +16,22 @@ To see the list of commands you can use, type :code:`hca --help`.  Commands are 
 roughly correspond to DCP system components, e.g. DSS, Staging Service.  To get detailed help for a particular
 command group type, e.g. :code:`hca upload --help`.
 
+Configuration management
+~~~~~~~~~~~~~~~~~~~~~~~~
+The HCA CLI supports ingesting configuration from a configurable array of sources. Each source is a JSON file.
+Configuration sources that follow the first source update the configuration using recursive dictionary merging. Sources
+are enumerated in the following order (i.e., in order of increasing priority):
+
+- Site-wide configuration source, ``/etc/hca/config.json``
+- User configuration source, ``~/.config/hca/config.json``
+- Any sources listed in the colon-delimited variable ``HCA_CONFIG_FILE``
+- Command line options
+
+**Array merge operators**: When loading a chain of configuration sources, the HCA CLI uses recursive dictionary merging
+to combine the sources. Additionally, when the original config value is a list, the package supports array manipulation
+operators, which let you extend and modify arrays defined in underlying configurations. See
+https://github.com/kislyuk/tweak#array-merge-operators for a list of these operators.
+
 Development
 -----------
 To develop on the CLI, first run `pip install -r requirements-dev.txt`. You can install your locally modified copy of
