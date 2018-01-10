@@ -91,19 +91,22 @@ except ImportError:
     from funcsigs import signature, Signature, Parameter
 
 import requests
+from requests.adapters import HTTPAdapter
 from requests_oauthlib import OAuth2Session
+from urllib3.util import retry
 
 from .. import get_config, logger
 from .compat import USING_PYTHON2
 from .exceptions import SwaggerAPIException, SwaggerClientInternalError
 from ._docs import _pagination_docstring, _streaming_docstring, _md2rst
 
+
 class _ClientMethodFactory(object):
     def __init__(self, client, parameters, path_parameters, http_method, method_name, method_data, body_props):
         self.__dict__.update(locals())
         self._context_manager_response = None
 
-    def _request(self, req_args, url=None, stream=False):
+    def _request(self, req_args, url=None, stream=False, headers=None):
         supplied_path_params = [p for p in req_args if p in self.path_parameters and req_args[p] is not None]
         if url is None:
             url = self.client.host + self.client.http_paths[self.method_name][frozenset(supplied_path_params)]
@@ -116,10 +119,15 @@ class _ClientMethodFactory(object):
             session = self.client.get_authenticated_session()
         else:
             session = self.client.get_session()
+        retry_policy = retry.Retry(status=10, status_forcelist=frozenset({502, 503, 504}))
+        adapter = HTTPAdapter(max_retries=retry_policy)
+        session.mount('http://', adapter)
+        session.mount('https://', adapter)
 
         # TODO: (akislyuk) if using service account credentials, use manual refresh here
         json_input = body if self.body_props else None
-        res = session.request(self.http_method, url, params=query, json=json_input, stream=stream)
+        headers = headers if headers else {}
+        res = session.request(self.http_method, url, params=query, json=json_input, stream=stream, headers=headers)
         if res.status_code >= 400:
             raise SwaggerAPIException(response=res)
         return res
