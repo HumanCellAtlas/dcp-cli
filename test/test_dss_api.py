@@ -119,7 +119,7 @@ class TestDssApi(unittest.TestCase):
         query = {}
 
         for result in client.post_search.iterate(es_query=query, replica="aws"):
-            self.assertIn("bundle_id", result)
+            self.assertIn("bundle_fqid", result)
 
     @reset_tweak_changes
     def test_python_login_logout(self):
