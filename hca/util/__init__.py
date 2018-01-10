@@ -119,7 +119,14 @@ class _ClientMethodFactory(object):
             session = self.client.get_authenticated_session()
         else:
             session = self.client.get_session()
-        retry_policy = retry.Retry(status=10, status_forcelist=frozenset({502, 503, 504}))
+        if self.method_data.get('x-dss-idempotent', False):
+            method_whitelist = False
+        else:
+            method_whitelist = retry.Retry.DEFAULT_METHOD_WHITELIST
+        retry_policy = retry.Retry(
+            method_whitelist=method_whitelist,
+            status=10,
+            status_forcelist=frozenset({502, 503, 504}))
         adapter = HTTPAdapter(max_retries=retry_policy)
         session.mount('http://', adapter)
         session.mount('https://', adapter)
