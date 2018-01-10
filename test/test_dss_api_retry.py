@@ -73,6 +73,26 @@ class TestDssApiRetry(unittest.TestCase):
             },
         )
 
+    def test_idempotent_retry(self):
+        """
+        Test that non-GET methods marked idempotent in the API are retried.  We instruct the server to fake a 504 with
+        some probability, and we should retry until successful.
+        """
+        client = hca.dss.DSSClient()
+        file_uuid = str(uuid.uuid4())
+        creator_uid = client.config.get("creator_uid", 0)
+
+        client.put_file._request(
+            dict(
+                uuid=file_uuid,
+                bundle_uuid=str(uuid.uuid4()),
+                creator_uid=creator_uid,
+                source_url=TestDssApiRetry.source_url,
+            ),
+            headers={
+                'Cookie': "DSS_FAKE_504_PROBABILITY=0.5",
+            },
+        )
 
 if __name__ == '__main__':
     unittest.main()
