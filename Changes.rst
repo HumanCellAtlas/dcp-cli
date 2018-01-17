@@ -1,3 +1,9 @@
+Changes for v3.2.0 (2018-01-17)
+===============================
+
+Upload: Turn on S3 Transfer Acceleration by default Retry GET requests
+(#87) Rename bundle\_id to bundle\_fqid (#86)
+
 Changes for v3.1.1 (2018-01-03)
 ===============================
 
