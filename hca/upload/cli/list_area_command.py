@@ -14,8 +14,7 @@ class ListAreaCommand(UploadCLICommand):
         list_area_parser.add_argument('-l', '--long', action='store_true', help="Long listing - show file details.")
 
     def __init__(self, args):
-        files = list_current_area()
-        for f in files:
+        for f in list_current_area(detail=args.long):
             print(f['name'])
             if args.long:
                 print("\t%-12s %d bytes\n\t%-12s %s\n\t%-12s %s" % (

@@ -34,18 +34,20 @@ def forget_area(uuid_or_alias):
         raise UploadException("\"%s\" matches more than one area, please provide more characters." % (uuid_or_alias,))
 
 
-def list_current_area():
+def list_current_area(detail=False):
     """
-    Returns array of dicts describing the files in the currently selected Upload Area.
+    A generator that returns dicts describing the files in the currently selected Upload Area.
     """
-    return list_area(UploadConfig().current_area)
+    for file_info in UploadArea(uuid=UploadConfig().current_area).list(detail=detail):
+        yield file_info
 
 
-def list_area(area_uuid):
+def list_area(area_uuid, detail=False):
     """
-    Returns array of dicts describing the files in the Upload Area with the supplied UUID.
+    A generator that returns dicts describing the files in the Upload Area with the supplied UUID.
     """
-    return UploadArea(uuid=area_uuid).list()
+    for file_info in UploadArea(uuid=area_uuid).list(detail=detail):
+        yield file_info
 
 
 def list_areas():
