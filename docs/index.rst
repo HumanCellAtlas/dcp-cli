@@ -1,4 +1,3 @@
-.. hca-cli documentation master file, created by
 .. include:: ../README.rst
 
 API documentation
