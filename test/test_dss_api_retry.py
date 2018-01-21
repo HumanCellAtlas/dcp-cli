@@ -69,7 +69,7 @@ class TestDssApiRetry(unittest.TestCase):
                 replica="aws",
             ),
             headers={
-                'Cookie': "DSS_FAKE_504_PROBABILITY=0.5",
+                'DSS_FAKE_504_PROBABILITY': "0.5",
             },
         )
 
