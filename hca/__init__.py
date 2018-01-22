@@ -2,13 +2,13 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import os, logging
 
-import tweak
+from tweak import Config as _Config
 
-class HCAConfig(tweak.Config):
+class HCAConfig(_Config):
     default_config_file = os.path.join(os.path.dirname(__file__), "default_config.json")
     @property
     def config_files(self):
-        return [self.default_config_file] + tweak.Config.config_files.fget(self)
+        return [self.default_config_file] + _Config.config_files.fget(self)
 
     @property
     def user_config_dir(self):
@@ -24,3 +24,5 @@ def get_config():
 
 
 logger = logging.getLogger(__name__)
+
+from . import dss, upload  # noqa
