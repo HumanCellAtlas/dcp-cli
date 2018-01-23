@@ -7,7 +7,7 @@ from .common import UploadCLICommand
 
 
 def add_commands(subparsers):
-    upload_parser = subparsers.add_parser('upload', help="Upload data to HCA")
+    upload_parser = subparsers.add_parser('upload', help="Upload data to DCP")
     upload_subparsers = upload_parser.add_subparsers()
 
     help_parser = upload_subparsers.add_parser('help',

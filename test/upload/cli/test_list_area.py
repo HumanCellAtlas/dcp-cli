@@ -3,7 +3,7 @@ import sys
 import unittest
 from argparse import Namespace
 
-import requests_mock
+import responses
 import boto3
 from moto import mock_s3
 
@@ -42,24 +42,26 @@ class TestUploadListAreaCommand(unittest.TestCase):
         self.assertEqual(stdout.captured(), "file1.fastq.gz\nsample.json\n")
 
     @reset_tweak_changes
+    @responses.activate
     def test_list_area_command_with_long_option(self):
         area = mock_current_upload_area()
         self.upload_bucket.Object('/'.join([area.uuid, 'file1.fastq.gz'])).put(Body="foo")
 
-        with requests_mock.mock() as m:
-            mock_url = 'https://upload.{stage}.data.humancellatlas.org/v1/area/{uuid}/files_info'.format(
-                stage=self.deployment_stage,
-                uuid=area.uuid)
-            m.put(mock_url, text='['
-                                 '{"name":"file1.fastq.gz",'
-                                 '"content_type":"binary/octet-stream; dcp-type=data",'
-                                 '"size":123,'
-                                 '"url":"http://example.com",'
-                                 '"checksums":{"sha1":"shaaa"}}'
-                                 ']')
+        list_url = 'https://upload.{stage}.data.humancellatlas.org/v1/area/{uuid}/files_info'.format(
+            stage=self.deployment_stage,
+            uuid=area.uuid)
+        responses.add(responses.PUT, list_url, status=200, json=[
+            {
+                "name": "file1.fastq.gz",
+                "content_type": "binary/octet-stream; dcp-type=data",
+                "size": 123,
+                "url": "http://example.com",
+                "checksums": {"sha1": "shaaa"}
+            }
+        ])
 
-            with CapturingIO('stdout') as stdout:
-                ListAreaCommand(Namespace(long=True))
+        with CapturingIO('stdout') as stdout:
+            ListAreaCommand(Namespace(long=True))
 
         self.assertRegexpMatches(stdout.captured(), "size\s+123")
         self.assertRegexpMatches(stdout.captured(), "Content-Type\s+binary/octet-stream; dcp-type=data")

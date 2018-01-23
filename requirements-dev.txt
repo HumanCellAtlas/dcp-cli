@@ -2,7 +2,7 @@ flake8
 moto
 coverage
 pyyaml
-requests_mock
+responses
 backports.tempfile
 mock
 -r requirements.txt
