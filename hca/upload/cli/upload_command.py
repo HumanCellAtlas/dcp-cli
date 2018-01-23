@@ -10,7 +10,6 @@ class UploadCommand(UploadCLICommand):
     """
     Upload a file to the currently selected upload area.
     """
-    UPLOAD_BUCKET_TEMPLATE = "org-humancellatlas-upload-%s"
     COMPARISON_TOOL = "https://s3-accelerate-speedtest.s3-accelerate.amazonaws.com/en/accelerate-speed-comparsion.html"
 
     @classmethod
@@ -56,8 +55,10 @@ class UploadCommand(UploadCLICommand):
     def _load_config(self):
         self.config = UploadConfig()
         if not self.config.current_area:
-            sys.stderr.write("\nThere is not upload area selected.\n" +
-                             "Please select one with \"hca upload select <urn_or_alias>\"\n\n")
+            sys.stderr.write("\nThere is no upload area selected.\n" +
+                             "Please select one with \"{cmdname} upload select <urn_or_alias>\"\n\n".format(
+                                 cmdname=sys.argv[0]))
+            exit(1)
 
     def _check_args(self, args):
         if args.target_filename and len(args.file_paths) > 1:

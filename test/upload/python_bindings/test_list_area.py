@@ -2,9 +2,9 @@ import os
 import sys
 import unittest
 
-import requests_mock
 import boto3
 from moto import mock_s3
+import responses
 
 from ... import reset_tweak_changes
 
@@ -39,16 +39,16 @@ class TestUploadListArea(unittest.TestCase):
         self.assertEqual(file_list, [{'name': 'bogofile'}])
 
     @reset_tweak_changes
+    @responses.activate
     def test_list_current_area_with_detail(self):
         area = mock_current_upload_area()
         self.upload_bucket.Object('/'.join([area.uuid, 'bogofile'])).put(Body="foo")
 
-        with requests_mock.mock() as m:
-            mock_url = 'https://upload.{stage}.data.humancellatlas.org/v1/area/{uuid}/files_info'.format(
-                stage=self.deployment_stage,
-                uuid=area.uuid)
-            m.put(mock_url, text='[{"name":"bogofile","size":1234}]')
+        list_url = 'https://upload.{stage}.data.humancellatlas.org/v1/area/{uuid}/files_info'.format(
+            stage=self.deployment_stage,
+            uuid=area.uuid)
+        responses.add(responses.PUT, list_url, json=[{"name": "bogofile", "size": 1234}], status=200)
 
-            file_list = list(upload.list_current_area(detail=True))
+        file_list = list(upload.list_current_area(detail=True))
 
         self.assertEqual(file_list, [{'name': 'bogofile', 'size': 1234}])
