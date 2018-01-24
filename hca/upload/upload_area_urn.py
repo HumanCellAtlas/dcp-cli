@@ -21,6 +21,9 @@ class UploadAreaURN:
         else:
             raise UploadException("Bad URN: %s" % (urn,))
 
+    def __repr__(self):
+        return ":".join(['dcp', 'upl', 'aws', self.deployment_stage, self.uuid])
+
     @property
     def credentials(self):
         uppercase_credentials = json.loads(base64.b64decode(self.encoded_credentials).decode('ascii'))

@@ -53,6 +53,12 @@ class S3Agent:
             self.cumulative_bytes_transferred = 0
             obj.upload_fileobj(fh, **upload_fileobj_args)
 
+    def list_bucket_by_page(self, bucket_name, key_prefix):
+        paginator = self.s3.meta.client.get_paginator('list_objects')
+        for page in paginator.paginate(Bucket=bucket_name, Prefix=key_prefix, PaginationConfig={'PageSize': 100}):
+            if 'Contents' in page:
+                yield [o['Key'] for o in page['Contents']]
+
     @classmethod
     def transfer_config(cls, file_size):
         etag_stride = cls._s3_chunk_size(file_size)

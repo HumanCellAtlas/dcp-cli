@@ -4,6 +4,8 @@ import unittest
 from argparse import Namespace
 
 import requests_mock
+import boto3
+from moto import mock_s3
 
 from ... import CapturingIO, reset_tweak_changes
 from .. import mock_current_upload_area
@@ -16,38 +18,49 @@ from hca.upload.cli.list_area_command import ListAreaCommand
 
 class TestUploadListAreaCommand(unittest.TestCase):
 
+    def setUp(self):
+        self.s3_mock = mock_s3()
+        self.s3_mock.start()
+
+        self.deployment_stage = 'test'
+        self.upload_bucket_name = 'org-humancellatlas-upload-{}'.format(self.deployment_stage)
+        self.upload_bucket = boto3.resource('s3').Bucket(self.upload_bucket_name)
+        self.upload_bucket.create()
+
+    def tearDown(self):
+        self.s3_mock.stop()
+
     @reset_tweak_changes
     def test_list_area_command(self):
-
         area = mock_current_upload_area()
+        self.upload_bucket.Object('/'.join([area.uuid, 'file1.fastq.gz'])).put(Body="foo")
+        self.upload_bucket.Object('/'.join([area.uuid, 'sample.json'])).put(Body="foo")
 
-        with requests_mock.mock() as m:
-            mock_url = 'https://upload.test.data.humancellatlas.org/v1/area/{uuid}'.format(uuid=area.uuid)
-            m.get(mock_url, text='{"files":[{"name":"file1.fastq.gz"},{"name":"sample.json"}]}')
-
-            with CapturingIO('stdout') as stdout:
-                ListAreaCommand(Namespace(long=False))
+        with CapturingIO('stdout') as stdout:
+            ListAreaCommand(Namespace(long=False))
 
         self.assertEqual(stdout.captured(), "file1.fastq.gz\nsample.json\n")
 
     @reset_tweak_changes
     def test_list_area_command_with_long_option(self):
-
         area = mock_current_upload_area()
+        self.upload_bucket.Object('/'.join([area.uuid, 'file1.fastq.gz'])).put(Body="foo")
 
         with requests_mock.mock() as m:
-            mock_url = 'https://upload.test.data.humancellatlas.org/v1/area/{uuid}'.format(uuid=area.uuid)
-            m.get(mock_url, text='{"files":['
+            mock_url = 'https://upload.{stage}.data.humancellatlas.org/v1/area/{uuid}/files_info'.format(
+                stage=self.deployment_stage,
+                uuid=area.uuid)
+            m.put(mock_url, text='['
                                  '{"name":"file1.fastq.gz",'
-                                 '"content_type":"foo/bar",'
+                                 '"content_type":"binary/octet-stream; dcp-type=data",'
                                  '"size":123,'
                                  '"url":"http://example.com",'
                                  '"checksums":{"sha1":"shaaa"}}'
-                                 ']}')
+                                 ']')
 
             with CapturingIO('stdout') as stdout:
                 ListAreaCommand(Namespace(long=True))
 
         self.assertRegexpMatches(stdout.captured(), "size\s+123")
-        self.assertRegexpMatches(stdout.captured(), "Content-Type\s+foo/bar")
+        self.assertRegexpMatches(stdout.captured(), "Content-Type\s+binary/octet-stream; dcp-type=data")
         self.assertRegexpMatches(stdout.captured(), "SHA1\s+shaaa")
