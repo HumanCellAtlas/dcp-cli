@@ -52,7 +52,7 @@ class TestUploadListAreaCommand(unittest.TestCase):
                 uuid=area.uuid)
             m.put(mock_url, text='['
                                  '{"name":"file1.fastq.gz",'
-                                 '"content_type":"binary/octet-stream dcp-type=data",'
+                                 '"content_type":"binary/octet-stream; dcp-type=data",'
                                  '"size":123,'
                                  '"url":"http://example.com",'
                                  '"checksums":{"sha1":"shaaa"}}'
@@ -62,5 +62,5 @@ class TestUploadListAreaCommand(unittest.TestCase):
                 ListAreaCommand(Namespace(long=True))
 
         self.assertRegexpMatches(stdout.captured(), "size\s+123")
-        self.assertRegexpMatches(stdout.captured(), "Content-Type\s+binary/octet-stream dcp-type=data")
+        self.assertRegexpMatches(stdout.captured(), "Content-Type\s+binary/octet-stream; dcp-type=data")
         self.assertRegexpMatches(stdout.captured(), "SHA1\s+shaaa")

@@ -14,7 +14,9 @@ class ApiClient:
         url = "{api_url_base}/area/{uuid}/files_info".format(api_url_base=self.api_url_base, uuid=area_uuid)
         response = requests.put(url, data=(json.dumps(file_list)))
         if not response.ok:
-            raise RuntimeError("GET {url} returned {status}, {content}".format(url=url,
-                                                                               status=response.status_code,
-                                                                               content=response.content))
+            raise RuntimeError(
+                "GET {url} returned {status}, {content}".format(
+                    url=url,
+                    status=response.status_code,
+                    content=response.content))
         return response.json()
