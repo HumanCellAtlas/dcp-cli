@@ -1,0 +1,13 @@
+version: "2"         # required to adjust maintainability checks
+checks:
+  argument-count:
+    enabled: false
+  method-complexity:
+    config:
+      threshold: 6
+exclude_patterns:
+  - "build/"
+  - "dist/"
+  - "scripts/"
+  - "test/"
+  - "hca/dss/"
