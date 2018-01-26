@@ -1,3 +1,11 @@
+Changes for v3.3.0 (2018-01-25)
+===============================
+
+upload: make upload\_service\_api\_url\_template configurable upload:
+fix list command to work for areas with many files (#93) Bump tweak
+dependency version (#92) Remove spurious line from autodoc file Send
+DSS\_FAKE\_504\_PROBABILITY as a header.
+
 Changes for v3.2.0 (2018-01-17)
 ===============================
 
