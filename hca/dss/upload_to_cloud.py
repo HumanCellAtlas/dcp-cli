@@ -11,7 +11,7 @@ import uuid
 import boto3
 from boto3.s3.transfer import TransferConfig
 
-from ..packages.checksumming_io import ChecksummingBufferedReader, S3Etag
+from dcplib.checksumming_io import ChecksummingBufferedReader, S3Etag
 
 
 def encode_tags(tags):
