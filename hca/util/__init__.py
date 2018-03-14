@@ -100,6 +100,11 @@ from .compat import USING_PYTHON2
 from .exceptions import SwaggerAPIException, SwaggerClientInternalError
 from ._docs import _pagination_docstring, _streaming_docstring, _md2rst
 
+class RetryPolicy(retry.Retry):
+    def __init__(self, retry_after_status_codes={301}, **kwargs):
+        super(RetryPolicy, self).__init__(**kwargs)
+        self.RETRY_AFTER_STATUS_CODES = frozenset(retry_after_status_codes | retry.Retry.RETRY_AFTER_STATUS_CODES)
+
 
 class _ClientMethodFactory(object):
     def __init__(self, client, parameters, path_parameters, http_method, method_name, method_data, body_props):
@@ -119,7 +124,7 @@ class _ClientMethodFactory(object):
             session = self.client.get_authenticated_session()
         else:
             session = self.client.get_session()
-        retry_policy = retry.Retry(status=10, status_forcelist=frozenset({502, 503, 504}))
+        retry_policy = RetryPolicy(status=10, status_forcelist=frozenset({502, 503, 504}))
         adapter = HTTPAdapter(max_retries=retry_policy)
         session.mount('http://', adapter)
         session.mount('https://', adapter)
