@@ -7,7 +7,7 @@ install_requires = [line.rstrip() for line in open(os.path.join(os.path.dirname(
 
 setup(
     name="hca",
-    version="3.3.0",
+    version="3.3.1",
     url='https://github.com/HumanCellAtlas/dcp-cli',
     license='Apache Software License',
     author='Human Cell Atlas contributors',

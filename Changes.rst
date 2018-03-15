@@ -1,3 +1,10 @@
+Changes for v3.3.1 (2018-03-15)
+===============================
+
+-  Enable Retry-After for HTTP 301 (#96)
+
+-  Switch to checksumming_io from dcplib (#95)
+
 Changes for v3.3.0 (2018-01-25)
 ===============================
 
