@@ -12,11 +12,13 @@ class HCAConfig(_Config):
     def user_config_dir(self):
         return os.path.join(self._user_config_home, self._name)
 
+
 _config = None
 def get_config():
     global _config
     if _config is None:
-        _config = HCAConfig(__name__)
+        _config = HCAConfig("hca")
     return _config
+
 
 logger = logging.getLogger("hca")
