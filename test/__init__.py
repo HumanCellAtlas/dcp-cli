@@ -4,7 +4,7 @@ import sys
 import pickle
 from functools import wraps
 
-import hca
+import hca, hca.config
 from hca.util.compat import USING_PYTHON2
 
 if 'DEPLOYMENT_STAGE' not in os.environ:
@@ -43,8 +43,8 @@ def reset_tweak_changes(f):
         finally:
             # The save method of the previous config manager will be called as an atexit handler.
             # Invalidate its config file path so it fails to save the old config.
-            hca._config._user_config_home = "/tmp"
+            hca.config._config._user_config_home = "/tmp"
             # Reload config after changes made.
-            hca._config = pickle.loads(backup)
+            hca.config._config = pickle.loads(backup)
             hca.get_config().save()
     return save_and_restore_tweak_config
