@@ -1,3 +1,8 @@
+Changes for v3.4.1 (2018-03-29)
+===============================
+
+-  Fix streaming managed download in DSS CLI
+
 Changes for v3.4.0 (2018-03-29)
 ===============================
 
