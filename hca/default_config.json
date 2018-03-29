@@ -2,6 +2,6 @@
   "log_level": "INFO",
   "client_id": "foo",
   "DSSClient": {
-    "swagger_url": "https://dss.staging.data.humancellatlas.org/v1/swagger.json"
+    "swagger_url": "https://dss.data.humancellatlas.org/v1/swagger.json"
   }
 }

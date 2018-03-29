@@ -1,3 +1,8 @@
+Changes for v3.4.0 (2018-03-29)
+===============================
+
+Use prod API endpoint by default
+
 Changes for v3.3.1 (2018-03-15)
 ===============================
 
