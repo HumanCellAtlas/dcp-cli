@@ -38,9 +38,7 @@ class DSSClient(SwaggerClient):
             filename = file_.get("name", file_uuid)
 
             logger.info("File %s: Retrieving...", filename)
-            session = self.get_session()
-            session.stream = True
-            response = self.get_file._request(dict(uuid=file_uuid, replica=replica))
+            response = self.get_file._request(dict(uuid=file_uuid, replica=replica), stream=True)
 
             try:
                 if response.ok:
@@ -57,7 +55,6 @@ class DSSClient(SwaggerClient):
                     logger.error("%s", "Response: {}".format(response.text))
             finally:
                 response.close()
-                session.stream = False
         return {}
 
     def upload(self, src_dir, replica, staging_bucket, timeout_seconds=1200):
