@@ -9,6 +9,7 @@ before_install:
 - openssl aes-256-cbc -K $encrypted_266b385b8e6e_key -iv $encrypted_266b385b8e6e_iv
   -in travis-gcp-service-account-credentials.json.enc -out travis-gcp-service-account-credentials.json
   -d
+- sed -i -e s/dss.data.humancellatlas.org/dss.$DSS_TEST_STAGE.data.humancellatlas.org/ hca/default_config.json
 install:
 - pip install -r requirements-dev.txt
 - make install
@@ -23,3 +24,4 @@ env:
   - secure: i4TnnjYv1u6ujWBNCZiO82uu1Ooti/Savgti+c5cCsWg1zus5QI1LMc5f16hx+NjYW4e9kWHz5nahcTFEZclm0ovx7FMLcLCHuUlaAiQhc89yqpWYR0arxBWBD0myZy0KG8PfVO/oXecKjJUQSFDUHL9OT+ELQ0Z0NYdNFiCZKzzt0Bsh+EMRcZ0r97SJHOohkGVFvX2NeKGvkcOVyxd20H7xMKTG+2Sx5IEMj8BI6EPrZ1yPjJ4AlUjF2f5nsf5Bry9z1tZkHQn8xQeYz+e1XoGKic2qxU8utpslefWAGE5HTBydk4JwOMpACge9PUoT09/9SEu8ma01iUinMvMVNu1MbfclK6lsaohjdqaQXOdWwvjy8SltdHKG7ws9AshhnCgupM/0znLX6Gj15AFV0vCuNqUVSNfKlGt/XqwOZE+lUb8+Ej9DPqnFNSAGU2RSFDEmrVu1OWkA1dz5cJ6R09+C6jFAuP4YKn3YB3S2LJ/iIqvx2SW3O8j0q6JDVxmoPVY/CO9y37JnP5QqeQQL6xepK+/Iymd2G+gQDV2VV3LZtJnVerZPAbNL0b8tGLxJhw8aMp5lSIt+WEla6LeV+D1wnPzrw9vzAG71qmGraU2R7IO/upYuH8RPuEFWDeATWQjsa7mxwWZy45JKltlbFDH8E1GkhO/9CysNH1g9bc=
   - AWS_DEFAULT_REGION=us-east-1
   - GOOGLE_APPLICATION_CREDENTIALS=travis-gcp-service-account-credentials.json
+  - DSS_TEST_STAGE=dev
