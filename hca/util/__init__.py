@@ -124,7 +124,7 @@ class _ClientMethodFactory(object):
             session = self.client.get_authenticated_session()
         else:
             session = self.client.get_session()
-        retry_policy = RetryPolicy(status=10, status_forcelist=frozenset({502, 503, 504}))
+        retry_policy = RetryPolicy(read=10, status=10, status_forcelist=frozenset({502, 503, 504}))
         adapter = HTTPAdapter(max_retries=retry_policy)
         session.mount('http://', adapter)
         session.mount('https://', adapter)
