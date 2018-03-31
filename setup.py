@@ -18,7 +18,8 @@ setup(
     extras_require={
         ':python_version == "2.7"': [
             'enum34 >= 1.1.6, < 2',
-            'funcsigs >= 1.0.2, < 2'
+            'funcsigs >= 1.0.2, < 2',
+            'pathlib2 >= 2.3.0, < 3'
         ],
         ':python_version < "3.5"': ['typing >= 3.6.2, < 4'],
     },

@@ -85,18 +85,13 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import os, types, collections, typing, json, errno, base64, argparse
 
-try:
-    from inspect import signature, Signature, Parameter
-except ImportError:
-    from funcsigs import signature, Signature, Parameter
-
 import requests
 from requests.adapters import HTTPAdapter
 from requests_oauthlib import OAuth2Session
 from urllib3.util import retry
 
 from .. import get_config, logger
-from .compat import USING_PYTHON2
+from .compat import USING_PYTHON2, Path, signature, Signature, Parameter
 from .exceptions import SwaggerAPIException, SwaggerClientInternalError
 from ._docs import _pagination_docstring, _streaming_docstring, _md2rst
 
@@ -213,19 +208,20 @@ class SwaggerClient(object):
             else:
                 swagger_filename = base64.urlsafe_b64encode(swagger_url.encode()).decode() + ".json"
                 swagger_filename = os.path.join(self.config.user_config_dir, swagger_filename)
-            if not os.path.exists(swagger_filename):
-                try:
-                    os.makedirs(self.config.user_config_dir)
-                except OSError as e:
-                    if not (e.errno == errno.EEXIST and os.path.isdir(self.config.user_config_dir)):
-                        raise
+            if os.path.exists(swagger_filename):
+                with open(swagger_filename) as fh:
+                    self.__class__._swagger_spec = json.load(fh)
+            else:
                 res = requests.get(swagger_url)
                 res.raise_for_status()
                 assert "swagger" in res.json()
-                with open(swagger_filename, "wb") as fh:
-                    fh.write(res.content)
-            with open(swagger_filename) as fh:
-                self.__class__._swagger_spec = json.load(fh)
+                try:
+                    Path(self.config.user_config_dir).mkdir(parents=True, exist_ok=True)
+                    with open(swagger_filename, "wb") as fh:
+                        fh.write(res.content)
+                except IOError as e:
+                    logger.error(e)
+                self.__class__._swagger_spec = res.json()
         return self._swagger_spec
 
     @property
