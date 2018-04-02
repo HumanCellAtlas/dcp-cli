@@ -93,7 +93,7 @@ except ImportError:
 import requests
 from requests.adapters import HTTPAdapter
 from requests_oauthlib import OAuth2Session
-from urllib3.util import retry
+from urllib3.util import retry, timeout
 
 from .. import get_config, logger
 from .compat import USING_PYTHON2
@@ -107,6 +107,9 @@ class RetryPolicy(retry.Retry):
 
 
 class _ClientMethodFactory(object):
+    retry_policy = RetryPolicy(read=10, status=10, status_forcelist=frozenset({500, 502, 503, 504}))
+    timeout_policy = timeout.Timeout(connect=60, read=120)
+
     def __init__(self, client, parameters, path_parameters, http_method, method_name, method_data, body_props):
         self.__dict__.update(locals())
         self._context_manager_response = None
@@ -124,15 +127,15 @@ class _ClientMethodFactory(object):
             session = self.client.get_authenticated_session()
         else:
             session = self.client.get_session()
-        retry_policy = RetryPolicy(read=10, status=10, status_forcelist=frozenset({502, 503, 504}))
-        adapter = HTTPAdapter(max_retries=retry_policy)
+        adapter = HTTPAdapter(max_retries=self.retry_policy)
         session.mount('http://', adapter)
         session.mount('https://', adapter)
 
         # TODO: (akislyuk) if using service account credentials, use manual refresh here
         json_input = body if self.body_props else None
         headers = headers if headers else {}
-        res = session.request(self.http_method, url, params=query, json=json_input, stream=stream, headers=headers)
+        res = session.request(self.http_method, url, params=query, json=json_input, stream=stream, headers=headers,
+                              timeout=self.timeout_policy)
         if res.status_code >= 400:
             raise SwaggerAPIException(response=res)
         return res
