@@ -1,7 +1,7 @@
 SHELL=/bin/bash
 
 test: lint install
-	coverage run --source=$$(python setup.py --name) -m unittest discover
+	coverage run --source=$$(python setup.py --name) -m unittest discover -v
 
 lint:
 	./setup.py flake8

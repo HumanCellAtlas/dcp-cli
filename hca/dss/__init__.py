@@ -6,6 +6,7 @@ import uuid
 from io import open
 
 import requests
+from requests.packages.urllib3.exceptions import ProtocolError, DecodeError, ReadTimeoutError
 
 from ..util import SwaggerClient
 from ..util.exceptions import SwaggerAPIException
@@ -37,24 +38,24 @@ class DSSClient(SwaggerClient):
             file_uuid = file_["uuid"]
             filename = file_.get("name", file_uuid)
 
-            logger.info("File %s: Retrieving...", filename)
-            response = self.get_file._request(dict(uuid=file_uuid, replica=replica), stream=True)
+            logger.info("Retrieving file %s", filename)
 
+            file_path = os.path.join(dest_name, filename)
+
+            retries = self.get_session().adapters["https://"].max_retries
+            # When streaming response data, requests/urllib3 does not obey its usual retry logic, so we reenact it here.
             try:
-                if response.ok:
-                    file_path = os.path.join(dest_name, filename)
+                with self.get_file.stream(uuid=file_uuid, replica=replica) as fh, open(file_path, "wb") as dest_fh:
                     logger.info("%s", "File {}: GET SUCCEEDED. Writing to disk.".format(filename))
-                    with open(file_path, "wb") as fh:
-                        for chunk in response.iter_content(chunk_size=1024*1024):
-                            if chunk:
-                                fh.write(chunk)
+                    while True:
+                        chunk = fh.raw.read(1024*1024)
+                        if len(chunk) == 0:
+                            break
+                        dest_fh.write(chunk)
                     logger.info("%s", "File {}: GET SUCCEEDED. Stored at {}.".format(filename, file_path))
-
-                else:
-                    logger.error("%s", "File {}: GET FAILED.".format(filename))
-                    logger.error("%s", "Response: {}".format(response.text))
-            finally:
-                response.close()
+            except (ProtocolError, DecodeError, ReadTimeoutError) as e:
+                logger.error(e)
+                retries = retries.increment(method="GET", error=e)
         return {}
 
     def upload(self, src_dir, replica, staging_bucket, timeout_seconds=1200):
