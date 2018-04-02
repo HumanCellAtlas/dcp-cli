@@ -6,7 +6,7 @@ import uuid
 from io import open
 
 import requests
-from requests.packages.urllib3.exceptions import ProtocolError, DecodeError, ReadTimeoutError, MaxRetryError
+from requests.packages.urllib3.exceptions import ProtocolError, DecodeError, ReadTimeoutError
 
 from ..util import SwaggerClient
 from ..util.exceptions import SwaggerAPIException
