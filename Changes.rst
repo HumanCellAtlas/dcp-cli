@@ -1,3 +1,10 @@
+Changes for v3.4.3 (2018-04-02)
+===============================
+
+-  Add timeout policy for requests (#100)
+
+-  Retry streaming read errors in bundle download (#98)
+
 Changes for v3.4.2 (2018-03-30)
 ===============================
 
