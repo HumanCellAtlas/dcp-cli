@@ -48,7 +48,10 @@ class DSSClient(SwaggerClient):
                 with self.get_file.stream(uuid=file_uuid, replica=replica) as fh, open(file_path, "wb") as dest_fh:
                     logger.info("%s", "File {}: GET SUCCEEDED. Writing to disk.".format(filename))
                     while True:
-                        dest_fh.write(fh.raw.read(1024*1024))
+                        chunk = fh.raw.read(1024*1024)
+                        if len(chunk) == 0:
+                            break
+                        dest_fh.write(chunk)
                     logger.info("%s", "File {}: GET SUCCEEDED. Stored at {}.".format(filename, file_path))
             except (ProtocolError, DecodeError, ReadTimeoutError) as e:
                 logger.error(e)
