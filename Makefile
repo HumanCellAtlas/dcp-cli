@@ -6,7 +6,12 @@ test: lint install
 lint:
 	./setup.py flake8
 
-install:
+version: hca/version.py
+
+hca/version.py: setup.py
+	echo "__version__ = '$$(python setup.py --version)'" > $@
+
+install: clean version
 	-rm -rf dist
 	python setup.py bdist_wheel
 	pip install --upgrade dist/*.whl
@@ -17,7 +22,10 @@ init_docs:
 docs:
 	$(MAKE) -C docs html
 
+clean:
+	-rm -rf build dist
+	-rm -rf *.egg-info
 
-.PHONY: test release docs
+.PHONY: test lint install release docs clean
 
 include common.mk
