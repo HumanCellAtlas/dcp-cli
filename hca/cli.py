@@ -9,7 +9,7 @@ For help with individual commands, run ``{prog} <command> --help``.
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-import os, sys, argparse, logging, json, datetime, traceback
+import os, sys, argparse, logging, json, datetime, traceback, platform
 from io import open
 
 import argcomplete
@@ -41,7 +41,13 @@ class HCAArgumentParser(argparse.ArgumentParser):
 
 def main(args=None):
     parser = HCAArgumentParser(description=__doc__, formatter_class=argparse.RawTextHelpFormatter)
-    parser.add_argument("--version", action="version", version="%(prog)s {version}".format(version=__version__))
+    version_string = "%(prog)s {version} ({python_impl} {python_version} {platform})"
+    parser.add_argument("--version", action="version", version=version_string.format(
+        version=__version__,
+        python_impl=platform.python_implementation(),
+        python_version=platform.python_version(),
+        platform=platform.platform()
+    ))
     parser.add_argument("--log-level", default=get_config().get("log_level"),
                         help=str([logging.getLevelName(i) for i in range(10, 60, 10)]),
                         choices={logging.getLevelName(i) for i in range(10, 60, 10)})
