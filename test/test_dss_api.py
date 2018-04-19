@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-import unittest, os, sys, filecmp, uuid, tempfile
+import unittest, os, sys, filecmp, uuid, tempfile, datetime, logging
 
 pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))  # noqa
 sys.path.insert(0, pkg_root)  # noqa
@@ -75,6 +75,7 @@ class TestDssApi(unittest.TestCase):
 
         # Test put-files
         file_uuid = str(uuid.uuid4())
+        file_version = datetime.datetime.now().isoformat()
         bundle_uuid = str(uuid.uuid4())
         source_url = "s3://{}/{}/{}".format(self.staging_bucket, file_['uuid'], file_['name'])
         client.put_file(uuid=file_uuid, creator_uid=1, bundle_uuid=bundle_uuid, source_url=source_url)
@@ -82,8 +83,8 @@ class TestDssApi(unittest.TestCase):
         # Test put-bundles
         files = [{'indexed': True,
                   'name': file_['name'],
-                  'uuid': file_['uuid'],
-                  'version': file_['version']}]
+                  'uuid': file_uuid,
+                  'version': file_version}]
         res = client.put_bundle(uuid=bundle_uuid, files=files, creator_uid=1, replica="aws")
         self.assertTrue(len(res["version"]) > 0)
 
