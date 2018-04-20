@@ -329,18 +329,35 @@ class SwaggerClient(object):
     def _process_method_args(self, parameters):
         body_props = {}
         method_args = collections.OrderedDict()
+
+        def _process_schema(schema, prefix=""):
+            for prop_name, prop_data in schema["properties"].items():
+                prop_data = self._resolve_ref(prop_data)
+                enum_values = prop_data.get("enum")
+                if enum_values is None:
+                    type_ = prop_data.get("type")
+                else:
+                    type_ = 'string'
+                if type_ == 'object' and "properties" in prop_data and not prefix:
+                    _process_schema(prop_data, prefix=prop_name + '_')
+                else:
+                    anno = self._type_map[type_]
+                    if prop_name not in schema.get("required", []):
+                        anno = typing.Optional[anno]
+                    param = Parameter(prefix + prop_name,
+                                      Parameter.POSITIONAL_OR_KEYWORD,
+                                      default=prop_data.get("default"),
+                                      annotation=anno)
+                    method_arg = dict(param=param,
+                                      doc=prop_data.get("description"),
+                                      choices=enum_values,
+                                      required=prop_name in schema.get("required", []))
+                    method_args[prefix + prop_name] = method_arg
+                    body_props[prefix + prop_name] = schema
+
         for parameter in parameters.values():
             if parameter["in"] == "body":
-                for prop_name, prop_data in parameter["schema"]["properties"].items():
-                    anno = self._type_map[prop_data["type"]]
-                    if prop_name not in parameter["schema"].get("required", []):
-                        anno = typing.Optional[anno]
-                    param = Parameter(prop_name, Parameter.POSITIONAL_OR_KEYWORD, default=prop_data.get("default"),
-                                      annotation=anno)
-                    method_args[prop_name] = dict(param=param, doc=prop_data.get("description"),
-                                                  choices=parameter.get("enum"),
-                                                  required=prop_name in parameter["schema"].get("required", []))
-                    body_props[prop_name] = parameter["schema"]
+                _process_schema(parameter["schema"])
             else:
                 annotation = str if parameter.get("required") else typing.Optional[str]
                 param = Parameter(parameter["name"], Parameter.POSITIONAL_OR_KEYWORD, default=parameter.get("default"),
@@ -348,6 +365,19 @@ class SwaggerClient(object):
                 method_args[parameter["name"]] = dict(param=param, doc=parameter.get("description"),
                                                       choices=parameter.get("enum"), required=parameter.get("required"))
         return body_props, method_args
+
+    def _resolve_ref(self, prop_data):
+        try:
+            ref = prop_data['$ref']
+        except KeyError:
+            pass
+        else:
+            path = ref.split('/')
+            assert path[0] == '#'
+            prop_data = self._swagger_spec
+            for key in path[1:]:
+                prop_data = prop_data[key]
+        return prop_data
 
     def _build_client_method(self, http_method, http_path, method_data):
         method_name_parts = [http_method] + [p for p in http_path.split("/")[1:] if not p.startswith("{")]
