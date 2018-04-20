@@ -75,16 +75,16 @@ class TestDssApi(unittest.TestCase):
 
         # Test put-files
         file_uuid = str(uuid.uuid4())
-        file_version = datetime.datetime.now().isoformat()
+        # file_version = datetime.datetime.now().isoformat()
         bundle_uuid = str(uuid.uuid4())
         source_url = "s3://{}/{}/{}".format(self.staging_bucket, file_['uuid'], file_['name'])
-        client.put_file(uuid=file_uuid, creator_uid=1, bundle_uuid=bundle_uuid, source_url=source_url)
+        res = client.put_file(uuid=file_uuid, creator_uid=1, bundle_uuid=bundle_uuid, source_url=source_url)
 
         # Test put-bundles
         files = [{'indexed': True,
                   'name': file_['name'],
                   'uuid': file_uuid,
-                  'version': file_version}]
+                  'version': res['version']}]
         res = client.put_bundle(uuid=bundle_uuid, files=files, creator_uid=1, replica="aws")
         self.assertTrue(len(res["version"]) > 0)
 
