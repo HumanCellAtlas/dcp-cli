@@ -331,16 +331,19 @@ class SwaggerClient(object):
         method_args = collections.OrderedDict()
         for parameter in parameters.values():
             if parameter["in"] == "body":
-                for prop_name, prop_data in parameter["schema"]["properties"].items():
-                    anno = self._type_map[prop_data["type"]]
-                    if prop_name not in parameter["schema"].get("required", []):
+                schema = parameter["schema"]
+                for prop_name, prop_data in schema["properties"].items():
+                    enum_values = prop_data.get("enum")
+                    type_ = prop_data.get("type") if enum_values is None else 'string'
+                    anno = self._type_map[type_]
+                    if prop_name not in schema.get("required", []):
                         anno = typing.Optional[anno]
                     param = Parameter(prop_name, Parameter.POSITIONAL_OR_KEYWORD, default=prop_data.get("default"),
                                       annotation=anno)
                     method_args[prop_name] = dict(param=param, doc=prop_data.get("description"),
-                                                  choices=parameter.get("enum"),
-                                                  required=prop_name in parameter["schema"].get("required", []))
-                    body_props[prop_name] = parameter["schema"]
+                                                  choices=enum_values,
+                                                  required=prop_name in schema.get("required", []))
+                    body_props[prop_name] = schema
             else:
                 annotation = str if parameter.get("required") else typing.Optional[str]
                 param = Parameter(parameter["name"], Parameter.POSITIONAL_OR_KEYWORD, default=parameter.get("default"),
