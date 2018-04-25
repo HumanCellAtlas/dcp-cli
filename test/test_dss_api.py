@@ -95,7 +95,7 @@ class TestDssApi(unittest.TestCase):
         client = hca.dss.DSSClient()
 
         query = {'bool': {}}
-        resp = client.put_subscription(es_query=query, callback_url="www.example.com", replica="aws")
+        resp = client.put_subscription(es_query=query, callback_url="https://www.example.com", replica="aws")
         subscription_uuid = resp['uuid']
 
         resp = client.get_subscriptions(replica="aws")
@@ -126,7 +126,7 @@ class TestDssApi(unittest.TestCase):
     def test_python_login_logout(self):
         client = hca.dss.DSSClient()
         query = {'bool': {}}
-        resp = client.put_subscription(es_query=query, callback_url="www.example.com", replica="aws")
+        resp = client.put_subscription(es_query=query, callback_url="https://www.example.com", replica="aws")
         self.assertIn("uuid", resp)
 
         access_token = "test_access_token"
