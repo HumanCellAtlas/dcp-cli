@@ -114,13 +114,15 @@ class TestDssApi(unittest.TestCase):
         with self.assertRaisesRegexp(Exception, "Cannot find subscription!"):
             resp = client.get_subscription(replica="aws", uuid=subscription_uuid)
 
-    def test_search(self):
+    def test_search(self, limit=128):
         client = hca.dss.DSSClient()
 
         query = {}
 
-        for result in client.post_search.iterate(es_query=query, replica="aws"):
+        for ix, result in enumerate(client.post_search.iterate(es_query=query, replica="aws")):
             self.assertIn("bundle_fqid", result)
+            if ix > limit:
+                break
 
     @reset_tweak_changes
     def test_python_login_logout(self):
