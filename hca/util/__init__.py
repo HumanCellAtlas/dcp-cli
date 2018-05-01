@@ -108,7 +108,7 @@ class RetryPolicy(retry.Retry):
 
 class _ClientMethodFactory(object):
     retry_policy = RetryPolicy(read=10, status=10, status_forcelist=frozenset({500, 502, 503, 504}))
-    timeout_policy = timeout.Timeout(connect=60, read=120)
+    timeout_policy = timeout.Timeout(connect=60, read=10)
 
     def __init__(self, client, parameters, path_parameters, http_method, method_name, method_data, body_props):
         self.__dict__.update(locals())
