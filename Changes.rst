@@ -1,3 +1,14 @@
+Changes for v3.5.0 (2018-05-03)
+===============================
+
+-  Add HTTP resume to DCP CLI download. (#101)
+
+-  Cap the number of results for test_search (#111)
+
+-  Provide schema for URLs. (#110)
+
+-  Fix handling of enum values in JSON request bodies
+
 Changes for v3.4.6 (2018-04-19)
 ===============================
 
