@@ -39,7 +39,8 @@ class DSSClient(SwaggerClient):
 
     def download(self, bundle_uuid, replica, version="", dest_name="",
                  metadata_files=('*',), data_files=('*',),
-                 num_retries=10, min_delay_seconds=0.25):
+                 initial_retries_left=10, min_delay_seconds=0.25,
+                 name=None):
         """
         Download a bundle and save it to the local filesystem as a directory.
 
@@ -72,7 +73,8 @@ class DSSClient(SwaggerClient):
         if not dest_name:
             dest_name = bundle_uuid
 
-        bundle = self.get_bundle(uuid=bundle_uuid, replica=replica, version=version if version else None)["bundle"]
+        bundle = self.get_bundle(uuid=bundle_uuid, replica=replica,
+                                 version=version if version else None, name=name)["bundle"]
 
         files = {}
         for file_ in bundle["files"]:
@@ -124,6 +126,7 @@ class DSSClient(SwaggerClient):
                             headers={
                                 'Range': "bytes={}-".format(fh.tell())
                             },
+                            name=name
                         )
                         try:
                             if not response.ok:
@@ -238,7 +241,7 @@ class DSSClient(SwaggerClient):
         else:
             return {}
 
-    def upload(self, src_dir, replica, staging_bucket, timeout_seconds=1200):
+    def upload(self, src_dir, replica, staging_bucket, timeout_seconds=1200, name=None):
         """
         Upload a directory of files from the local filesystem and create a bundle containing the uploaded files.
 
@@ -281,7 +284,8 @@ class DSSClient(SwaggerClient):
                 version=version,
                 creator_uid=creator_uid,
                 source_url=source_url
-            ))
+            ), name=name)
+            version = response.json().get('version', "blank")
             files_uploaded.append(dict(name=filename, version=version, uuid=file_uuid, creator_uid=creator_uid))
 
             if response.status_code in (requests.codes.ok, requests.codes.created):
@@ -294,7 +298,7 @@ class DSSClient(SwaggerClient):
                 wait = 1.0
                 while time.time() < timeout:
                     try:
-                        self.head_file(uuid=file_uuid, replica="aws", version=version)
+                        self.head_file(uuid=file_uuid, replica="aws", version=version, name=name)
                         break
                     except SwaggerAPIException as e:
                         if e.code != requests.codes.not_found:
@@ -318,7 +322,8 @@ class DSSClient(SwaggerClient):
                                    version=version,
                                    replica=replica,
                                    creator_uid=creator_uid,
-                                   files=file_args)
+                                   files=file_args,
+                                   name=name)
         logger.info("%s", "Bundle {}: Registered successfully".format(bundle_uuid))
 
         return {
