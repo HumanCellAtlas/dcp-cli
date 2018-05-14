@@ -107,7 +107,6 @@ class RetryPolicy(retry.Retry):
 
 
 class _ClientMethodFactory(object):
-    retry_policy = RetryPolicy(read=10, status=10, status_forcelist=frozenset({500, 502, 503, 504}))
     timeout_policy = timeout.Timeout(connect=60, read=10)
 
     def __init__(self, client, parameters, path_parameters, http_method, method_name, method_data, body_props):
@@ -127,9 +126,6 @@ class _ClientMethodFactory(object):
             session = self.client.get_authenticated_session()
         else:
             session = self.client.get_session()
-        adapter = HTTPAdapter(max_retries=self.retry_policy)
-        session.mount('http://', adapter)
-        session.mount('https://', adapter)
 
         # TODO: (akislyuk) if using service account credentials, use manual refresh here
         json_input = body if self.body_props else None
@@ -176,6 +172,7 @@ class _PaginatingClientMethodFactory(_ClientMethodFactory):
 
 class SwaggerClient(object):
     scheme = "https"
+    retry_policy = RetryPolicy(read=10, status=10, status_forcelist=frozenset({500, 502, 503, 504}))
     _authenticated_session = None
     _session = None
     _swagger_spec = None
@@ -222,7 +219,7 @@ class SwaggerClient(object):
                 except OSError as e:
                     if not (e.errno == errno.EEXIST and os.path.isdir(self.config.user_config_dir)):
                         raise
-                res = requests.get(swagger_url)
+                res = self.get_session().get(swagger_url)
                 res.raise_for_status()
                 assert "swagger" in res.json()
                 with open(swagger_filename, "wb") as fh:
@@ -242,6 +239,7 @@ class SwaggerClient(object):
         if self._session is None:
             self._session = requests.Session(**self._session_kwargs)
             self._session.headers.update({"User-Agent": self.__class__.__name__})
+            self._set_retry_policy(self._session)
         return self._session
 
     def logout(self):
@@ -321,7 +319,13 @@ class SwaggerClient(object):
                     **self._session_kwargs
                 )
             self._authenticated_session.headers.update({"User-Agent": self.__class__.__name__})
+            self._set_retry_policy(self._authenticated_session)
         return self._authenticated_session
+
+    def _set_retry_policy(self, session):
+        adapter = HTTPAdapter(max_retries=self.retry_policy)
+        session.mount('http://', adapter)
+        session.mount('https://', adapter)
 
     def _save_auth_token_refresh_result(self, result):
         self.config.oauth2_token = result
