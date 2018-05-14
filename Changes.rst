@@ -1,3 +1,8 @@
+Changes for v3.5.1 (2018-05-14)
+===============================
+
+-  Apply retry policy when fetching Swagger API definition
+
 Changes for v3.5.0 (2018-05-03)
 ===============================
 
