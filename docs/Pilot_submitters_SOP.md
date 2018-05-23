@@ -50,13 +50,15 @@ The hca-cli supports [wildcards](https://en.wikibooks.org/wiki/A_Quick_Introduct
 
 You can see which files you have uploaded to the cloud using 
 
-```$ hca upload list -l```
+```
+$ hca upload list -l
+```
 
 This will show the files in the area you have selected.
 
 ## Note
 
-* Files cannot be deleted using the hca-cli. Contact us (data-help@humancellatlas.org) with a manifesto if there are files we should ignore. Please include your name, credentials and manifesto in this email.
+* Files cannot be deleted using the hca-cli. Contact us (data-help@humancellatlas.org) with a manifesto if there are files we should ignore. Please include your name, credentials, and manifesto in this email.
 * Uploading a file with the same name as one that already exists will replace the file with the most recent upload.
-* For more information about the hca-cli see:
-[GitHub - HumanCellAtlas/dcp-cli: HCA Data Coordination Platform Command Line Interface](https://github.com/HumanCellAtlas/dcp-cli)
+* For more information about the hca-cli, you can check out documentation on 
+[GitHub](https://github.com/HumanCellAtlas/dcp-cli) or [readthedocs](http://hca.readthedocs.io/en/latest/).
