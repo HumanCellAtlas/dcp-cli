@@ -211,7 +211,7 @@ class SwaggerClient(object):
         refs = []
 
         def store_refs(d):
-            if len(d) == 1 and list(d)[0] == ptr_str:
+            if len(d) == 1 and ptr_str in d:
                 refs.append(d)
             return d
 
