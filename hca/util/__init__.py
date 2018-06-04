@@ -94,6 +94,7 @@ import requests
 from requests.adapters import HTTPAdapter
 from requests_oauthlib import OAuth2Session
 from urllib3.util import retry, timeout
+from jsonpointer import resolve_pointer
 
 from .. import get_config, logger
 from .compat import USING_PYTHON2
@@ -202,6 +203,25 @@ class SwaggerClient(object):
             for http_method, method_data in path_data.items():
                 self._build_client_method(http_method, http_path, method_data)
 
+    @staticmethod
+    def load_swagger_json(swagger_json, ptr_str="$ref"):
+        """
+        Load the Swagger JSON and resolve {"$ref": "#/..."} internal JSON Pointer references.
+        """
+        refs = []
+
+        def store_refs(d):
+            if len(d) == 1 and ptr_str in d:
+                refs.append(d)
+            return d
+
+        swagger_content = json.load(swagger_json, object_hook=store_refs)
+        for ref in refs:
+            _, target = ref.popitem()
+            assert target[0] == "#"
+            ref.update(resolve_pointer(swagger_content, target[1:]))
+        return swagger_content
+
     @property
     def swagger_spec(self):
         if not self._swagger_spec:
@@ -225,7 +245,7 @@ class SwaggerClient(object):
                 with open(swagger_filename, "wb") as fh:
                     fh.write(res.content)
             with open(swagger_filename) as fh:
-                self.__class__._swagger_spec = json.load(fh)
+                self.__class__._swagger_spec = self.load_swagger_json(fh)
         return self._swagger_spec
 
     @property
