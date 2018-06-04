@@ -1,3 +1,8 @@
+Changes for v3.5.2 (2018-06-04)
+===============================
+
+-  Resolve internal references in Swagger spec (#122)
+
 Changes for v3.5.1 (2018-05-14)
 ===============================
 
