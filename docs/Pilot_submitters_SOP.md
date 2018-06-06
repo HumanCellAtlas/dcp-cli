@@ -1,4 +1,4 @@
-# SOP for pilot submitters
+# SOP for pilot submitters providing data files to the HCA Data Coordination Platform
 
 This SOP describes how to submit data files to the HCA Data Coordination Platform (DCP) for the DCP pilot software release. Currently, the `hca` command line tool (hca-cli) is used to transfer data files to Amazon S3.
 
@@ -53,10 +53,10 @@ The hca-cli transfers data files to a secure "upload area". Unique credentials a
 The hca-cli supports [wildcards](https://en.wikibooks.org/wiki/A_Quick_Introduction_to_Unix/Wildcards) which allows multiple files to be uploaded using one command if they have a common naming convention. For example, 
 
 ```
-hca upload file *.fastq
+hca upload file *.fastq.gz
 ```
 
-will upload all files in the current directory where the filename ends in `.fastq`.
+will upload all files in the current directory where the filename ends in `.fastq.gz`.
 
 A list of files present in the selected upload area can be viewed by running:
 
