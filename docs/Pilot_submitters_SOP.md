@@ -67,6 +67,6 @@ hca upload list -l
 ## Note
 
 * Files cannot be deleted from the upload area using the `hca` tool. If there are files that need to be deleted, please contact data-help@humancellatlas.org and include your name, credentials, and a list of filenames to delete.
-* Uploading a file with the same filename as one that already exists in the upload area will replace the file with the most recent upload.
+* Uploading a file with the same filename as one that already exists in the upload area will replace the file with the most recent upload. You can find out what files are already in the system using the command hca upload list -l
 * For more information about the hca-cli, you can check out documentation on 
 [GitHub](https://github.com/HumanCellAtlas/dcp-cli) or [readthedocs](http://hca.readthedocs.io/en/latest/).
