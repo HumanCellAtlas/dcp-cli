@@ -14,11 +14,11 @@ class UploadArea:
 
     @classmethod
     def all(cls):
-        return [cls(uuid=uuid) for uuid in UploadConfig().areas()]
+        return [cls(uuid=uuid) for uuid in UploadConfig().areas]
 
     @classmethod
     def areas_matching_alias(cls, alias):
-        return [cls(uuid=uuid) for uuid in UploadConfig().areas() if re.match(alias, uuid)]
+        return [cls(uuid=uuid) for uuid in UploadConfig().areas if re.match(alias, uuid)]
 
     def __init__(self, **kwargs):
         """
@@ -29,7 +29,7 @@ class UploadArea:
         """
         if 'uuid' in kwargs:
             self.uuid = kwargs['uuid']
-            areas = UploadConfig().areas()
+            areas = UploadConfig().areas
             if self.uuid not in areas:
                 raise UploadException("I'm not aware of upload area \"%s\"" % self.uuid)
             self.urn = UploadAreaURN(areas[self.uuid])

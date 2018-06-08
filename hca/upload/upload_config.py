@@ -29,8 +29,21 @@ class UploadConfig:
             self._config.upload.upload_service_api_url_template = self.DEFAULT_UPLOAD_SERVICE_API_URL_TEMPLATE
         self.save()
 
+    @property
     def areas(self):
         return self._config.upload.areas
+
+    @property
+    def current_area(self):
+        return self._config.upload.current_area
+
+    @property
+    def bucket_name_template(self):
+        return self._config.upload.bucket_name_template
+
+    @property
+    def upload_service_api_url_template(self):
+        return self._config.upload.upload_service_api_url_template
 
     def add_area(self, urn):
         if urn.urn not in self._config.upload.areas:
@@ -47,18 +60,6 @@ class UploadConfig:
         if area_uuid in self._config.upload.areas:
             del self._config.upload.areas[area_uuid]
             self.save()
-
-    @property
-    def current_area(self):
-        return self._config.upload.current_area
-
-    @property
-    def bucket_name_template(self):
-        return self._config.upload.bucket_name_template
-
-    @property
-    def upload_service_api_url_template(self):
-        return self._config.upload.upload_service_api_url_template
 
     def save(self):
         self._config.save()
