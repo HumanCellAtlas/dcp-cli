@@ -20,14 +20,14 @@ class TestUploadCliForgetCommand(unittest.TestCase):
     @reset_tweak_changes
     def test_when_given_an_alias_that_matches_one_area_it_forgets_that_area(self):
         area = mock_current_upload_area()
-        self.assertIn(area.uuid, UploadConfig().areas())
+        self.assertIn(area.uuid, UploadConfig().areas)
         self.assertEqual(area.uuid, UploadConfig().current_area)
 
         with CapturingIO('stdout') as stdout:
             args = Namespace(uuid_or_alias=area.uuid)
             ForgetCommand(args)
 
-        self.assertNotIn(area.uuid, UploadConfig().areas())
+        self.assertNotIn(area.uuid, UploadConfig().areas)
         self.assertEqual(None, UploadConfig().current_area)
 
     @reset_tweak_changes
