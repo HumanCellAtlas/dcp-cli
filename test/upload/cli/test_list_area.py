@@ -1,14 +1,12 @@
 import os
 import sys
-import unittest
 from argparse import Namespace
 
 import responses
 import boto3
-from moto import mock_s3
 
 from ... import CapturingIO, reset_tweak_changes
-from .. import mock_current_upload_area
+from .. import UploadTestCase, mock_current_upload_area
 
 pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))  # noqa
 sys.path.insert(0, pkg_root)  # noqa
@@ -16,12 +14,10 @@ sys.path.insert(0, pkg_root)  # noqa
 from hca.upload.cli.list_area_command import ListAreaCommand
 
 
-class TestUploadListAreaCommand(unittest.TestCase):
+class TestUploadListAreaCommand(UploadTestCase):
 
     def setUp(self):
-        self.s3_mock = mock_s3()
-        self.s3_mock.start()
-
+        super(self.__class__, self).setUp()
         self.deployment_stage = 'test'
         self.upload_bucket_name = 'org-humancellatlas-upload-{}'.format(self.deployment_stage)
         self.upload_bucket = boto3.resource('s3').Bucket(self.upload_bucket_name)
