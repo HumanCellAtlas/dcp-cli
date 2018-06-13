@@ -8,7 +8,6 @@ from mock import patch, Mock
 
 import boto3
 
-from ... import reset_tweak_changes
 from .. import UploadTestCase
 
 pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))  # noqa
@@ -38,7 +37,6 @@ class TestUploadCliUploadCommand(UploadTestCase):
         }
         config.save()
 
-    @reset_tweak_changes
     def test_upload_with_target_filename_option(self):
         self.setup_tweak_config()
         s3 = boto3.resource('s3')
@@ -57,7 +55,6 @@ class TestUploadCliUploadCommand(UploadTestCase):
             expected_contents = fh.read()
             self.assertEqual(obj.get()['Body'].read(), expected_contents)
 
-    @reset_tweak_changes
     def test_upload_with_dcp_type_option(self):
         self.setup_tweak_config()
         s3 = boto3.resource('s3')
@@ -72,7 +69,6 @@ class TestUploadCliUploadCommand(UploadTestCase):
             expected_contents = fh.read()
             self.assertEqual(obj.get()['Body'].read(), expected_contents)
 
-    @reset_tweak_changes
     @patch('hca.upload.s3_agent.S3Agent.upload_file')   # Don't actually try to upload
     def test_no_transfer_acceleration_option_sets_up_botocore_config_correctly(self, upload_file_stub):
         self.setup_tweak_config()
@@ -90,7 +86,6 @@ class TestUploadCliUploadCommand(UploadTestCase):
             UploadCommand(args)
             mock_config.assert_called_once_with()
 
-    @reset_tweak_changes
     def test_multiple_uploads(self):
         self.setup_tweak_config()
         s3 = boto3.resource('s3')

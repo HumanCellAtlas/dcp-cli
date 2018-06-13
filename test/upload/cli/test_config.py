@@ -3,7 +3,7 @@ from argparse import Namespace
 import responses
 import boto3
 
-from ... import CapturingIO, reset_tweak_changes
+from ... import CapturingIO
 from .. import UploadTestCase, mock_current_upload_area
 
 import hca
@@ -23,7 +23,6 @@ class TestConfig(UploadTestCase):
         self.area = mock_current_upload_area()
         self.upload_bucket.Object('/'.join([self.area.uuid, 'file1.fastq.gz'])).put(Body="foo")
 
-    @reset_tweak_changes
     @responses.activate
     def test_we_access_hca_url_by_default(self):
 
@@ -38,7 +37,6 @@ class TestConfig(UploadTestCase):
         self.assertEqual(len(responses.calls), 1)
         self.assertEqual(responses.calls[0].request.url, list_url)
 
-    @reset_tweak_changes
     @responses.activate
     def test_we_access_configured_upload_service_api_endpoint(self):
         config = hca.get_config()

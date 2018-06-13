@@ -5,7 +5,7 @@ from argparse import Namespace
 
 import six
 
-from ... import CapturingIO, reset_tweak_changes
+from ... import CapturingIO
 from .. import UploadTestCase
 
 pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))  # noqa
@@ -23,7 +23,6 @@ class TestUploadCliListAreasCommand(UploadTestCase):
         creds = "foo"
         self.urn = "dcp:upl:aws:dev:{}:{}".format(self.area_uuid, creds)
 
-    @reset_tweak_changes
     def test_it_lists_areas_when_there_are_some(self):
         a_uuid = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
         b_uuid = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'

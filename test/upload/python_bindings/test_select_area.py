@@ -2,7 +2,6 @@ import os
 import sys
 import uuid
 
-from ... import reset_tweak_changes
 from .. import UploadTestCase
 
 pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))  # noqa
@@ -21,13 +20,11 @@ class TestUploadSelectArea(UploadTestCase):
         creds = "foo"
         self.urn = "dcp:upl:aws:dev:{}:{}".format(self.area_uuid, creds)
 
-    @reset_tweak_changes
     def test_when_given_neither_a_uuid_or_urn_it_raises(self):
 
         with self.assertRaises(UploadException):
             upload.select_area()
 
-    @reset_tweak_changes
     def test_when_given_an_unrecognized_urn_it_stores_it_in_upload_area_list_and_sets_it_as_current_area(self):
         upload.select_area(urn=self.urn)
 
@@ -36,7 +33,6 @@ class TestUploadSelectArea(UploadTestCase):
         self.assertEqual(self.urn, config.upload.areas[self.area_uuid])
         self.assertEqual(self.area_uuid, config.upload.current_area)
 
-    @reset_tweak_changes
     def test_when_given_a_uuid_of_an_existing_area_it_selects_that_area(self):
         a_uuid = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
         b_uuid = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'
@@ -54,7 +50,6 @@ class TestUploadSelectArea(UploadTestCase):
         config = hca.get_config()
         self.assertEqual(b_uuid, config.upload.current_area)
 
-    @reset_tweak_changes
     def test_when_given_a_uuid_of_an_unknown_area_it_raises_an_error(self):
 
         with self.assertRaises(UploadException):

@@ -4,8 +4,6 @@ import sys
 import boto3
 import responses
 
-from ... import reset_tweak_changes
-
 pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))  # noqa
 sys.path.insert(0, pkg_root)  # noqa
 
@@ -22,7 +20,6 @@ class TestUploadListArea(UploadTestCase):
         self.upload_bucket = boto3.resource('s3').Bucket(self.upload_bucket_name)
         self.upload_bucket.create()
 
-    @reset_tweak_changes
     def test_list_current_area(self):
         area = mock_current_upload_area()
         self.upload_bucket.Object('/'.join([area.uuid, 'bogofile'])).put(Body="foo")
@@ -31,7 +28,6 @@ class TestUploadListArea(UploadTestCase):
 
         self.assertEqual(file_list, [{'name': 'bogofile'}])
 
-    @reset_tweak_changes
     @responses.activate
     def test_list_current_area_with_detail(self):
         area = mock_current_upload_area()

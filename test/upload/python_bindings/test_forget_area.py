@@ -1,7 +1,6 @@
 import os
 import sys
 
-from ... import reset_tweak_changes
 from .. import UploadTestCase, mock_upload_area, mock_current_upload_area
 
 pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))  # noqa
@@ -12,7 +11,6 @@ from hca.upload import UploadConfig, UploadException, forget_area
 
 class TestUploadForget(UploadTestCase):
 
-    @reset_tweak_changes
     def test_when_given_an_alias_that_matches_one_area_it_forgets_that_area(self):
         area = mock_current_upload_area()
         self.assertIn(area.uuid, UploadConfig().areas)
@@ -23,13 +21,11 @@ class TestUploadForget(UploadTestCase):
         self.assertNotIn(area.uuid, UploadConfig().areas)
         self.assertEqual(None, UploadConfig().current_area)
 
-    @reset_tweak_changes
     def test_when_given_an_alias_that_matches_no_areas_it_raises(self):
 
         with self.assertRaises(UploadException):
             forget_area('bogo-uuid')
 
-    @reset_tweak_changes
     def test_when_given_an_alias_that_matches_more_than_one_area_it_raises(self):
         mock_upload_area('deadbeef-dead-dead-dead-beeeeeeeeeef')
         mock_upload_area('deafbeef-deaf-deaf-deaf-beeeeeeeeeef')
