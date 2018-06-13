@@ -13,9 +13,8 @@ from .. import UploadTestCase
 pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))  # noqa
 sys.path.insert(0, pkg_root)  # noqa
 
-import hca
 from hca.upload.cli.upload_command import UploadCommand
-from .. import UPLOAD_BUCKET_NAME_TEMPLATE, TEST_UPLOAD_BUCKET
+from .. import TEST_UPLOAD_BUCKET
 
 
 class TestUploadCliUploadCommand(UploadTestCase):
@@ -28,17 +27,7 @@ class TestUploadCliUploadCommand(UploadTestCase):
         encoded_creds = base64.b64encode(json.dumps(creds).encode('ascii')).decode('ascii')
         self.urn = "dcp:upl:aws:{}:{}:{}".format(self.stage, self.area_uuid, encoded_creds)
 
-    def setup_tweak_config(self):
-        config = hca.get_config()
-        config.upload = {
-            'areas': {self.area_uuid: self.urn},
-            'current_area': self.area_uuid,
-            'bucket_name_template': UPLOAD_BUCKET_NAME_TEMPLATE
-        }
-        config.save()
-
     def test_upload_with_target_filename_option(self):
-        self.setup_tweak_config()
         s3 = boto3.resource('s3')
         s3.Bucket(TEST_UPLOAD_BUCKET).create()
 
@@ -56,7 +45,6 @@ class TestUploadCliUploadCommand(UploadTestCase):
             self.assertEqual(obj.get()['Body'].read(), expected_contents)
 
     def test_upload_with_dcp_type_option(self):
-        self.setup_tweak_config()
         s3 = boto3.resource('s3')
         s3.Bucket(TEST_UPLOAD_BUCKET).create()
 
@@ -71,7 +59,6 @@ class TestUploadCliUploadCommand(UploadTestCase):
 
     @patch('hca.upload.s3_agent.S3Agent.upload_file')   # Don't actually try to upload
     def test_no_transfer_acceleration_option_sets_up_botocore_config_correctly(self, upload_file_stub):
-        self.setup_tweak_config()
         import botocore
 
         with patch('hca.upload.s3_agent.Config', new=Mock(wraps=botocore.config.Config)) as mock_config:
@@ -87,7 +74,6 @@ class TestUploadCliUploadCommand(UploadTestCase):
             mock_config.assert_called_once_with()
 
     def test_multiple_uploads(self):
-        self.setup_tweak_config()
         s3 = boto3.resource('s3')
         s3.Bucket(TEST_UPLOAD_BUCKET).create()
 
