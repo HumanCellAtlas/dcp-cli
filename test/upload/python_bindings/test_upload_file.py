@@ -1,9 +1,7 @@
 import os
 import sys
-import unittest
 
 import boto3
-from moto import mock_s3
 
 from ... import reset_tweak_changes
 
@@ -11,12 +9,11 @@ pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')) 
 sys.path.insert(0, pkg_root)  # noqa
 
 from hca import upload
-from .. import TEST_UPLOAD_BUCKET, mock_current_upload_area, setup_tweak_config
+from .. import UploadTestCase, TEST_UPLOAD_BUCKET, mock_current_upload_area, setup_tweak_config
 
 
-class TestUploadFileUpload(unittest.TestCase):
+class TestUploadFileUpload(UploadTestCase):
 
-    @mock_s3
     @reset_tweak_changes
     def test_file_upload(self):
         setup_tweak_config()
@@ -33,7 +30,6 @@ class TestUploadFileUpload(unittest.TestCase):
             expected_contents = fh.read()
             self.assertEqual(obj.get()['Body'].read(), expected_contents)
 
-    @mock_s3
     @reset_tweak_changes
     def test_file_upload_with_target_filename_option(self):
         setup_tweak_config()

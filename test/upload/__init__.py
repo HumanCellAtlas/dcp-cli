@@ -2,8 +2,9 @@ import base64
 import json
 import os
 import uuid
+import unittest
 
-import tweak
+from moto import mock_s3
 
 import hca
 from hca.upload import UploadArea, UploadAreaURN
@@ -39,3 +40,14 @@ def mock_upload_area(area_uuid=None):
     urn = "dcp:upl:aws:{}:{}:{}".format(stage, area_uuid, encoded_creds)
     area = UploadArea(urn=UploadAreaURN(urn))
     return area
+
+
+class UploadTestCase(unittest.TestCase):
+
+    def setUp(self):
+        # Setup mock AWS
+        self.s3_mock = mock_s3()
+        self.s3_mock.start()
+
+    def tearDown(self):
+        self.s3_mock.stop()

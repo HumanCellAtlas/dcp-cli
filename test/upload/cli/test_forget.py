@@ -1,12 +1,11 @@
 import os
 import sys
-import unittest
 from argparse import Namespace
 
 import six
 
 from ... import CapturingIO, reset_tweak_changes
-from .. import mock_current_upload_area, mock_upload_area
+from .. import UploadTestCase, mock_current_upload_area, mock_upload_area
 
 pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))  # noqa
 sys.path.insert(0, pkg_root)  # noqa
@@ -15,7 +14,7 @@ from hca.upload import UploadConfig
 from hca.upload.cli.forget_command import ForgetCommand
 
 
-class TestUploadCliForgetCommand(unittest.TestCase):
+class TestUploadCliForgetCommand(UploadTestCase):
 
     @reset_tweak_changes
     def test_when_given_an_alias_that_matches_one_area_it_forgets_that_area(self):

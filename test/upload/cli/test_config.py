@@ -1,26 +1,20 @@
-import os
-import sys
-import unittest
 from argparse import Namespace
 
 import responses
 import boto3
-from moto import mock_s3
 
 from ... import CapturingIO, reset_tweak_changes
-from .. import mock_current_upload_area
+from .. import UploadTestCase, mock_current_upload_area
 
 import hca
 
 from hca.upload.cli.list_area_command import ListAreaCommand
 
 
-class TestConfig(unittest.TestCase):
+class TestConfig(UploadTestCase):
 
     def setUp(self):
-        self.s3_mock = mock_s3()
-        self.s3_mock.start()
-
+        super(self.__class__, self).setUp()
         self.deployment_stage = 'test'
         self.upload_bucket_name = 'org-humancellatlas-upload-{}'.format(self.deployment_stage)
         self.upload_bucket = boto3.resource('s3').Bucket(self.upload_bucket_name)
@@ -28,9 +22,6 @@ class TestConfig(unittest.TestCase):
 
         self.area = mock_current_upload_area()
         self.upload_bucket.Object('/'.join([self.area.uuid, 'file1.fastq.gz'])).put(Body="foo")
-
-    def tearDown(self):
-        self.s3_mock.stop()
 
     @reset_tweak_changes
     @responses.activate

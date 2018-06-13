@@ -6,6 +6,7 @@ import uuid
 import tweak
 
 from ... import reset_tweak_changes
+from .. import UploadTestCase
 
 pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))  # noqa
 sys.path.insert(0, pkg_root)  # noqa
@@ -14,9 +15,10 @@ import hca
 from hca import upload
 
 
-class TestUploadListAreas(unittest.TestCase):
+class TestUploadListAreas(UploadTestCase):
 
     def setUp(self):
+        super(self.__class__, self).setUp()
         self.area_uuid = str(uuid.uuid4())
         creds = "foo"
         self.urn = "dcp:upl:aws:dev:{}:{}".format(self.area_uuid, creds)
