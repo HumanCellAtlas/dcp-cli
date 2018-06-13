@@ -5,7 +5,7 @@ from argparse import Namespace
 import responses
 import boto3
 
-from ... import CapturingIO, reset_tweak_changes
+from ... import CapturingIO
 from .. import UploadTestCase, mock_current_upload_area
 
 pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))  # noqa
@@ -26,7 +26,6 @@ class TestUploadListAreaCommand(UploadTestCase):
     def tearDown(self):
         self.s3_mock.stop()
 
-    @reset_tweak_changes
     def test_list_area_command(self):
         area = mock_current_upload_area()
         self.upload_bucket.Object('/'.join([area.uuid, 'file1.fastq.gz'])).put(Body="foo")
@@ -37,7 +36,6 @@ class TestUploadListAreaCommand(UploadTestCase):
 
         self.assertEqual(stdout.captured(), "file1.fastq.gz\nsample.json\n")
 
-    @reset_tweak_changes
     @responses.activate
     def test_list_area_command_with_long_option(self):
         area = mock_current_upload_area()

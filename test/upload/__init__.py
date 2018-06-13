@@ -6,6 +6,8 @@ import unittest
 
 from moto import mock_s3
 
+from .. import TweakResetter
+
 import hca
 from hca.upload import UploadArea, UploadAreaURN
 
@@ -48,6 +50,10 @@ class UploadTestCase(unittest.TestCase):
         # Setup mock AWS
         self.s3_mock = mock_s3()
         self.s3_mock.start()
+        # Don't crush Tweak config
+        self.tweak_resetter = TweakResetter()
+        self.tweak_resetter.save_config()
 
     def tearDown(self):
         self.s3_mock.stop()
+        self.tweak_resetter.restore_config()
