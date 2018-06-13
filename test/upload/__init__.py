@@ -15,15 +15,6 @@ UPLOAD_BUCKET_NAME_TEMPLATE = 'bogo-bucket-{deployment_stage}'
 TEST_UPLOAD_BUCKET = UPLOAD_BUCKET_NAME_TEMPLATE.format(deployment_stage=os.environ['DEPLOYMENT_STAGE'])
 
 
-def setup_tweak_config():
-    config = hca.get_config()
-    config.upload = {
-        'areas': {},
-        'bucket_name_template': UPLOAD_BUCKET_NAME_TEMPLATE
-    }
-    config.save()
-
-
 def mock_current_upload_area():
     area = mock_upload_area()
     area.select()
@@ -53,7 +44,18 @@ class UploadTestCase(unittest.TestCase):
         # Don't crush Tweak config
         self.tweak_resetter = TweakResetter()
         self.tweak_resetter.save_config()
+        # Clean config
+        self._setup_tweak_config()
 
     def tearDown(self):
         self.s3_mock.stop()
         self.tweak_resetter.restore_config()
+
+    def _setup_tweak_config(self):
+        config = hca.get_config()
+        config.upload = {
+            'areas': {},
+            'bucket_name_template': UPLOAD_BUCKET_NAME_TEMPLATE
+        }
+        config.save()
+
