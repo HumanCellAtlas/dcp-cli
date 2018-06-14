@@ -1,6 +1,5 @@
 from .upload_config import UploadConfig
 from .upload_area import UploadArea
-from .upload_area_urn import UploadAreaURN
 from .exceptions import UploadException
 
 
@@ -8,15 +7,15 @@ def select_area(**kwargs):
     """
     Select a new destination for uploads, using the UUID of a formerly selected area, or the URN of a new upload area.
 
-    :param urn: An Upload Area URN.
+    :param uri: An Upload Area URI.
     :param uuid: A RFC4122-compliant ID of the upload area.
     """
     if 'uuid' in kwargs:
         area = UploadArea(uuid=kwargs['uuid'])
-    elif 'urn' in kwargs:
-        area = UploadArea(urn=UploadAreaURN(kwargs['urn']))
+    elif 'uri' in kwargs:
+        area = UploadArea(uri=kwargs['uri'])
     else:
-        raise UploadException("You must supply a UUID or URN")
+        raise UploadException("You must supply a UUID or URI")
     area.select()
 
 

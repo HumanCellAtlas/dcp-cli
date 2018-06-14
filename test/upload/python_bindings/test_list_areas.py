@@ -21,8 +21,8 @@ class TestUploadListAreas(UploadTestCase):
         config = hca.get_config()
         config.upload = {
             'areas': {
-                a_uuid: "dcp:upl:aws:dev:%s" % (a_uuid,),
-                b_uuid: "dcp:upl:aws:dev:%s" % (b_uuid,),
+                a_uuid: {'uri': "s3://foo/{}/".format(a_uuid)},
+                b_uuid: {'uri': "s3://foo/{}/".format(b_uuid)},
             },
             'current_area': a_uuid
         }

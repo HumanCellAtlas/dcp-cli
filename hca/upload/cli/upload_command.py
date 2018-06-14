@@ -56,7 +56,7 @@ class UploadCommand(UploadCLICommand):
         self.config = UploadConfig()
         if not self.config.current_area:
             sys.stderr.write("\nThere is no upload area selected.\n" +
-                             "Please select one with \"{cmdname} upload select <urn_or_alias>\"\n\n".format(
+                             "Please select one with \"{cmdname} upload select <uri_or_alias>\"\n\n".format(
                                  cmdname=sys.argv[0]))
             exit(1)
 

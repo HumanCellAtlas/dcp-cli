@@ -17,20 +17,19 @@ class TestUploadSelectArea(UploadTestCase):
     def setUp(self):
         super(self.__class__, self).setUp()
         self.area_uuid = str(uuid.uuid4())
-        creds = "foo"
-        self.urn = "dcp:upl:aws:dev:{}:{}".format(self.area_uuid, creds)
+        self.uri = "s3://org-humancellatlas-upload-test/{}/".format(self.area_uuid)
 
-    def test_when_given_neither_a_uuid_or_urn_it_raises(self):
+    def test_when_given_neither_a_uuid_or_uri_it_raises(self):
 
         with self.assertRaises(UploadException):
             upload.select_area()
 
-    def test_when_given_an_unrecognized_urn_it_stores_it_in_upload_area_list_and_sets_it_as_current_area(self):
-        upload.select_area(urn=self.urn)
+    def test_when_given_an_unrecognized_uri_it_stores_it_in_upload_area_list_and_sets_it_as_current_area(self):
+        upload.select_area(uri=self.uri)
 
         config = hca.get_config()
         self.assertIn(self.area_uuid, config.upload.areas)
-        self.assertEqual(self.urn, config.upload.areas[self.area_uuid])
+        self.assertEqual(self.uri, config.upload.areas[self.area_uuid]['uri'])
         self.assertEqual(self.area_uuid, config.upload.current_area)
 
     def test_when_given_a_uuid_of_an_existing_area_it_selects_that_area(self):
@@ -39,9 +38,9 @@ class TestUploadSelectArea(UploadTestCase):
         config = hca.get_config()
         config.upload = {
             'areas': {
-                a_uuid: "dcp:upl:aws:dev:%s" % (a_uuid,),
-                b_uuid: "dcp:upl:aws:dev:%s" % (b_uuid,),
-            }
+                a_uuid: {'uri': "s3://foo/{}/".format(a_uuid)},
+                b_uuid: {'uri': "s3://foo/{}/".format(b_uuid)},
+            },
         }
         config.save()
 
