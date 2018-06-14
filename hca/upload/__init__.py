@@ -1,6 +1,8 @@
+from .credentials_manager import CredentialsManager
 from .upload_config import UploadConfig
-from .upload_area import UploadArea
+from .upload_area import UploadArea, UploadAreaURI
 from .exceptions import UploadException
+from .api_client import ApiClient
 
 
 def select_area(**kwargs):
@@ -73,3 +75,12 @@ def upload_file(file_path,
                      use_transfer_acceleration=use_transfer_acceleration,
                      report_progress=report_progress,
                      dcp_type=dcp_type)
+
+
+def get_credentials(area_uuid):
+    """
+    Return a set of credentials that may be used to access the Upload Area.
+    """
+    area = UploadArea(uuid=area_uuid)
+    creds_mgr = CredentialsManager(area)
+    return creds_mgr.get_credentials()
