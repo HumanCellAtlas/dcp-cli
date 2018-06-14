@@ -39,6 +39,7 @@ class DSSClient(SwaggerClient):
 
         for file_ in bundle["files"]:
             file_uuid = file_["uuid"]
+            file_version = file_["version"]
             filename = file_.get("name", file_uuid)
 
             logger.info("File %s: Retrieving...", filename)
@@ -57,7 +58,7 @@ class DSSClient(SwaggerClient):
                 while True:
                     try:
                         response = self.get_file._request(
-                            dict(uuid=file_uuid, replica=replica),
+                            dict(uuid=file_uuid, version=file_version, replica=replica),
                             stream=True,
                             headers={
                                 'Range': "bytes={}-".format(fh.tell())
