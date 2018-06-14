@@ -3,7 +3,6 @@ import sys
 from argparse import Namespace
 
 import responses
-import boto3
 
 from ... import CapturingIO
 from .. import UploadTestCase
@@ -20,9 +19,12 @@ class TestUploadListAreaCommand(UploadTestCase):
         super(self.__class__, self).setUp()
         self.area = self.mock_current_upload_area()
 
+    @responses.activate
     def test_list_area_command(self):
         self.upload_bucket.Object('/'.join([self.area.uuid, 'file1.fastq.gz'])).put(Body="foo")
         self.upload_bucket.Object('/'.join([self.area.uuid, 'sample.json'])).put(Body="foo")
+
+        self.simulate_credentials_api(area_uuid=self.area.uuid)
 
         with CapturingIO('stdout') as stdout:
             ListAreaCommand(Namespace(long=False))
@@ -32,6 +34,8 @@ class TestUploadListAreaCommand(UploadTestCase):
     @responses.activate
     def test_list_area_command_with_long_option(self):
         self.upload_bucket.Object('/'.join([self.area.uuid, 'file1.fastq.gz'])).put(Body="foo")
+
+        self.simulate_credentials_api(area_uuid=self.area.uuid)
 
         list_url = 'https://upload.{stage}.data.humancellatlas.org/v1/area/{uuid}/files_info'.format(
             stage=self.deployment_stage,

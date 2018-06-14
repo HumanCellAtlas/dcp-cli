@@ -1,12 +1,11 @@
 import os
 import sys
-import uuid
+import unittest
 from argparse import Namespace
 
 import six
 
 from ... import CapturingIO
-from .. import UploadTestCase
 
 pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))  # noqa
 sys.path.insert(0, pkg_root)  # noqa
@@ -15,13 +14,7 @@ import hca
 from hca.upload.cli.list_areas_command import ListAreasCommand
 
 
-class TestUploadCliListAreasCommand(UploadTestCase):
-
-    def setUp(self):
-        super(self.__class__, self).setUp()
-        self.area_uuid = str(uuid.uuid4())
-        creds = "foo"
-        self.urn = "dcp:upl:aws:dev:{}:{}".format(self.area_uuid, creds)
+class TestUploadCliListAreasCommand(unittest.TestCase):
 
     def test_it_lists_areas_when_there_are_some(self):
         a_uuid = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
@@ -29,8 +22,8 @@ class TestUploadCliListAreasCommand(UploadTestCase):
         config = hca.get_config()
         config.upload = {
             'areas': {
-                a_uuid: "dcp:upl:aws:dev:%s" % (a_uuid,),
-                b_uuid: "dcp:upl:aws:dev:%s" % (b_uuid,),
+                a_uuid: {'uri': "s3://foo/{}/".format(a_uuid)},
+                b_uuid: {'uri': "s3://foo/{}/".format(b_uuid)},
             },
             'current_area': a_uuid
         }

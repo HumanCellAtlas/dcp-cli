@@ -1,20 +1,44 @@
 import os
 import re
 
+from six.moves.urllib.parse import urlparse
+
 from dcplib.media_types import DcpMediaType
 
 from .api_client import ApiClient
+from .credentials_manager import CredentialsManager
 from .exceptions import UploadException
 from .s3_agent import S3Agent
 from .upload_config import UploadConfig
-from .upload_area_urn import UploadAreaURN
+
+
+class UploadAreaURI:
+
+    def __init__(self, uri):
+        self.uri = uri
+        self.parsed = urlparse(self.uri)
+
+    def __str__(self):
+        return self.uri
+
+    @property
+    def bucket_name(self):
+        return self.parsed.netloc
+
+    @property
+    def deployment_stage(self):
+        return self.bucket_name.split('-')[-1]
+
+    @property
+    def area_uuid(self):
+        return self.parsed.path.split('/')[-2]
 
 
 class UploadArea:
 
     @classmethod
     def all(cls):
-        return [cls(uuid=uuid) for uuid in UploadConfig().areas]
+        return [cls(uuid=uuid) for uuid in UploadConfig().areas.keys()]
 
     @classmethod
     def areas_matching_alias(cls, alias):
@@ -22,23 +46,30 @@ class UploadArea:
 
     def __init__(self, **kwargs):
         """
-        You must supply either a uuid or urn keyword argument.
+        You must supply either a uuid or uri keyword argument.
 
         :param uuid: The UUID of an existing Upload Area that we know about.
-        :param urn: An UploadAreaURN for a new area.
+        :param uri: A URI for a new area.
         """
         if 'uuid' in kwargs:
-            self.uuid = kwargs['uuid']
+            uuid = kwargs['uuid']
             areas = UploadConfig().areas
-            if self.uuid not in areas:
-                raise UploadException("I'm not aware of upload area \"%s\"" % self.uuid)
-            self.urn = UploadAreaURN(areas[self.uuid])
-        elif 'urn' in kwargs:
-            self.urn = kwargs['urn']
-            self.uuid = self.urn.uuid
-            UploadConfig().add_area(self.urn)
+            if uuid not in areas:
+                raise UploadException("I'm not aware of upload area \"%s\"" % uuid)
+            self.uri = UploadAreaURI(areas[uuid]['uri'])
+        elif 'uri' in kwargs:
+            self.uri = UploadAreaURI(kwargs['uri'])
+            UploadConfig().add_area(self.uri)
         else:
-            raise UploadException("You must provide a uuid or URN")
+            raise UploadException("You must provide a uuid or URI")
+        self.uuid = self.uri.area_uuid
+
+    def __str__(self):
+        return "UploadArea {uri}".format(uri=self.uri)
+
+    @property
+    def deployment_stage(self):
+        return self.uri.deployment_stage
 
     @property
     def is_selected(self):
@@ -65,11 +96,11 @@ class UploadArea:
         :param detail: return detailed file information (slower)
         :return: a list of dicts containing at least 'name', or more of detail was requested
         """
-        upload_api_client = ApiClient(self.urn.deployment_stage)
-        s3agent = S3Agent(aws_credentials=self.urn.credentials)
+        upload_api_client = ApiClient(self.uri.deployment_stage)
+        s3agent = S3Agent(aws_credentials=self._get_credentials())
         key_prefix = self.uuid + "/"
         key_prefix_length = len(key_prefix)
-        for page in s3agent.list_bucket_by_page(bucket_name=self._bucket_name(), key_prefix=key_prefix):
+        for page in s3agent.list_bucket_by_page(bucket_name=self.uri.bucket_name, key_prefix=key_prefix):
             file_list = [key[key_prefix_length:] for key in page]  # cut off upload-area-id/
             if detail:
                 files_info = upload_api_client.files_info(self.uuid, file_list)
@@ -82,8 +113,9 @@ class UploadArea:
                     report_progress=False):
         file_s3_key = "%s/%s" % (self.uuid, target_filename or os.path.basename(file_path))
         content_type = str(DcpMediaType.from_file(file_path, dcp_type))
-        s3agent = S3Agent(aws_credentials=self.urn.credentials, transfer_acceleration=use_transfer_acceleration)
-        s3agent.upload_file(file_path, self._bucket_name(), file_s3_key, content_type, report_progress=report_progress)
+        s3agent = S3Agent(aws_credentials=self._get_credentials(), transfer_acceleration=use_transfer_acceleration)
+        s3agent.upload_file(file_path, self.uri.bucket_name, file_s3_key, content_type, report_progress=report_progress)
 
-    def _bucket_name(self):
-        return UploadConfig().bucket_name_template.format(deployment_stage=self.urn.deployment_stage)
+    def _get_credentials(self):
+        creds_mgr = CredentialsManager(self)
+        return creds_mgr.get_credentials()
