@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
-
+import itertools
 import unittest, os, sys, filecmp, uuid, tempfile, datetime, logging
 
 pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))  # noqa
@@ -27,8 +27,16 @@ class TestDssApi(unittest.TestCase):
             client = hca.dss.DSSClient()
 
             bundle_output = client.upload(src_dir=bundle_path, replica="aws", staging_bucket=self.staging_bucket)
+            files = bundle_output['files']
 
-            client.download(bundle_uuid=bundle_output['bundle_uuid'], dest_name=dest_dir, replica="aws")
+            # Upload a new version of cell.json with the contents of assay.json. The subsequent download should not be
+            # affected by that new version since the bundle still refers to the old version.
+            file1, file2 = itertools.islice((f for f in files if f['name'].endswith('.json')), 2)
+            source_url = "s3://{}/{}/{}".format(self.staging_bucket, file2['uuid'], file2['name'])
+            bundle_uuid = bundle_output['bundle_uuid']
+            client.put_file(uuid=file1['uuid'], creator_uid=1, bundle_uuid=bundle_uuid, source_url=source_url)
+
+            client.download(bundle_uuid=bundle_uuid, dest_name=dest_dir, replica="aws")
 
             # Check that contents are the same
             for file in os.listdir(bundle_path):
