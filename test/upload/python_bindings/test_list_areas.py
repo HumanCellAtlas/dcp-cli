@@ -1,6 +1,5 @@
 import os
 import sys
-import uuid
 
 from .. import UploadTestCase
 
@@ -15,9 +14,6 @@ class TestUploadListAreas(UploadTestCase):
 
     def setUp(self):
         super(self.__class__, self).setUp()
-        self.area_uuid = str(uuid.uuid4())
-        creds = "foo"
-        self.urn = "dcp:upl:aws:dev:{}:{}".format(self.area_uuid, creds)
 
     def test_list_areas_lists_areas_when_there_are_some(self):
         a_uuid = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
