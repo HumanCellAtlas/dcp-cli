@@ -3,6 +3,7 @@ import sys
 from argparse import Namespace
 
 import responses
+import six
 
 from ... import CapturingIO
 from .. import UploadTestCase
@@ -53,6 +54,6 @@ class TestUploadListAreaCommand(UploadTestCase):
         with CapturingIO('stdout') as stdout:
             ListAreaCommand(Namespace(long=True))
 
-        self.assertRegexpMatches(stdout.captured(), "size\s+123")
-        self.assertRegexpMatches(stdout.captured(), "Content-Type\s+binary/octet-stream; dcp-type=data")
-        self.assertRegexpMatches(stdout.captured(), "SHA1\s+shaaa")
+        six.assertRegex(self, stdout.captured(), "size\s+123")
+        six.assertRegex(self, stdout.captured(), "Content-Type\s+binary/octet-stream; dcp-type=data")
+        six.assertRegex(self, stdout.captured(), "SHA1\s+shaaa")

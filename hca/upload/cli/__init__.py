@@ -3,6 +3,7 @@ from .list_areas_command import ListAreasCommand
 from .list_area_command import ListAreaCommand
 from .upload_command import UploadCommand
 from .forget_command import ForgetCommand
+from .creds_command import CredsCommand
 from .common import UploadCLICommand
 
 
@@ -24,3 +25,4 @@ def add_commands(subparsers):
     ListAreaCommand.add_parser(upload_subparsers)
     ListAreasCommand.add_parser(upload_subparsers)
     ForgetCommand.add_parser(upload_subparsers)
+    CredsCommand.add_parser(upload_subparsers)
