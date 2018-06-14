@@ -41,6 +41,17 @@ class UploadArea:
         return [cls(uuid=uuid) for uuid in UploadConfig().areas.keys()]
 
     @classmethod
+    def from_alias(cls, uuid_or_alias):
+        matching_areas = UploadArea.areas_matching_alias(alias=uuid_or_alias)
+        if len(matching_areas) == 0:
+            raise UploadException("Sorry I don't recognize area \"%s\"" % (uuid_or_alias,))
+        elif len(matching_areas) == 1:
+            return matching_areas[0]
+        else:
+            raise UploadException(
+                "\"%s\" matches more than one area, please provide more characters." % (uuid_or_alias,))
+
+    @classmethod
     def areas_matching_alias(cls, alias):
         return [cls(uuid=uuid) for uuid in UploadConfig().areas if re.match(alias, uuid)]
 
