@@ -6,7 +6,7 @@ import responses
 import boto3
 
 from ... import CapturingIO
-from .. import UploadTestCase, mock_current_upload_area
+from .. import UploadTestCase
 
 pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))  # noqa
 sys.path.insert(0, pkg_root)  # noqa
@@ -18,18 +18,11 @@ class TestUploadListAreaCommand(UploadTestCase):
 
     def setUp(self):
         super(self.__class__, self).setUp()
-        self.deployment_stage = 'test'
-        self.upload_bucket_name = 'org-humancellatlas-upload-{}'.format(self.deployment_stage)
-        self.upload_bucket = boto3.resource('s3').Bucket(self.upload_bucket_name)
-        self.upload_bucket.create()
-
-    def tearDown(self):
-        self.s3_mock.stop()
+        self.area = self.mock_current_upload_area()
 
     def test_list_area_command(self):
-        area = mock_current_upload_area()
-        self.upload_bucket.Object('/'.join([area.uuid, 'file1.fastq.gz'])).put(Body="foo")
-        self.upload_bucket.Object('/'.join([area.uuid, 'sample.json'])).put(Body="foo")
+        self.upload_bucket.Object('/'.join([self.area.uuid, 'file1.fastq.gz'])).put(Body="foo")
+        self.upload_bucket.Object('/'.join([self.area.uuid, 'sample.json'])).put(Body="foo")
 
         with CapturingIO('stdout') as stdout:
             ListAreaCommand(Namespace(long=False))
@@ -38,12 +31,11 @@ class TestUploadListAreaCommand(UploadTestCase):
 
     @responses.activate
     def test_list_area_command_with_long_option(self):
-        area = mock_current_upload_area()
-        self.upload_bucket.Object('/'.join([area.uuid, 'file1.fastq.gz'])).put(Body="foo")
+        self.upload_bucket.Object('/'.join([self.area.uuid, 'file1.fastq.gz'])).put(Body="foo")
 
         list_url = 'https://upload.{stage}.data.humancellatlas.org/v1/area/{uuid}/files_info'.format(
             stage=self.deployment_stage,
-            uuid=area.uuid)
+            uuid=self.area.uuid)
         responses.add(responses.PUT, list_url, status=200, json=[
             {
                 "name": "file1.fastq.gz",

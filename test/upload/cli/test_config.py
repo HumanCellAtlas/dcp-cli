@@ -1,10 +1,9 @@
 from argparse import Namespace
 
 import responses
-import boto3
 
 from ... import CapturingIO
-from .. import UploadTestCase, mock_current_upload_area
+from .. import UploadTestCase
 
 import hca
 
@@ -15,12 +14,7 @@ class TestConfig(UploadTestCase):
 
     def setUp(self):
         super(self.__class__, self).setUp()
-        self.deployment_stage = 'test'
-        self.upload_bucket_name = 'org-humancellatlas-upload-{}'.format(self.deployment_stage)
-        self.upload_bucket = boto3.resource('s3').Bucket(self.upload_bucket_name)
-        self.upload_bucket.create()
-
-        self.area = mock_current_upload_area()
+        self.area = self.mock_current_upload_area()
         self.upload_bucket.Object('/'.join([self.area.uuid, 'file1.fastq.gz'])).put(Body="foo")
 
     @responses.activate

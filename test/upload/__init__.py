@@ -1,9 +1,9 @@
 import base64
 import json
-import os
 import uuid
 import unittest
 
+import boto3
 from moto import mock_s3
 
 from .. import TweakResetter
@@ -11,31 +11,10 @@ from .. import TweakResetter
 import hca
 from hca.upload import UploadArea, UploadAreaURN
 
-UPLOAD_BUCKET_NAME_TEMPLATE = 'bogo-bucket-{deployment_stage}'
-TEST_UPLOAD_BUCKET = UPLOAD_BUCKET_NAME_TEMPLATE.format(deployment_stage=os.environ['DEPLOYMENT_STAGE'])
-
-
-def mock_current_upload_area():
-    area = mock_upload_area()
-    area.select()
-    return area
-
-
-def mock_upload_area(area_uuid=None):
-    """
-    Create a UUID and URN for a fake upload area, store it in Tweak config.
-    """
-    stage = os.environ['DEPLOYMENT_STAGE']
-    if not area_uuid:
-        area_uuid = str(uuid.uuid4())
-    creds = {'AWS_ACCESS_KEY_ID': 'foo', 'AWS_SECRET_ACCESS_KEY': 'bar'}
-    encoded_creds = base64.b64encode(json.dumps(creds).encode('ascii')).decode('ascii')
-    urn = "dcp:upl:aws:{}:{}:{}".format(stage, area_uuid, encoded_creds)
-    area = UploadArea(urn=UploadAreaURN(urn))
-    return area
-
 
 class UploadTestCase(unittest.TestCase):
+
+    UPLOAD_BUCKET_NAME_TEMPLATE = 'bogo-bucket-{deployment_stage}'
 
     def setUp(self):
         # Setup mock AWS
@@ -46,16 +25,38 @@ class UploadTestCase(unittest.TestCase):
         self.tweak_resetter.save_config()
         # Clean config
         self._setup_tweak_config()
+        # Upload bucket
+        self.deployment_stage = 'test'
+        self.upload_bucket_name = self.UPLOAD_BUCKET_NAME_TEMPLATE.format(deployment_stage=self.deployment_stage)
+        self.upload_bucket = boto3.resource('s3').Bucket(self.upload_bucket_name)
+        self.upload_bucket.create()
 
     def tearDown(self):
         self.s3_mock.stop()
         self.tweak_resetter.restore_config()
 
+    def mock_current_upload_area(self):
+        area = self.mock_upload_area()
+        area.select()
+        return area
+
+    def mock_upload_area(self, area_uuid=None):
+        """
+        Create a UUID and URN for a fake upload area, store it in Tweak config.
+        """
+        if not area_uuid:
+            area_uuid = str(uuid.uuid4())
+        creds = {'AWS_ACCESS_KEY_ID': 'foo', 'AWS_SECRET_ACCESS_KEY': 'bar'}
+        encoded_creds = base64.b64encode(json.dumps(creds).encode('ascii')).decode('ascii')
+        urn = "dcp:upl:aws:{}:{}:{}".format(self.deployment_stage, area_uuid, encoded_creds)
+        area = UploadArea(urn=UploadAreaURN(urn))
+        return area
+
     def _setup_tweak_config(self):
         config = hca.get_config()
         config.upload = {
             'areas': {},
-            'bucket_name_template': UPLOAD_BUCKET_NAME_TEMPLATE
+            'bucket_name_template': self.UPLOAD_BUCKET_NAME_TEMPLATE
         }
         config.save()
 
