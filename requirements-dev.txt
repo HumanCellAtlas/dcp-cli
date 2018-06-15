@@ -5,4 +5,5 @@ pyyaml
 responses
 backports.tempfile
 mock
+unittest2
 -r requirements.txt

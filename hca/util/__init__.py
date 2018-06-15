@@ -430,8 +430,12 @@ class SwaggerClient(object):
     def _get_command_arg_settings(self, param_data):
         if param_data.default is Parameter.empty:
             return dict(required=True)
+        elif param_data.default is True:
+            return dict(action='store_false', default=True)
+        elif param_data.default is False:
+            return dict(action='store_true', default=False)
         elif isinstance(param_data.default, (list, tuple)):
-            return dict(nargs="+", required=True, default=param_data.default)
+            return dict(nargs="+", default=param_data.default)
         else:
             return dict(type=type(param_data.default), default=param_data.default)
 

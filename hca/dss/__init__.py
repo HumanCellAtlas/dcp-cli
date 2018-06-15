@@ -1,5 +1,6 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
+from fnmatch import fnmatchcase
 import hashlib
 import os
 import re
@@ -21,21 +22,35 @@ class DSSClient(SwaggerClient):
     Client for the Data Storage Service API.
     """
     UPLOAD_BACKOFF_FACTOR = 1.618
+
     def __init__(self, *args, **kwargs):
         super(DSSClient, self).__init__(*args, **kwargs)
         self.commands += [self.download, self.upload]
 
-    def download(self, bundle_uuid, replica, version="", dest_name="", initial_retries_left=10, min_delay_seconds=0.25):
+    def download(self, bundle_uuid, replica, version="", dest_name="",
+                 metadata_files=('*',), data_files=('*',),
+                 initial_retries_left=10, min_delay_seconds=0.25):
         """
         Download a bundle and save it to the local filesystem as a directory.
+
+        `metadata_files` (`--metadata-files` on the CLI) are one or more shell patterns against which all metadata
+        files in the bundle will be matched case-sensitively. A file is considered a metadata file if the `indexed`
+        property in the manifest is set. If and only if a metadata file matches any of the patterns in
+        `metadata_files` will it be downloaded.
+
+        `data_files` (`--data-files` on the CLI) are one or more shell patterns against which all data files in the
+        bundle will be matched case-sensitively. A file is considered a data file if the `indexed` property in the
+        manifest is not set. If and only if a data file matches any of the patterns in `data_files` will it be
+        downloaded.
+
+        By default, all data and metadata files are downloaded. To disable the downloading of data files,
+        use `--data-files ''` if using the CLI (or `data_files=()` if invoking `download` programmatically). Likewise
+        for metadata files.
         """
         if not dest_name:
             dest_name = bundle_uuid
 
         bundle = self.get_bundle(uuid=bundle_uuid, replica=replica, version=version if version else None)["bundle"]
-
-        if not os.path.isdir(dest_name):
-            os.makedirs(dest_name)
 
         files = {}
         for file_ in bundle["files"]:
@@ -55,6 +70,13 @@ class DSSClient(SwaggerClient):
             file_uuid = file_["uuid"]
             file_version = file_["version"]
             filename = file_.get("name", file_uuid)
+
+            globs = metadata_files if file_['indexed'] else data_files
+            if not any(fnmatchcase(filename, glob) for glob in globs):
+                continue
+
+            if not os.path.isdir(dest_name):
+                os.makedirs(dest_name)
 
             logger.info("File %s: Retrieving...", filename)
             file_path = os.path.join(dest_name, filename)
@@ -137,7 +159,6 @@ class DSSClient(SwaggerClient):
                 else:
                     logger.info("%s", "File {}: GET SUCCEEDED. Stored at {}.".format(filename, file_path))
 
-        return {}
 
     def upload(self, src_dir, replica, staging_bucket, timeout_seconds=1200):
         """

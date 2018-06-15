@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 # coding: utf-8
+from fnmatch import fnmatchcase
 import itertools
-import unittest, os, sys, filecmp, uuid, tempfile, datetime, logging
+import os, sys, filecmp, uuid, tempfile
 
 pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))  # noqa
 sys.path.insert(0, pkg_root)  # noqa
@@ -12,37 +13,69 @@ from test import reset_tweak_changes
 
 if USING_PYTHON2:
     import backports.tempfile
+    import unittest2 as unittest
     TemporaryDirectory = backports.tempfile.TemporaryDirectory
 else:
+    import unittest
     TemporaryDirectory = tempfile.TemporaryDirectory
 
 class TestDssApi(unittest.TestCase):
     staging_bucket = "org-humancellatlas-dss-cli-test"
 
     def test_python_upload_download(self):
-        with TemporaryDirectory() as dest_dir:
-            dirpath = os.path.dirname(os.path.realpath(__file__))
-            bundle_path = os.path.join(dirpath, "bundle")
 
-            client = hca.dss.DSSClient()
+        dirpath = os.path.dirname(os.path.realpath(__file__))
+        bundle_path = os.path.join(dirpath, "bundle")
+        uploaded_files = set(os.listdir(bundle_path))
+        client = hca.dss.DSSClient()
 
-            bundle_output = client.upload(src_dir=bundle_path, replica="aws", staging_bucket=self.staging_bucket)
-            files = bundle_output['files']
+        manifest = client.upload(src_dir=bundle_path,
+                                 replica="aws",
+                                 staging_bucket=self.staging_bucket)
+        manifest_files = manifest['files']
+        self.assertEqual({file['name'] for file in manifest_files}, uploaded_files)
 
-            # Upload a new version of cell.json with the contents of assay.json. The subsequent download should not be
-            # affected by that new version since the bundle still refers to the old version.
-            file1, file2 = itertools.islice((f for f in files if f['name'].endswith('.json')), 2)
-            source_url = "s3://{}/{}/{}".format(self.staging_bucket, file2['uuid'], file2['name'])
-            bundle_uuid = bundle_output['bundle_uuid']
-            client.put_file(uuid=file1['uuid'], creator_uid=1, bundle_uuid=bundle_uuid, source_url=source_url)
+        # Work around https://github.com/HumanCellAtlas/data-store/issues/1331
+        for file in manifest_files:
+            file['indexed'] = file['name'].endswith('.json')
 
-            client.download(bundle_uuid=bundle_uuid, dest_name=dest_dir, replica="aws")
+        for metadata_globs in (), ('',), ('*',), ('a[s][s]ay.json',):
+            for data_globs in (), ('',), ('*',), ('*_1.fastq.gz',):
+                with self.subTest(metadata_files=metadata_globs, data_files=data_globs):
+                    bundle_uuid = manifest['bundle_uuid']
+                    expect_downloaded_files = {
+                        file['name'] for file in manifest_files
+                        if any(fnmatchcase(file['name'], glob)
+                               for glob in (metadata_globs if file['indexed'] else data_globs))}
 
-            # Check that contents are the same
-            for file in os.listdir(bundle_path):
-                uploaded_file = os.path.join(bundle_path, file)
-                downloaded_file = os.path.join(dest_dir, file)
-                self.assertTrue(filecmp.cmp(uploaded_file, downloaded_file, False))
+                    if '*' in metadata_globs and '*' in data_globs:
+                        # In the test case where we download all files, add another wrinkle to the test: Upload a new
+                        # version of one of the metadata files. That new file version is not referenced by any
+                        # bundle. The subsequent download should not be affected by that new version since the bundle
+                        # still refers to the old version.
+                        file1, file2 = itertools.islice((f for f in manifest_files if f['name'].endswith('.json')), 2)
+                        source_url = "s3://{}/{}/{}".format(self.staging_bucket, file2['uuid'], file2['name'])
+                        client.put_file(uuid=file1['uuid'],
+                                        creator_uid=1,
+                                        bundle_uuid=bundle_uuid,
+                                        source_url=source_url)
+
+                    with TemporaryDirectory() as dest_dir:
+                        client.download(bundle_uuid=bundle_uuid,
+                                        dest_name=dest_dir,
+                                        replica="aws",
+                                        data_files=data_globs,
+                                        metadata_files=metadata_globs)
+                        # Check that contents are the same
+                        downloaded_files = set(os.listdir(dest_dir))
+                        self.assertEqual(expect_downloaded_files, downloaded_files)
+                        for file in downloaded_files:
+                            manifest_entry = next(entry for entry in manifest['files'] if entry['name'] == file)
+                            globs = metadata_globs if manifest_entry['indexed'] else data_globs
+                            self.assertTrue(any(fnmatchcase(file, glob) for glob in globs))
+                            uploaded_file = os.path.join(bundle_path, file)
+                            downloaded_file = os.path.join(dest_dir, file)
+                            self.assertTrue(filecmp.cmp(uploaded_file, downloaded_file, False))
 
     def test_python_upload_lg_file(self):
         with TemporaryDirectory() as src_dir, TemporaryDirectory() as dest_dir:
