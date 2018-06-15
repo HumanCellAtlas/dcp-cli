@@ -37,7 +37,21 @@ class DSSClient(SwaggerClient):
         if not os.path.isdir(dest_name):
             os.makedirs(dest_name)
 
+        files = {}
         for file_ in bundle["files"]:
+            # The file name collision check is case-insensitive even if the local file system we're running on is
+            # case-sensitive. We do this in order to get consistent download behavior on all operating systems and
+            # file systems. The case of file names downloaded to a case-sensitive system will still match exactly
+            # what's specified in the bundle manifest. We just don't want a bundle with files 'Foo' and 'foo' to
+            # create two files on one system and one file on the other. Allowing this to happen would, in the best
+            # case, overwrite Foo with foo locally. A resumed download could produce a local file called foo that
+            # contains a mix of data from Foo and foo.
+            filename = file_.get("name", file_["uuid"]).lower()
+            if files.setdefault(filename, file_) is not file_:
+                raise ValueError("Bundle {bundle_uuid} version {bundle_version} contains multiple files named "
+                                 "'{filename}' or a case derivation thereof".format(filename=filename, **bundle))
+
+        for file_ in files.values():
             file_uuid = file_["uuid"]
             file_version = file_["version"]
             filename = file_.get("name", file_uuid)
