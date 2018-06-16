@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
+import csv
 from fnmatch import fnmatchcase
 import itertools
 import os, sys, filecmp, uuid, tempfile
@@ -76,6 +77,66 @@ class TestDssApi(unittest.TestCase):
                             uploaded_file = os.path.join(bundle_path, file)
                             downloaded_file = os.path.join(dest_dir, file)
                             self.assertTrue(filecmp.cmp(uploaded_file, downloaded_file, False))
+
+    def test_python_manifest_download(self):
+
+        dirpath = os.path.dirname(os.path.realpath(__file__))
+        bundle_path = os.path.join(dirpath, "bundle")
+        uploaded_files = set(os.listdir(bundle_path))
+        client = hca.dss.DSSClient()
+
+        manifest = client.upload(src_dir=bundle_path,
+                                 replica="aws",
+                                 staging_bucket=self.staging_bucket)
+        manifest_files = manifest['files']
+        self.assertEqual({file['name'] for file in manifest_files}, uploaded_files)
+
+        # Work around https://github.com/HumanCellAtlas/data-store/issues/1331
+        for file in manifest_files:
+            file['indexed'] = file['name'].endswith('.json')
+
+        bundle_uuid = manifest['bundle_uuid']
+        bundle_version = manifest['version']
+        data_files = tuple(file['name'] for file in manifest_files if not file['indexed'])
+
+        for bad_bundle in False, True:
+            with self.subTest(bad_bundle=bad_bundle):
+                with TemporaryDirectory() as work_dir:
+                    cwd = os.getcwd()
+                    os.chdir(work_dir)
+                    try:
+                        with open('manifest.tsv', 'w') as manifest:
+                            tsv = csv.DictWriter(manifest,
+                                                 fieldnames=('bundle_uuid', 'bundle_version', 'file_name'),
+                                                 delimiter='\t',
+                                                 quoting=csv.QUOTE_NONE)
+                            tsv.writeheader()
+                            tsv.writerow(dict(bundle_uuid=bundle_uuid,
+                                              bundle_version=bundle_version,
+                                              file_name=data_files[0]))
+                            if bad_bundle:
+                                tsv.writerow(dict(bundle_uuid=str(uuid.uuid4()),
+                                                  bundle_version=bundle_version,
+                                                  file_name=data_files[0]))
+
+                        dest_dir = os.path.join(work_dir, bundle_uuid)
+                        try:
+                            client.download_manifest('manifest.tsv', replica="aws")
+                        except RuntimeError as e:
+                            self.assertTrue(bad_bundle, "Should only raise with a bad bundle in the manifest")
+                            self.assertEquals("1 bundle(s) failed to download", e.args[0])
+                        else:
+                            self.assertFalse(bad_bundle)
+                        for file in manifest_files:
+                            uploaded_file = os.path.join(bundle_path, file['name'])
+                            downloaded_file = os.path.join(dest_dir, file['name'])
+                            if file['indexed'] or file['name'] == data_files[0]:
+                                self.assertTrue(filecmp.cmp(uploaded_file, downloaded_file, False))
+                            else:
+                                self.assertTrue(os.path.exists(uploaded_file))
+                                self.assertFalse(os.path.exists(downloaded_file))
+                    finally:
+                        os.chdir(cwd)
 
     def test_python_upload_lg_file(self):
         with TemporaryDirectory() as src_dir, TemporaryDirectory() as dest_dir:

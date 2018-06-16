@@ -1,5 +1,7 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
+from collections import defaultdict
+import csv
 from fnmatch import fnmatchcase
 import hashlib
 import os
@@ -11,6 +13,8 @@ from io import open
 import requests
 from requests.exceptions import ChunkedEncodingError, ConnectionError, ReadTimeout
 
+from hca.util import USING_PYTHON2
+from hca.util.compat import glob_escape
 from ..util import SwaggerClient
 from ..util.exceptions import SwaggerAPIException
 from .. import logger
@@ -25,7 +29,7 @@ class DSSClient(SwaggerClient):
 
     def __init__(self, *args, **kwargs):
         super(DSSClient, self).__init__(*args, **kwargs)
-        self.commands += [self.download, self.upload]
+        self.commands += [self.download, self.download_manifest, self.upload]
 
     def download(self, bundle_uuid, replica, version="", dest_name="",
                  metadata_files=('*',), data_files=('*',),
@@ -159,6 +163,48 @@ class DSSClient(SwaggerClient):
                 else:
                     logger.info("%s", "File {}: GET SUCCEEDED. Stored at {}.".format(filename, file_path))
 
+    def download_manifest(self, manifest, replica, initial_retries_left=10, min_delay_seconds=0.25):
+        """
+        Process the given manifest file in TSV (tab-separated values) format and download the files referenced by it.
+
+        Each row in the manifest represents one file in DSS. The manifest must have a header row. The header row must
+        declare the following columns:
+
+        `bundle_uuid` - the UUID of the bundle containing the file in DSS
+
+        `bundle_version` - the version of the bundle containing the file in DSS
+
+        `file_name` - the name of the file as specified in the bundle
+
+        The TSV may have additional columns. Those columns will be ignored. The ordering of the columns is
+        insignificant because the TSV is required to have a header row.
+        """
+        with open(manifest) as f:
+            bundles = defaultdict(set)
+            # unicode_literals is on so all strings are unicode. CSV wants a str so we need to jump through a hoop.
+            delimiter = '\t'.encode('ascii') if USING_PYTHON2 else '\t'
+            reader = csv.DictReader(f, delimiter=delimiter, quoting=csv.QUOTE_NONE)
+            for row in reader:
+                bundles[(row['bundle_uuid'], row['bundle_version'])].add(row['file_name'])
+        errors = 0
+        for (bundle_uuid, bundle_version), data_files in bundles.items():
+            data_globs = tuple(glob_escape(file_name) for file_name in data_files if file_name)
+            logger.info('Downloading bundle %s version %s ...', bundle_uuid, bundle_version)
+            try:
+                self.download(bundle_uuid,
+                              replica,
+                              version=bundle_version,
+                              data_files=data_globs,
+                              initial_retries_left=initial_retries_left,
+                              min_delay_seconds=min_delay_seconds)
+            except Exception as e:
+                errors += 1
+                logger.warning('Failed to download bundle %s version %s from replica %s',
+                               bundle_uuid, bundle_version, replica, exc_info=e)
+        if errors:
+            raise RuntimeError('{} bundle(s) failed to download'.format(errors))
+        else:
+            return {}
 
     def upload(self, src_dir, replica, staging_bucket, timeout_seconds=1200):
         """
