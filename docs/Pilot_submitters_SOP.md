@@ -13,7 +13,7 @@ This SOP describes how to submit data files to the HCA Data Coordination Platfor
 The hca-cli is used to upload files to the HCA DCP. This tool is provided by the package `hca`, which can be installed by running the following command in the terminal:
 
 ```
-pip install hca
+pip install hca==3.5.2
 ```
 
 Once installed, more information about using the hca-cli can be found by running:
@@ -50,7 +50,7 @@ The hca-cli transfers data files to a secure "upload area". Unique credentials a
     hca upload file <data-files>
     ```
 
-The hca-cli supports [wildcards](https://en.wikibooks.org/wiki/A_Quick_Introduction_to_Unix/Wildcards) which allows multiple files to be uploaded using one command if they have a common naming convention. For example, 
+The hca-cli supports [wildcards](https://en.wikibooks.org/wiki/A_Quick_Introduction_to_Unix/Wildcards) which allows multiple files to be uploaded using one command if they have a common naming convention. For example,
 
 ```
 hca upload file *.fastq.gz
@@ -68,5 +68,5 @@ hca upload list -l
 
 * Files cannot be deleted from the upload area using the `hca` tool. If there are files that need to be deleted, please contact data-help@humancellatlas.org and include your name, credentials, and a list of filenames to delete.
 * Uploading a file with the same filename as one that already exists in the upload area will replace the file with the most recent upload. You can find out what files are already in the system using the command hca upload list -l
-* For more information about the hca-cli, you can check out documentation on 
+* For more information about the hca-cli, you can check out documentation on
 [GitHub](https://github.com/HumanCellAtlas/dcp-cli) or [readthedocs](http://hca.readthedocs.io/en/latest/).
