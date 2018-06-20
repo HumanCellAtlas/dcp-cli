@@ -1,3 +1,10 @@
+Changes for v4.0.0 (2018-06-20)
+===============================
+
+Upload: creds command and Python binding for get\_credentials Upload:
+upload areas are now represented by a URI instead of URN DSS: fix
+updated files seeping into downloads of older bundles
+
 Changes for v3.5.2 (2018-06-04)
 ===============================
 
