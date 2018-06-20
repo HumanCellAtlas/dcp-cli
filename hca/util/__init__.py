@@ -108,7 +108,6 @@ class RetryPolicy(retry.Retry):
 
 
 class _ClientMethodFactory(object):
-    timeout_policy = timeout.Timeout(connect=60, read=10)
 
     def __init__(self, client, parameters, path_parameters, http_method, method_name, method_data, body_props):
         self.__dict__.update(locals())
@@ -132,7 +131,7 @@ class _ClientMethodFactory(object):
         json_input = body if self.body_props else None
         headers = headers if headers else {}
         res = session.request(self.http_method, url, params=query, json=json_input, stream=stream, headers=headers,
-                              timeout=self.timeout_policy)
+                              timeout=self.client.timeout_policy)
         if res.status_code >= 400:
             raise SwaggerAPIException(response=res)
         return res
@@ -185,6 +184,12 @@ class SwaggerClient(object):
         "array": typing.List,
         "object": typing.Mapping
     }
+    # The read timeout should be longer than DSS' API Gateway timeout to avoid races with the client and the gateway
+    # hanging up at the same time. It's better to consistently get a 504 from the server than a read timeout from the
+    # client or sometimes one and sometimes the other.
+    #
+    timeout_policy = timeout.Timeout(connect=20, read=40)
+
     def __init__(self, config=None, **session_kwargs):
         self.config = config or get_config()
         self._session_kwargs = session_kwargs
