@@ -2,6 +2,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 from collections import defaultdict
 import csv
+from datetime import datetime
 from fnmatch import fnmatchcase
 import hashlib
 import os
@@ -155,13 +156,13 @@ class DSSClient(SwaggerClient):
                             continue
                         raise
 
-                if hasher.hexdigest().lower() != file_["sha256"].lower():
-                    os.remove(file_path)
-                    logger.error("%s", "File {}: GET FAILED. Checksum mismatch.".format(filename))
-                    raise ValueError("Expected sha256 {} Received sha256 {}".format(
-                        file_["sha256"].lower(), hasher.hexdigest().lower()))
-                else:
-                    logger.info("%s", "File {}: GET SUCCEEDED. Stored at {}.".format(filename, file_path))
+            if hasher.hexdigest().lower() != file_["sha256"].lower():
+                os.remove(file_path)
+                logger.error("%s", "File {}: GET FAILED. Checksum mismatch.".format(filename))
+                raise ValueError("Expected sha256 {} Received sha256 {}".format(
+                    file_["sha256"].lower(), hasher.hexdigest().lower()))
+            else:
+                logger.info("%s", "File {}: GET SUCCEEDED. Stored at {}.".format(filename, file_path))
 
     def download_manifest(self, manifest, replica, initial_retries_left=10, min_delay_seconds=0.25):
         """
@@ -213,6 +214,8 @@ class DSSClient(SwaggerClient):
         This method requires the use of a client-controlled object storage bucket to stage the data for upload.
         """
         bundle_uuid = str(uuid.uuid4())
+        version = datetime.utcnow().strftime("%Y-%m-%dT%H%M%S.%fZ")
+
         files_to_upload, files_uploaded = [], []
         for filename in os.listdir(src_dir):
             full_file_name = os.path.join(src_dir, filename)
@@ -237,10 +240,10 @@ class DSSClient(SwaggerClient):
             response = self.put_file._request(dict(
                 uuid=file_uuid,
                 bundle_uuid=bundle_uuid,
+                version=version,
                 creator_uid=creator_uid,
                 source_url=source_url
             ))
-            version = response.json().get('version', "blank")
             files_uploaded.append(dict(name=filename, version=version, uuid=file_uuid, creator_uid=creator_uid))
 
             if response.status_code in (requests.codes.ok, requests.codes.created):
@@ -273,7 +276,11 @@ class DSSClient(SwaggerClient):
 
         logger.info("%s", "Bundle {}: Registering...".format(bundle_uuid))
 
-        response = self.put_bundle(uuid=bundle_uuid, replica=replica, creator_uid=creator_uid, files=file_args)
+        response = self.put_bundle(uuid=bundle_uuid,
+                                   version=version,
+                                   replica=replica,
+                                   creator_uid=creator_uid,
+                                   files=file_args)
         logger.info("%s", "Bundle {}: Registered successfully".format(bundle_uuid))
 
         return {

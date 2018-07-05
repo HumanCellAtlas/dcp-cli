@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 import csv
+import datetime
 from fnmatch import fnmatchcase
 import itertools
 import os, sys, filecmp, uuid, tempfile
@@ -55,8 +56,10 @@ class TestDssApi(unittest.TestCase):
                         # bundle. The subsequent download should not be affected by that new version since the bundle
                         # still refers to the old version.
                         file1, file2 = itertools.islice((f for f in manifest_files if f['name'].endswith('.json')), 2)
+                        file_version = datetime.datetime.now().isoformat()
                         source_url = "s3://{}/{}/{}".format(self.staging_bucket, file2['uuid'], file2['name'])
                         client.put_file(uuid=file1['uuid'],
+                                        version=file_version,
                                         creator_uid=1,
                                         bundle_uuid=bundle_uuid,
                                         source_url=source_url)
@@ -177,21 +180,22 @@ class TestDssApi(unittest.TestCase):
 
         # Test put-files
         file_uuid = str(uuid.uuid4())
-        # file_version = datetime.datetime.now().isoformat()
+        file_version = datetime.datetime.utcnow().strftime("%Y-%m-%dT%H%M%S.%fZ")
         bundle_uuid = str(uuid.uuid4())
         source_url = "s3://{}/{}/{}".format(self.staging_bucket, file_['uuid'], file_['name'])
-        res = client.put_file(uuid=file_uuid, creator_uid=1, bundle_uuid=bundle_uuid, source_url=source_url)
+        res = client.put_file(uuid=file_uuid, creator_uid=1, bundle_uuid=bundle_uuid,
+                              version=file_version, source_url=source_url)
 
         # Test put-bundles
         files = [{'indexed': True,
                   'name': file_['name'],
                   'uuid': file_uuid,
                   'version': res['version']}]
-        res = client.put_bundle(uuid=bundle_uuid, files=files, creator_uid=1, replica="aws")
-        self.assertTrue(len(res["version"]) > 0)
+        res = client.put_bundle(uuid=bundle_uuid, files=files, version=file_version, creator_uid=1, replica="aws")
+        self.assertEqual(res["version"], file_version)
 
         with self.assertRaisesRegexp(Exception, "Missing query parameter 'replica'"):
-            res = client.put_bundle(uuid=bundle_uuid, files=[], creator_uid=1)
+            res = client.put_bundle(uuid=bundle_uuid, files=[], version=file_version, creator_uid=1)
 
     def test_python_subscriptions(self):
         client = hca.dss.DSSClient()
