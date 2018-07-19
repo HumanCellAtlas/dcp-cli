@@ -83,7 +83,7 @@ client. Subclasses can add more commands by adding them to the
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-import os, types, collections, typing, json, errno, base64, argparse
+import os, datetime, types, collections, typing, json, errno, base64, argparse
 
 try:
     from inspect import signature, Signature, Parameter
@@ -176,6 +176,7 @@ class SwaggerClient(object):
     _authenticated_session = None
     _session = None
     _swagger_spec = None
+    _spec_valid_for_days = 7
     _type_map = {
         "string": str,
         "number": float,
@@ -238,7 +239,9 @@ class SwaggerClient(object):
             else:
                 swagger_filename = base64.urlsafe_b64encode(swagger_url.encode()).decode() + ".json"
                 swagger_filename = os.path.join(self.config.user_config_dir, swagger_filename)
-            if not os.path.exists(swagger_filename):
+            is_cached = os.path.exists(swagger_filename)
+            if (not is_cached) or (is_cached and
+                                 self._get_days_since_last_modified(swagger_filename) >= self._spec_valid_for_days):
                 try:
                     os.makedirs(self.config.user_config_dir)
                 except OSError as e:
@@ -297,6 +300,11 @@ class SwaggerClient(object):
                                         expires_at="-1",
                                         token_type="Bearer")
         print("Storing access credentials")
+
+    def _get_days_since_last_modified(self, filename):
+        now = datetime.datetime.now()
+        last_modified = datetime.datetime.fromtimestamp(os.path.getmtime(filename))
+        return (now - last_modified).days
 
     def _get_oauth_token_from_service_account_credentials(self):
         scopes = ["https://www.googleapis.com/auth/userinfo.email"]
