@@ -10,6 +10,7 @@ import uuid
 
 from requests import ConnectTimeout
 from urllib3 import Timeout
+from datetime import datetime
 
 from hca.util import RetryPolicy
 
@@ -61,10 +62,12 @@ class TestDssApiRetry(unittest.TestCase):
         client = hca.dss.DSSClient()
         file_uuid = str(uuid.uuid4())
         creator_uid = client.config.get("creator_uid", 0)
+        version = datetime.utcnow().strftime("%Y-%m-%dT%H%M%S.%fZ")
 
         client.put_file._request(
             dict(
                 uuid=file_uuid,
+                version=version,
                 bundle_uuid=str(uuid.uuid4()),
                 creator_uid=creator_uid,
                 source_url=TestDssApiRetry.source_url,
