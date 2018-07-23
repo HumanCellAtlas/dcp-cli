@@ -83,7 +83,7 @@ client. Subclasses can add more commands by adding them to the
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-import os, datetime, types, collections, typing, json, errno, base64, argparse
+import os, types, collections, typing, json, errno, base64, argparse
 
 try:
     from inspect import signature, Signature, Parameter
@@ -95,6 +95,7 @@ from requests.adapters import HTTPAdapter
 from requests_oauthlib import OAuth2Session
 from urllib3.util import retry, timeout
 from jsonpointer import resolve_pointer
+from datetime import datetime
 
 from .. import get_config, logger
 from .compat import USING_PYTHON2
@@ -302,8 +303,8 @@ class SwaggerClient(object):
         print("Storing access credentials")
 
     def _get_days_since_last_modified(self, filename):
-        now = datetime.datetime.now()
-        last_modified = datetime.datetime.fromtimestamp(os.path.getmtime(filename))
+        now = datetime.now()
+        last_modified = datetime.fromtimestamp(os.path.getmtime(filename))
         return (now - last_modified).days
 
     def _get_oauth_token_from_service_account_credentials(self):
