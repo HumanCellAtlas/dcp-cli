@@ -241,7 +241,7 @@ class SwaggerClient(object):
                 swagger_filename = os.path.join(self.config.user_config_dir, swagger_filename)
             is_cached = os.path.exists(swagger_filename)
             if (not is_cached) or (is_cached and
-                                 self._get_days_since_last_modified(swagger_filename) >= self._spec_valid_for_days):
+                                   self._get_days_since_last_modified(swagger_filename) >= self._spec_valid_for_days):
                 try:
                     os.makedirs(self.config.user_config_dir)
                 except OSError as e:
