@@ -27,12 +27,7 @@ class TestUploadListArea(UploadTestCase):
 
     @responses.activate
     def test_list_current_area_with_detail(self):
-        creds_url = 'https://upload.{stage}.data.humancellatlas.org/v1/area/{uuid}/credentials'.format(
-            stage=self.deployment_stage,
-            uuid=self.area.uuid)
-        responses.add(responses.POST, creds_url,
-                      json={'AccessKeyId': 'foo', 'SecretAccessKey': 'bar', 'SessionToken': 'baz'},
-                      status=201)
+        self.simulate_credentials_api(area_uuid=self.area.uuid)
 
         list_url = 'https://upload.{stage}.data.humancellatlas.org/v1/area/{uuid}/files_info'.format(
             stage=self.deployment_stage,

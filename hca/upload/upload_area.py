@@ -14,6 +14,12 @@ from .upload_config import UploadConfig
 
 class UploadAreaURI:
 
+    """
+    Upload area URIs take the form s3://<upload-bucket-prefix>-<deployment_stage>/<area_uuid>/
+
+    e.g. s3://org-humancellatlas-upload-prod/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/
+    """
+
     def __init__(self, uri):
         self.uri = uri
         self.parsed = urlparse(self.uri)
@@ -108,7 +114,8 @@ class UploadArea:
         :return: a list of dicts containing at least 'name', or more of detail was requested
         """
         upload_api_client = ApiClient(self.uri.deployment_stage)
-        s3agent = S3Agent(aws_credentials=self._get_credentials())
+        creds_provider = CredentialsManager(upload_area=self)
+        s3agent = S3Agent(credentials_provider=creds_provider)
         key_prefix = self.uuid + "/"
         key_prefix_length = len(key_prefix)
         for page in s3agent.list_bucket_by_page(bucket_name=self.uri.bucket_name, key_prefix=key_prefix):
@@ -124,9 +131,6 @@ class UploadArea:
                     report_progress=False):
         file_s3_key = "%s/%s" % (self.uuid, target_filename or os.path.basename(file_path))
         content_type = str(DcpMediaType.from_file(file_path, dcp_type))
-        s3agent = S3Agent(aws_credentials=self._get_credentials(), transfer_acceleration=use_transfer_acceleration)
+        creds_provider = CredentialsManager(upload_area=self)
+        s3agent = S3Agent(credentials_provider=creds_provider, transfer_acceleration=use_transfer_acceleration)
         s3agent.upload_file(file_path, self.uri.bucket_name, file_s3_key, content_type, report_progress=report_progress)
-
-    def _get_credentials(self):
-        creds_mgr = CredentialsManager(self)
-        return creds_mgr.get_credentials()
