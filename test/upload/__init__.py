@@ -1,3 +1,4 @@
+import datetime
 import re
 import uuid
 import unittest
@@ -65,10 +66,14 @@ class UploadTestCase(unittest.TestCase):
             api_host = api_host.format(stage=stage)
 
         creds_url = 'https://{api_host}/v1/area/{uuid}/credentials'.format(api_host=api_host, uuid=area_uuid)
-
-        responses.add(responses.POST, creds_url,
-                      json={'AccessKeyId': 'foo', 'SecretAccessKey': 'bar', 'SessionToken': 'baz'},
-                      status=201)
+        expiration = (datetime.datetime.utcnow() + datetime.timedelta(hours=1)).isoformat() + 'Z'
+        creds = {
+            'AccessKeyId': 'foo',
+            'SecretAccessKey': 'bar',
+            'SessionToken': 'baz',
+            'Expiration': expiration
+        }
+        responses.add(responses.POST, creds_url, json=creds, status=201)
         return creds_url
 
     def _setup_tweak_config(self):

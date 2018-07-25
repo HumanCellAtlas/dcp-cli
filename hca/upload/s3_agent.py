@@ -4,6 +4,8 @@ import sys
 import boto3
 from boto3.s3.transfer import TransferConfig
 from botocore.config import Config
+from botocore.credentials import CredentialResolver
+from botocore.session import get_session
 
 KB = 1024
 MB = KB * KB
@@ -24,10 +26,12 @@ class S3Agent:
 
     CLEAR_TO_EOL = "\x1b[0K"
 
-    def __init__(self, aws_credentials={}, transfer_acceleration=True):
-        session = boto3.session.Session(**aws_credentials)
+    def __init__(self, credentials_provider, transfer_acceleration=True):
         config = Config(s3={'use_accelerate_endpoint': True}) if transfer_acceleration else Config()
-        self.s3 = session.resource('s3', config=config)
+        botocore_session = get_session()
+        botocore_session.register_component('credential_provider', CredentialResolver(providers=[credentials_provider]))
+        my_session = boto3.Session(botocore_session=botocore_session)
+        self.s3 = my_session.resource('s3', config=config)
 
     def upload_progress_callback(self, bytes_transferred):
         self.cumulative_bytes_transferred += bytes_transferred

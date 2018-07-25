@@ -16,13 +16,7 @@ class TestGetCredentials(UploadTestCase):
     def test_get_credentials(self):
 
         area = self.mock_current_upload_area()
-
-        creds_url = 'https://upload.{stage}.data.humancellatlas.org/v1/area/{uuid}/credentials'.format(
-            stage=self.deployment_stage, uuid=area.uuid)
-
-        responses.add(responses.POST, creds_url,
-                      json={'AccessKeyId': 'foo', 'SecretAccessKey': 'bar', 'SessionToken': 'baz'},
-                      status=201)
+        creds_url = self.simulate_credentials_api(area_uuid=area.uuid)
 
         upload.get_credentials(area.uuid)
 

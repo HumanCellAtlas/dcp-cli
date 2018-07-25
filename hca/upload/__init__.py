@@ -78,4 +78,9 @@ def get_credentials(area_uuid):
     """
     area = UploadArea(uuid=area_uuid)
     creds_mgr = CredentialsManager(area)
-    return creds_mgr.get_credentials()
+    creds = creds_mgr.get_credentials_from_upload_api()
+    return {
+        'AWS_ACCESS_KEY_ID': creds['access_key'],
+        'AWS_SECRET_ACCESS_KEY': creds['secret_key'],
+        'AWS_SESSION_TOKEN': creds['token']
+    }

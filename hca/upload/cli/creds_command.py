@@ -23,10 +23,9 @@ class CredsCommand(UploadCLICommand):
 
             area = UploadArea.from_alias(alias)
             creds = get_credentials(area.uuid)
-            print("SAM: ", creds)
-            print("AWS_ACCESS_KEY_ID=%s\nAWS_SECRET_ACCESS_KEY=%s\nAWS_SESSION_TOKEN=%s" % (
-                creds['aws_access_key_id'], creds['aws_secret_access_key'], creds['aws_session_token']
-            ))
+            for k, v in creds.items():
+                print("{key}={value}".format(key=k, value=v))
+
         except UploadException as e:
             print(str(e))
             exit(1)

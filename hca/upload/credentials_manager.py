@@ -1,53 +1,26 @@
-import boto3
-from botocore.errorfactory import ClientError
+from botocore.credentials import DeferredRefreshableCredentials, CredentialProvider
 
 from .api_client import ApiClient
-from .upload_config import UploadConfig
 
 
-class CredentialsManager:
+class CredentialsManager(CredentialProvider):
 
+    """
+    We are using an internal feature of Boto3 that allows you to provide an object that will refresh credentials
+    when they are getting close to expiry.  An instance of CredentialsManager is such an object.
+    Based on an original example by Andrey here: https://allspark.dev.data.humancellatlas.org/snippets/1
+    """
     def __init__(self, upload_area):
+        super(CredentialsManager, self).__init__()
         self.area = upload_area
 
-    def get_credentials(self):
-        """
-        Get credentials from Config, or request them from the API, then store them in Config.
+    def load(self):
+        return DeferredRefreshableCredentials(refresh_using=self.get_credentials_from_upload_api, method=None)
 
-        Note that we check the credentials are good using get-caller-identity before returning them,
-        instead of providing a decorator that will catch ExpiredToken and retry.
-        This is because some of the Upload methods return generators, which mean the exception happens
-        outside of our control.
-        """
-        config = UploadConfig()
-        our_info = config.areas[self.area.uuid]
-        if 'credentials' not in our_info or not self._credentials_are_good(our_info['credentials']):
-            self._get_new_credentials()
-        return our_info['credentials']
-
-    def delete_credentials(self):
-        config = UploadConfig()
-        del config.areas[self.area.uuid]['credentials']
-        config.save()
-
-    def _credentials_are_good(self, credentials):
-        try:
-            session = boto3.session.Session(**credentials)
-            sts = session.client('sts')
-            sts.get_caller_identity()
-            return True
-        except ClientError:
-            return False
-
-    def _get_new_credentials(self):
+    def get_credentials_from_upload_api(self):
         api = ApiClient(deployment_stage=self.area.deployment_stage)
-        raw_creds = api.credentials(area_uuid=self.area.uuid)
-        creds = {
-            'aws_access_key_id': raw_creds['AccessKeyId'],
-            'aws_secret_access_key': raw_creds['SecretAccessKey'],
-            'aws_session_token': raw_creds['SessionToken']
-        }
-        config = UploadConfig()
-        config.areas[self.area.uuid]['credentials'] = creds
-        config.save()
-        return creds
+        credentials = api.credentials(area_uuid=self.area.uuid)
+        return dict(access_key=credentials['AccessKeyId'],
+                    secret_key=credentials['SecretAccessKey'],
+                    token=credentials['SessionToken'],
+                    expiry_time=credentials['Expiration'])
