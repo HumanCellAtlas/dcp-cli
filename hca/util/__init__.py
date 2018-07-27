@@ -290,7 +290,9 @@ class SwaggerClient(object):
         if access_token:
             credentials = argparse.Namespace(token=access_token, refresh_token=None, id_token=None)
         else:
-            scopes = ["https://www.googleapis.com/auth/userinfo.email"]
+            scopes = ["https://www.googleapis.com/auth/plus.me",
+                      "https://www.googleapis.com/auth/userinfo.email"]
+
             from google_auth_oauthlib.flow import InstalledAppFlow
             flow = InstalledAppFlow.from_client_config(self.application_secrets, scopes=scopes)
             credentials = flow.run_local_server()
