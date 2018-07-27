@@ -1,3 +1,12 @@
+Changes for v4.1.1 (2018-07-27)
+===============================
+
+-  Update Google auth scopes to match new injected Google scope
+
+-  Refetch DSS API definition weekly (#79) (#139)
+
+-  Supply the required version to dss.upload (#135)
+
 
 Changes for v4.0.0 (2018-06-20)
 ===============================
