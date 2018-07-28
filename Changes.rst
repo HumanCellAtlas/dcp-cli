@@ -1,3 +1,8 @@
+Changes for v4.1.2 (2018-07-27)
+===============================
+
+Fix ExpiredToken exceptions during ``hca upload file``
+
 Changes for v4.1.1 (2018-07-27)
 ===============================
 
