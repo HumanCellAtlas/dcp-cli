@@ -47,12 +47,14 @@ DSS deployment. You can also layer a minimal config file on top of the default `
     jq -n .DSSClient.swagger_url=env.SWAGGER_URL > ~/.config/hca/config.staging.json
     export HCA_CONFIG_FILE=~/.config/hca/config.staging.json
 
-To use the Python interface with a local or test DSS, set the ``host`` attribute of the API client:
+To use the Python interface with a local or test DSS, configure an HCAConfig object with a ``swagger_url`` field, and
+pass it as a parameter to the API client's constructor:
 
 .. code-block:: python
 
-    client = hca.dss.DSSClient()
-    client.host = "https://dss.example.com/v1"
+    config = HCAConfig()
+    config['DSSClient'].swagger_url = "https://dss.example.com/v1/swagger.json"
+    client = DSSClient(config=config)
     res = client.post_search(...)
 
 Testing
