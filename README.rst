@@ -40,8 +40,14 @@ the hca package by running `make install` in the repository root directory.
 To use the command line interface with a local or test DSS, first run ``hca`` (or ``scripts/hca`` if you want to use the
 package in place from the repository root directory). This will create the file ``~/.config/hca/config.json``, which you
 can modify to update the value of `DSSClient.swagger_url` to point to the URL of the Swagger definition served by your
-DSS deployment. You can also layer a minimal config file on top of the default ``config.json`` using the
-``HCA_CONFIG_FILE`` environment variable, for example::
+DSS deployment. One caveat is that the CLI enforces HTTPS connection to the DSS API and is hardcoded in the source. In
+order to successfully connect to a local DSS, make this change in ``dcp-cli/hca/util/__init__.py`` in the
+`SwaggerClient` object::
+
+    scheme = "http"
+
+You can also layer a minimal config file on top of the default ``config.json`` using the ``HCA_CONFIG_FILE`` environment
+variable, for example::
 
     export SWAGGER_URL="https://dss.staging.data.humancellatlas.org/v1/swagger.json"
     jq -n .DSSClient.swagger_url=env.SWAGGER_URL > ~/.config/hca/config.staging.json
