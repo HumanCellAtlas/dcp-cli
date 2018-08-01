@@ -13,13 +13,17 @@ MB = KB * KB
 
 def sizeof_fmt(num, suffix='B'):
     """
-    From https://stackoverflow.com/a/1094933
+    Adapted from https://stackoverflow.com/a/1094933
+    Re: precision - display enough decimals to show progress on a slow (<5 MB/s) Internet connection
     """
+    precision = {'': 0, 'Ki': 0, 'Mi': 0, 'Gi': 3, 'Ti': 6, 'Pi': 9, 'Ei': 12, 'Zi': 15}
+
     for unit in ['', 'Ki', 'Mi', 'Gi', 'Ti', 'Pi', 'Ei', 'Zi']:
         if abs(num) < 1024.0:
-            return "%d %s%s" % (num, unit, suffix)
+            format_string = "{number:.%df} {unit}{suffix}" % precision[unit]
+            return format_string.format(number=num, unit=unit, suffix=suffix)
         num /= 1024.0
-    return "%.1f %s%s" % (num, 'Yi', suffix)
+    return "%.18f %s%s" % (num, 'Yi', suffix)
 
 
 class S3Agent:
