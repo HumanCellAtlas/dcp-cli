@@ -7,8 +7,7 @@ from botocore.config import Config
 from botocore.credentials import CredentialResolver
 from botocore.session import get_session
 
-KB = 1024
-MB = KB * KB
+from dcplib import s3_multipart
 
 
 def sizeof_fmt(num, suffix='B'):
@@ -48,7 +47,7 @@ class S3Agent:
         sys.stdout.flush()
 
     def upload_file(self, local_path, target_bucket, target_key, content_type, report_progress=False):
-        self.file_size = os.stat(local_path).st_size
+        self.file_size = os.path.getsize(local_path)
         bucket = self.s3.Bucket(target_bucket)
         obj = bucket.Object(target_key)
         upload_fileobj_args = {
@@ -69,16 +68,5 @@ class S3Agent:
 
     @classmethod
     def transfer_config(cls, file_size):
-        etag_stride = cls._s3_chunk_size(file_size)
-        return TransferConfig(multipart_threshold=etag_stride,
-                              multipart_chunksize=etag_stride)
-
-    @staticmethod
-    def _s3_chunk_size(file_size):
-        if file_size <= 10000 * 64 * MB:
-            return 64 * MB
-        else:
-            div = file_size // 10000
-            if div * 10000 < file_size:
-                div += 1
-            return ((div + (MB - 1)) // MB) * MB
+        return TransferConfig(multipart_threshold=s3_multipart.MULTIPART_THRESHOLD,
+                              multipart_chunksize=s3_multipart.get_s3_multipart_chunk_size(file_size))
