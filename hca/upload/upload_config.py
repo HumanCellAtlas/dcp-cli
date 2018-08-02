@@ -11,7 +11,8 @@ class UploadConfig:
     """
 
     DEFAULT_BUCKET_NAME_TEMPLATE = "org-humancellatlas-upload-{deployment_stage}"
-    DEFAULT_UPLOAD_SERVICE_API_URL_TEMPLATE = "https://upload.{deployment_stage}.data.humancellatlas.org/v1"
+    DEFAULT_PREPROD_API_URL_TEMPLATE = "https://upload.{deployment_stage}.data.humancellatlas.org/v1"
+    DEFAULT_PRODUCTION_API_URL = "https://upload.data.humancellatlas.org/v1"
 
     def __init__(self):
         self._load_config()
@@ -30,8 +31,13 @@ class UploadConfig:
             self._config.upload.current_area = None
         if 'bucket_name_template' not in self._config.upload:
             self._config.upload.bucket_name_template = self.DEFAULT_BUCKET_NAME_TEMPLATE
-        if 'upload_service_api_url_template' not in self._config.upload:
-            self._config.upload.upload_service_api_url_template = self.DEFAULT_UPLOAD_SERVICE_API_URL_TEMPLATE
+        if 'production_api_url' not in self._config.upload:
+            self._config.upload.production_api_url = self.DEFAULT_PRODUCTION_API_URL
+        if 'preprod_api_url_template' not in self._config.upload:
+            self._config.upload.preprod_api_url_template = self.DEFAULT_PREPROD_API_URL_TEMPLATE
+        # Old style.  Remove after 2018:
+        if 'upload_service_api_url_template' in self._config.upload:
+            del self._config.upload['upload_service_api_url_template']
         self.save()
 
     @property
@@ -47,8 +53,12 @@ class UploadConfig:
         return self._config.upload.bucket_name_template
 
     @property
-    def upload_service_api_url_template(self):
-        return self._config.upload.upload_service_api_url_template
+    def preprod_api_url_template(self):
+        return self._config.upload.preprod_api_url_template
+
+    @property
+    def production_api_url(self):
+        return self._config.upload.production_api_url
 
     def add_area(self, uri):
         if uri.area_uuid not in self._config.upload.areas:
