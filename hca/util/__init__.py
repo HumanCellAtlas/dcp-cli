@@ -91,8 +91,13 @@ except ImportError:
     from funcsigs import signature, Signature, Parameter
 
 import requests
+
+from docutils import utils
+from docutils.frontend import OptionParser
+from docutils.parsers.rst import Parser as RSTParser_component
 from requests.adapters import HTTPAdapter
 from requests_oauthlib import OAuth2Session
+from sphinx.parsers import RSTParser
 from urllib3.util import retry, timeout
 from jsonpointer import resolve_pointer
 
@@ -480,11 +485,64 @@ class SwaggerClient(object):
             sig = signature(command)
             if not getattr(command, "__doc__", None):
                 raise SwaggerClientInternalError("Command {} has no docstring".format(command))
-            doc = command.__doc__.strip().format(prog=subparsers._prog_prefix)
-            command_subparser = subparsers.add_parser(command.__name__,
-                                                      help=doc.splitlines()[0],
-                                                      description=doc)
+            docstring = command.__doc__.format(prog=subparsers._prog_prefix)
+            method_args = self.parse_docstring(docstring)
+            command_subparser = subparsers.add_parser(command.__name__.replace("_", "-"),
+                                                      help=method_args['summary'],
+                                                      description=method_args['description']
+                                                      )
             command_subparser.set_defaults(entry_point=self._command_arg_forwarder_factory(command, sig))
             for param_name, param_data in sig.parameters.items():
                 command_subparser.add_argument("--" + param_name.replace("_", "-"),
+                                               help=method_args['params'].get(param_name, None),
                                                **self._get_command_arg_settings(param_data))
+
+    @staticmethod
+    def parse_docstring(docstring):
+        """
+        Using the sphinx RSTParse to parse __doc__ for argparse `parameters`, `help`, and `description`. The first
+        rst paragraph encountered it treated as the argparse help text. Any param fields are treated as argparse
+        arguments. Any other text is combined and added to the argparse description.
+
+        example:
+        \"\"\"
+            this will be the summary
+
+            :param name: describe the parameter called name.
+
+            this will be the descriptions
+
+            * more description
+            * more description
+
+            This will also be in the description
+        \"\"\"
+
+        :param str docstring:
+        :return:
+        :rtype: dict
+        """
+        settings = OptionParser(components=(RSTParser_component,)).get_default_values()
+        rstparser = RSTParser()
+        document = utils.new_document(' ', settings)
+        rstparser.parse(docstring, document)
+        if document.children[0].tagname != 'block_quote':
+            logger.warning("The first line of the docstring must be blank.")
+        else:
+            document = document.children[0]
+
+        def get_params(field_list_node, params):
+            for field in field_list_node.children:
+                name = field.children[0].rawsource.split(' ')
+                if 'param' == name[0]:
+                    params[name[-1]] = field.children[1].astext()
+
+        method_args = {'summary': '', 'params': dict(), 'description': ''}
+        for node in document.children:
+            if node.tagname is 'paragraph' and method_args['summary'] == '':
+                method_args['summary'] = node.astext()
+            elif node.tagname is 'field_list':
+                get_params(node, method_args['params'])
+            else:
+                method_args['description'] += '\n' + node.astext()
+        return method_args
