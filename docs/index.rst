@@ -1,11 +1,6 @@
-.. include:: ../README.rst
-
-API documentation
-=================
-
-.. automodule:: hca.dss
-   :members:
-   :inherited-members:
+=======
+HCA CLI
+=======
 
 Table of Contents
 =================
@@ -13,4 +8,6 @@ Table of Contents
 .. toctree::
    :maxdepth: 5
 
+   readme
    cli
+   api
