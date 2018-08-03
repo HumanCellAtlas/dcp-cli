@@ -1,11 +1,15 @@
+#!/usr/bin/env python
+# coding: utf-8
+
 import os
 import sys
 import unittest
 
-pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))  # noqa
+pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))  # noqa
 sys.path.insert(0, pkg_root)  # noqa
 
 from hca.upload.media_type import MediaType
+from test import TEST_DIR
 
 
 class TestMediaType(unittest.TestCase):
@@ -57,7 +61,7 @@ class TestMediaType(unittest.TestCase):
 
             self.assertEqual(str(mt), media_type_string)
 
-    BUNDLE_FIXTURE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'bundle'))
+    BUNDLE_FIXTURE_DIR = os.path.join(TEST_DIR, "res", "bundle")
 
     TEST_FILES_AND_STRINGS = {
         'assay.json': 'application/json; dcp-type="metadata/assay"',
@@ -71,3 +75,7 @@ class TestMediaType(unittest.TestCase):
         for filename, media_type in TestMediaType.TEST_FILES_AND_STRINGS.items():
             file_path = os.path.join(self.BUNDLE_FIXTURE_DIR, filename)
             self.assertEqual(str(MediaType.from_file(file_path)), media_type)
+
+
+if __name__ == '__main__':
+    unittest.main()

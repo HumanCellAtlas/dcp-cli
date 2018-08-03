@@ -7,8 +7,7 @@ import boto3
 from moto import mock_s3, mock_sts
 import responses
 
-
-from .. import TweakResetter
+from test import TweakResetter
 
 import hca
 from hca.upload import UploadArea
@@ -83,3 +82,4 @@ class UploadTestCase(unittest.TestCase):
             'bucket_name_template': self.UPLOAD_BUCKET_NAME_TEMPLATE
         }
         config.save()
+

@@ -1,16 +1,20 @@
+#!/usr/bin/env python
+# coding: utf-8
+
 import os
 import sys
+import unittest
 from argparse import Namespace
 from mock import patch, Mock
 
 import responses
 
-from .. import UploadTestCase
-
-pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))  # noqa
+pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..', '..'))  # noqa
 sys.path.insert(0, pkg_root)  # noqa
 
 from hca.upload.cli.upload_command import UploadCommand
+from test import TEST_DIR
+from test.integration.upload import UploadTestCase
 
 
 class TestUploadCliUploadCommand(UploadTestCase):
@@ -23,7 +27,7 @@ class TestUploadCliUploadCommand(UploadTestCase):
     def test_upload_with_target_filename_option(self):
 
         args = Namespace(
-            file_paths=['test/bundle/sample.json'],
+            file_paths=[os.path.join(TEST_DIR, "res", "bundle", "sample.json")],
             target_filename='FOO',
             no_transfer_acceleration=False,
             quiet=True)
@@ -34,7 +38,7 @@ class TestUploadCliUploadCommand(UploadTestCase):
 
         obj = self.upload_bucket.Object("{}/FOO".format(self.area.uuid))
         self.assertEqual(obj.content_type, 'application/json; dcp-type=data')
-        with open('test/bundle/sample.json', 'rb') as fh:
+        with open(os.path.join(TEST_DIR, "res", "bundle", "sample.json"), 'rb') as fh:
             expected_contents = fh.read()
             self.assertEqual(obj.get()['Body'].read(), expected_contents)
 
@@ -89,3 +93,7 @@ class TestUploadCliUploadCommand(UploadTestCase):
             with open(filename, 'rb') as fh:
                 expected_contents = fh.read()
                 self.assertEqual(obj.get()['Body'].read(), expected_contents)
+
+
+if __name__ == '__main__':
+    unittest.main()

@@ -1,13 +1,17 @@
+#!/usr/bin/env python
+# coding: utf-8
+
 import os
 import sys
+import unittest
 
 import responses
 
-pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))  # noqa
+pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..', '..'))  # noqa
 sys.path.insert(0, pkg_root)  # noqa
 
 from hca import upload
-from .. import UploadTestCase
+from test.integration.upload import UploadTestCase
 
 
 class TestUploadListArea(UploadTestCase):
@@ -37,3 +41,7 @@ class TestUploadListArea(UploadTestCase):
         file_list = list(upload.list_current_area(detail=True))
 
         self.assertEqual(file_list, [{'name': 'bogofile', 'size': 1234}])
+
+
+if __name__ == '__main__':
+    unittest.main()

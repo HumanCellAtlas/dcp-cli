@@ -8,14 +8,14 @@ import sys
 import unittest
 import json
 
-pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))  # noqa
+pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))  # noqa
 sys.path.insert(0, pkg_root)  # noqa
 
 import hca
 import hca.cli
 import hca.dss
 
-from test import CapturingIO, reset_tweak_changes
+from test import CapturingIO, reset_tweak_changes, TEST_DIR
 
 
 class TestDssCLI(unittest.TestCase):
@@ -30,7 +30,7 @@ class TestDssCLI(unittest.TestCase):
 
     def test_get_files_cli(self):
         filename = "SRR2967608_1.fastq.gz"
-        dirpath = os.path.join(os.path.dirname(os.path.realpath(__file__)), "bundle")
+        dirpath = os.path.join(TEST_DIR, "res", "bundle")
         file_path = os.path.join(dirpath, filename)
 
         replica = "aws"
