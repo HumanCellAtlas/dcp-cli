@@ -505,18 +505,18 @@ class SwaggerClient(object):
         arguments. Any other text is combined and added to the argparse description.
 
         example:
-        \"\"\"
-            this will be the summary
+            \"""
+             this will be the summary
 
-            :param name: describe the parameter called name.
+             :param name: describe the parameter called name.
 
-            this will be the descriptions
+             this will be the descriptions
 
-            * more description
-            * more description
+             * more description
+             * more description
 
-            This will also be in the description
-        \"\"\"
+             This will also be in the description
+            \"""
 
         :param str docstring:
         :return:
