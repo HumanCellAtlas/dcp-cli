@@ -40,8 +40,7 @@ class HCAArgumentParser(argparse.ArgumentParser):
             self._defaults.pop("entry_point", None)
         return subparser
 
-
-def main(args=None):
+def get_parser():
     parser = HCAArgumentParser(description=__doc__, formatter_class=argparse.RawTextHelpFormatter)
     version_string = "%(prog)s {version} ({python_impl} {python_version} {platform})"
     parser.add_argument("--version", action="version", version=version_string.format(
@@ -62,7 +61,10 @@ def main(args=None):
     dss_cli.add_commands(parser._subparsers)
 
     argcomplete.autocomplete(parser)
+    return parser
 
+def main(args=None):
+    parser = get_parser()
     if len(sys.argv) < 2:
         parser.print_help()
         parser.exit(1)

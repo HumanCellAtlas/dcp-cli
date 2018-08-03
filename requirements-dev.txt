@@ -6,4 +6,5 @@ responses
 backports.tempfile
 mock
 unittest2
+sphinx-argparse
 -r requirements.txt
