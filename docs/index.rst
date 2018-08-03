@@ -1,13 +1,12 @@
-=======
-HCA CLI
-=======
+.. include:: ../README.rst
+
 
 Table of Contents
-=================
-
+-----------------
 .. toctree::
    :maxdepth: 5
 
-   readme
+   index
    cli
    api
+

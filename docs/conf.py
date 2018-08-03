@@ -22,9 +22,6 @@ import sys
 
 sys.path.insert(0, os.path.abspath('..'))  # noqa
 
-from hca.dss import DSSClient
-dss_client = DSSClient()
-
 # -- General configuration ------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
@@ -49,14 +46,15 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = 'hca-cli'
+project = 'HCA CLI'
 copyright = '2017, James Mackey, Andrey Kislyuk'
 author = 'James Mackey'
 
 # A string of reStructuredText that will be included at the end of every source file that is read.
-rst_epilog = """* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`"""
+rst_epilog = """
+.. rubric:: Links:
+    :ref:`genindex` / :ref:`modindex` / :ref:`search`
+"""
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
