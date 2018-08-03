@@ -1,13 +1,16 @@
+#!/usr/bin/env python
+# coding: utf-8
+
 import os
 import sys
+import unittest
 
-from .. import UploadTestCase
-
-pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))  # noqa
+pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..', '..'))  # noqa
 sys.path.insert(0, pkg_root)  # noqa
 
 import hca
 from hca import upload
+from test.integration.upload import UploadTestCase
 
 
 class TestUploadListAreas(UploadTestCase):
@@ -44,3 +47,7 @@ class TestUploadListAreas(UploadTestCase):
             hca.upload.list_areas()
         except Exception as e:
             self.fail("Expected no exception, got %s" % (e,))
+
+
+if __name__ == '__main__':
+    unittest.main()

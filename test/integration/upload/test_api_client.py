@@ -1,7 +1,17 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+import os
+import sys
+import unittest
+
+pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))  # noqa
+sys.path.insert(0, pkg_root)  # noqa
+
 from hca.upload import ApiClient
 from hca.upload import UploadConfig
 
-from . import UploadTestCase
+from test.integration.upload import UploadTestCase
 
 
 class TestApiClient(UploadTestCase):
@@ -21,3 +31,7 @@ class TestApiClient(UploadTestCase):
     def test_api_base_is_set_correctly_for_prod(self):
         client = ApiClient(deployment_stage="prod")
         self.assertEqual("https://prefix.suffix", client.api_url_base)
+
+
+if __name__ == '__main__':
+    unittest.main()

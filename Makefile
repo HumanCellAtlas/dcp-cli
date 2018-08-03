@@ -4,6 +4,12 @@ test: lint install
 	# https://github.com/HumanCellAtlas/dcp-cli/issues/127
 	coverage run --source=hca -m unittest discover -v -t . -s test
 
+unit: lint install
+	coverage run --source=hca -m unittest discover -v -t . -s test/unit
+
+integration: lint install
+	coverage run --source=hca -m unittest discover -v -t . -s test/integration
+
 lint:
 	./setup.py flake8
 
@@ -29,6 +35,6 @@ clean:
 	-rm -rf build dist
 	-rm -rf *.egg-info
 
-.PHONY: test lint install release docs clean
+.PHONY: test unit integration lint install release docs clean
 
 include common.mk

@@ -1,11 +1,19 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+import os
+import sys
 import datetime
+import unittest
 
 import responses
 
-from . import UploadTestCase
+pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))  # noqa
+sys.path.insert(0, pkg_root)  # noqa
 
 from hca.upload import UploadConfig
 from hca.upload.credentials_manager import CredentialsManager
+from test.integration.upload import UploadTestCase
 
 call_count = 0
 
@@ -52,3 +60,7 @@ class TestCredentialsManager(UploadTestCase):
         self.assertEqual(len(responses.calls), 1)
         self.assertEqual(responses.calls[0].request.url, creds_url)
         self.assertEqual(expected_creds, creds)
+
+
+if __name__ == '__main__':
+    unittest.main()
