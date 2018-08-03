@@ -38,19 +38,23 @@ class DSSClient(SwaggerClient):
         """
         Download a bundle and save it to the local filesystem as a directory.
 
-        `metadata_files` (`--metadata-files` on the CLI) are one or more shell patterns against which all metadata
-        files in the bundle will be matched case-sensitively. A file is considered a metadata file if the `indexed`
-        property in the manifest is set. If and only if a metadata file matches any of the patterns in
-        `metadata_files` will it be downloaded.
+        :param str bundle_uuid: The uuid of the bundle to download
+        :param str replica: the replica to download from. [aws,gcp,azure]
+        :param str version: Timestamp of bundle creation in RFC3339. The version to download, else download the latest.
+        :param str dest_name: The destination file path for the download
+        :param list metadata_files: one or more shell patterns against which all metadata files in the bundle will be
+            matched case-sensitively. A file is considered a metadata file if the `indexed` property in the manifest is
+            set. If and only if a metadata file matches any of the patterns in `metadata_files` will it be downloaded.
+        :param list data_files: one or more shell patterns against which all data files in the bundle will be matched
+            case-sensitively. A file is considered a data file if the `indexed` property in the manifest is not set. If
+            and only if a data file matches any of the patterns in `data_files` will it be downloaded.
+        :param int initial_retries_left: The initial number of times to retries a failed download.
+        :param float min_delay_seconds: The minimum number of seconds to wait in between retries.
 
-        `data_files` (`--data-files` on the CLI) are one or more shell patterns against which all data files in the
-        bundle will be matched case-sensitively. A file is considered a data file if the `indexed` property in the
-        manifest is not set. If and only if a data file matches any of the patterns in `data_files` will it be
-        downloaded.
-
+        Download a bundle and save it to the local filesystem as a directory.
         By default, all data and metadata files are downloaded. To disable the downloading of data files,
-        use `--data-files ''` if using the CLI (or `data_files=()` if invoking `download` programmatically). Likewise
-        for metadata files.
+        use `--data-files ''` if using the CLI (or `data_files=()` if invoking `download` programmatically).
+        Likewise for metadata files.
         """
         if not dest_name:
             dest_name = bundle_uuid
@@ -168,17 +172,26 @@ class DSSClient(SwaggerClient):
         """
         Process the given manifest file in TSV (tab-separated values) format and download the files referenced by it.
 
-        Each row in the manifest represents one file in DSS. The manifest must have a header row. The header row must
-        declare the following columns:
+        :param str manifest: path to a TSV (tab-separated values) file listing files to download
+        :param str replica: the replica to download from. [aws,gcp,azure]
+        :param int initial_retries_left: The initial number of times to retries a failed download.
+        :param float min_delay_seconds: The minimum number of seconds to wait in between retries.
 
-        `bundle_uuid` - the UUID of the bundle containing the file in DSS
+        Process the given manifest file in TSV (tab-separated values) format and download the files
+        referenced by it.
 
-        `bundle_version` - the version of the bundle containing the file in DSS
+        Each row in the manifest represents one file in DSS. The manifest must have a header row. The header row
+        must declare the following columns:
 
-        `file_name` - the name of the file as specified in the bundle
+        * `bundle_uuid` - the UUID of the bundle containing the file in DSS.
+
+        * `bundle_version` - the version of the bundle containing the file in DSS.
+
+        * `file_name` - the name of the file as specified in the bundle.
 
         The TSV may have additional columns. Those columns will be ignored. The ordering of the columns is
         insignificant because the TSV is required to have a header row.
+
         """
         with open(manifest) as f:
             bundles = defaultdict(set)
@@ -211,6 +224,12 @@ class DSSClient(SwaggerClient):
         """
         Upload a directory of files from the local filesystem and create a bundle containing the uploaded files.
 
+        :param str src_dir: file path to a directory of file to upload
+        :param str replica: the replica to upload to. [aws,gcp,azure]
+        :param str staging_bucket: the bucket to upload from.
+        :param int timeout_seconds: timeout.
+
+        Upload a directory of files from the local filesystem and create a bundle containing the uploaded files.
         This method requires the use of a client-controlled object storage bucket to stage the data for upload.
         """
         bundle_uuid = str(uuid.uuid4())
