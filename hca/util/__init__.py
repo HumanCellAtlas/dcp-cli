@@ -93,6 +93,7 @@ except ImportError:
 import requests
 from requests.adapters import HTTPAdapter
 from requests_oauthlib import OAuth2Session
+from oauthlib.oauth2 import WebApplicationClient
 from urllib3.util import retry, timeout
 from jsonpointer import resolve_pointer
 from datetime import datetime
@@ -107,6 +108,10 @@ class RetryPolicy(retry.Retry):
         super(RetryPolicy, self).__init__(**kwargs)
         self.RETRY_AFTER_STATUS_CODES = frozenset(retry_after_status_codes | retry.Retry.RETRY_AFTER_STATUS_CODES)
 
+class JWTClient(WebApplicationClient):
+    def _add_bearer_token(self, uri, http_method='GET', body=None, headers=None, *args, **kwargs):
+        headers["Authorization"] = "Bearer {}".format(self.token["id_token"])
+        return uri, headers, body
 
 class _ClientMethodFactory(object):
 
@@ -259,6 +264,22 @@ class SwaggerClient(object):
 
     @property
     def application_secrets(self):
+        return {
+            "installed": {
+#                "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+#                "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+                "auth_uri": "https://auth.dev.data.humancellatlas.org/authorize",
+                "client_id": "qtMgNk9fqVeclLtZl6WkbdJ59dP3WeAt",
+                "client_secret": "JDE9KHBzrvNryDdzr3gNkyCMhXEUdMrzMcBrTXoRCNM0RlODP6NzlOxqF7Yx7O1F",
+#                "project_id": "human-cell-atlas-travis-test",
+                "redirect_uris": [
+                    "urn:ietf:wg:oauth:2.0:oob",
+                    "http://localhost:8080"
+                ],
+                "token_uri": "https://auth.dev.data.humancellatlas.org/oauth/token"
+            }
+        }
+
         if "application_secrets" not in self.config:
             app_secrets_url = "https://{}/internal/application_secrets".format(self._swagger_spec["host"])
             self.config.application_secrets = requests.get(app_secrets_url).json()
@@ -290,12 +311,13 @@ class SwaggerClient(object):
         if access_token:
             credentials = argparse.Namespace(token=access_token, refresh_token=None, id_token=None)
         else:
-            scopes = ["https://www.googleapis.com/auth/plus.me",
-                      "https://www.googleapis.com/auth/userinfo.email"]
+            scopes = ["openid", "email", "offline_access"]
 
             from google_auth_oauthlib.flow import InstalledAppFlow
             flow = InstalledAppFlow.from_client_config(self.application_secrets, scopes=scopes)
-            credentials = flow.run_local_server()
+            msg = "Authentication successful. Please close this tab and run HCA CLI commands in the terminal."
+            credentials = flow.run_local_server(success_message=msg, audience="https://dss.dev.data.humancellatlas.org/")
+
         # TODO: (akislyuk) test token autorefresh on expiration
         self.config.oauth2_token = dict(access_token=credentials.token,
                                         refresh_token=credentials.refresh_token,
@@ -345,7 +367,9 @@ class SwaggerClient(object):
                     msg = ('Please configure {prog} authentication credentials using "{prog} login" '
                            'or set the GOOGLE_APPLICATION_CREDENTIALS environment variable')
                     raise Exception(msg.format(prog=self.__module__.replace(".", " ")))
+                jwt_client = JWTClient(client_id=oauth2_client_data["client_id"], token=self.config.oauth2_token)
                 self._authenticated_session = OAuth2Session(
+                    client=jwt_client,
                     client_id=oauth2_client_data["client_id"],
                     token=self.config.oauth2_token,
                     auto_refresh_url=oauth2_client_data["token_uri"],
