@@ -84,6 +84,9 @@ client. Subclasses can add more commands by adding them to the
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import os, types, collections, typing, json, errno, base64, argparse
+import time
+
+import jwt
 
 try:
     from inspect import signature, Signature, Parameter
@@ -296,12 +299,13 @@ class SwaggerClient(object):
         if access_token:
             credentials = argparse.Namespace(token=access_token, refresh_token=None, id_token=None)
         else:
-            scopes = ["https://www.googleapis.com/auth/plus.me",
-                      "https://www.googleapis.com/auth/userinfo.email"]
+            scopes = ["openid", "email", "offline_access"]
 
             from google_auth_oauthlib.flow import InstalledAppFlow
             flow = InstalledAppFlow.from_client_config(self.application_secrets, scopes=scopes)
-            credentials = flow.run_local_server()
+            msg = "Authentication successful. Please close this tab and run HCA CLI commands in the terminal."
+            credentials = flow.run_local_server(success_message=msg, audience="https://dss.dev.data.humancellatlas.org/")
+
         # TODO: (akislyuk) test token autorefresh on expiration
         self.config.oauth2_token = dict(access_token=credentials.token,
                                         refresh_token=credentials.refresh_token,
@@ -332,11 +336,37 @@ class SwaggerClient(object):
         r.session.close()
         return credentials.token, credentials.expiry
 
+    def _get_jwt_from_service_account_credentials(self):
+        assert 'GOOGLE_APPLICATION_CREDENTIALS' in os.environ
+        service_account_credentials_filename = os.environ['GOOGLE_APPLICATION_CREDENTIALS']
+        if not os.path.isfile(service_account_credentials_filename):
+            msg = 'File "{}" referenced by the GOOGLE_APPLICATION_CREDENTIALS environment variable does not exist'
+            raise Exception(msg.format(service_account_credentials_filename))
+        with open(service_account_credentials_filename) as fh:
+            service_credentials = json.load(fh)
+
+        audience = "https://dev.data.humancellatlas.org/"
+        iat = time.time()
+        exp = iat + 3600
+        payload = {'iss': service_credentials["client_email"],
+                   'sub': service_credentials["client_email"],
+                   'aud': audience,
+                   'iat': iat,
+                   'exp': exp,
+                   'email': service_credentials["client_email"],
+                   'scope': ['email', 'openid', 'offline_access']
+                   }
+        payload['https://auth.data.humancellatlas.org/group'] = 'hca'
+        additional_headers = {'kid': service_credentials["private_key_id"]}
+        signed_jwt = jwt.encode(payload, service_credentials["private_key"], headers=additional_headers,
+                                algorithm='RS256').decode()
+        return signed_jwt, exp
+
     def get_authenticated_session(self):
         if self._authenticated_session is None:
             oauth2_client_data = self.application_secrets["installed"]
             if 'GOOGLE_APPLICATION_CREDENTIALS' in os.environ:
-                token, expires_at = self._get_oauth_token_from_service_account_credentials()
+                token, expires_at = self._get_jwt_from_service_account_credentials()
                 # TODO: (akislyuk) figure out the right strategy for persisting the service account oauth2 token
                 self._authenticated_session = OAuth2Session(client_id=oauth2_client_data["client_id"],
                                                             token=dict(access_token=token),
