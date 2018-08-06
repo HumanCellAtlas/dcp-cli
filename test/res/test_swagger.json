@@ -1,0 +1,205 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "TestSwagger",
+    "description": "A test swagger API definition created for testing purposes.",
+    "version": "0.0.0"
+  },
+  "host": "host.com",
+  "schemes": [
+    "https"
+  ],
+  "basePath": "/base",
+  "paths": {
+    "/with/path/query/params/{path_param}": {
+      "get": {
+        "description": "GET method with a path and a query parameter.",
+        "summary": "",
+        "parameters": [
+          {
+            "name": "path_param",
+            "description": "A required path parameter.",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "query_param",
+            "description": "A required query parameter.",
+            "in": "query",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/with/path/query/body/params/{path_param}": {
+      "post": {
+        "description": "POST method with a path, a query and a body parameter.",
+        "summary": "",
+        "parameters": [
+          {
+            "name": "path_param",
+            "description": "A required path parameter.",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "query_param",
+            "description": "A required query parameter.",
+            "in": "query",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "json_request_body",
+            "description": "A required body parameter.",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "prop1": {
+                  "description": "Property 1",
+                  "type": "string"
+                },
+                "prop2": {
+                  "description": "Property 2",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "prop1", "prop2"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/with/list/in/body/param": {
+      "post": {
+        "description": "POST method with list in body parameter",
+        "summary": "",
+        "parameters": [
+          {
+            "name": "json_request_body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "prop1": {
+                  "description": "Property 1",
+                  "type": "string"
+                },
+                "prop2": {
+                  "description": "Property 2 (List)",
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "prop3": {
+                        "description": "Property 3 (List item)",
+                        "type": "string"
+                      },
+                      "prop4": {
+                        "description": "Property 4 (List item)",
+                        "type": "boolean"
+                      }
+                    },
+                    "required": [
+                      "prop3", "prop4"
+                    ]
+                  }
+                }
+              },
+              "required": [
+                "prop1", "prop2"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/with/missing/required/param/{path_param}": {
+      "delete": {
+        "description": "DELETE method with a path parameter.",
+        "summary": "",
+        "parameters": [
+          {
+            "name": "path_param",
+            "description": "A required path parameter.",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/with/optional/param": {
+      "head": {
+        "description": "HEAD method with an optional query parameter.",
+        "summary": "",
+        "parameters": [
+          {
+            "name": "query_param",
+            "description": "An optional query parameter.",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "default": "default"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/with/invalid/enum/param": {
+      "put": {
+        "description": "PUT method with a query parameter.",
+        "summary": "",
+        "parameters": [
+          {
+            "name": "query_param",
+            "description": "A required query parameter.",
+            "in": "query",
+            "required": true,
+            "type": "string",
+            "enum": [
+              "enum1", "enum2"
+            ]
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    }
+  }
+}

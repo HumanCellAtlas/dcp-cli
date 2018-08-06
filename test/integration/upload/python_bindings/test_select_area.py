@@ -3,16 +3,16 @@
 
 import os
 import sys
-import uuid
 import unittest
+import uuid
 
-pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..', '..'))  # noqa
+pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", ".."))  # noqa
 sys.path.insert(0, pkg_root)  # noqa
 
 import hca
 from hca import upload
 from hca.upload.exceptions import UploadException
-from test.integration.upload  import UploadTestCase
+from test.integration.upload import UploadTestCase
 
 
 class TestUploadSelectArea(UploadTestCase):
@@ -58,5 +58,5 @@ class TestUploadSelectArea(UploadTestCase):
             upload.select_area(uuid='bogobogo-bogo-bogo-bogo-areaaaaaaaaa')
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

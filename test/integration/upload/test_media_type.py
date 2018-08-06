@@ -77,5 +77,5 @@ class TestMediaType(unittest.TestCase):
             self.assertEqual(str(MediaType.from_file(file_path)), media_type)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

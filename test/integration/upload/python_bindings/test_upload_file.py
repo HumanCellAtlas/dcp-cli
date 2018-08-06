@@ -7,7 +7,7 @@ import unittest
 
 import responses
 
-pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..', '..'))  # noqa
+pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", ".."))  # noqa
 sys.path.insert(0, pkg_root)  # noqa
 
 from hca import upload
@@ -47,5 +47,5 @@ class TestUploadFileUpload(UploadTestCase):
             self.assertEqual(obj.get()['Body'].read(), expected_contents)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

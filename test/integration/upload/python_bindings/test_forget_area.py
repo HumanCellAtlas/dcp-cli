@@ -5,10 +5,10 @@ import os
 import sys
 import unittest
 
-pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..', '..'))  # noqa
+pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", ".."))  # noqa
 sys.path.insert(0, pkg_root)  # noqa
 
-from hca.upload import UploadConfig, UploadException, forget_area
+from hca.upload import forget_area, UploadConfig, UploadException
 from test.integration.upload import UploadTestCase
 
 
