@@ -44,8 +44,10 @@ class DSSClient(SwaggerClient):
         Download a bundle and save it to the local filesystem as a directory.
 
         :param str bundle_uuid: The uuid of the bundle to download
-        :param str replica: the replica to download from. [aws,gcp,azure]
-        :param str version: Timestamp of bundle creation in RFC3339. The version to download, else download the latest.
+        :param str replica: the replica to download from. The supported replicas are: `aws` for Amazon Web Services, and
+            `gcp` for Google Cloud Platform. [aws, gcp]
+        :param str version: The version to download, else if not specified, download the latest. The version is a
+            timestamp of bundle creation in RFC3339
         :param str dest_name: The destination file path for the download
         :param list metadata_files: one or more shell patterns against which all metadata files in the bundle will be
             matched case-sensitively. A file is considered a metadata file if the `indexed` property in the manifest is
@@ -53,13 +55,18 @@ class DSSClient(SwaggerClient):
         :param list data_files: one or more shell patterns against which all data files in the bundle will be matched
             case-sensitively. A file is considered a data file if the `indexed` property in the manifest is not set. If
             and only if a data file matches any of the patterns in `data_files` will it be downloaded.
-        :param int initial_retries_left: The initial number of times to retries a failed download.
+        :param int initial_retries_left: The initial quota of download failures to accept before exiting due to
+            failures. The number of retries increase and decrease as file chucks succeed and fail.
         :param float min_delay_seconds: The minimum number of seconds to wait in between retries.
 
         Download a bundle and save it to the local filesystem as a directory.
         By default, all data and metadata files are downloaded. To disable the downloading of data files,
         use `--data-files ''` if using the CLI (or `data_files=()` if invoking `download` programmatically).
         Likewise for metadata files.
+
+        If a retryable exception occurs, we wait a bit and retry again.  The delay increases each time we fail and
+        decreases each time we successfully read a block.  We set a quota for the number of failures that goes up with
+        every successful block read and down with each failure.
         """
         if not dest_name:
             dest_name = bundle_uuid
@@ -178,8 +185,10 @@ class DSSClient(SwaggerClient):
         Process the given manifest file in TSV (tab-separated values) format and download the files referenced by it.
 
         :param str manifest: path to a TSV (tab-separated values) file listing files to download
-        :param str replica: the replica to download from. [aws,gcp,azure]
-        :param int initial_retries_left: The initial number of times to retries a failed download.
+        :param str replica: the replica to download from. The supported replicas are: `aws` for Amazon Web Services, and
+            `gcp` for Google Cloud Platform. [aws, gcp]
+        :param int initial_retries_left: The initial quota of download failures to accept before exiting due to
+            failures. The number of retries increase and decrease as file chucks succeed and fail.
         :param float min_delay_seconds: The minimum number of seconds to wait in between retries.
 
         Process the given manifest file in TSV (tab-separated values) format and download the files
@@ -229,10 +238,11 @@ class DSSClient(SwaggerClient):
         """
         Upload a directory of files from the local filesystem and create a bundle containing the uploaded files.
 
-        :param str src_dir: file path to a directory of file to upload
-        :param str replica: the replica to upload to. [aws,gcp,azure]
-        :param str staging_bucket: the bucket to upload from.
-        :param int timeout_seconds: timeout.
+        :param str src_dir: file path to a directory of files to upload to the replica.
+        :param str replica: the replica to upload to. The supported replicas are: `aws` for Amazon Web Services, and
+            `gcp` for Google Cloud Platform. [aws, gcp]
+        :param str staging_bucket: a client controlled AWS S3 storage bucket to upload from.
+        :param int timeout_seconds: the time to wait for a file to upload to replica.
 
         Upload a directory of files from the local filesystem and create a bundle containing the uploaded files.
         This method requires the use of a client-controlled object storage bucket to stage the data for upload.
