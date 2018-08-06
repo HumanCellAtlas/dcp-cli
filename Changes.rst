@@ -1,3 +1,12 @@
+Changes for v4.1.3 (2018-08-06)
+===============================
+
+-  Use setuptools entry_points instead of scripts
+
+-  Use s3 multipart constants as defined in dcplib (#150)
+
+-  Documentation improvements
+
 Changes for v4.1.2 (2018-07-27)
 ===============================
 
