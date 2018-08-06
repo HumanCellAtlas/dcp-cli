@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # coding: utf-8
 
+import datetime
 import os
 import sys
-import datetime
 import unittest
 
 import responses
@@ -62,5 +62,5 @@ class TestCredentialsManager(UploadTestCase):
         self.assertEqual(expected_creds, creds)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

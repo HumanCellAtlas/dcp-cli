@@ -5,7 +5,7 @@ import os
 import sys
 import unittest
 
-pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..', '..'))  # noqa
+pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", ".."))  # noqa
 sys.path.insert(0, pkg_root)  # noqa
 
 import hca
@@ -49,5 +49,5 @@ class TestUploadListAreas(UploadTestCase):
             self.fail("Expected no exception, got %s" % (e,))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

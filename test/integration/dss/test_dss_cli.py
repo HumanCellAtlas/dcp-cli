@@ -3,10 +3,10 @@
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
+import json
 import os
 import sys
 import unittest
-import json
 
 pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))  # noqa
 sys.path.insert(0, pkg_root)  # noqa
@@ -14,7 +14,6 @@ sys.path.insert(0, pkg_root)  # noqa
 import hca
 import hca.cli
 import hca.dss
-
 from test import CapturingIO, reset_tweak_changes, TEST_DIR
 
 
@@ -73,5 +72,5 @@ class TestDssCLI(unittest.TestCase):
         self.assertEqual(json.loads(stdout.captured())["es_query"], {})
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

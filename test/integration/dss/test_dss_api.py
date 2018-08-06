@@ -3,9 +3,13 @@
 
 import csv
 import datetime
-from fnmatch import fnmatchcase
+import filecmp
 import itertools
-import os, sys, filecmp, uuid, tempfile
+import os
+import sys
+import tempfile
+import uuid
+from fnmatch import fnmatchcase
 
 pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))  # noqa
 sys.path.insert(0, pkg_root)  # noqa
@@ -127,7 +131,7 @@ class TestDssApi(unittest.TestCase):
                             client.download_manifest('manifest.tsv', replica="aws")
                         except RuntimeError as e:
                             self.assertTrue(bad_bundle, "Should only raise with a bad bundle in the manifest")
-                            self.assertEquals("1 bundle(s) failed to download", e.args[0])
+                            self.assertEqual("1 bundle(s) failed to download", e.args[0])
                         else:
                             self.assertFalse(bad_bundle)
                         for file in manifest_files:
@@ -249,5 +253,5 @@ class TestDssApi(unittest.TestCase):
         self.assertNotIn("oauth2_token", config)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

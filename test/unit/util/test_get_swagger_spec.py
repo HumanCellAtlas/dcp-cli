@@ -28,14 +28,13 @@ class TestSwaggerClient(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         """
-        Initializes SwaggerClient with a test HCAConfig to
-        avoid interaction with the User's existing configuration.
+        Initialize SwaggerClient with a test HCAConfig.
         """
         cls.swagger_url = "test_swagger_url"
         cls.open_fn_name = "__builtin__.open" if USING_PYTHON2 else "builtins.open"
         cls.test_response = requests.models.Response()
         cls.test_response.status_code = 200
-        with open(os.path.join(TEST_DIR, "res", "test_swagger.json")) as fh:
+        with open(os.path.join(TEST_DIR, "res", "test_swagger.json"), 'rb') as fh:
             cls.test_response._content = fh.read()
 
         with mock.patch('requests.Session.get') as mock_get, \
@@ -43,9 +42,9 @@ class TestSwaggerClient(unittest.TestCase):
                 mock.patch('hca.util.fs.atomic_write'), \
                 mock.patch('hca.dss.SwaggerClient.load_swagger_json') as mock_load_swagger_json:
             mock_get.return_value = cls.test_response
-            mock_load_swagger_json.return_value = json.loads(cls.test_response._content)
+            mock_load_swagger_json.return_value = json.loads(cls.test_response._content.decode("utf-8"))
 
-            config = HCAConfig()
+            config = HCAConfig(save_on_exit=False)
             config['SwaggerClient'] = {}
             config['SwaggerClient'].swagger_url = cls.swagger_url
             cls.client = hca.util.SwaggerClient(config)
@@ -56,8 +55,6 @@ class TestSwaggerClient(unittest.TestCase):
         self.client._session = requests.Session()
 
     def tearDown(self):
-        if "swagger_filename" in self.client.config:
-            self.client.config.pop("swagger_filename")
         self.client.__class__._swagger_spec = None
 
     def test_get_swagger_spec_new(self):
@@ -71,6 +68,7 @@ class TestSwaggerClient(unittest.TestCase):
             mock_exists.return_value = False
             mock_days_since_last_modified.return_value = 0
             mock_get.return_value = self.test_response
+            self.client.config.pop('swagger_filename')
 
             test = self.client.swagger_spec
             self.assertTrue(mock_makedirs.called)
@@ -128,5 +126,5 @@ class TestSwaggerClient(unittest.TestCase):
             self.assertFalse(mock_atomic_write.called)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

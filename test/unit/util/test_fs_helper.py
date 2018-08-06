@@ -92,5 +92,5 @@ class TestFSHelper(unittest.TestCase):
             self.assertTrue(mock_getmtime.calledWith(file))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

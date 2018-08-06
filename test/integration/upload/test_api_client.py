@@ -8,9 +8,7 @@ import unittest
 pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))  # noqa
 sys.path.insert(0, pkg_root)  # noqa
 
-from hca.upload import ApiClient
-from hca.upload import UploadConfig
-
+from hca.upload import ApiClient, UploadConfig
 from test.integration.upload import UploadTestCase
 
 
@@ -33,5 +31,5 @@ class TestApiClient(UploadTestCase):
         self.assertEqual("https://prefix.suffix", client.api_url_base)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

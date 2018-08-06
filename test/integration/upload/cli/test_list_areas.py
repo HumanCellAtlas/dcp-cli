@@ -38,5 +38,5 @@ class TestUploadCliListAreasCommand(unittest.TestCase):
         six.assertRegex(self, stdout.captured(), b_uuid)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

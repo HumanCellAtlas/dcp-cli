@@ -5,7 +5,7 @@ test: lint install
 	coverage run --source=hca -m unittest discover -v -t . -s test
 
 unit: lint install
-	coverage run --source=hca -m unittest discover -v -t . -s test/unit
+	python -m unittest discover -v -t . -s test/unit
 
 integration: lint install
 	coverage run --source=hca -m unittest discover -v -t . -s test/integration
