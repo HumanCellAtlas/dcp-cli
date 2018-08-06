@@ -24,7 +24,11 @@ setup(
         ':python_version < "3.5"': ['typing >= 3.6.2, < 4'],
     },
     packages=find_packages(exclude=['test']),
-    scripts=glob.glob('scripts/*'),
+    entry_points={
+        'console_scripts': [
+            'hca=hca.cli:main'
+        ],
+    },
     platforms=['MacOS X', 'Posix'],
     package_data={'hcacli': ['*.json']},
     zip_safe=False,
