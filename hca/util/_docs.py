@@ -2,8 +2,7 @@ import CommonMark
 
 from docutils import utils
 from docutils.frontend import OptionParser
-from docutils.parsers.rst import Parser as RSTParser_component
-from sphinx.parsers import RSTParser
+from docutils.parsers.rst import Parser as RSTParser
 
 from .. import logger
 
@@ -73,7 +72,7 @@ def _parse_docstring(docstring):
     :return:
     :rtype: dict
     """
-    settings = OptionParser(components=(RSTParser_component,)).get_default_values()
+    settings = OptionParser(components=(RSTParser,)).get_default_values()
     rstparser = RSTParser()
     document = utils.new_document(' ', settings)
     rstparser.parse(docstring, document)

@@ -482,7 +482,7 @@ class SwaggerClient(object):
             if not getattr(command, "__doc__", None):
                 raise SwaggerClientInternalError("Command {} has no docstring".format(command))
             docstring = command.__doc__.format(prog=subparsers._prog_prefix)
-            method_args = parse_docstring(docstring)
+            method_args = _parse_docstring(docstring)
             command_subparser = subparsers.add_parser(command.__name__.replace("_", "-"),
                                                       help=method_args['summary'],
                                                       description=method_args['description']
