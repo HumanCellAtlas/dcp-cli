@@ -39,7 +39,7 @@ class DSSClient(SwaggerClient):
 
     def download(self, bundle_uuid, replica, version="", dest_name="",
                  metadata_files=('*',), data_files=('*',),
-                 initial_retries_left=10, min_delay_seconds=0.25):
+                 num_retries=10, min_delay_seconds=0.25):
         """
         Download a bundle and save it to the local filesystem as a directory.
 
@@ -53,9 +53,10 @@ class DSSClient(SwaggerClient):
             matched case-sensitively. A file is considered a metadata file if the `indexed` property in the manifest is
             set. If and only if a metadata file matches any of the patterns in `metadata_files` will it be downloaded.
         :param list data_files: one or more shell patterns against which all data files in the bundle will be matched
-            case-sensitively. A file is considered a data file if the `indexed` property in the manifest is not set. If
-            and only if a data file matches any of the patterns in `data_files` will it be downloaded.
-        :param int initial_retries_left: The initial quota of download failures to accept before exiting due to
+            case-sensitively. A file is considered a data file if the `indexed` property in the manifest is not set. The
+            file will be downloaded only if a data file matches any of the patterns in `data_files` will it be
+            downloaded.
+        :param int num_retries: The initial quota of download failures to accept before exiting due to
             failures. The number of retries increase and decrease as file chucks succeed and fail.
         :param float min_delay_seconds: The minimum number of seconds to wait in between retries.
 
@@ -109,7 +110,7 @@ class DSSClient(SwaggerClient):
             # If we can, we will attempt HTTP resume.  However, we verify that the server supports HTTP resume.  If the
             # ranged get doesn't yield the correct header, then we start over.
             delay = min_delay_seconds
-            retries_left = initial_retries_left
+            retries_left = num_retries
             hasher = hashlib.sha256()
             with open(file_path, "wb") as fh:
                 while True:
@@ -156,7 +157,7 @@ class DSSClient(SwaggerClient):
                                 if chunk:
                                     fh.write(chunk)
                                     hasher.update(chunk)
-                                    retries_left = min(retries_left + 1, initial_retries_left)
+                                    retries_left = min(retries_left + 1, num_retries)
                                     delay = max(delay / 2, min_delay_seconds)
                             break
                         finally:
@@ -180,14 +181,14 @@ class DSSClient(SwaggerClient):
             else:
                 logger.info("%s", "File {}: GET SUCCEEDED. Stored at {}.".format(filename, file_path))
 
-    def download_manifest(self, manifest, replica, initial_retries_left=10, min_delay_seconds=0.25):
+    def download_manifest(self, manifest, replica, num_retries=10, min_delay_seconds=0.25):
         """
         Process the given manifest file in TSV (tab-separated values) format and download the files referenced by it.
 
         :param str manifest: path to a TSV (tab-separated values) file listing files to download
         :param str replica: the replica to download from. The supported replicas are: `aws` for Amazon Web Services, and
             `gcp` for Google Cloud Platform. [aws, gcp]
-        :param int initial_retries_left: The initial quota of download failures to accept before exiting due to
+        :param int num_retries: The initial quota of download failures to accept before exiting due to
             failures. The number of retries increase and decrease as file chucks succeed and fail.
         :param float min_delay_seconds: The minimum number of seconds to wait in between retries.
 
@@ -223,7 +224,7 @@ class DSSClient(SwaggerClient):
                               replica,
                               version=bundle_version,
                               data_files=data_globs,
-                              initial_retries_left=initial_retries_left,
+                              num_retries=num_retries,
                               min_delay_seconds=min_delay_seconds)
             except Exception as e:
                 errors += 1
