@@ -91,6 +91,7 @@ except ImportError:
     from funcsigs import signature, Signature, Parameter
 
 import requests
+
 from requests.adapters import HTTPAdapter
 from requests_oauthlib import OAuth2Session
 from urllib3.util import retry, timeout
@@ -99,7 +100,7 @@ from jsonpointer import resolve_pointer
 from .. import get_config, logger
 from .compat import USING_PYTHON2
 from .exceptions import SwaggerAPIException, SwaggerClientInternalError
-from ._docs import _pagination_docstring, _streaming_docstring, _md2rst
+from ._docs import _pagination_docstring, _streaming_docstring, _md2rst, _parse_docstring
 from .fs_helper import FSHelper as fs
 
 
@@ -480,11 +481,14 @@ class SwaggerClient(object):
             sig = signature(command)
             if not getattr(command, "__doc__", None):
                 raise SwaggerClientInternalError("Command {} has no docstring".format(command))
-            doc = command.__doc__.strip().format(prog=subparsers._prog_prefix)
-            command_subparser = subparsers.add_parser(command.__name__,
-                                                      help=doc.splitlines()[0],
-                                                      description=doc)
+            docstring = command.__doc__.format(prog=subparsers._prog_prefix)
+            method_args = _parse_docstring(docstring)
+            command_subparser = subparsers.add_parser(command.__name__.replace("_", "-"),
+                                                      help=method_args['summary'],
+                                                      description=method_args['description']
+                                                      )
             command_subparser.set_defaults(entry_point=self._command_arg_forwarder_factory(command, sig))
             for param_name, param_data in sig.parameters.items():
                 command_subparser.add_argument("--" + param_name.replace("_", "-"),
+                                               help=method_args['params'].get(param_name, None),
                                                **self._get_command_arg_settings(param_data))

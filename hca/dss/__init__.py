@@ -1,3 +1,8 @@
+"""
+Data Storage System
+*******************
+"""
+
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 from collections import defaultdict
@@ -34,23 +39,35 @@ class DSSClient(SwaggerClient):
 
     def download(self, bundle_uuid, replica, version="", dest_name="",
                  metadata_files=('*',), data_files=('*',),
-                 initial_retries_left=10, min_delay_seconds=0.25):
+                 num_retries=10, min_delay_seconds=0.25):
         """
         Download a bundle and save it to the local filesystem as a directory.
 
-        `metadata_files` (`--metadata-files` on the CLI) are one or more shell patterns against which all metadata
-        files in the bundle will be matched case-sensitively. A file is considered a metadata file if the `indexed`
-        property in the manifest is set. If and only if a metadata file matches any of the patterns in
-        `metadata_files` will it be downloaded.
+        :param str bundle_uuid: The uuid of the bundle to download
+        :param str replica: the replica to download from. The supported replicas are: `aws` for Amazon Web Services, and
+            `gcp` for Google Cloud Platform. [aws, gcp]
+        :param str version: The version to download, else if not specified, download the latest. The version is a
+            timestamp of bundle creation in RFC3339
+        :param str dest_name: The destination file path for the download
+        :param list metadata_files: one or more shell patterns against which all metadata files in the bundle will be
+            matched case-sensitively. A file is considered a metadata file if the `indexed` property in the manifest is
+            set. If and only if a metadata file matches any of the patterns in `metadata_files` will it be downloaded.
+        :param list data_files: one or more shell patterns against which all data files in the bundle will be matched
+            case-sensitively. A file is considered a data file if the `indexed` property in the manifest is not set. The
+            file will be downloaded only if a data file matches any of the patterns in `data_files` will it be
+            downloaded.
+        :param int num_retries: The initial quota of download failures to accept before exiting due to
+            failures. The number of retries increase and decrease as file chucks succeed and fail.
+        :param float min_delay_seconds: The minimum number of seconds to wait in between retries.
 
-        `data_files` (`--data-files` on the CLI) are one or more shell patterns against which all data files in the
-        bundle will be matched case-sensitively. A file is considered a data file if the `indexed` property in the
-        manifest is not set. If and only if a data file matches any of the patterns in `data_files` will it be
-        downloaded.
-
+        Download a bundle and save it to the local filesystem as a directory.
         By default, all data and metadata files are downloaded. To disable the downloading of data files,
-        use `--data-files ''` if using the CLI (or `data_files=()` if invoking `download` programmatically). Likewise
-        for metadata files.
+        use `--data-files ''` if using the CLI (or `data_files=()` if invoking `download` programmatically).
+        Likewise for metadata files.
+
+        If a retryable exception occurs, we wait a bit and retry again.  The delay increases each time we fail and
+        decreases each time we successfully read a block.  We set a quota for the number of failures that goes up with
+        every successful block read and down with each failure.
         """
         if not dest_name:
             dest_name = bundle_uuid
@@ -93,7 +110,7 @@ class DSSClient(SwaggerClient):
             # If we can, we will attempt HTTP resume.  However, we verify that the server supports HTTP resume.  If the
             # ranged get doesn't yield the correct header, then we start over.
             delay = min_delay_seconds
-            retries_left = initial_retries_left
+            retries_left = num_retries
             hasher = hashlib.sha256()
             with open(file_path, "wb") as fh:
                 while True:
@@ -140,7 +157,7 @@ class DSSClient(SwaggerClient):
                                 if chunk:
                                     fh.write(chunk)
                                     hasher.update(chunk)
-                                    retries_left = min(retries_left + 1, initial_retries_left)
+                                    retries_left = min(retries_left + 1, num_retries)
                                     delay = max(delay / 2, min_delay_seconds)
                             break
                         finally:
@@ -164,21 +181,32 @@ class DSSClient(SwaggerClient):
             else:
                 logger.info("%s", "File {}: GET SUCCEEDED. Stored at {}.".format(filename, file_path))
 
-    def download_manifest(self, manifest, replica, initial_retries_left=10, min_delay_seconds=0.25):
+    def download_manifest(self, manifest, replica, num_retries=10, min_delay_seconds=0.25):
         """
         Process the given manifest file in TSV (tab-separated values) format and download the files referenced by it.
 
-        Each row in the manifest represents one file in DSS. The manifest must have a header row. The header row must
-        declare the following columns:
+        :param str manifest: path to a TSV (tab-separated values) file listing files to download
+        :param str replica: the replica to download from. The supported replicas are: `aws` for Amazon Web Services, and
+            `gcp` for Google Cloud Platform. [aws, gcp]
+        :param int num_retries: The initial quota of download failures to accept before exiting due to
+            failures. The number of retries increase and decrease as file chucks succeed and fail.
+        :param float min_delay_seconds: The minimum number of seconds to wait in between retries.
 
-        `bundle_uuid` - the UUID of the bundle containing the file in DSS
+        Process the given manifest file in TSV (tab-separated values) format and download the files
+        referenced by it.
 
-        `bundle_version` - the version of the bundle containing the file in DSS
+        Each row in the manifest represents one file in DSS. The manifest must have a header row. The header row
+        must declare the following columns:
 
-        `file_name` - the name of the file as specified in the bundle
+        * `bundle_uuid` - the UUID of the bundle containing the file in DSS.
+
+        * `bundle_version` - the version of the bundle containing the file in DSS.
+
+        * `file_name` - the name of the file as specified in the bundle.
 
         The TSV may have additional columns. Those columns will be ignored. The ordering of the columns is
         insignificant because the TSV is required to have a header row.
+
         """
         with open(manifest) as f:
             bundles = defaultdict(set)
@@ -196,7 +224,7 @@ class DSSClient(SwaggerClient):
                               replica,
                               version=bundle_version,
                               data_files=data_globs,
-                              initial_retries_left=initial_retries_left,
+                              num_retries=num_retries,
                               min_delay_seconds=min_delay_seconds)
             except Exception as e:
                 errors += 1
@@ -211,6 +239,13 @@ class DSSClient(SwaggerClient):
         """
         Upload a directory of files from the local filesystem and create a bundle containing the uploaded files.
 
+        :param str src_dir: file path to a directory of files to upload to the replica.
+        :param str replica: the replica to upload to. The supported replicas are: `aws` for Amazon Web Services, and
+            `gcp` for Google Cloud Platform. [aws, gcp]
+        :param str staging_bucket: a client controlled AWS S3 storage bucket to upload from.
+        :param int timeout_seconds: the time to wait for a file to upload to replica.
+
+        Upload a directory of files from the local filesystem and create a bundle containing the uploaded files.
         This method requires the use of a client-controlled object storage bucket to stage the data for upload.
         """
         bundle_uuid = str(uuid.uuid4())

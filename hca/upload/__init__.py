@@ -1,3 +1,8 @@
+"""
+Upload Service
+**************
+"""
+
 from .credentials_manager import CredentialsManager
 from .upload_config import UploadConfig
 from .upload_area import UploadArea, UploadAreaURI
