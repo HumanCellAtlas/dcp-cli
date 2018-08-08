@@ -1,3 +1,8 @@
+Changes for v4.1.4 (2018-08-07)
+===============================
+
+Fix ``hca upload file`` to work in production enironment again.
+
 Changes for v4.1.3 (2018-08-06)
 ===============================
 
