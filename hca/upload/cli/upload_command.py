@@ -2,8 +2,8 @@ import os
 import sys
 
 from ..upload_config import UploadConfig
-from .. import upload_file
 from .common import UploadCLICommand
+from ..upload_area import UploadArea
 
 
 class UploadCommand(UploadCLICommand):
@@ -37,20 +37,12 @@ class UploadCommand(UploadCLICommand):
     def __init__(self, args):
         self._load_config()
         self._check_args(args)
-        for file_path in args.file_paths:
-            self._upload_file(file_path,
-                              target_filename=args.target_filename,
-                              use_transfer_acceleration=(not args.no_transfer_acceleration),
-                              report_progress=(not args.quiet))
-
-    def _upload_file(self, file_path, target_filename=None, use_transfer_acceleration=True, report_progress=True):
-        current_area_uuid = UploadConfig().current_area
-        if report_progress:
-            print("Uploading %s to upload area %s..." % (os.path.basename(file_path), current_area_uuid))
-        upload_file(file_path, target_filename, use_transfer_acceleration=use_transfer_acceleration,
-                    report_progress=report_progress, dcp_type="data")
-        if report_progress:
-            print("\n")
+        area = UploadArea(uuid=UploadConfig().current_area)
+        area.upload_files(args.file_paths,
+                          target_filename=args.target_filename,
+                          use_transfer_acceleration=(not args.no_transfer_acceleration),
+                          report_progress=(not args.quiet),
+                          dcp_type="data")
 
     def _load_config(self):
         self.config = UploadConfig()
