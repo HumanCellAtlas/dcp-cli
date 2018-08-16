@@ -1,12 +1,17 @@
+#!/usr/bin/env python
+# coding: utf-8
+
 import os
 import sys
+import unittest
 
 import responses
 
-pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))  # noqa
+pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", ".."))  # noqa
 sys.path.insert(0, pkg_root)  # noqa
 
-from .. import UploadTestCase
+from test import TEST_DIR
+from test.integration.upload import UploadTestCase
 
 
 class TestUploadFileUpload(UploadTestCase):
@@ -19,7 +24,7 @@ class TestUploadFileUpload(UploadTestCase):
     def test_file_upload(self):
         self.simulate_credentials_api(area_uuid=self.area.uuid)
 
-        file_path = os.path.join(os.path.dirname(__file__), '..', '..', 'bundle', 'assay.json')
+        file_path = os.path.join(TEST_DIR, "res", "bundle", "assay.json")
         self.area.upload_files(file_paths=[file_path])
 
         obj = self.upload_bucket.Object("{}/assay.json".format(self.area.uuid))
@@ -77,3 +82,6 @@ class TestUploadFileUpload(UploadTestCase):
         self.assertEqual(self.area.s3agent.file_count, 2)
         self.assertEqual(self.area.s3agent.file_size_sum, 2156)
         self.assertEqual(self.area.s3agent.file_upload_completed_count, 2)
+
+if __name__ == "__main__":
+    unittest.main()

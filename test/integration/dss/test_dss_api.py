@@ -1,17 +1,22 @@
 #!/usr/bin/env python
 # coding: utf-8
+
 import csv
 import datetime
-from fnmatch import fnmatchcase
+import filecmp
 import itertools
-import os, sys, filecmp, uuid, tempfile
+import os
+import sys
+import tempfile
+import uuid
+from fnmatch import fnmatchcase
 
-pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))  # noqa
+pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))  # noqa
 sys.path.insert(0, pkg_root)  # noqa
 
 import hca.dss
 from hca.util.compat import USING_PYTHON2
-from test import reset_tweak_changes
+from test import reset_tweak_changes, TEST_DIR
 
 if USING_PYTHON2:
     import backports.tempfile
@@ -26,8 +31,7 @@ class TestDssApi(unittest.TestCase):
 
     def test_python_upload_download(self):
 
-        dirpath = os.path.dirname(os.path.realpath(__file__))
-        bundle_path = os.path.join(dirpath, "bundle")
+        bundle_path = os.path.join(TEST_DIR, "res", "bundle")
         uploaded_files = set(os.listdir(bundle_path))
         client = hca.dss.DSSClient()
 
@@ -84,7 +88,7 @@ class TestDssApi(unittest.TestCase):
     def test_python_manifest_download(self):
 
         dirpath = os.path.dirname(os.path.realpath(__file__))
-        bundle_path = os.path.join(dirpath, "bundle")
+        bundle_path = os.path.join(TEST_DIR, "res", "bundle")
         uploaded_files = set(os.listdir(bundle_path))
         client = hca.dss.DSSClient()
 
@@ -127,7 +131,7 @@ class TestDssApi(unittest.TestCase):
                             client.download_manifest('manifest.tsv', replica="aws")
                         except RuntimeError as e:
                             self.assertTrue(bad_bundle, "Should only raise with a bad bundle in the manifest")
-                            self.assertEquals("1 bundle(s) failed to download", e.args[0])
+                            self.assertEqual("1 bundle(s) failed to download", e.args[0])
                         else:
                             self.assertFalse(bad_bundle)
                         for file in manifest_files:
@@ -156,7 +160,7 @@ class TestDssApi(unittest.TestCase):
                 self.assertTrue(filecmp.cmp(fh.name, downloaded_file, False))
 
     def test_python_bindings(self):
-        bundle_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "bundle")
+        bundle_path = os.path.join(TEST_DIR, "res", "bundle")
 
         client = hca.dss.DSSClient()
         bundle_output = client.upload(src_dir=bundle_path, replica="aws", staging_bucket=self.staging_bucket)
@@ -249,5 +253,5 @@ class TestDssApi(unittest.TestCase):
         self.assertNotIn("oauth2_token", config)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

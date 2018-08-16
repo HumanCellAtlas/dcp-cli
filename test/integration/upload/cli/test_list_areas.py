@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# coding: utf-8
+
 import os
 import sys
 import unittest
@@ -5,13 +8,12 @@ from argparse import Namespace
 
 import six
 
-from ... import CapturingIO
-
-pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))  # noqa
+pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..', '..'))  # noqa
 sys.path.insert(0, pkg_root)  # noqa
 
 import hca
 from hca.upload.cli.list_areas_command import ListAreasCommand
+from test import CapturingIO
 
 
 class TestUploadCliListAreasCommand(unittest.TestCase):
@@ -34,3 +36,7 @@ class TestUploadCliListAreasCommand(unittest.TestCase):
 
         six.assertRegex(self, stdout.captured(), "%s <- selected" % a_uuid)
         six.assertRegex(self, stdout.captured(), b_uuid)
+
+
+if __name__ == "__main__":
+    unittest.main()

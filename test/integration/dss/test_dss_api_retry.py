@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
+
 import io
 import os
 import socket
@@ -7,17 +8,15 @@ import sys
 import tempfile
 import unittest
 import uuid
-
+from datetime import datetime
 from requests import ConnectTimeout
 from urllib3 import Timeout
-from datetime import datetime
 
-from hca.util import RetryPolicy
-
-pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))  # noqa
+pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))  # noqa
 sys.path.insert(0, pkg_root)  # noqa
 
 import hca.dss
+from hca.util import RetryPolicy
 from hca.util.compat import USING_PYTHON2
 from hca.dss import upload_to_cloud
 
@@ -99,10 +98,9 @@ class TestDssApiRetry(unittest.TestCase):
             # If a domain name resolves to more than one IP (multiple A records with the same name), urllib3 will
             # try each one in turn. That's why we may observe multiple calls to settimeout() and connect(). But they
             # should come in pairs. We don't care what connect() was called with, only settimout().
-            self.assertEquals(len(settimeout_calls), len(connect_calls))
-            self.assertEquals(settimeout_calls, [mock.call(.123)] * len(settimeout_calls))
+            self.assertEqual(len(settimeout_calls), len(connect_calls))
+            self.assertEqual(settimeout_calls, [mock.call(.123)] * len(settimeout_calls))
 
 
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

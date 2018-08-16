@@ -1,16 +1,19 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+from argparse import Namespace
 import os
 import sys
-from argparse import Namespace
+import unittest
 
 import responses
 import six
 
-from ... import CapturingIO
-from .. import UploadTestCase
-
-pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))  # noqa
+pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", ".."))  # noqa
 sys.path.insert(0, pkg_root)  # noqa
 
+from test import CapturingIO
+from test.integration.upload import UploadTestCase
 from hca.upload.cli.list_area_command import ListAreaCommand
 
 
@@ -57,3 +60,7 @@ class TestUploadListAreaCommand(UploadTestCase):
         six.assertRegex(self, stdout.captured(), "size\s+123")
         six.assertRegex(self, stdout.captured(), "Content-Type\s+binary/octet-stream; dcp-type=data")
         six.assertRegex(self, stdout.captured(), "SHA1\s+shaaa")
+
+
+if __name__ == "__main__":
+    unittest.main()

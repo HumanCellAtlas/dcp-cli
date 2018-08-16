@@ -7,11 +7,9 @@ import boto3
 from moto import mock_s3, mock_sts
 import responses
 
-
-from .. import TweakResetter
-
 import hca
 from hca.upload import UploadArea
+from test import TweakResetter
 
 
 class UploadTestCase(unittest.TestCase):

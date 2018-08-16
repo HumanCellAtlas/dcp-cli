@@ -10,6 +10,8 @@ from hca.util.compat import USING_PYTHON2
 if 'DEPLOYMENT_STAGE' not in os.environ:
     os.environ['DEPLOYMENT_STAGE'] = 'test'
 
+TEST_DIR = os.path.dirname(os.path.abspath(__file__))
+
 
 class CapturingIO:
     def __init__(self, stream_name='stdout'):

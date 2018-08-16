@@ -1,18 +1,21 @@
+#!/usr/bin/env python
+# coding: utf-8
+
 import os
 import sys
 import uuid
+import unittest
 from argparse import Namespace
 
 import six
 
-from ... import CapturingIO
-from .. import UploadTestCase
-
-pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))  # noqa
+pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", ".."))  # noqa
 sys.path.insert(0, pkg_root)  # noqa
 
 import hca
 from hca.upload.cli.select_command import SelectCommand
+from test import CapturingIO
+from test.integration.upload import UploadTestCase
 
 
 class TestUploadCliSelectCommand(UploadTestCase):
@@ -97,3 +100,7 @@ class TestUploadCliSelectCommand(UploadTestCase):
 
         config = hca.get_config()
         self.assertEqual(b_uuid, config.upload.current_area)
+
+
+if __name__ == "__main__":
+    unittest.main()
