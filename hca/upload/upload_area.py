@@ -108,7 +108,7 @@ class UploadArea:
         self._setup_s3_agent_for_file_upload(file_paths=file_paths, use_transfer_acceleration=use_transfer_acceleration)
         pool = ThreadPool()
         if report_progress:
-            print("Starting upload of %s files to upload area %s" % (len(file_paths), self.uuid))
+            print("\nStarting upload of %s files to upload area %s" % (len(file_paths), self.uuid))
         for file_path in file_paths:
             pool.add_task(self._upload_file, file_path,
                           target_filename=target_filename,
@@ -116,7 +116,14 @@ class UploadArea:
                           report_progress=report_progress)
         pool.wait_for_completion()
         if report_progress:
-            print("Completed upload of %s files to upload area %s" % (self.s3agent.file_upload_completed_count, self.uuid))
+            number_of_errors = len(self.s3agent.failed_uploads)
+            if number_of_errors == 0:
+                print("Completed upload of %s files to upload area %s.\n" % (self.s3agent.file_upload_completed_count, self.uuid))
+            else:
+                print("\nThe following files failed:")
+                for k, v in self.s3agent.failed_uploads.items():
+                    print("%s: [Exception] %s" % (k, v))
+                print("\nPlease retry or contact an hca administrator at data-help@humancellatlas.org for help.\n")
 
     def _setup_s3_agent_for_file_upload(self, file_paths=[], use_transfer_acceleration=True):
         creds_provider = CredentialsManager(upload_area=self)
@@ -127,6 +134,10 @@ class UploadArea:
 
     def _upload_file(self, file_path=None, dcp_type="data", target_filename=None, use_transfer_acceleration=True,
                      report_progress=False):
-        file_s3_key = "%s/%s" % (self.uuid, target_filename or os.path.basename(file_path))
-        content_type = str(DcpMediaType.from_file(file_path, dcp_type))
-        self.s3agent.upload_file(file_path, self.uri.bucket_name, file_s3_key, content_type, report_progress=report_progress)
+        try:
+            file_s3_key = "%s/%s" % (self.uuid, target_filename or os.path.basename(file_path))
+            content_type = str(DcpMediaType.from_file(file_path, dcp_type))
+            self.s3agent.upload_file(file_path, self.uri.bucket_name, file_s3_key, content_type, report_progress=report_progress)
+            self.s3agent.file_upload_completed_count += 1
+        except Exception as e:
+            self.s3agent.failed_uploads[file_path] = e

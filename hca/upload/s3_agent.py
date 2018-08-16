@@ -39,6 +39,7 @@ class S3Agent:
         self.file_size_sum = file_size_sum
         self.file_upload_completed_count = 0
         self.cumulative_bytes_transferred = 0
+        self.failed_uploads = {}
 
     def upload_progress_callback(self, bytes_transferred):
         self.cumulative_bytes_transferred += bytes_transferred
@@ -63,7 +64,6 @@ class S3Agent:
             upload_fileobj_args['Callback'] = self.upload_progress_callback
         with open(local_path, 'rb') as fh:
             obj.upload_fileobj(fh, **upload_fileobj_args)
-            self.file_upload_completed_count += 1
 
     def list_bucket_by_page(self, bucket_name, key_prefix):
         paginator = self.s3.meta.client.get_paginator('list_objects')
