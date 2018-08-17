@@ -71,6 +71,21 @@ class TestDssCLI(unittest.TestCase):
 
         self.assertEqual(json.loads(stdout.captured())["es_query"], {})
 
+    def test_cli_get_bundle(self):
+        """Test that get_bundle() returns the same files that were uploaded"""
+        client = hca.dss.DSSClient()
+        bundle_path = os.path.join(TEST_DIR, "res", "bundle")
+        replica = "aws"
+        staging_bucket = "org-humancellatlas-dss-cli-test"
+
+        response = client.upload(src_dir=bundle_path, replica=replica, staging_bucket=staging_bucket)
+        bundle_uuid = response['bundle_uuid']
+        args = ["dss", "get-bundle", "--uuid", bundle_uuid, "--replica", replica]
+        with CapturingIO('stdout') as stdout:
+            hca.cli.main(args)
+        # Assert that each file uuid in the bundle is the same as before we uploaded it
+        for i, f in enumerate(json.loads(stdout.captured())['bundle']['files']):
+            self.assertEqual(f['uuid'], response['files'][i]['uuid'])
 
 if __name__ == "__main__":
     unittest.main()
