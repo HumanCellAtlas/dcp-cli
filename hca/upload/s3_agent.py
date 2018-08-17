@@ -43,14 +43,11 @@ class S3Agent:
 
     def upload_progress_callback(self, bytes_transferred):
         self.cumulative_bytes_transferred += bytes_transferred
-        percent_complete = (self.cumulative_bytes_transferred * 100) / self.file_size_sum
         files_remaining = self.file_count - self.file_upload_completed_count
-        sys.stdout.write("%s of %s transferred (%.0f%%) with %s of %s files remaining\n" % (sizeof_fmt(self.cumulative_bytes_transferred),
-                                                                                            sizeof_fmt(self.file_size_sum),
-                                                                                            percent_complete,
-                                                                                            files_remaining,
-                                                                                            self.file_count))
-        sys.stdout.flush()
+        sys.stdout.write("Completed %s/%s with %s of %s files remaining\n" % (sizeof_fmt(self.cumulative_bytes_transferred),
+                                                                              sizeof_fmt(self.file_size_sum),
+                                                                              files_remaining,
+                                                                              self.file_count))
 
     def upload_file(self, local_path, target_bucket, target_key, content_type, report_progress=False):
         file_size = os.path.getsize(local_path)
