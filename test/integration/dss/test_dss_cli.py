@@ -51,17 +51,25 @@ class TestDssCLI(unittest.TestCase):
             self.assertEqual(file_content, res)
 
     @reset_tweak_changes
-    def test_cli_login(self):
-        """Test that the login command works with a dummy token"""
+    def test_cli_login_logout(self):
+        """Test that the login/logout commands work with a dummy token"""
         access_token = "test_access_token"
-        expected = "Storing access credentials\n"
-        args = ["dss", "login", "--access-token", access_token]
+        expected_login = "Storing access credentials\n"
+        expected_logout = ""
+        args_login = ["dss", "login", "--access-token", access_token]
+        args_logout = ["dss", "logout"]
 
         with CapturingIO('stdout') as stdout:
-            hca.cli.main(args)
+            hca.cli.main(args_login)
 
-        self.assertEqual(stdout.captured(), expected)
+        self.assertEqual(stdout.captured(), expected_login)
         self.assertEqual(hca.get_config().oauth2_token.access_token, access_token)
+
+        with CapturingIO('stdout') as stdout:
+            hca.cli.main(args_logout)
+
+        self.assertEqual(stdout.captured(), expected_logout)
+        self.assertFalse(hasattr(hca.get_config(), 'oauth2_token'))
 
     def test_json_input(self):
         """Ensure that adding JSON input works"""
