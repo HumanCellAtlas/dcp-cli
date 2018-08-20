@@ -9,6 +9,7 @@ from .exceptions import UploadException
 from .s3_agent import S3Agent
 from .upload_config import UploadConfig
 from .upload_area_uri import UploadAreaURI
+from hca.util.pool import ThreadPool
 
 
 class UploadArea:
@@ -51,6 +52,7 @@ class UploadArea:
         else:
             raise UploadException("You must provide a uuid or URI")
         self.uuid = self.uri.area_uuid
+        self.s3_agent = None
 
     def __str__(self):
         return "UploadArea {uri}".format(uri=self.uri)
@@ -98,10 +100,45 @@ class UploadArea:
             for file_info in files_info:
                 yield file_info
 
-    def upload_file(self, file_path, dcp_type=None, target_filename=None, use_transfer_acceleration=True,
-                    report_progress=False):
-        file_s3_key = "%s/%s" % (self.uuid, target_filename or os.path.basename(file_path))
-        content_type = str(DcpMediaType.from_file(file_path, dcp_type))
+    def upload_files(self, file_paths, dcp_type="data", target_filename=None, use_transfer_acceleration=True,
+                     report_progress=False):
+        """
+        A function that takes in a list of file paths and other optional args for parallel file upload
+        """
+        self._setup_s3_agent_for_file_upload(file_paths=file_paths, use_transfer_acceleration=use_transfer_acceleration)
+        pool = ThreadPool()
+        if report_progress:
+            print("\nStarting upload of %s files to upload area %s" % (len(file_paths), self.uuid))
+        for file_path in file_paths:
+            pool.add_task(self._upload_file, file_path,
+                          target_filename=target_filename,
+                          use_transfer_acceleration=use_transfer_acceleration,
+                          report_progress=report_progress)
+        pool.wait_for_completion()
+        if report_progress:
+            number_of_errors = len(self.s3agent.failed_uploads)
+            if number_of_errors == 0:
+                print("Completed upload of %s files to upload area %s\n" % (self.s3agent.file_upload_completed_count, self.uuid))
+            else:
+                print("\nThe following files failed:")
+                for k, v in self.s3agent.failed_uploads.items():
+                    print("%s: [Exception] %s" % (k, v))
+                print("\nPlease retry or contact an hca administrator at data-help@humancellatlas.org for help.\n")
+
+    def _setup_s3_agent_for_file_upload(self, file_paths=[], use_transfer_acceleration=True):
         creds_provider = CredentialsManager(upload_area=self)
-        s3agent = S3Agent(credentials_provider=creds_provider, transfer_acceleration=use_transfer_acceleration)
-        s3agent.upload_file(file_path, self.uri.bucket_name, file_s3_key, content_type, report_progress=report_progress)
+        self.s3agent = S3Agent(credentials_provider=creds_provider, transfer_acceleration=use_transfer_acceleration)
+        file_size_sum = sum(os.path.getsize(path) for path in file_paths)
+        file_count = len(file_paths)
+        self.s3agent.set_s3_agent_variables_for_batch_file_upload(file_count=file_count, file_size_sum=file_size_sum)
+
+    def _upload_file(self, file_path=None, dcp_type="data", target_filename=None, use_transfer_acceleration=True,
+                     report_progress=False):
+        try:
+            file_s3_key = "%s/%s" % (self.uuid, target_filename or os.path.basename(file_path))
+            content_type = str(DcpMediaType.from_file(file_path, dcp_type))
+            self.s3agent.upload_file(file_path, self.uri.bucket_name, file_s3_key, content_type, report_progress=report_progress)
+            self.s3agent.file_upload_completed_count += 1
+            print("Download complete of %s to upload area %s" % (file_path, file_s3_key))
+        except Exception as e:
+            self.s3agent.failed_uploads[file_path] = e

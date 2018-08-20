@@ -55,28 +55,6 @@ def list_areas():
     return [{'uuid': area.uuid, 'is_selected': area.is_selected} for area in UploadArea.all()]
 
 
-def upload_file(file_path,
-                target_filename=None,
-                use_transfer_acceleration=True,
-                report_progress=False,
-                dcp_type="data"):
-    """
-    Upload a file to the currently selected Upload Area
-
-    :param file_path: <string> Path to file on local filesystem.
-    :param target_filename: <string> Rename file during upload (optional).
-    :param use_transfer_acceleration: <bool> Use S3 Transfer Acceleration [default: True] (optional).
-    :param report_progress: <bool> Display progress % during upload (optional).
-    :param dcp_type: <string> Override value of Content-Type dcp-type parameter (optional).
-    """
-    area = UploadArea(uuid=UploadConfig().current_area)
-    area.upload_file(file_path,
-                     target_filename=target_filename,
-                     use_transfer_acceleration=use_transfer_acceleration,
-                     report_progress=report_progress,
-                     dcp_type=dcp_type)
-
-
 def get_credentials(area_uuid):
     """
     Return a set of credentials that may be used to access the Upload Area.
