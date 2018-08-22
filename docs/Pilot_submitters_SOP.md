@@ -13,7 +13,7 @@ This SOP describes how to submit data files to the HCA Data Coordination Platfor
 The hca-cli is used to upload files to the HCA DCP. This tool is provided by the package `hca`, which can be installed by running the following command in the terminal:
 
 ```
-pip install hca==3.5.2
+pip install hca
 ```
 
 Once installed, more information about using the hca-cli can be found by running:
