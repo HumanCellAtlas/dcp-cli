@@ -5,4 +5,7 @@ pyyaml
 responses
 backports.tempfile
 mock
+unittest2
+Sphinx
+sphinx-argparse
 -r requirements.txt

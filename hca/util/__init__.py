@@ -91,14 +91,18 @@ except ImportError:
     from funcsigs import signature, Signature, Parameter
 
 import requests
+
 from requests.adapters import HTTPAdapter
 from requests_oauthlib import OAuth2Session
 from urllib3.util import retry, timeout
+from jsonpointer import resolve_pointer
 
 from .. import get_config, logger
 from .compat import USING_PYTHON2
 from .exceptions import SwaggerAPIException, SwaggerClientInternalError
-from ._docs import _pagination_docstring, _streaming_docstring, _md2rst
+from ._docs import _pagination_docstring, _streaming_docstring, _md2rst, _parse_docstring
+from .fs_helper import FSHelper as fs
+
 
 class RetryPolicy(retry.Retry):
     def __init__(self, retry_after_status_codes={301}, **kwargs):
@@ -107,7 +111,6 @@ class RetryPolicy(retry.Retry):
 
 
 class _ClientMethodFactory(object):
-    timeout_policy = timeout.Timeout(connect=60, read=10)
 
     def __init__(self, client, parameters, path_parameters, http_method, method_name, method_data, body_props):
         self.__dict__.update(locals())
@@ -131,7 +134,7 @@ class _ClientMethodFactory(object):
         json_input = body if self.body_props else None
         headers = headers if headers else {}
         res = session.request(self.http_method, url, params=query, json=json_input, stream=stream, headers=headers,
-                              timeout=self.timeout_policy)
+                              timeout=self.client.timeout_policy)
         if res.status_code >= 400:
             raise SwaggerAPIException(response=res)
         return res
@@ -162,6 +165,7 @@ class _ClientMethodFactory(object):
         self._context_manager_response.close()
         self._context_manager_response = None
 
+
 class _PaginatingClientMethodFactory(_ClientMethodFactory):
     def iterate(self, **kwargs):
         page = None
@@ -170,12 +174,14 @@ class _PaginatingClientMethodFactory(_ClientMethodFactory):
             for result in page.json()["results"]:
                     yield result
 
+
 class SwaggerClient(object):
     scheme = "https"
     retry_policy = RetryPolicy(read=10, status=10, status_forcelist=frozenset({500, 502, 503, 504}))
     _authenticated_session = None
     _session = None
     _swagger_spec = None
+    _spec_valid_for_days = 7
     _type_map = {
         "string": str,
         "number": float,
@@ -184,6 +190,12 @@ class SwaggerClient(object):
         "array": typing.List,
         "object": typing.Mapping
     }
+    # The read timeout should be longer than DSS' API Gateway timeout to avoid races with the client and the gateway
+    # hanging up at the same time. It's better to consistently get a 504 from the server than a read timeout from the
+    # client or sometimes one and sometimes the other.
+    #
+    timeout_policy = timeout.Timeout(connect=20, read=40)
+
     def __init__(self, config=None, **session_kwargs):
         self.config = config or get_config()
         self._session_kwargs = session_kwargs
@@ -202,6 +214,25 @@ class SwaggerClient(object):
             for http_method, method_data in path_data.items():
                 self._build_client_method(http_method, http_path, method_data)
 
+    @staticmethod
+    def load_swagger_json(swagger_json, ptr_str="$ref"):
+        """
+        Load the Swagger JSON and resolve {"$ref": "#/..."} internal JSON Pointer references.
+        """
+        refs = []
+
+        def store_refs(d):
+            if len(d) == 1 and ptr_str in d:
+                refs.append(d)
+            return d
+
+        swagger_content = json.load(swagger_json, object_hook=store_refs)
+        for ref in refs:
+            _, target = ref.popitem()
+            assert target[0] == "#"
+            ref.update(resolve_pointer(swagger_content, target[1:]))
+        return swagger_content
+
     @property
     def swagger_spec(self):
         if not self._swagger_spec:
@@ -213,7 +244,9 @@ class SwaggerClient(object):
             else:
                 swagger_filename = base64.urlsafe_b64encode(swagger_url.encode()).decode() + ".json"
                 swagger_filename = os.path.join(self.config.user_config_dir, swagger_filename)
-            if not os.path.exists(swagger_filename):
+            if (("swagger_filename" not in self.config) and
+                ((not os.path.exists(swagger_filename)) or
+                 (fs.get_days_since_last_modified(swagger_filename) >= self._spec_valid_for_days))):
                 try:
                     os.makedirs(self.config.user_config_dir)
                 except OSError as e:
@@ -222,10 +255,9 @@ class SwaggerClient(object):
                 res = self.get_session().get(swagger_url)
                 res.raise_for_status()
                 assert "swagger" in res.json()
-                with open(swagger_filename, "wb") as fh:
-                    fh.write(res.content)
+                fs.atomic_write(os.path.basename(swagger_filename), self.config.user_config_dir, res.content)
             with open(swagger_filename) as fh:
-                self.__class__._swagger_spec = json.load(fh)
+                self.__class__._swagger_spec = self.load_swagger_json(fh)
         return self._swagger_spec
 
     @property
@@ -261,7 +293,9 @@ class SwaggerClient(object):
         if access_token:
             credentials = argparse.Namespace(token=access_token, refresh_token=None, id_token=None)
         else:
-            scopes = ["https://www.googleapis.com/auth/userinfo.email"]
+            scopes = ["https://www.googleapis.com/auth/plus.me",
+                      "https://www.googleapis.com/auth/userinfo.email"]
+
             from google_auth_oauthlib.flow import InstalledAppFlow
             flow = InstalledAppFlow.from_client_config(self.application_secrets, scopes=scopes)
             credentials = flow.run_local_server()
@@ -410,8 +444,12 @@ class SwaggerClient(object):
     def _get_command_arg_settings(self, param_data):
         if param_data.default is Parameter.empty:
             return dict(required=True)
+        elif param_data.default is True:
+            return dict(action='store_false', default=True)
+        elif param_data.default is False:
+            return dict(action='store_true', default=False)
         elif isinstance(param_data.default, (list, tuple)):
-            return dict(nargs="+", required=True, default=param_data.default)
+            return dict(nargs="+", default=param_data.default)
         else:
             return dict(type=type(param_data.default), default=param_data.default)
 
@@ -443,11 +481,14 @@ class SwaggerClient(object):
             sig = signature(command)
             if not getattr(command, "__doc__", None):
                 raise SwaggerClientInternalError("Command {} has no docstring".format(command))
-            doc = command.__doc__.strip().format(prog=subparsers._prog_prefix)
-            command_subparser = subparsers.add_parser(command.__name__,
-                                                      help=doc.splitlines()[0],
-                                                      description=doc)
+            docstring = command.__doc__.format(prog=subparsers._prog_prefix)
+            method_args = _parse_docstring(docstring)
+            command_subparser = subparsers.add_parser(command.__name__.replace("_", "-"),
+                                                      help=method_args['summary'],
+                                                      description=method_args['description']
+                                                      )
             command_subparser.set_defaults(entry_point=self._command_arg_forwarder_factory(command, sig))
             for param_name, param_data in sig.parameters.items():
                 command_subparser.add_argument("--" + param_name.replace("_", "-"),
+                                               help=method_args['params'].get(param_name, None),
                                                **self._get_command_arg_settings(param_data))

@@ -10,6 +10,8 @@ from hca.util.compat import USING_PYTHON2
 if 'DEPLOYMENT_STAGE' not in os.environ:
     os.environ['DEPLOYMENT_STAGE'] = 'test'
 
+TEST_DIR = os.path.dirname(os.path.abspath(__file__))
+
 
 class CapturingIO:
     def __init__(self, stream_name='stdout'):
@@ -33,18 +35,33 @@ class CapturingIO:
         return self.buffer.read()
 
 
+class TweakResetter:
+    """
+    May be used with 'with', in the decorator (below) or manually:
+    """
+
+    def __enter__(self):
+        self.save_config()
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.restore_config()
+
+    def save_config(self):
+        config = hca.get_config()
+        self.backup = pickle.dumps(config)
+
+    def restore_config(self):
+        # The save method of the previous config manager will be called as an atexit handler.
+        # Invalidate its config file path so it fails to save the old config.
+        hca.config._config._user_config_home = "/tmp"
+        # Reload config after changes made.
+        hca.config._config = pickle.loads(self.backup)
+        hca.get_config().save()
+
+
 def reset_tweak_changes(f):
     @wraps(f)
     def save_and_restore_tweak_config(*args, **kwargs):
-        config = hca.get_config()
-        backup = pickle.dumps(config)
-        try:
+        with TweakResetter():
             f(*args, **kwargs)
-        finally:
-            # The save method of the previous config manager will be called as an atexit handler.
-            # Invalidate its config file path so it fails to save the old config.
-            hca.config._config._user_config_home = "/tmp"
-            # Reload config after changes made.
-            hca.config._config = pickle.loads(backup)
-            hca.get_config().save()
     return save_and_restore_tweak_config

@@ -1,3 +1,44 @@
+Changes for v4.1.4 (2018-08-07)
+===============================
+
+Fix ``hca upload file`` to work in production enironment again.
+
+Changes for v4.1.3 (2018-08-06)
+===============================
+
+-  Use setuptools entry_points instead of scripts
+
+-  Use s3 multipart constants as defined in dcplib (#150)
+
+-  Documentation improvements
+
+Changes for v4.1.2 (2018-07-27)
+===============================
+
+Fix ExpiredToken exceptions during ``hca upload file``
+
+Changes for v4.1.1 (2018-07-27)
+===============================
+
+-  Update Google auth scopes to match new injected Google scope
+
+-  Refetch DSS API definition weekly (#79) (#139)
+
+-  Supply the required version to dss.upload (#135)
+
+
+Changes for v4.0.0 (2018-06-20)
+===============================
+
+Upload: creds command and Python binding for get\_credentials Upload:
+upload areas are now represented by a URI instead of URN DSS: fix
+updated files seeping into downloads of older bundles
+
+Changes for v3.5.2 (2018-06-04)
+===============================
+
+-  Resolve internal references in Swagger spec (#122)
+
 Changes for v3.5.1 (2018-05-14)
 ===============================
 
