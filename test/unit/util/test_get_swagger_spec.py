@@ -50,12 +50,12 @@ class TestSwaggerClient(unittest.TestCase):
             cls.client = hca.util.SwaggerClient(config)
 
     def setUp(self):
-        self.client.__class__._swagger_spec = None
+        self.client._swagger_spec = None
         self.client._spec_valid_for_days = 1
         self.client._session = requests.Session()
 
     def tearDown(self):
-        self.client.__class__._swagger_spec = None
+        self.client._swagger_spec = None
 
     def test_get_swagger_spec_new(self):
         with mock.patch('os.path.exists') as mock_exists, \

@@ -90,7 +90,7 @@ class TestSwaggerClient(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.client.__class__._swagger_spec = None
+        cls.client._swagger_spec = None
 
     def setUp(self):
         self.client._session = requests.Session()
