@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
+from concurrent.futures import ThreadPoolExecutor
 import csv
 import datetime
 import filecmp
@@ -20,14 +21,40 @@ from test import reset_tweak_changes, TEST_DIR
 
 if USING_PYTHON2:
     import backports.tempfile
+    import mock
     import unittest2 as unittest
     TemporaryDirectory = backports.tempfile.TemporaryDirectory
 else:
     import unittest
+    from unittest import mock
     TemporaryDirectory = tempfile.TemporaryDirectory
+
 
 class TestDssApi(unittest.TestCase):
     staging_bucket = "org-humancellatlas-dss-cli-test"
+
+    def test_set_host(self):
+        with TemporaryDirectory() as home:
+            with mock.patch.dict(os.environ, HOME=home):
+                dev = hca.dss.DSSClient(
+                    swagger_url="https://dss.dev.data.humancellatlas.org/v1/swagger.json")
+                self.assertEqual("dss.dev.data.humancellatlas.org", dev._swagger_spec['host'])
+
+    def test_set_host_multithreaded(self):
+        num_repeats = 10
+        num_threads = 2
+        for repeat in range(num_repeats):
+            with self.subTest(repeat=repeat):
+                with TemporaryDirectory() as home:
+                    with mock.patch.dict(os.environ, HOME=home):
+
+                        def f(_):
+                            dev = hca.dss.DSSClient(
+                                swagger_url="https://dss.dev.data.humancellatlas.org/v1/swagger.json")
+                            self.assertEqual('dss.dev.data.humancellatlas.org', dev._swagger_spec['host'])
+
+                        with ThreadPoolExecutor(num_threads) as tpe:
+                            self.assertTrue(all(x is None for x in tpe.map(f, range(num_threads))))
 
     def test_python_upload_download(self):
 

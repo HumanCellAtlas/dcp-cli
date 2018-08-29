@@ -180,7 +180,6 @@ class SwaggerClient(object):
     retry_policy = RetryPolicy(read=10, status=10, status_forcelist=frozenset({500, 502, 503, 504}))
     _authenticated_session = None
     _session = None
-    _swagger_spec = None
     _spec_valid_for_days = 7
     _type_map = {
         "string": str,
@@ -196,9 +195,11 @@ class SwaggerClient(object):
     #
     timeout_policy = timeout.Timeout(connect=20, read=40)
 
-    def __init__(self, config=None, **session_kwargs):
+    def __init__(self, config=None, swagger_url=None, **session_kwargs):
         self.config = config or get_config()
+        self.swagger_url = swagger_url or self.config[self.__class__.__name__].swagger_url
         self._session_kwargs = session_kwargs
+        self._swagger_spec = None
 
         if USING_PYTHON2:
             self.__doc__ = _md2rst(self.swagger_spec["info"]["description"])
@@ -236,13 +237,12 @@ class SwaggerClient(object):
     @property
     def swagger_spec(self):
         if not self._swagger_spec:
-            swagger_url = self.config[self.__class__.__name__].swagger_url
             if "swagger_filename" in self.config:
                 swagger_filename = self.config.swagger_filename
                 if not swagger_filename.startswith("/"):
                     swagger_filename = os.path.join(os.path.dirname(__file__), swagger_filename)
             else:
-                swagger_filename = base64.urlsafe_b64encode(swagger_url.encode()).decode() + ".json"
+                swagger_filename = base64.urlsafe_b64encode(self.swagger_url.encode()).decode() + ".json"
                 swagger_filename = os.path.join(self.config.user_config_dir, swagger_filename)
             if (("swagger_filename" not in self.config) and
                 ((not os.path.exists(swagger_filename)) or
@@ -252,12 +252,12 @@ class SwaggerClient(object):
                 except OSError as e:
                     if not (e.errno == errno.EEXIST and os.path.isdir(self.config.user_config_dir)):
                         raise
-                res = self.get_session().get(swagger_url)
+                res = self.get_session().get(self.swagger_url)
                 res.raise_for_status()
                 assert "swagger" in res.json()
                 fs.atomic_write(os.path.basename(swagger_filename), self.config.user_config_dir, res.content)
             with open(swagger_filename) as fh:
-                self.__class__._swagger_spec = self.load_swagger_json(fh)
+                self._swagger_spec = self.load_swagger_json(fh)
         return self._swagger_spec
 
     @property
