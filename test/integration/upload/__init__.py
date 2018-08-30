@@ -36,11 +36,6 @@ class UploadTestCase(unittest.TestCase):
         self.sts_mock.stop()
         self.tweak_resetter.restore_config()
 
-    def mock_current_upload_area(self):
-        area = self.mock_upload_area()
-        area.select()
-        return area
-
     def mock_current_upload_area(self, area_uuid=None, bucket_name=None):
         area = self.mock_upload_area(area_uuid=area_uuid, bucket_name=bucket_name)
         area.select()
