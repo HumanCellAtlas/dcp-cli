@@ -47,13 +47,19 @@ The hca-cli transfers data files to a secure "upload area". Unique credentials a
 1. Upload the data files to the upload area, replacing `<data-files>` with the data filenames:
 
     ```
-    hca upload file <data-files>
+    hca upload files <data-files>
     ```
 
 The hca-cli supports [wildcards](https://en.wikibooks.org/wiki/A_Quick_Introduction_to_Unix/Wildcards) which allows multiple files to be uploaded using one command if they have a common naming convention. For example,
 
 ```
-hca upload file *.fastq.gz
+hca upload files *.fastq.gz
+```
+
+The hca-cli also supports directories as targets with an optional file extension arg. If the file extension is provided, only files matching that extension in the directory will be supported.
+
+```
+hca upload files data_files_directory/ --file-extension .fastq.gz
 ```
 
 will upload all files in the current directory where the filename ends in `.fastq.gz`.
