@@ -27,10 +27,11 @@ class TestUploadCliUploadCommand(UploadTestCase):
     def test_upload_with_target_filename_option(self):
 
         args = Namespace(
-            file_paths=[os.path.join(TEST_DIR, "res", "bundle", "sample.json")],
+            upload_paths=[os.path.join(TEST_DIR, "res", "bundle", "sample.json")],
             target_filename='FOO',
             no_transfer_acceleration=False,
-            quiet=True)
+            quiet=True,
+            file_extension=None)
 
         self.simulate_credentials_api(area_uuid=self.area.uuid)
 
@@ -45,7 +46,7 @@ class TestUploadCliUploadCommand(UploadTestCase):
     @responses.activate
     def test_upload_with_dcp_type_option(self):
 
-        args = Namespace(file_paths=['LICENSE'], target_filename=None, no_transfer_acceleration=False, quiet=True)
+        args = Namespace(upload_paths=['LICENSE'], target_filename=None, no_transfer_acceleration=False, quiet=True, file_extension=None)
 
         self.simulate_credentials_api(area_uuid=self.area.uuid)
 
@@ -64,7 +65,7 @@ class TestUploadCliUploadCommand(UploadTestCase):
 
         with patch('hca.upload.s3_agent.Config', new=Mock(wraps=botocore.config.Config)) as mock_config:
 
-            args = Namespace(file_paths=['LICENSE'], target_filename=None, quiet=True)
+            args = Namespace(upload_paths=['LICENSE'], target_filename=None, quiet=True, file_extension=None)
             args.no_transfer_acceleration = False
 
             self.simulate_credentials_api(area_uuid=self.area.uuid)
@@ -81,8 +82,8 @@ class TestUploadCliUploadCommand(UploadTestCase):
     def test_multiple_uploads(self):
 
         files = ['LICENSE', 'README.rst']
-        args = Namespace(file_paths=files, target_filename=None, no_transfer_acceleration=False,
-                         dcp_type=None, quiet=True)
+        args = Namespace(upload_paths=files, target_filename=None, no_transfer_acceleration=False,
+                         dcp_type=None, quiet=True, file_extension=None)
 
         self.simulate_credentials_api(area_uuid=self.area.uuid)
 
@@ -93,6 +94,64 @@ class TestUploadCliUploadCommand(UploadTestCase):
             with open(filename, 'rb') as fh:
                 expected_contents = fh.read()
                 self.assertEqual(obj.get()['Body'].read(), expected_contents)
+
+    @responses.activate
+    def test_directory_upload_path_without_file_extension(self):
+        test_dir_path = os.path.join(TEST_DIR, "upload", "data")
+        args = Namespace(
+            upload_paths=[test_dir_path],
+            target_filename=None,
+            no_transfer_acceleration=False,
+            quiet=True,
+            file_extension=None)
+
+        self.simulate_credentials_api(area_uuid=self.area.uuid)
+        UploadCommand(args)
+        self.assertEqual(len(list(self.upload_bucket.objects.all())), 5)
+
+    @responses.activate
+    def test_directory_upload_path_with_file_extension(self):
+        test_dir_path = os.path.join(TEST_DIR, "upload", "data")
+        args = Namespace(
+            upload_paths=[test_dir_path],
+            target_filename=None,
+            no_transfer_acceleration=False,
+            quiet=True,
+            file_extension="fastq.gz")
+
+        self.simulate_credentials_api(area_uuid=self.area.uuid)
+        UploadCommand(args)
+        self.assertEqual(len(list(self.upload_bucket.objects.all())), 3)
+
+    @responses.activate
+    def test_multiple_directory_upload_paths_without_file_extension(self):
+        test_dir_path_one = os.path.join(TEST_DIR, "upload", "data", "subdir1")
+        test_dir_path_two = os.path.join(TEST_DIR, "upload", "data", "subdir2")
+        args = Namespace(
+            upload_paths=[test_dir_path_one, test_dir_path_two],
+            target_filename=None,
+            no_transfer_acceleration=False,
+            quiet=True,
+            file_extension=None)
+
+        self.simulate_credentials_api(area_uuid=self.area.uuid)
+        UploadCommand(args)
+        self.assertEqual(len(list(self.upload_bucket.objects.all())), 3)
+
+    @responses.activate
+    def test_multiple_directory_upload_paths_with_file_extension(self):
+        test_dir_path_one = os.path.join(TEST_DIR, "upload", "data", "subdir1")
+        test_dir_path_two = os.path.join(TEST_DIR, "upload", "data", "subdir2")
+        args = Namespace(
+            upload_paths=[test_dir_path_one, test_dir_path_two],
+            target_filename=None,
+            no_transfer_acceleration=False,
+            quiet=True,
+            file_extension="fastq.gz")
+
+        self.simulate_credentials_api(area_uuid=self.area.uuid)
+        UploadCommand(args)
+        self.assertEqual(len(list(self.upload_bucket.objects.all())), 2)
 
 
 if __name__ == "__main__":
