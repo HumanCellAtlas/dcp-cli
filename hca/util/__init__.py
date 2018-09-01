@@ -96,6 +96,7 @@ from requests.adapters import HTTPAdapter
 from requests_oauthlib import OAuth2Session
 from urllib3.util import retry, timeout
 from jsonpointer import resolve_pointer
+from threading import Lock
 
 from .. import get_config, logger
 from .compat import USING_PYTHON2
@@ -181,6 +182,7 @@ class SwaggerClient(object):
     _authenticated_session = None
     _session = None
     _spec_valid_for_days = 7
+    _swagger_spec_lock = Lock()
     _type_map = {
         "string": str,
         "number": float,
@@ -236,28 +238,29 @@ class SwaggerClient(object):
 
     @property
     def swagger_spec(self):
-        if not self._swagger_spec:
-            if "swagger_filename" in self.config:
-                swagger_filename = self.config.swagger_filename
-                if not swagger_filename.startswith("/"):
-                    swagger_filename = os.path.join(os.path.dirname(__file__), swagger_filename)
-            else:
-                swagger_filename = base64.urlsafe_b64encode(self.swagger_url.encode()).decode() + ".json"
-                swagger_filename = os.path.join(self.config.user_config_dir, swagger_filename)
-            if (("swagger_filename" not in self.config) and
-                ((not os.path.exists(swagger_filename)) or
-                 (fs.get_days_since_last_modified(swagger_filename) >= self._spec_valid_for_days))):
-                try:
-                    os.makedirs(self.config.user_config_dir)
-                except OSError as e:
-                    if not (e.errno == errno.EEXIST and os.path.isdir(self.config.user_config_dir)):
-                        raise
-                res = self.get_session().get(self.swagger_url)
-                res.raise_for_status()
-                assert "swagger" in res.json()
-                fs.atomic_write(os.path.basename(swagger_filename), self.config.user_config_dir, res.content)
-            with open(swagger_filename) as fh:
-                self._swagger_spec = self.load_swagger_json(fh)
+        with self._swagger_spec_lock:
+            if not self._swagger_spec:
+                if "swagger_filename" in self.config:
+                    swagger_filename = self.config.swagger_filename
+                    if not swagger_filename.startswith("/"):
+                        swagger_filename = os.path.join(os.path.dirname(__file__), swagger_filename)
+                else:
+                    swagger_filename = base64.urlsafe_b64encode(self.swagger_url.encode()).decode() + ".json"
+                    swagger_filename = os.path.join(self.config.user_config_dir, swagger_filename)
+                if (("swagger_filename" not in self.config) and
+                    ((not os.path.exists(swagger_filename)) or
+                     (fs.get_days_since_last_modified(swagger_filename) >= self._spec_valid_for_days))):
+                    try:
+                        os.makedirs(self.config.user_config_dir)
+                    except OSError as e:
+                        if not (e.errno == errno.EEXIST and os.path.isdir(self.config.user_config_dir)):
+                            raise
+                    res = self.get_session().get(self.swagger_url)
+                    res.raise_for_status()
+                    assert "swagger" in res.json()
+                    fs.atomic_write(os.path.basename(swagger_filename), self.config.user_config_dir, res.content)
+                with open(swagger_filename) as fh:
+                    self._swagger_spec = self.load_swagger_json(fh)
         return self._swagger_spec
 
     @property

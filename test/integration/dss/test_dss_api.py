@@ -45,8 +45,8 @@ class TestDssApi(unittest.TestCase):
         num_threads = 2
         for repeat in range(num_repeats):
             with self.subTest(repeat=repeat):
-                with TemporaryDirectory() as home:
-                    with mock.patch.dict(os.environ, HOME=home):
+                with TemporaryDirectory() as config_dir:
+                    with mock.patch.dict(os.environ, XDG_CONFIG_HOME=config_dir):
 
                         def f(_):
                             dev = hca.dss.DSSClient(
