@@ -262,7 +262,7 @@ class TestDssApi(unittest.TestCase):
                 break
 
     @reset_tweak_changes
-    def test_python_login_logout(self):
+    def test_python_login_logout_service_acount(self):
         client = hca.dss.DSSClient()
         query = {'bool': {}}
         resp = client.put_subscription(es_query=query, callback_url="https://www.example.com", replica="aws")
@@ -274,9 +274,27 @@ class TestDssApi(unittest.TestCase):
         config = hca.get_config()
 
         self.assertEqual(config.oauth2_token.access_token, access_token)
+        client.logout()
+        self.assertNotIn("oauth2_token", config)
+
+    @unittest.skipIf(True, "Manual Test")
+    @reset_tweak_changes
+    def test_python_login_logout_user_account(self):
+        client = hca.dss.DSSClient()
+        config = hca.get_config()
 
         client.logout()
+        self.assertNotIn("oauth2_token", config)
 
+        client.login()
+        self.assertIn("oauth2_token", config)
+
+        query = {'bool': {}}
+        resp = client.put_subscription(es_query=query, callback_url="https://www.example.com", replica="aws")
+        self.assertIn("uuid", resp)
+        client.delete_subscription(uuid=resp["uuid"], replica="aws")
+
+        client.logout()
         self.assertNotIn("oauth2_token", config)
 
 
