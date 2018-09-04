@@ -1,3 +1,24 @@
+Changes for v4.2.0 (2018-09-04)
+===============================
+
+-  Synchronize access to Swagger definition
+
+-  Enable programmatic SwaggerClient host configuration (#142)
+
+-  Allow for directory and file extension in hca upload files command
+   (#174)
+
+-  Restrict Boto3 dependency version range to 1.7.x (#176). Pin
+   commonmark to 0.7.x.
+
+-  upload cli parallelization 5x improvement (#155)
+
+-  Add integration tests for SwaggerClient’s code generation methods
+   (#109)
+
+-  Help info for parameters appears in cli for upload and download
+   (#146)
+
 Changes for v4.1.4 (2018-08-07)
 ===============================
 
