@@ -113,6 +113,9 @@ class DSSClient(SwaggerClient):
             retries_left = num_retries
             hasher = hashlib.sha256()
             with open(file_path, "wb") as fh:
+                if file_['size'] == 0:
+                    logger.info("%s", "File {}: CREATED (empty). Stored at {}.".format(filename, file_path))
+                    continue
                 while True:
                     try:
                         response = self.get_file._request(
