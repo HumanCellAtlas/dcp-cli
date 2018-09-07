@@ -353,10 +353,10 @@ class SwaggerClient(object):
                    'aud': audience,
                    'iat': iat,
                    'exp': exp,
-                   'email': service_credentials["client_email"],
+                   'https://auth.data.humancellatlas.org/email': service_credentials["client_email"],
+                   'https://auth.data.humancellatlas.org/group': 'hca',
                    'scope': ['email', 'openid', 'offline_access']
                    }
-        payload['https://auth.data.humancellatlas.org/group'] = 'hca'
         additional_headers = {'kid': service_credentials["private_key_id"]}
         signed_jwt = jwt.encode(payload, service_credentials["private_key"], headers=additional_headers,
                                 algorithm='RS256').decode()
