@@ -120,7 +120,7 @@ class _ClientMethodFactory(object):
         self.__dict__.update(locals())
         self._context_manager_response = None
 
-    def _request(self, req_args, url=None, stream=False, headers=None, **kwargs):
+    def _request(self, req_args, url=None, stream=False, headers=None):
         supplied_path_params = [p for p in req_args if p in self.path_parameters and req_args[p] is not None]
         if url is None:
             url = self.client.host + self.client.http_paths[self.method_name][frozenset(supplied_path_params)]
@@ -363,7 +363,7 @@ class SwaggerClient(object):
                                 algorithm='RS256').decode()
         return signed_jwt, exp
 
-    def get_authenticated_session(self, **kwargs):
+    def get_authenticated_session(self):
         if self._authenticated_session is None:
             oauth2_client_data = self.application_secrets["installed"]
             if 'GOOGLE_APPLICATION_CREDENTIALS' in os.environ:
