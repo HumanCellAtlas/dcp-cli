@@ -130,7 +130,7 @@ class _ClientMethodFactory(object):
                  if self.parameters.get(k, {}).get("in") == "query" and v is not None}
         body = {k: v for k, v in req_args.items() if k in self.body_props and v is not None}
         if "security" in self.method_data:
-            session = self.client.get_authenticated_session(**kwargs)
+            session = self.client.get_authenticated_session()
         else:
             session = self.client.get_session()
 
@@ -182,7 +182,7 @@ class _PaginatingClientMethodFactory(_ClientMethodFactory):
 class SwaggerClient(object):
     scheme = "https"
     retry_policy = RetryPolicy(read=10, status=10, status_forcelist=frozenset({500, 502, 503, 504}))
-    default_token_expiration = 3600
+    token_expiration = 3600
     _authenticated_session = None
     _session = None
     _spec_valid_for_days = 7
@@ -337,7 +337,7 @@ class SwaggerClient(object):
         r.session.close()
         return credentials.token, credentials.expiry
 
-    def _get_jwt_from_service_account_credentials(self, token_expiration):
+    def _get_jwt_from_service_account_credentials(self):
         assert 'GOOGLE_APPLICATION_CREDENTIALS' in os.environ
         service_account_credentials_filename = os.environ['GOOGLE_APPLICATION_CREDENTIALS']
         if not os.path.isfile(service_account_credentials_filename):
@@ -348,7 +348,7 @@ class SwaggerClient(object):
 
         audience = "https://dev.data.humancellatlas.org/"
         iat = time.time()
-        exp = iat + token_expiration
+        exp = iat + self.token_expiration
         payload = {'iss': service_credentials["client_email"],
                    'sub': service_credentials["client_email"],
                    'aud': audience,
@@ -367,8 +367,7 @@ class SwaggerClient(object):
         if self._authenticated_session is None:
             oauth2_client_data = self.application_secrets["installed"]
             if 'GOOGLE_APPLICATION_CREDENTIALS' in os.environ:
-                token, expires_at = self._get_jwt_from_service_account_credentials(
-                    kwargs.get('token_expiration', self.default_token_expiration))
+                token, expires_at = self._get_jwt_from_service_account_credentials()
                 # TODO: (akislyuk) figure out the right strategy for persisting the service account oauth2 token
                 self._authenticated_session = OAuth2Session(client_id=oauth2_client_data["client_id"],
                                                             token=dict(access_token=token),
