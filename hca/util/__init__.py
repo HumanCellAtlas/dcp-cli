@@ -181,7 +181,7 @@ class _PaginatingClientMethodFactory(_ClientMethodFactory):
 
 class SwaggerClient(object):
     scheme = "https"
-    retry_policy = RetryPolicy(read=10, status=10, status_forcelist=frozenset({500, 502, 503, 504}))
+    retry_policy = RetryPolicy(read=10, status=10, backoff_factor=0.1, status_forcelist=frozenset({500, 502, 503, 504}))
     token_expiration = 3600
     _authenticated_session = None
     _session = None
