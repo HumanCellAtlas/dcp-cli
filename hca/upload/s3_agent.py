@@ -6,6 +6,7 @@ from boto3.s3.transfer import TransferConfig
 from botocore.config import Config
 from botocore.credentials import CredentialResolver
 from botocore.session import get_session
+from retrying import retry
 
 from dcplib import s3_multipart
 
@@ -49,6 +50,7 @@ class S3Agent:
                                                                               files_remaining,
                                                                               self.file_count))
 
+    @retry(stop_max_attempt_number=3, wait_fixed=2000)
     def upload_file(self, local_path, target_bucket, target_key, content_type, report_progress=False):
         file_size = os.path.getsize(local_path)
         bucket = self.s3.Bucket(target_bucket)
