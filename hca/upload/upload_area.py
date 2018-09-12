@@ -120,10 +120,11 @@ class UploadArea:
             if number_of_errors == 0:
                 print("Completed upload of %s files to upload area %s\n" % (self.s3agent.file_upload_completed_count, self.uuid))
             else:
-                print("\nThe following files failed:")
+                error = "\nThe following files failed:"
                 for k, v in self.s3agent.failed_uploads.items():
-                    print("%s: [Exception] %s" % (k, v))
-                print("\nPlease retry or contact an hca administrator at data-help@humancellatlas.org for help.\n")
+                    error += "\n%s: [Exception] %s" % (k, v)
+                error += "\nPlease retry or contact an hca administrator at data-help@humancellatlas.org for help.\n"
+                raise UploadException(error)
 
     def _setup_s3_agent_for_file_upload(self, file_paths=[], use_transfer_acceleration=True):
         creds_provider = CredentialsManager(upload_area=self)
