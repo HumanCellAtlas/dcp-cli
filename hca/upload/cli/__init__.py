@@ -1,3 +1,6 @@
+from .generate_status_report_command import GenerateStatusReportCommand
+
+from .list_file_status_command import ListFileStatusCommand
 from .select_command import SelectCommand
 from .list_areas_command import ListAreasCommand
 from .list_area_command import ListAreaCommand
@@ -26,3 +29,5 @@ def add_commands(subparsers):
     ListAreasCommand.add_parser(upload_subparsers)
     ForgetCommand.add_parser(upload_subparsers)
     CredsCommand.add_parser(upload_subparsers)
+    ListFileStatusCommand.add_parser(upload_subparsers)
+    GenerateStatusReportCommand.add_parser(upload_subparsers)

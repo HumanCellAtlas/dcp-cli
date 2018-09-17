@@ -1,41 +1,76 @@
+from collections import defaultdict
+
+from hca.upload import ApiClient
+
 
 class UploadAreaFilesStatusCheck(object):
-    def get_upload_area(self, submission_id):
-        pass
-        # How to implement this step?
+    def __init__(self, env):
+        self.upload_api_client = ApiClient(env)
 
-    def get_file_list(self, upload_area):
-        pass
+    def get_file_statuses(self, upload_area_uuid):
+        checksum_statuses = self.upload_api_client.checksum_statuses(upload_area_uuid)
+        validation_statuses = self.upload_api_client.validation_statuses(upload_area_uuid)
 
-    def check_all_file_statuses(self, upload_area):
-        file_list = self.get_file_list(upload_area)
-        for file in file_list:
-            status = FileStatusCheck.check_file_status(upload_area, file)
-            ## WHAT TO DO WITH FILE STATUSES?
-                # print individually in terminal
-                # concat and return a list with id?
+        validated_file_total = 0
+        for status in validation_statuses:
+            validated_file_total += validation_statuses[status]
+        validation_statuses['VALIDATION_UNSCHEDULED'] = checksum_statuses['CHECKSUMMED'] - validated_file_total
+
+        return checksum_statuses, validation_statuses
+
+    def check_file_statuses(self, upload_area_uuid, output_file_name):
+        checksum_statuses, validation_statuses = self.get_file_statuses(upload_area_uuid)
+
+        self.generate_report(upload_area_uuid, output_file_name, checksum_statuses, validation_statuses)
+
+    def generate_report(self, upload_area, output_file_name, checksum_statuses, validation_statuses):
+        f = open("{}.txt".format(output_file_name), "w+")
+        f.write('FILE STATUS REPORT\n'
+                'UploadArea: {}\n'
+                'Total Number of Files: {}\n'
+                'CHECKSUMS\n'.format(upload_area, checksum_statuses["TOTAL_NUM_FILES"]))
+        del checksum_statuses['TOTAL_NUM_FILES']
+        for category, value in checksum_statuses.items():
+            f.write("\t{} files: {}\n".format(category, value))
+        f.write('VALIDATIONS\n')
+        for category, value in validation_statuses.items():
+            f.write("\t{} files: {}\n".format(category, value))
+        f.close()
+
 
 class FileStatusCheck(object):
+    def __init__(self, env):
+        self.upload_api_client = ApiClient(env)
+
     def get_checksum_status(self, upload_area, file_id):
-        return 'CHECKSUMMED'
+        try:
+            response = self.upload_api_client.checksum_status(upload_area, file_id)
+        except RuntimeError as e:
+            return 'CHECKSUM_STATUS_RETRIEVAL_ERROR: {}'.format(e)
+        checksum_status = response['checksum_status']
+        if checksum_status == 'SCHEDULED':
+            return 'CHECKSUMMING_SCHEDULED'
+        elif checksum_status == 'UNSCHEDULED':
+            return 'CHECKSUMMING_UNSCHEDULED'
+        else:
+            return checksum_status
 
     def get_validation_status(self, upload_area, file_id):
-        return 'VALIDATED'
-
-    def get_notification_status(self, upload_area, file_id):
-        return 'NOTIFIED'
+        try:
+            response = self.upload_api_client.validation_status(upload_area, file_id)
+        except RuntimeError as e:
+            return 'VALIDATION_STATUS_RETRIEVAL_ERROR: {}'.format(e)
+        validation_status = response['validation_status']
+        if validation_status == 'SCHEDULED':
+            return 'VALIDATION_SCHEDULED'
+        elif validation_status == 'UNSCHEDULED':
+            return 'VALIDATION_UNSCHEDULED'
+        else:
+            return validation_status
 
     def check_file_status(self, upload_area, file_id):
         checksum_status = self.get_checksum_status(upload_area, file_id)
         if checksum_status != 'CHECKSUMMED':
-            return f"File {upload_area}/{file_id} is currently being checksummed. Status is: {checksum_status}"
-
+            return checksum_status
         validation_status = self.get_validation_status(upload_area, file_id)
-        if validation_status != 'VALIDATED':
-            return f"File {upload_area}/{file_id} is currently being validated. Status is: {validation_status}"
-
-        notification_status = self.get_notification_status(upload_area, file_id)
-        if notification_status != 'DELIVERED':
-            return f"File {upload_area}/{file_id} has been checksummed and validated. Notification status is: {notification_status} "
-
-        return f"File {upload_area}/{file_id} has been checksummed and validated. Ingest has been notified"
+        return validation_status

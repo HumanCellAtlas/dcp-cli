@@ -107,7 +107,7 @@ class TestUploadCliUploadCommand(UploadTestCase):
 
         self.simulate_credentials_api(area_uuid=self.area.uuid)
         UploadCommand(args)
-        self.assertEqual(len(list(self.upload_bucket.objects.all())), 5)
+        self.assertEqual(len(list(self.upload_bucket.objects.all())), 6)
 
     @responses.activate
     def test_directory_upload_path_with_file_extension(self):
