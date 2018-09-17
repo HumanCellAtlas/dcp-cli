@@ -182,6 +182,7 @@ class _PaginatingClientMethodFactory(_ClientMethodFactory):
 class SwaggerClient(object):
     scheme = "https"
     retry_policy = RetryPolicy(read=10, status=10, status_forcelist=frozenset({500, 502, 503, 504}))
+    token_expiration = 3600
     _authenticated_session = None
     _session = None
     _spec_valid_for_days = 7
@@ -347,16 +348,16 @@ class SwaggerClient(object):
 
         audience = "https://dev.data.humancellatlas.org/"
         iat = time.time()
-        exp = iat + 3600
+        exp = iat + self.token_expiration
         payload = {'iss': service_credentials["client_email"],
                    'sub': service_credentials["client_email"],
                    'aud': audience,
                    'iat': iat,
                    'exp': exp,
                    'email': service_credentials["client_email"],
-                   'scope': ['email', 'openid', 'offline_access']
+                   'scope': ['email', 'openid', 'offline_access'],
+                   'https://auth.data.humancellatlas.org/group': 'hca'
                    }
-        payload['https://auth.data.humancellatlas.org/group'] = 'hca'
         additional_headers = {'kid': service_credentials["private_key_id"]}
         signed_jwt = jwt.encode(payload, service_credentials["private_key"], headers=additional_headers,
                                 algorithm='RS256').decode()
