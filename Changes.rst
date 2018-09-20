@@ -1,3 +1,14 @@
+Changes for v4.4.1 (2018-09-20)
+===============================
+
+-  US 169 Add command line tool for checking upload area or file status
+   (#187)
+
+-  adding a backoff factor and retry redirects for api calls. (#184)
+
+-  The life time of a token can be adjusted for authentication sessions.
+   (#182)
+
 
 
 
