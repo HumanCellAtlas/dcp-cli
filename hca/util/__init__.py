@@ -199,6 +199,7 @@ class SwaggerClient(object):
         "array": typing.List,
         "object": typing.Mapping
     }
+    _audience = "https://dev.data.humancellatlas.org/"  # TODO derive from swagger
     # The read timeout should be longer than DSS' API Gateway timeout to avoid races with the client and the gateway
     # hanging up at the same time. It's better to consistently get a 504 from the server than a read timeout from the
     # client or sometimes one and sometimes the other.
@@ -309,7 +310,7 @@ class SwaggerClient(object):
             from google_auth_oauthlib.flow import InstalledAppFlow
             flow = InstalledAppFlow.from_client_config(self.application_secrets, scopes=scopes)
             msg = "Authentication successful. Please close this tab and run HCA CLI commands in the terminal."
-            credentials = flow.run_local_server(success_message=msg, audience="https://dss.dev.data.humancellatlas.org/")
+            credentials = flow.run_local_server(success_message=msg, audience=self._audience)
 
         # TODO: (akislyuk) test token autorefresh on expiration
         self.config.oauth2_token = dict(access_token=credentials.token,
@@ -350,12 +351,11 @@ class SwaggerClient(object):
         with open(service_account_credentials_filename) as fh:
             service_credentials = json.load(fh)
 
-        audience = "https://dev.data.humancellatlas.org/"
         iat = time.time()
         exp = iat + self.token_expiration
         payload = {'iss': service_credentials["client_email"],
                    'sub': service_credentials["client_email"],
-                   'aud': audience,
+                   'aud': self._audience,
                    'iat': iat,
                    'exp': exp,
                    'email': service_credentials["client_email"],
