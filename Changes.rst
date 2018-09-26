@@ -1,3 +1,8 @@
+Changes for v4.4.7 (2018-09-26)
+===============================
+
+Fix URL regexp in release script
+
 Changes for v4.4.6 (2018-09-26)
 ===============================
 
