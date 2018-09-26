@@ -1,7 +1,3 @@
-
-
-
-
 Changes for v4.4.1 (2018-09-20)
 ===============================
 
@@ -12,11 +8,6 @@ Changes for v4.4.1 (2018-09-20)
 
 -  The life time of a token can be adjusted for authentication sessions.
    (#182)
-
-
-
-
-
 
 Changes for v4.2.1 (2018-09-04)
 ===============================
