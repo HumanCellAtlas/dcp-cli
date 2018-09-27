@@ -70,6 +70,7 @@ def main(args=None):
         parser.exit(1)
 
     parsed_args = parser.parse_args(args=args)
+    logging.basicConfig(level=logging.ERROR)
     logger.setLevel(parsed_args.log_level)
     try:
         result = parsed_args.entry_point(parsed_args)
