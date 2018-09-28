@@ -5,3 +5,4 @@ CLI documentation
    :module: hca.cli
    :func: get_parser
    :prog: hca
+   :markdownhelp:
