@@ -1,12 +1,9 @@
 .. include:: ../README.rst
 
-
-Table of Contents
------------------
 .. toctree::
    :maxdepth: 5
+   :hidden:
 
-   index
    cli
    api
 
