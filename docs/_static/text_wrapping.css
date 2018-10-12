@@ -1,0 +1,7 @@
+/* From https://sphinx-argparse.readthedocs.io/en/stable/misc.html#text-wrapping-in-argument-tables */
+.wy-table-responsive table td {
+    white-space: normal !important;
+}
+.wy-table-responsive {
+    overflow: visible !important;
+}
