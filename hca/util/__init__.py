@@ -468,7 +468,7 @@ class SwaggerClient(object):
         docstring += "\n\n" + _md2rst(method_data["description"])
         client_method.__doc__ = docstring
 
-        setattr(self.__class__, method_name, types.MethodType(client_method, SwaggerClient))
+        setattr(self, method_name, types.MethodType(client_method, SwaggerClient))
         self.methods[method_name] = dict(method_data, entry_point=getattr(self, method_name)._cli_call,
                                          signature=client_method.__signature__, args=method_args)
 
