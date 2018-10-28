@@ -2,10 +2,12 @@
 # coding: utf-8
 
 import argparse
+import concurrent.futures
 import json
 import os
 import requests
 import sys
+import time
 import unittest
 
 pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))  # noqa
@@ -45,6 +47,7 @@ class TestSwaggerClient(unittest.TestCase):
     dummy_response = requests.models.Response()
     dummy_response.status_code = 200
     dummy_response._content = "content"
+    dummy_response.headers["content-type"] = "audio/vnd.rn-realaudio"
 
     generated_method_names = [
         # method names corresponding to all `paths`
@@ -69,13 +72,21 @@ class TestSwaggerClient(unittest.TestCase):
             content = fh.read()
             swagger_response._content = content
             cls.test_swagger_json = json.loads(content.decode("utf-8"))
-
+        cls.test_swagger_response = swagger_response
         cls.url_base = (cls.test_swagger_json['schemes'][0] + "://" +
                         cls.test_swagger_json['host'] +
                         cls.test_swagger_json['basePath'])
 
+        cls.client = cls.create_client(
+            cls.swagger_url, cls.test_swagger_response, cls.subparsers, cls.open_fn_name)
+
+    @staticmethod
+    def create_client(swagger_url, swagger_response, subparsers, open_fn_name):
+        """
+        Create and return a new SwaggerClient
+        """
         with mock.patch('requests.Session.get') as mock_get, \
-                mock.patch(cls.open_fn_name, mock_open()), \
+                mock.patch(open_fn_name, mock_open()), \
                 mock.patch('hca.util.fs.atomic_write'), \
                 mock.patch('hca.dss.SwaggerClient.load_swagger_json') as mock_load_swagger_json:
             # init SwaggerClient with test swagger JSON file
@@ -84,9 +95,10 @@ class TestSwaggerClient(unittest.TestCase):
 
             config = HCAConfig(save_on_exit=False)
             config['SwaggerClient'] = {}
-            config['SwaggerClient'].swagger_url = cls.swagger_url
-            cls.client = hca.util.SwaggerClient(config)
-            cls.client.build_argparse_subparsers(cls.subparsers)
+            config['SwaggerClient'].swagger_url = swagger_url
+            client = hca.util.SwaggerClient(config)
+            client.build_argparse_subparsers(subparsers)
+        return client
 
     @classmethod
     def tearDownClass(cls):
@@ -97,8 +109,8 @@ class TestSwaggerClient(unittest.TestCase):
 
     def test_client_methods_exist(self):
         for method_name in self.generated_method_names:
-            self.assertTrue(hasattr(self.client.__class__, method_name) and
-                            callable(getattr(self.client.__class__, method_name)))
+            self.assertTrue(hasattr(self.client, method_name) and
+                            callable(getattr(self.client, method_name)))
 
     def test_get_with_path_query_params(self):
         http_method = "get"
@@ -331,6 +343,37 @@ class TestSwaggerClient(unittest.TestCase):
                                              '--query-param', query_param_invalid])
             self.assertEqual(e.exception.code, 2)
 
+    def test_multithreaded(self):
+        http_method = "get"
+        path = "/with/path/query/params"
+        path_param = "path"
+        url = self.url_base + path + "/" + path_param
+        num_threads = 32
+        num_attempts = 400
+
+        with concurrent.futures.ThreadPoolExecutor(num_threads) as exe, \
+                mock.patch('requests.Session.request') as mock_request:
+
+            mock_request.return_value = self.dummy_response
+
+            def call_with_query_param(param):
+                client = self.create_client(
+                    self.swagger_url, self.test_swagger_response, self.subparsers,
+                    self.open_fn_name)
+                with client.get_with_path_query_params.stream(
+                        path_param=path_param, query_param=param):
+                    pass
+
+            futures = [exe.submit(call_with_query_param, str(i)) for i in range(num_attempts)]
+
+            while any(not f.done() for f in futures):
+                time.sleep(.5)
+
+            called_query_params = set()
+            for call in mock_request.mock_calls:
+                if 'params' in call[2]:
+                    called_query_params.add(call[2]["params"]["query_param"])
+            self.assertSetEqual(called_query_params, set(str(i) for i in range(num_attempts)))
 
 if __name__ == "__main__":
     unittest.main()
