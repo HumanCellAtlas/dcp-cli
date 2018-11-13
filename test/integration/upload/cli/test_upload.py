@@ -60,7 +60,7 @@ class TestUploadCliUploadCommand(UploadTestCase):
 
     @responses.activate
     @patch('hca.upload.s3_agent.S3Agent.upload_file')   # Don't actually try to upload
-    def test_no_transfer_acceleration_option_sets_up_botocore_config_correctly(self, upload_file_stub):
+    def test_no_transfer_acceleration_option_sets_up_botocore_config_correctly(self, *args):
         import botocore
 
         with patch('hca.upload.s3_agent.Config', new=Mock(wraps=botocore.config.Config)) as mock_config:
