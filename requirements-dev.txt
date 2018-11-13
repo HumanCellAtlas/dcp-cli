@@ -1,5 +1,5 @@
 flake8==3.5.0
-moto
+moto==1.3.3
 coverage
 pyyaml
 responses
