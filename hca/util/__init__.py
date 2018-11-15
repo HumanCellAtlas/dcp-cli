@@ -183,7 +183,6 @@ class SwaggerClient(object):
     scheme = "https"
     retry_policy = RetryPolicy(read=10,
                                status=10,
-                               redirect=3,
                                backoff_factor=0.1,
                                status_forcelist=frozenset({500, 502, 503, 504}))
     token_expiration = 3600
