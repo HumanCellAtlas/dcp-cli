@@ -1,3 +1,11 @@
+Changes for v4.4.9 (2018-11-16)
+===============================
+
+removing redirect for retry_policy (#205) [CVE-2018-18074] Upgrade
+requests to 2.20.0 (#204) Fixing read the docs error with markup
+language in argsparser (#197) Remove redundant index on landing page
+(#196) add testing for api_client (#190)
+
 Changes for v4.4.8 (2018-09-27)
 ===============================
 
