@@ -12,6 +12,7 @@ sys.path.insert(0, pkg_root)  # noqa
 
 from test import TEST_DIR
 from test.integration.upload import UploadTestCase
+from hca.upload.s3_agent import WRITE_PERCENT_THRESHOLD
 
 
 class TestUploadFileUpload(UploadTestCase):
@@ -82,6 +83,22 @@ class TestUploadFileUpload(UploadTestCase):
         self.assertEqual(self.area.s3agent.file_count, 2)
         self.assertEqual(self.area.s3agent.file_size_sum, 2156)
         self.assertEqual(self.area.s3agent.file_upload_completed_count, 2)
+
+    @responses.activate
+    def test_s3_agent_should_write_to_terminal(self):
+        file_paths = ["LICENSE", "LICENSE"]
+        self.area._setup_s3_agent_for_file_upload(file_paths=file_paths)
+        below_threshold_bytes = WRITE_PERCENT_THRESHOLD / 100.0 * self.area.s3agent.file_size_sum / 2
+        above_threshold_bytes = WRITE_PERCENT_THRESHOLD / 100.0 * self.area.s3agent.file_size_sum * 2
+        self.assertEqual(self.area.s3agent.file_size_sum, 2156)
+
+        self.area.s3agent.cumulative_bytes_transferred = below_threshold_bytes
+        write_to_terminal = self.area.s3agent.should_write_to_terminal()
+        self.assertEqual(write_to_terminal, False)
+
+        self.area.s3agent.cumulative_bytes_transferred = above_threshold_bytes
+        write_to_terminal = self.area.s3agent.should_write_to_terminal()
+        self.assertEqual(write_to_terminal, True)
 
 if __name__ == "__main__":
     unittest.main()
