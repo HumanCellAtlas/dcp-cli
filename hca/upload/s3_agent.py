@@ -6,9 +6,11 @@ from boto3.s3.transfer import TransferConfig
 from botocore.config import Config
 from botocore.credentials import CredentialResolver
 from botocore.session import get_session
-from retrying import retry
+from tenacity import retry, wait_fixed, stop_after_attempt
 
 from dcplib import s3_multipart
+
+WRITE_PERCENT_THRESHOLD = 0.1
 
 
 def sizeof_fmt(num, suffix='B'):
@@ -40,17 +42,29 @@ class S3Agent:
         self.file_size_sum = file_size_sum
         self.file_upload_completed_count = 0
         self.cumulative_bytes_transferred = 0
+        self.bytes_transferred_at_last_sys_write = 0
         self.failed_uploads = {}
 
     def upload_progress_callback(self, bytes_transferred):
         self.cumulative_bytes_transferred += bytes_transferred
         files_remaining = self.file_count - self.file_upload_completed_count
-        sys.stdout.write("Completed %s/%s with %s of %s files remaining\n" % (sizeof_fmt(self.cumulative_bytes_transferred),
-                                                                              sizeof_fmt(self.file_size_sum),
-                                                                              files_remaining,
-                                                                              self.file_count))
+        if self.should_write_to_terminal():
+            self.bytes_transferred_at_last_sys_write = self.cumulative_bytes_transferred
+            sys.stdout.write("Completed %s/%s with %s of %s files remaining \r" % (sizeof_fmt(self.cumulative_bytes_transferred),
+                                                                                   sizeof_fmt(self.file_size_sum),
+                                                                                   files_remaining,
+                                                                                   self.file_count))
+            sys.stdout.flush()
 
-    @retry(stop_max_attempt_number=3, wait_fixed=2000)
+    def should_write_to_terminal(self):
+        write_to_terminal = False
+        bytes_difference = self.cumulative_bytes_transferred - self.bytes_transferred_at_last_sys_write
+        # Only write to terminal if have surpassed threshold since last message
+        if float(bytes_difference) / float(self.file_size_sum) * 100 > WRITE_PERCENT_THRESHOLD:
+            write_to_terminal = True
+        return write_to_terminal
+
+    @retry(wait=wait_fixed(2), stop=stop_after_attempt(3))
     def upload_file(self, local_path, target_bucket, target_key, content_type, report_progress=False):
         file_size = os.path.getsize(local_path)
         bucket = self.s3.Bucket(target_bucket)
