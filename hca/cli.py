@@ -72,6 +72,10 @@ def main(args=None):
     parsed_args = parser.parse_args(args=args)
     logging.basicConfig(level=logging.ERROR)
     logger.setLevel(parsed_args.log_level)
+
+    logging.getLogger("urllib3").setLevel(parsed_args.log_level)
+    logging.getLogger("requests").setLevel(parsed_args.log_level)
+
     try:
         result = parsed_args.entry_point(parsed_args)
     except Exception as e:
