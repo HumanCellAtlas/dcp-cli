@@ -98,12 +98,13 @@ import requests
 from requests.adapters import HTTPAdapter
 from requests_oauthlib import OAuth2Session
 from urllib3.util import retry, timeout
+from urllib3.exceptions import MaxRetryError
 from jsonpointer import resolve_pointer
 from threading import Lock
 
 from .. import get_config, logger
 from .compat import USING_PYTHON2
-from .exceptions import SwaggerAPIException, SwaggerClientInternalError
+from .exceptions import SwaggerAPIException, SwaggerClientInternalError, SwaggerAPIMaxRetry
 from ._docs import _pagination_docstring, _streaming_docstring, _md2rst, _parse_docstring
 from .fs_helper import FSHelper as fs
 
@@ -113,6 +114,11 @@ class RetryPolicy(retry.Retry):
         super(RetryPolicy, self).__init__(**kwargs)
         self.RETRY_AFTER_STATUS_CODES = frozenset(retry_after_status_codes | retry.Retry.RETRY_AFTER_STATUS_CODES)
 
+    def increment(self, **kwargs):
+        try:
+            return super(RetryPolicy, self).increment(**kwargs)
+        except MaxRetryError:
+            raise SwaggerAPIMaxRetry(response=kwargs['response'])
 
 class _ClientMethodFactory(object):
 

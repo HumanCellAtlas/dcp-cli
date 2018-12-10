@@ -26,5 +26,11 @@ class SwaggerAPIException(HTTPError):
             return "{}: {} (HTTP {}). Details:\n{}".format(self.reason, self.title, self.code, self.response.text)
         return "{}, code {}".format(self.response.reason, self.response.status_code)
 
+class SwaggerAPIMaxRetry(SwaggerAPIException):
+    """
+    Exception raised when the max number of retries is exceeded.
+    """
+    pass
+
 class SwaggerClientInternalError(Exception):
     pass
