@@ -25,3 +25,4 @@ env:
   - AWS_DEFAULT_REGION=us-east-1
   - GOOGLE_APPLICATION_CREDENTIALS=travis-gcp-service-account-credentials.json
   - DSS_TEST_STAGE=dev
+  - BOTO_CONFIG=/dev/null
