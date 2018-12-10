@@ -120,6 +120,7 @@ class RetryPolicy(retry.Retry):
         except MaxRetryError:
             raise SwaggerAPIMaxRetry(response=kwargs['response'])
 
+
 class _ClientMethodFactory(object):
 
     def __init__(self, client, parameters, path_parameters, http_method, method_name, method_data, body_props):
