@@ -87,7 +87,7 @@ class TestDssApi(unittest.TestCase):
                         # bundle. The subsequent download should not be affected by that new version since the bundle
                         # still refers to the old version.
                         file1, file2 = itertools.islice((f for f in manifest_files if f['name'].endswith('.json')), 2)
-                        file_version = datetime.datetime.now().isoformat()
+                        file_version = datetime.datetime.utcnow().strftime("%Y-%m-%dT%H%M%S.%fZ")
                         source_url = "s3://{}/{}/{}".format(self.staging_bucket, file2['uuid'], file2['name'])
                         client.put_file(uuid=file1['uuid'],
                                         version=file_version,
