@@ -1,7 +1,6 @@
 SHELL=/bin/bash
 
 test: lint install integration unit
-	coverage run --source=hca -m unittest discover -v -t . -s test/upload
 
 unit: lint install
 	coverage run --source=hca -m unittest discover -v -t . -s test/unit
