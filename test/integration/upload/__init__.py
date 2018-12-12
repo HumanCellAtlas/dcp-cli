@@ -75,7 +75,6 @@ class UploadTestCase(unittest.TestCase):
         if re.search('\{stage\}', api_host):
             api_host = api_host.format(stage=stage)
         url = 'https://{api_host}/v1/area/{uuid}/{name}'.format(api_host=api_host, uuid=area_uuid, name=filename)
-        import pdb; pdb.set_trace()
         responses.add(responses.POST, url, status=202)
         return url
 

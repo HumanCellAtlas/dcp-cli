@@ -140,7 +140,7 @@ class UploadArea:
             content_type = str(DcpMediaType.from_file(file_path, dcp_type))
             self.s3agent.upload_file(file_path, self.uri.bucket_name, file_s3_key, content_type, report_progress=report_progress)
             self.s3agent.file_upload_completed_count += 1
-            self.upload_api_client.notify_on_file_upload(file_s3_key)
+            self.upload_api_client.file_upload_notification(self.uuid, target_filename or os.path.basename(file_path))
             print("Upload complete of %s to upload area %s" % (file_path, file_s3_key))
         except Exception as e:
             self.s3agent.failed_uploads[file_path] = e
