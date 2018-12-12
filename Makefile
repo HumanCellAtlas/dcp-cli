@@ -1,14 +1,24 @@
 SHELL=/bin/bash
 
-test: lint install
-	# https://github.com/HumanCellAtlas/dcp-cli/issues/127
-	coverage run --source=hca -m unittest discover -v -t . -s test
+test: lint install integrationtests unittests
+	coverage combine
+	rm -f .coverage.*
 
-unit: lint install
-	python -m unittest discover -v -t . -s test/unit
+unittests:
+	coverage run -p --source=hca -m unittest discover -v -t . -s test/unit
 
-integration: lint install
-	coverage run --source=hca -m unittest discover -v -t . -s test/integration
+unit: lint install unittests
+	coverage combine
+	rm -f .coverage.*
+
+integrationtests:
+    # https://github.com/HumanCellAtlas/dcp-cli/issues/127
+	coverage run -p --source=hca -m unittest discover -v -t . -s test/integration/upload
+	coverage run -p --source=hca -m unittest discover -v -t . -s test/integration/dss
+
+integration: lint install integrationtests
+	coverage combine
+	rm -f .coverage.*
 
 lint:
 	./setup.py flake8
