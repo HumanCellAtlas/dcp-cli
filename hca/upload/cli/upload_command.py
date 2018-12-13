@@ -1,6 +1,8 @@
 import os
 import sys
 
+import boto3
+
 from ..upload_config import UploadConfig
 from .common import UploadCLICommand
 from ..upload_area import UploadArea
@@ -38,13 +40,16 @@ class UploadCommand(UploadCLICommand):
         upload_parser.set_defaults(entry_point=UploadCommand)
 
     def __init__(self, args):
+        self.source_s3_client = boto3.client('s3')
         self.file_paths = []
+        self.file_size_sum = 0
         self._load_config()
         self._check_args(args)
         for upload_path in args.upload_paths:
             self._load_file_paths_from_upload_path(args, upload_path)
         area = UploadArea(uuid=UploadConfig().current_area)
         area.upload_files(self.file_paths,
+                          self.file_size_sum,
                           target_filename=args.target_filename,
                           use_transfer_acceleration=(not args.no_transfer_acceleration),
                           report_progress=(not args.quiet),
@@ -69,10 +74,42 @@ class UploadCommand(UploadCLICommand):
                     exit(1)
 
     def _load_file_paths_from_upload_path(self, args, upload_path):
-        if os.path.isfile(upload_path):
+        if upload_path.startswith("s3://"):
+            s3_file_paths, s3_file_size_sum = self._retrieve_files_list_and_size_sum_tuple_from_s3_path(upload_path)
+            self.file_paths += s3_file_paths
+            self.file_size_sum += s3_file_size_sum
+        elif os.path.isfile(upload_path):
             self.file_paths.append(upload_path)
+            self.file_size_sum += os.path.getsize(upload_path)
         elif os.path.isdir(upload_path):
             for dir_path, sub_dir_list, file_list in os.walk(upload_path):
                 for file_name in file_list:
                     if not args.file_extension or file_name.endswith(args.file_extension):
-                        self.file_paths.append(os.path.join(dir_path, file_name))
+                        file_path = os.path.join(dir_path, file_name)
+                        self.file_paths.append(file_path)
+                        self.file_size_sum += os.path.getsize(file_path)
+
+    def _retrieve_files_list_and_size_sum_tuple_from_s3_path(self, s3_path):
+        s3_file_obj_paths = []
+        s3_file_size_bytes_sum = 0
+        bucket, prefix = self._parse_s3_path(s3_path)
+
+        paginator = self.source_s3_client.get_paginator('list_objects_v2')
+        page_iterator = paginator.paginate(Bucket=bucket, Prefix=prefix)
+        for page in page_iterator:
+            if "Contents" in page:
+                for key in page["Contents"]:
+                    s3_file_size_bytes_sum += key['Size']
+                    s3_obj_path = "s3://{0}/{1}".format(bucket, key['Key'])
+                    s3_file_obj_paths.append(s3_obj_path)
+        return s3_file_obj_paths, s3_file_size_bytes_sum
+
+    def _parse_s3_path(self, s3_path):
+        s3_path = s3_path.replace("s3://", "")
+        s3_path_split = s3_path.split("/", 1)
+
+        bucket = s3_path_split[0]
+        prefix = ''
+        if len(s3_path_split) > 1:
+            prefix = s3_path_split[1]
+        return bucket, prefix

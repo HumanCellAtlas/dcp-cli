@@ -35,7 +35,8 @@ class S3Agent:
         botocore_session = get_session()
         botocore_session.register_component('credential_provider', CredentialResolver(providers=[credentials_provider]))
         my_session = boto3.Session(botocore_session=botocore_session)
-        self.s3 = my_session.resource('s3', config=config)
+        self.target_s3 = my_session.resource('s3', config=config)
+        self.source_s3_client = boto3.client('s3')
 
     def set_s3_agent_variables_for_batch_file_upload(self, file_count=0, file_size_sum=0):
         self.file_count = file_count
@@ -65,9 +66,35 @@ class S3Agent:
         return write_to_terminal
 
     @retry(wait=wait_fixed(2), stop=stop_after_attempt(3))
-    def upload_file(self, local_path, target_bucket, target_key, content_type, report_progress=False):
+    def copy_s3_file(self, s3_path, target_bucket, target_key, content_type, report_progress=False):
+        s3_path_split = s3_path.replace("s3://", "").split("/", 1)
+        source_bucket = s3_path_split[0]
+        source_key = s3_path_split[1]
+        response = self.source_s3_client.head_object(Bucket=source_bucket, Key=source_key)
+        file_size = response['ContentLength']
+        copy_source = {
+            'Bucket': source_bucket,
+            'Key': source_key
+        }
+        upload_args = {
+            'CopySource': copy_source,
+            'ExtraArgs': {
+                'ContentType': content_type,
+                'ACL': 'bucket-owner-full-control',
+            },
+            'Config': self.transfer_config(file_size),
+            'SourceClient': self.source_s3_client,
+            'Bucket': target_bucket,
+            'Key': target_key,
+        }
+        if report_progress:
+            upload_args['Callback'] = self.upload_progress_callback
+        self.target_s3.meta.client.copy(**upload_args)
+
+    @retry(wait=wait_fixed(2), stop=stop_after_attempt(3))
+    def upload_local_file(self, local_path, target_bucket, target_key, content_type, report_progress=False):
         file_size = os.path.getsize(local_path)
-        bucket = self.s3.Bucket(target_bucket)
+        bucket = self.target_s3.Bucket(target_bucket)
         obj = bucket.Object(target_key)
         upload_fileobj_args = {
             'ExtraArgs': {'ContentType': content_type, 'ACL': 'bucket-owner-full-control'},
@@ -79,7 +106,7 @@ class S3Agent:
             obj.upload_fileobj(fh, **upload_fileobj_args)
 
     def list_bucket_by_page(self, bucket_name, key_prefix):
-        paginator = self.s3.meta.client.get_paginator('list_objects')
+        paginator = self.target_s3.meta.client.get_paginator('list_objects')
         for page in paginator.paginate(Bucket=bucket_name, Prefix=key_prefix, PaginationConfig={'PageSize': 100}):
             if 'Contents' in page:
                 yield [o['Key'] for o in page['Contents']]
