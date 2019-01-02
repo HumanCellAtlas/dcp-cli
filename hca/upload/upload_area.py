@@ -53,6 +53,7 @@ class UploadArea:
             raise UploadException("You must provide a uuid or URI")
         self.uuid = self.uri.area_uuid
         self.s3_agent = None
+        self.upload_api_client = ApiClient(self.uri.deployment_stage)
 
     def __str__(self):
         return "UploadArea {uri}".format(uri=self.uri)
@@ -86,7 +87,6 @@ class UploadArea:
         :param detail: return detailed file information (slower)
         :return: a list of dicts containing at least 'name', or more of detail was requested
         """
-        upload_api_client = ApiClient(self.uri.deployment_stage)
         creds_provider = CredentialsManager(upload_area=self)
         s3agent = S3Agent(credentials_provider=creds_provider)
         key_prefix = self.uuid + "/"
@@ -94,7 +94,7 @@ class UploadArea:
         for page in s3agent.list_bucket_by_page(bucket_name=self.uri.bucket_name, key_prefix=key_prefix):
             file_list = [key[key_prefix_length:] for key in page]  # cut off upload-area-id/
             if detail:
-                files_info = upload_api_client.files_info(self.uuid, file_list)
+                files_info = self.upload_api_client.files_info(self.uuid, file_list)
             else:
                 files_info = [{'name': filename} for filename in file_list]
             for file_info in files_info:
@@ -140,6 +140,7 @@ class UploadArea:
             content_type = str(DcpMediaType.from_file(file_path, dcp_type))
             self.s3agent.upload_file(file_path, self.uri.bucket_name, file_s3_key, content_type, report_progress=report_progress)
             self.s3agent.file_upload_completed_count += 1
+            self.upload_api_client.file_upload_notification(self.uuid, target_filename or os.path.basename(file_path))
             print("Upload complete of %s to upload area %s" % (file_path, file_s3_key))
         except Exception as e:
             self.s3agent.failed_uploads[file_path] = e
