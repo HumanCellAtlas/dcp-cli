@@ -1,3 +1,10 @@
+Changes for v4.5.0 (2019-01-02)
+===============================
+
+post to upload api after successful file upload via hca cli (#214)
+Updating test cases (#215) change retry lib and improve output from hca
+upload tool during file upload (#208)
+
 Changes for v4.4.10 (2018-11-19)
 ================================
 
