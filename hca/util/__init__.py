@@ -110,13 +110,13 @@ from .fs_helper import FSHelper as fs
 
 
 class RetryPolicy(retry.Retry):
-    def __init__(self, retry_after_status_codes={301}, **kwargs):
-        super(RetryPolicy, self).__init__(**kwargs)
+    def __init__(self, retry_after_status_codes={301}, *args, **kwargs):
+        super(RetryPolicy, self).__init__(*args, **kwargs)
         self.RETRY_AFTER_STATUS_CODES = frozenset(retry_after_status_codes | retry.Retry.RETRY_AFTER_STATUS_CODES)
 
-    def increment(self, **kwargs):
+    def increment(self, *args, **kwargs):
         try:
-            return super(RetryPolicy, self).increment(**kwargs)
+            return super(RetryPolicy, self).increment(*args, **kwargs)
         except MaxRetryError:
             raise SwaggerAPIMaxRetry(response=kwargs['response'])
 
