@@ -25,7 +25,6 @@ class SwaggerAPIException(HTTPError):
                 return "{}: {} (HTTP {}). Details:\n{}".format(self.reason, self.title, self.code, self.stacktrace)
             return "{}: {} (HTTP {}). Details:\n{}".format(self.reason, self.title, self.code, self.response.text)
         return "{}, code {}".format(self.response.reason, self.response.status_code)
-    
 
 class SwaggerClientInternalError(Exception):
     pass
