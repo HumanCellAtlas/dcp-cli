@@ -109,9 +109,14 @@ from .fs_helper import FSHelper as fs
 
 
 class RetryPolicy(retry.Retry):
-    def __init__(self, retry_after_status_codes={301}, **kwargs):
-        super(RetryPolicy, self).__init__(**kwargs)
+    def __init__(self, retry_after_status_codes={301}, *args, **kwargs):
+        super(RetryPolicy, self).__init__(*args, **kwargs)
         self.RETRY_AFTER_STATUS_CODES = frozenset(retry_after_status_codes | retry.Retry.RETRY_AFTER_STATUS_CODES)
+
+    def increment(self, *args, **kwargs):
+        retry = super(RetryPolicy, self).increment(*args, **kwargs)
+        logger.warning("Retrying: {}".format(retry.history[-1]))
+        return retry
 
 
 class _ClientMethodFactory(object):
@@ -216,7 +221,7 @@ class SwaggerClient(object):
         else:
             self.__class__.__doc__ = _md2rst(self.swagger_spec["info"]["description"])
         self.methods = {}
-        self.commands = [self.login, self.logout]
+        self.commands = [self.login, self.logout, self.refresh_swagger]
         self.http_paths = collections.defaultdict(dict)
         self.host = "{scheme}://{host}{base}".format(scheme=self.scheme,
                                                      host=self.swagger_spec["host"],
@@ -253,8 +258,7 @@ class SwaggerClient(object):
                     if not swagger_filename.startswith("/"):
                         swagger_filename = os.path.join(os.path.dirname(__file__), swagger_filename)
                 else:
-                    swagger_filename = base64.urlsafe_b64encode(self.swagger_url.encode()).decode() + ".json"
-                    swagger_filename = os.path.join(self.config.user_config_dir, swagger_filename)
+                    swagger_filename = self._get_swagger_filename(self.swagger_url)
                 if (("swagger_filename" not in self.config) and
                     ((not os.path.exists(swagger_filename)) or
                      (fs.get_days_since_last_modified(swagger_filename) >= self._spec_valid_for_days))):
@@ -270,6 +274,22 @@ class SwaggerClient(object):
                 with open(swagger_filename) as fh:
                     self._swagger_spec = self.load_swagger_json(fh)
         return self._swagger_spec
+
+    def _get_swagger_filename(self, swagger_url):
+        swagger_filename = base64.urlsafe_b64encode(swagger_url.encode()).decode() + ".json"
+        swagger_filename = os.path.join(self.config.user_config_dir, swagger_filename)
+        return swagger_filename
+
+    def refresh_swagger(self):
+        """
+        Manually refresh the swagger document. This can help resolve errors communicate with the API.
+        """
+        try:
+            os.remove(self._get_swagger_filename(self.swagger_url))
+        except EnvironmentError as e:
+            logger.warn(os.strerror(e.errno))
+        else:
+            self.__init__()
 
     @property
     def application_secrets(self):
