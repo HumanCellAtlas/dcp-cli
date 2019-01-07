@@ -59,8 +59,6 @@ class FileStatusCheck(object):
         try:
             response = self.upload_api_client.validation_status(upload_area, file_id)
         except RuntimeError as e:
-            import pdb
-            pdb.set_trace()
             return 'VALIDATION_STATUS_RETRIEVAL_ERROR: {}'.format(e)
         validation_status = response['validation_status']
         if validation_status == 'SCHEDULED':

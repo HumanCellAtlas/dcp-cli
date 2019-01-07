@@ -69,6 +69,15 @@ class UploadTestCase(unittest.TestCase):
         responses.add(responses.POST, creds_url, json=creds, status=201)
         return creds_url
 
+    def simulate_file_upload_notification_api(self, area_uuid, filename,
+                                              api_host="upload.{stage}.data.humancellatlas.org",
+                                              stage='test'):
+        if re.search('\{stage\}', api_host):
+            api_host = api_host.format(stage=stage)
+        url = 'https://{api_host}/v1/area/{uuid}/{name}'.format(api_host=api_host, uuid=area_uuid, name=filename)
+        responses.add(responses.POST, url, status=202)
+        return url
+
     def _setup_tweak_config(self):
         config = hca.get_config()
         config.upload = {

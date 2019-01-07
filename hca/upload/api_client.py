@@ -1,6 +1,7 @@
 import json
 
 import requests
+from tenacity import retry, stop_after_attempt, wait_fixed
 
 from .upload_config import UploadConfig
 
@@ -31,6 +32,19 @@ class ApiClient:
                     status=response.status_code,
                     content=response.content))
         return response.json()
+
+    @retry(wait=wait_fixed(2), stop=stop_after_attempt(3))
+    def file_upload_notification(self, area_uuid, filename):
+        url = "{api_url_base}/area/{area_uuid}/{filename}".format(api_url_base=self.api_url_base,
+                                                                  area_uuid=area_uuid,
+                                                                  filename=filename)
+        response = requests.post(url)
+        if not response.status_code == requests.codes.accepted:
+            raise RuntimeError(
+                "POST {url} returned {status}".format(
+                    url=url,
+                    status=response.status_code))
+        return response
 
     def checksum_status(self, area_uuid, filename):
         url = "{api_url_base}/area/{uuid}/{filename}/checksum".format(api_url_base=self.api_url_base, uuid=area_uuid,
