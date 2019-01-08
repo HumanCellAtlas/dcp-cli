@@ -67,6 +67,8 @@ class S3Agent:
 
     @retry(wait=wait_fixed(2), stop=stop_after_attempt(3))
     def copy_s3_file(self, s3_path, target_bucket, target_key, content_type, report_progress=False):
+        # Here we are using s3's managed copy to allow for s3 to s3 file upload
+        # We override any original metadata or content types
         s3_path_split = s3_path.replace("s3://", "").split("/", 1)
         source_bucket = s3_path_split[0]
         source_key = s3_path_split[1]

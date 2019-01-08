@@ -134,6 +134,17 @@ class UploadArea:
         self.s3agent = S3Agent(credentials_provider=creds_provider, transfer_acceleration=use_transfer_acceleration)
         self.s3agent.set_s3_agent_variables_for_batch_file_upload(file_count=file_count, file_size_sum=file_size_sum)
 
+    def _determine_s3_file_content_type(self, file_path, dcp_type="data"):
+        mime_type_tuple = mimetypes.guess_type(file_path)
+        mime_type = "application/data"
+        if mime_type_tuple[0]:
+            mime_type = mime_type_tuple[0]
+        elif mime_type_tuple[1] == "gzip":
+            # If there is an encoding guess of gzip without a mimetype guess, set as application/gzip.
+            mime_type = "application/gzip"
+        content_type = "{0}; dcp-type={1}".format(mime_type, dcp_type)
+        return content_type
+
     def _upload_file(self, file_path=None, dcp_type="data", target_filename=None, use_transfer_acceleration=True,
                      report_progress=False):
         try:
@@ -141,8 +152,7 @@ class UploadArea:
             if file_path.startswith("s3://"):
                 file_name = file_path.split('/')[-1]
                 target_key = "%s/%s" % (self.uuid, target_filename or file_name)
-                mime_type = mimetypes.guess_type(file_path)[0]
-                content_type = "{0}; dcp_type=data".format(mime_type)
+                content_type = self._determine_s3_file_content_type(file_path, dcp_type)
                 self.s3agent.copy_s3_file(file_path, target_bucket, target_key, content_type,
                                           report_progress=report_progress)
             else:

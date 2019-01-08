@@ -98,5 +98,16 @@ class TestUploadFileUpload(UploadTestCase):
         write_to_terminal = self.area.s3agent.should_write_to_terminal()
         self.assertEqual(write_to_terminal, True)
 
+    @responses.activate
+    def test_determine_s3_file_content_type(self):
+        content_type_one = self.area._determine_s3_file_content_type("s3://bucket/file.json")
+        content_type_two = self.area._determine_s3_file_content_type("s3://bucket/file.fastq.gz")
+        content_type_three = self.area._determine_s3_file_content_type("s3://bucket/file.pdf")
+
+        self.assertEqual(content_type_one, "application/json; dcp-type=data")
+        self.assertEqual(content_type_two, "application/gzip; dcp-type=data")
+        self.assertEqual(content_type_three, "application/pdf; dcp-type=data")
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -119,6 +119,23 @@ class TestUploadCliUploadCommand(UploadTestCase):
         self.assertEqual(total_fize_size, 1078)
 
     @responses.activate
+    def test_load_file_paths_from_upload_path_with_s3_input(self):
+        files = ['LICENSE', 'README.rst']
+        args = Namespace(upload_paths=files, target_filename=None, no_transfer_acceleration=False,
+                         dcp_type=None, quiet=True, file_extension=None)
+        self.simulate_credentials_api(area_uuid=self.area.uuid)
+        upload_command = UploadCommand(args)
+        area_path = "s3://{0}/{1}".format(self.upload_bucket_name, self.area.uuid)
+        partial_obj_key = "{0}/LIC".format(area_path)
+        complete_obj_key = "{0}/LICENSE".format(area_path)
+
+        upload_command._load_file_paths_from_upload_path(args, partial_obj_key)
+
+        self.assertEqual(True, complete_obj_key in upload_command.file_paths)
+        self.assertEqual(3, len(upload_command.file_paths))
+        self.assertEqual(upload_command.file_size_sum, 6439)
+
+    @responses.activate
     def test_retrieve_files_list_and_size_sum_tuple_from_s3_path_with_complete_obj_key(self):
         files = ['LICENSE', 'README.rst']
         args = Namespace(upload_paths=files, target_filename=None, no_transfer_acceleration=False,
