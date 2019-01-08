@@ -50,7 +50,7 @@ class TestUploadFileUpload(UploadTestCase):
     def test_s3_agent_setup_for_single_file_upload(self):
         self.simulate_credentials_api(area_uuid=self.area.uuid)
         file_paths = ["LICENSE"]
-        self.area._setup_s3_agent_for_file_upload(file_paths=file_paths)
+        self.area._setup_s3_agent_for_file_upload(file_size_sum=1078, file_count=1)
         self.assertEqual(self.area.s3agent.file_count, 1)
         self.assertEqual(self.area.s3agent.file_size_sum, 1078)
         self.assertEqual(self.area.s3agent.file_upload_completed_count, 0)
@@ -59,8 +59,7 @@ class TestUploadFileUpload(UploadTestCase):
     @responses.activate
     def test_s3_agent_setup_for_multiple_file_upload(self):
         self.simulate_credentials_api(area_uuid=self.area.uuid)
-        file_paths = ["LICENSE", "LICENSE"]
-        self.area._setup_s3_agent_for_file_upload(file_paths=file_paths)
+        self.area._setup_s3_agent_for_file_upload(file_size_sum=2156, file_count=2)
         self.assertEqual(self.area.s3agent.file_count, 2)
         self.assertEqual(self.area.s3agent.file_size_sum, 2156)
         self.assertEqual(self.area.s3agent.file_upload_completed_count, 0)
@@ -70,7 +69,7 @@ class TestUploadFileUpload(UploadTestCase):
     def test_s3_agent_stats_update_for_single_file_upload(self):
         self.simulate_credentials_api(area_uuid=self.area.uuid)
         file_paths = ["LICENSE"]
-        self.area.upload_files(file_paths=file_paths)
+        self.area.upload_files(file_paths=file_paths, file_size_sum=1078)
         self.assertEqual(self.area.s3agent.file_count, 1)
         self.assertEqual(self.area.s3agent.file_size_sum, 1078)
         self.assertEqual(self.area.s3agent.file_upload_completed_count, 1)
@@ -79,15 +78,14 @@ class TestUploadFileUpload(UploadTestCase):
     def test_s3_agent_stats_update_for_multiple_file_upload(self):
         self.simulate_credentials_api(area_uuid=self.area.uuid)
         file_paths = ["LICENSE", "LICENSE"]
-        self.area.upload_files(file_paths=file_paths)
+        self.area.upload_files(file_paths=file_paths, file_size_sum=2156)
         self.assertEqual(self.area.s3agent.file_count, 2)
         self.assertEqual(self.area.s3agent.file_size_sum, 2156)
         self.assertEqual(self.area.s3agent.file_upload_completed_count, 2)
 
     @responses.activate
     def test_s3_agent_should_write_to_terminal(self):
-        file_paths = ["LICENSE", "LICENSE"]
-        self.area._setup_s3_agent_for_file_upload(file_paths=file_paths)
+        self.area._setup_s3_agent_for_file_upload(file_size_sum=2156, file_count=2)
         below_threshold_bytes = WRITE_PERCENT_THRESHOLD / 100.0 * self.area.s3agent.file_size_sum / 2
         above_threshold_bytes = WRITE_PERCENT_THRESHOLD / 100.0 * self.area.s3agent.file_size_sum * 2
         self.assertEqual(self.area.s3agent.file_size_sum, 2156)

@@ -143,7 +143,7 @@ class UploadArea:
                 target_key = "%s/%s" % (self.uuid, target_filename or file_name)
                 mime_type = mimetypes.guess_type(file_path)[0]
                 content_type = "{0}; dcp_type=data".format(mime_type)
-                self.s3agent.copy_s3_file(file_path, target_bucket, target_key, dcp_type,
+                self.s3agent.copy_s3_file(file_path, target_bucket, target_key, content_type,
                                           report_progress=report_progress)
             else:
                 target_key = "%s/%s" % (self.uuid, target_filename or os.path.basename(file_path))

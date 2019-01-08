@@ -80,12 +80,13 @@ class S3Agent:
             'CopySource': copy_source,
             'ExtraArgs': {
                 'ContentType': content_type,
-                'ACL': 'bucket-owner-full-control',
+                'MetadataDirective': 'REPLACE',
+                'ACL': 'bucket-owner-full-control'
             },
             'Config': self.transfer_config(file_size),
             'SourceClient': self.source_s3_client,
             'Bucket': target_bucket,
-            'Key': target_key,
+            'Key': target_key
         }
         if report_progress:
             upload_args['Callback'] = self.upload_progress_callback
