@@ -1,3 +1,9 @@
+Changes for v4.6.0 (2019-01-08)
+===============================
+
+enable file copy from s3 to upload area (#217) Apply log level to
+requests and urllib3 (#216) Adding refresh-swagger command (#211)
+
 Changes for v4.5.0 (2019-01-02)
 ===============================
 
