@@ -44,6 +44,114 @@ class TestUploadCliUploadCommand(UploadTestCase):
             self.assertEqual(obj.get()['Body'].read(), expected_contents)
 
     @responses.activate
+    def test_parse_s3_path_with_no_prefix(self):
+        files = ['LICENSE', 'README.rst']
+        args = Namespace(upload_paths=files, target_filename=None, no_transfer_acceleration=False,
+                         dcp_type=None, quiet=True, file_extension=None)
+        self.simulate_credentials_api(area_uuid=self.area.uuid)
+        upload_command = UploadCommand(args)
+        s3_path_with_no_prefix = "s3://fake-bucket"
+
+        bucket, prefix = upload_command._parse_s3_path(s3_path_with_no_prefix)
+
+        self.assertEqual(bucket, "fake-bucket")
+        self.assertEqual(prefix, "")
+
+    @responses.activate
+    def test_parse_s3_path_with_dir_prefix(self):
+        files = ['LICENSE', 'README.rst']
+        args = Namespace(upload_paths=files, target_filename=None, no_transfer_acceleration=False,
+                         dcp_type=None, quiet=True, file_extension=None)
+        self.simulate_credentials_api(area_uuid=self.area.uuid)
+        upload_command = UploadCommand(args)
+        s3_path_with_no_prefix = "s3://fake-bucket/fake-dir/"
+
+        bucket, prefix = upload_command._parse_s3_path(s3_path_with_no_prefix)
+
+        self.assertEqual(bucket, "fake-bucket")
+        self.assertEqual(prefix, "fake-dir/")
+
+    @responses.activate
+    def test_parse_s3_path_with_obj_prefix(self):
+        files = ['LICENSE', 'README.rst']
+        args = Namespace(upload_paths=files, target_filename=None, no_transfer_acceleration=False,
+                         dcp_type=None, quiet=True, file_extension=None)
+        self.simulate_credentials_api(area_uuid=self.area.uuid)
+        upload_command = UploadCommand(args)
+        s3_path_with_no_prefix = "s3://fake-bucket/fake-dir/fake-obj"
+
+        bucket, prefix = upload_command._parse_s3_path(s3_path_with_no_prefix)
+
+        self.assertEqual(bucket, "fake-bucket")
+        self.assertEqual(prefix, "fake-dir/fake-obj")
+
+    @responses.activate
+    def test_retrieve_files_list_and_size_sum_tuple_from_s3_path_with_dir_key(self):
+        files = ['LICENSE', 'README.rst']
+        args = Namespace(upload_paths=files, target_filename=None, no_transfer_acceleration=False,
+                         dcp_type=None, quiet=True, file_extension=None)
+        self.simulate_credentials_api(area_uuid=self.area.uuid)
+        upload_command = UploadCommand(args)
+        area_s3_path = "s3://{0}/{1}".format(self.upload_bucket_name, self.area.uuid)
+
+        s3_file_paths, total_fize_size = upload_command._retrieve_files_list_and_size_sum_tuple_from_s3_path(area_s3_path)
+
+        for file in files:
+            file_key = "{0}/{1}".format(area_s3_path, file)
+            self.assertEqual(True, file_key in s3_file_paths)
+        self.assertEqual(total_fize_size, 5361)
+
+    @responses.activate
+    def test_retrieve_files_list_and_size_sum_tuple_from_s3_path_with_partial_obj_key(self):
+        files = ['LICENSE', 'README.rst']
+        args = Namespace(upload_paths=files, target_filename=None, no_transfer_acceleration=False,
+                         dcp_type=None, quiet=True, file_extension=None)
+        self.simulate_credentials_api(area_uuid=self.area.uuid)
+        upload_command = UploadCommand(args)
+        area_path = "s3://{0}/{1}".format(self.upload_bucket_name, self.area.uuid)
+        partial_obj_key = "{0}/LIC".format(area_path)
+        complete_obj_key = "{0}/LICENSE".format(area_path)
+
+        s3_file_paths, total_fize_size = upload_command._retrieve_files_list_and_size_sum_tuple_from_s3_path(partial_obj_key)
+
+        self.assertEqual(True, complete_obj_key in s3_file_paths)
+        self.assertEqual(1, len(s3_file_paths))
+        self.assertEqual(total_fize_size, 1078)
+
+    @responses.activate
+    def test_load_file_paths_from_upload_path_with_s3_input(self):
+        files = ['LICENSE', 'README.rst']
+        args = Namespace(upload_paths=files, target_filename=None, no_transfer_acceleration=False,
+                         dcp_type=None, quiet=True, file_extension=None)
+        self.simulate_credentials_api(area_uuid=self.area.uuid)
+        upload_command = UploadCommand(args)
+        area_path = "s3://{0}/{1}".format(self.upload_bucket_name, self.area.uuid)
+        partial_obj_key = "{0}/LIC".format(area_path)
+        complete_obj_key = "{0}/LICENSE".format(area_path)
+
+        upload_command._load_file_paths_from_upload_path(args, partial_obj_key)
+
+        self.assertEqual(True, complete_obj_key in upload_command.file_paths)
+        self.assertEqual(3, len(upload_command.file_paths))
+        self.assertEqual(upload_command.file_size_sum, 6439)
+
+    @responses.activate
+    def test_retrieve_files_list_and_size_sum_tuple_from_s3_path_with_complete_obj_key(self):
+        files = ['LICENSE', 'README.rst']
+        args = Namespace(upload_paths=files, target_filename=None, no_transfer_acceleration=False,
+                         dcp_type=None, quiet=True, file_extension=None)
+        self.simulate_credentials_api(area_uuid=self.area.uuid)
+        upload_command = UploadCommand(args)
+        area_path = "s3://{0}/{1}".format(self.upload_bucket_name, self.area.uuid)
+        complete_obj_key = "{0}/LICENSE".format(area_path)
+
+        s3_file_paths, total_fize_size = upload_command._retrieve_files_list_and_size_sum_tuple_from_s3_path(complete_obj_key)
+
+        self.assertEqual(True, complete_obj_key in s3_file_paths)
+        self.assertEqual(1, len(s3_file_paths))
+        self.assertEqual(total_fize_size, 1078)
+
+    @responses.activate
     def test_upload_with_dcp_type_option(self):
 
         args = Namespace(upload_paths=['LICENSE'], target_filename=None, no_transfer_acceleration=False, quiet=True, file_extension=None)
@@ -62,7 +170,7 @@ class TestUploadCliUploadCommand(UploadTestCase):
     def test_no_transfer_acceleration_option_sets_up_botocore_config_correctly(self):
         import botocore
 
-        with patch('hca.upload.s3_agent.S3Agent.upload_file'), \
+        with patch('hca.upload.s3_agent.S3Agent.upload_local_file'), \
             patch('hca.upload.s3_agent.Config', new=Mock(wraps=botocore.config.Config)) as mock_config:
 
             args = Namespace(upload_paths=['LICENSE'], target_filename=None, quiet=True, file_extension=None)

@@ -1,5 +1,6 @@
 import os
 import re
+import mimetypes
 
 from dcplib.media_types import DcpMediaType
 
@@ -100,12 +101,14 @@ class UploadArea:
             for file_info in files_info:
                 yield file_info
 
-    def upload_files(self, file_paths, dcp_type="data", target_filename=None, use_transfer_acceleration=True,
-                     report_progress=False):
+    def upload_files(self, file_paths, file_size_sum=0, dcp_type="data", target_filename=None,
+                     use_transfer_acceleration=True, report_progress=False):
         """
         A function that takes in a list of file paths and other optional args for parallel file upload
         """
-        self._setup_s3_agent_for_file_upload(file_paths=file_paths, use_transfer_acceleration=use_transfer_acceleration)
+        self._setup_s3_agent_for_file_upload(file_count=len(file_paths),
+                                             file_size_sum=file_size_sum,
+                                             use_transfer_acceleration=use_transfer_acceleration)
         pool = ThreadPool()
         if report_progress:
             print("\nStarting upload of %s files to upload area %s" % (len(file_paths), self.uuid))
@@ -126,21 +129,39 @@ class UploadArea:
                 error += "\nPlease retry or contact an hca administrator at data-help@humancellatlas.org for help.\n"
                 raise UploadException(error)
 
-    def _setup_s3_agent_for_file_upload(self, file_paths=[], use_transfer_acceleration=True):
+    def _setup_s3_agent_for_file_upload(self, file_count=0, file_size_sum=0, use_transfer_acceleration=True):
         creds_provider = CredentialsManager(upload_area=self)
         self.s3agent = S3Agent(credentials_provider=creds_provider, transfer_acceleration=use_transfer_acceleration)
-        file_size_sum = sum(os.path.getsize(path) for path in file_paths)
-        file_count = len(file_paths)
         self.s3agent.set_s3_agent_variables_for_batch_file_upload(file_count=file_count, file_size_sum=file_size_sum)
+
+    def _determine_s3_file_content_type(self, file_path, dcp_type="data"):
+        mime_type_tuple = mimetypes.guess_type(file_path)
+        mime_type = "application/data"
+        if mime_type_tuple[0]:
+            mime_type = mime_type_tuple[0]
+        elif mime_type_tuple[1] == "gzip":
+            # If there is an encoding guess of gzip without a mimetype guess, set as application/gzip.
+            mime_type = "application/gzip"
+        content_type = "{0}; dcp-type={1}".format(mime_type, dcp_type)
+        return content_type
 
     def _upload_file(self, file_path=None, dcp_type="data", target_filename=None, use_transfer_acceleration=True,
                      report_progress=False):
         try:
-            file_s3_key = "%s/%s" % (self.uuid, target_filename or os.path.basename(file_path))
-            content_type = str(DcpMediaType.from_file(file_path, dcp_type))
-            self.s3agent.upload_file(file_path, self.uri.bucket_name, file_s3_key, content_type, report_progress=report_progress)
+            target_bucket = self.uri.bucket_name
+            if file_path.startswith("s3://"):
+                file_name = file_path.split('/')[-1]
+                target_key = "%s/%s" % (self.uuid, target_filename or file_name)
+                content_type = self._determine_s3_file_content_type(file_path, dcp_type)
+                self.s3agent.copy_s3_file(file_path, target_bucket, target_key, content_type,
+                                          report_progress=report_progress)
+            else:
+                target_key = "%s/%s" % (self.uuid, target_filename or os.path.basename(file_path))
+                content_type = str(DcpMediaType.from_file(file_path, dcp_type))
+                self.s3agent.upload_local_file(file_path, target_bucket, target_key, content_type,
+                                               report_progress=report_progress)
             self.s3agent.file_upload_completed_count += 1
             self.upload_api_client.file_upload_notification(self.uuid, target_filename or os.path.basename(file_path))
-            print("Upload complete of %s to upload area %s" % (file_path, file_s3_key))
+            print("Upload complete of %s to upload area %s" % (file_path, self.uri))
         except Exception as e:
             self.s3agent.failed_uploads[file_path] = e
