@@ -1,6 +1,6 @@
-# SOP for pilot submitters providing data files to the HCA Data Coordination Platform
+# Guide for submitting data files to the HCA Data Coordination Platform
 
-This SOP describes how to submit data files to the HCA Data Coordination Platform (DCP) for the DCP pilot software release. Currently, the `hca` command line tool (hca-cli) is used to transfer data files to Amazon S3.
+This document describes how to submit data files to the HCA Data Coordination Platform (DCP) using the hca command line tool (hca-cli).
 
 ## Requirements
 
