@@ -129,8 +129,9 @@ class DSSClient(SwaggerClient):
                             if not response.ok:
                                 logger.error("%s", "File {}: GET FAILED.".format(filename))
                                 logger.error("%s", "Response: {}".format(response.text))
-                                if response.headers['AWS-Request-ID']:
-                                    logger.error("%s", "AWS-Request-ID: {}".format(response.headers["AWS-Request-ID"]))
+                                if response.headers['X-AWS-REQUEST-ID']:
+                                    logger.error("%s", "X-AWS-REQUEST-ID: {}".format(
+                                        response.headers["X-AWS-REQUEST-ID"]))
                                 break
 
                             consume_bytes = int(fh.tell())
