@@ -176,3 +176,9 @@ texinfo_documents = [
      author, 'hca-cli', 'One line description of project.',
      'Miscellaneous'),
 ]
+
+
+# -- Do not remove. -------------------------------------------------------
+# Used for Generating the DSS API Documentation
+from hca.dss import DSSClient
+dss_client = DSSClient()
