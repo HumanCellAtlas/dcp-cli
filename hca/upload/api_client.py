@@ -33,7 +33,7 @@ class ApiClient:
                     content=response.content))
         return response.json()
 
-    @retry(wait=wait_fixed(2), stop=stop_after_attempt(3))
+    @retry(reraise=True, wait=wait_fixed(2), stop=stop_after_attempt(3))
     def file_upload_notification(self, area_uuid, filename):
         url = "{api_url_base}/area/{area_uuid}/{filename}".format(api_url_base=self.api_url_base,
                                                                   area_uuid=area_uuid,
