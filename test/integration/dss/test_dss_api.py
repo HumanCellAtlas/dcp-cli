@@ -251,7 +251,6 @@ class TestDssApi(unittest.TestCase):
         with self.assertRaisesRegexp(Exception, "Cannot find subscription!"):
             resp = client.get_subscription(replica="aws", uuid=subscription_uuid)
 
-
         # Test subscriptions version 2 (jmespath subscriptions)
         resp = client.put_subscription(callback_url="https://www.example.com", replica="aws")
         subscription_uuid = resp['uuid']
