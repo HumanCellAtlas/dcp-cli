@@ -6,6 +6,7 @@ Data Storage System
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 from collections import defaultdict
+from concurrent.futures import ThreadPoolExecutor
 import csv
 from datetime import datetime
 from fnmatch import fnmatchcase
@@ -49,10 +50,10 @@ class DSSClient(SwaggerClient):
         :param str version: The version to download, else if not specified, download the latest. The version is a
             timestamp of bundle creation in RFC3339
         :param str dest_name: The destination file path for the download
-        :param list metadata_files: one or more shell patterns against which all metadata files in the bundle will be
+        :param tuple metadata_files: one or more shell patterns against which all metadata files in the bundle will be
             matched case-sensitively. A file is considered a metadata file if the `indexed` property in the manifest is
             set. If and only if a metadata file matches any of the patterns in `metadata_files` will it be downloaded.
-        :param list data_files: one or more shell patterns against which all data files in the bundle will be matched
+        :param tuple data_files: one or more shell patterns against which all data files in the bundle will be matched
             case-sensitively. A file is considered a data file if the `indexed` property in the manifest is not set. The
             file will be downloaded only if a data file matches any of the patterns in `data_files` will it be
             downloaded.
@@ -150,13 +151,13 @@ class DSSClient(SwaggerClient):
                                     filename, server_start, consume_bytes))
 
                                 while consume_bytes > 0:
-                                    bytes_to_read = min(consume_bytes, 1024*1024)
+                                    bytes_to_read = min(consume_bytes, 1024 * 1024)
                                     content = response.iter_content(chunk_size=bytes_to_read)
                                     chunk = next(content)
                                     if chunk:
                                         consume_bytes -= len(chunk)
 
-                            for chunk in response.iter_content(chunk_size=1024*1024):
+                            for chunk in response.iter_content(chunk_size=1024 * 1024):
                                 if chunk:
                                     fh.write(chunk)
                                     hasher.update(chunk)
@@ -184,7 +185,13 @@ class DSSClient(SwaggerClient):
             else:
                 logger.info("%s", "File {}: GET SUCCEEDED. Stored at {}.".format(filename, file_path))
 
-    def download_manifest(self, manifest, replica, num_retries=10, min_delay_seconds=0.25):
+    def download_manifest(self,
+                          manifest,
+                          replica,
+                          num_retries=10,
+                          min_delay_seconds=0.25,
+                          no_data=False,
+                          no_metadata=False):
         """
         Process the given manifest file in TSV (tab-separated values) format and download the files referenced by it.
 
@@ -194,6 +201,10 @@ class DSSClient(SwaggerClient):
         :param int num_retries: The initial quota of download failures to accept before exiting due to
             failures. The number of retries increase and decrease as file chucks succeed and fail.
         :param float min_delay_seconds: The minimum number of seconds to wait in between retries.
+        :param bool no_data: Only download the metadata associated with the data files referenced by the manifest.
+                             Do not download the actual data files.
+        :param no_metadata: Only download the data files referenced by the manifest.
+                            Do not download any associated metadata files.
 
         Process the given manifest file in TSV (tab-separated values) format and download the files
         referenced by it.
@@ -218,21 +229,30 @@ class DSSClient(SwaggerClient):
             reader = csv.DictReader(f, delimiter=delimiter, quoting=csv.QUOTE_NONE)
             for row in reader:
                 bundles[(row['bundle_uuid'], row['bundle_version'])].add(row['file_name'])
-        errors = 0
-        for (bundle_uuid, bundle_version), data_files in bundles.items():
-            data_globs = tuple(glob_escape(file_name) for file_name in data_files if file_name)
+
+        def download_bundle(item):
+            (bundle_uuid, bundle_version), data_files = item
+            data_globs = () if no_data else tuple(glob_escape(file_name) for file_name in data_files if file_name)
+            metadata_globs = () if no_metadata else ('*',)
             logger.info('Downloading bundle %s version %s ...', bundle_uuid, bundle_version)
             try:
                 self.download(bundle_uuid,
                               replica,
                               version=bundle_version,
                               data_files=data_globs,
+                              metadata_files=metadata_globs,
                               num_retries=num_retries,
                               min_delay_seconds=min_delay_seconds)
             except Exception as e:
-                errors += 1
                 logger.warning('Failed to download bundle %s version %s from replica %s',
                                bundle_uuid, bundle_version, replica, exc_info=e)
+                return 1
+            else:
+                return 0
+
+        with ThreadPoolExecutor() as tpe:
+            errors = sum(tpe.map(download_bundle, bundles.items()))
+
         if errors:
             raise RuntimeError('{} bundle(s) failed to download'.format(errors))
         else:
