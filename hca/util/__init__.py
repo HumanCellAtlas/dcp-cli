@@ -511,7 +511,7 @@ class SwaggerClient(object):
             return dict(type=type(param_data.default), default=param_data.default)
 
     def _get_param_argparse_type(self, anno):
-        if anno in {typing.List, typing.Mapping}:
+        if anno in {typing.List, typing.Mapping, typing.Union[typing.Mapping, None]}:
             return json.loads
         elif isinstance(getattr(anno, "__args__", None), tuple) and anno == typing.Optional[anno.__args__[0]]:
             return anno.__args__[0]
