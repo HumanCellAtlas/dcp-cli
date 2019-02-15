@@ -101,6 +101,16 @@ class TestDssApiRetry(unittest.TestCase):
             self.assertEqual(len(settimeout_calls), len(connect_calls))
             self.assertEqual(settimeout_calls, [mock.call(.123)] * len(settimeout_calls))
 
+    def test_retry_on_500_errors(self):
+        """
+        Test that retries work on errors 500 through 512.
+        """
+        client = hca.dss.DSSClient()
+        query = {}
+        replica = "aws"
+        result = list(client.post_search.iterate(es_query=query, replica=replica))
+        self.assertTrue(result)
+
 
 if __name__ == "__main__":
     unittest.main()

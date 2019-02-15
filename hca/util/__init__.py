@@ -189,7 +189,7 @@ class SwaggerClient(object):
     retry_policy = RetryPolicy(read=10,
                                status=10,
                                backoff_factor=0.1,
-                               status_forcelist=frozenset({500, 502, 503, 504}))
+                               status_forcelist=frozenset(range(500, 512)))
     token_expiration = 3600
     _authenticated_session = None
     _session = None
