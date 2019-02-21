@@ -32,6 +32,11 @@ to combine the sources. Additionally, when the original config value is a list, 
 operators, which let you extend and modify arrays defined in underlying configurations. See
 https://github.com/kislyuk/tweak#array-merge-operators for a list of these operators.
 
+Google Service Credentials
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+For services using the HCA CLI, the environment variable `GOOGLE_APPLICATION_CREDENTIALS` can be set to the path of
+google service credential file. This allows the HCA CLI to be used without needing to login.
+
 Development
 -----------
 To develop on the CLI, first run `pip install -r requirements-dev.txt`. You can install your locally modified copy of
