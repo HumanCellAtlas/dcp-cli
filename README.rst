@@ -41,7 +41,7 @@ whitelisted before they will authenticate with the HCA-CLI. The environment vari
 should be set to the path of google service credentials file. This allows the HCA-CLI to be 
 used without requiring user intervention for login.
 
-More info on[google service credentials](https://cloud.google.com/iam/docs/understanding-service-accounts) 
+More info on [google service credentials](https://cloud.google.com/iam/docs/understanding-service-accounts) 
 and how to [create](https://console.cloud.google.com/iam-admin/serviceaccounts). 
 
 Development
