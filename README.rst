@@ -32,10 +32,17 @@ to combine the sources. Additionally, when the original config value is a list, 
 operators, which let you extend and modify arrays defined in underlying configurations. See
 https://github.com/kislyuk/tweak#array-merge-operators for a list of these operators.
 
-Google Service Credentials
-~~~~~~~~~~~~~~~~~~~~~~~~~~
-For services using the HCA CLI, the environment variable `GOOGLE_APPLICATION_CREDENTIALS` can be set to the path of
-google service credential file. This allows the HCA CLI to be used without needing to login.
+Service to Service Authorization
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+For HCA/DCP developers using the HCA-CLI to with connect their service, 
+google service credentials can be used to authenticate the services API requests. The google service credentials must be 
+white listed before they will authenticate with the HCA-CLI. The environment variable `GOOGLE_APPLICATION_CREDENTIALS` 
+should be set to the path of google service credential file to authenticate the service. This allows the HCA CLI to be 
+used without requiring user intervention for login.
+
+More info on[google service credentials](https://cloud.google.com/iam/docs/understanding-service-accounts) 
+and how to [create](https://console.cloud.google.com/iam-admin/serviceaccounts). 
 
 Development
 -----------
