@@ -1,3 +1,11 @@
+Changes for v4.7.0 (2019-02-21)
+===============================
+
+Relax boto range (#243) Support optional object parameters (#229) reduce
+threads running on upload and reraise error from Tenacy on upload
+methods (#228) Fixing the generation of DSS API Docs (#227) Update guide
+for submitting data files to the DCP (#224)
+
 Changes for v4.6.0 (2019-01-08)
 ===============================
 
