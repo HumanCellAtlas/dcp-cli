@@ -16,6 +16,7 @@ pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '
 sys.path.insert(0, pkg_root)  # noqa
 
 import hca.dss
+from hca.dss.util import directory_builder
 from hca.util.compat import USING_PYTHON2
 from test import reset_tweak_changes, TEST_DIR
 
@@ -56,6 +57,19 @@ class TestDssApi(unittest.TestCase):
                         with ThreadPoolExecutor(num_threads) as tpe:
                             self.assertTrue(all(x is None for x in tpe.map(f, range(num_threads))))
 
+    def test_python_nested_bundle_upload(self):
+        bundle_path = os.path.join(TEST_DIR, "res", "nestedBundle")
+        uploaded_files = set(x.name for x in directory_builder(str(bundle_path)))
+        client = hca.dss.DSSClient()
+
+        manifest = client.upload(src_dir=bundle_path,
+                                 replica="aws",
+                                 staging_bucket=self.staging_bucket)
+        manifest_files = manifest['files']
+        print(manifest)
+        self.assertEqual({file['name'] for file in manifest_files}, uploaded_files)
+
+
     def test_python_upload_download(self):
 
         bundle_path = os.path.join(TEST_DIR, "res", "bundle")
@@ -66,6 +80,7 @@ class TestDssApi(unittest.TestCase):
                                  replica="aws",
                                  staging_bucket=self.staging_bucket)
         manifest_files = manifest['files']
+        print(manifest)
         self.assertEqual({file['name'] for file in manifest_files}, uploaded_files)
 
         # Work around https://github.com/HumanCellAtlas/data-store/issues/1331

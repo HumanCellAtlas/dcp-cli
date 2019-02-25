@@ -258,7 +258,7 @@ class DSSClient(SwaggerClient):
         files_to_upload, files_uploaded = [], []
 
         for filename in directory_builder(src_dir):
-            full_file_name = filename.name
+            full_file_name = filename.path
             files_to_upload.append(open(full_file_name, "rb"))
 
         logger.info("Uploading %i files from %s to %s", len(files_to_upload), src_dir, staging_bucket)

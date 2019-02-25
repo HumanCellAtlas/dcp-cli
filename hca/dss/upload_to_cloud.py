@@ -64,7 +64,7 @@ def _create_object_name(file_name: str, src_dir: str = ''):
         return str(file)
     else:
         intermediate_dirs = root.replace(src_dir, '')
-        return '{}/{}'.format(intermediate_dirs, file)
+        return str(os.path.join(intermediate_dirs, file))
 
 
 def upload_to_cloud(file_handles, staging_bucket, replica, from_cloud=False, src_dir=''):
