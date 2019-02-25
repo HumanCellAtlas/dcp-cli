@@ -16,4 +16,3 @@ def directory_builder(src_dir: str):
             yield from directory_builder(x)
         else:
             yield x
-
