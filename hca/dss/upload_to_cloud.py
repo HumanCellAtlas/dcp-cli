@@ -50,7 +50,24 @@ def _copy_from_s3(path, s3):
     return file_uuids, key_names
 
 
-def upload_to_cloud(file_handles, staging_bucket, replica, from_cloud=False):
+def _create_object_name(file_name: str, src_dir: str = ''):
+    """
+    Figures out object naming for upload based on path, attempts to normalize the paths from different OS
+
+    :param file_name: string for path to file
+    :return: a string for the object name to be used in cloud storage
+    """
+    file_path = os.path.normpath(os.path.join(file_name))
+    root, file = os.path.split(file_path)
+    if not root:
+        # base case that path is just a file
+        return str(file)
+    else:
+        intermediate_dirs = root.replace(src_dir, '')
+        return '{}/{}'.format(intermediate_dirs, file)
+
+
+def upload_to_cloud(file_handles, staging_bucket, replica, from_cloud=False, src_dir=''):
     """
     Upload files to cloud.
 
@@ -58,6 +75,7 @@ def upload_to_cloud(file_handles, staging_bucket, replica, from_cloud=False):
                          metadata uploaded. Else, a list of binary file_handles to upload.
     :param staging_bucket: The aws bucket to upload the files to.
     :param replica: The cloud replica to write to. One of 'aws', 'gc', or 'azure'. No functionality now.
+    :param src_dir: src_dirctory that files are being uploaded from, used for setting object name
     :return: a list of each file's unique key name.
     """
     s3 = boto3.resource("s3")
@@ -75,7 +93,7 @@ def upload_to_cloud(file_handles, staging_bucket, replica, from_cloud=False):
                                     multipart_chunksize=multipart_chunksize)
             with ChecksummingBufferedReader(raw_fh, multipart_chunksize) as fh:
                 file_uuid = str(uuid.uuid4())
-                key_name = "{}/{}".format(file_uuid, os.path.basename(fh.raw.name))
+                key_name = "{}/{}".format(file_uuid, _create_object_name(fh.raw.name, src_dir))
                 destination_bucket.upload_fileobj(
                     fh,
                     key_name,

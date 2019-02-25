@@ -21,6 +21,7 @@ from requests.exceptions import ChunkedEncodingError, ConnectionError, ReadTimeo
 
 from hca.util import USING_PYTHON2
 from hca.util.compat import glob_escape
+from .util import directory_builder
 from ..util import SwaggerClient
 from ..util.exceptions import SwaggerAPIException
 from .. import logger
@@ -255,13 +256,14 @@ class DSSClient(SwaggerClient):
         version = datetime.utcnow().strftime("%Y-%m-%dT%H%M%S.%fZ")
 
         files_to_upload, files_uploaded = [], []
-        for filename in os.listdir(src_dir):
-            full_file_name = os.path.join(src_dir, filename)
+
+        for filename in directory_builder(src_dir):
+            full_file_name = filename.name
             files_to_upload.append(open(full_file_name, "rb"))
 
         logger.info("Uploading %i files from %s to %s", len(files_to_upload), src_dir, staging_bucket)
         file_uuids, uploaded_keys = upload_to_cloud(files_to_upload, staging_bucket=staging_bucket, replica=replica,
-                                                    from_cloud=False)
+                                                    from_cloud=False,src_dir=src_dir)
         for file_handle in files_to_upload:
             file_handle.close()
         filenames = list(map(os.path.basename, uploaded_keys))
