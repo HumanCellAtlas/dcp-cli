@@ -7,8 +7,6 @@ For help with individual commands, run ``{prog} <command> --help``.
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-import hca
-
 import os
 import sys
 import argparse
