@@ -35,10 +35,10 @@ https://github.com/kislyuk/tweak#array-merge-operators for a list of these opera
 Service to Service Authorization
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-For HCA/DCP developers using the HCA-CLI to connect their service, 
-google service credentials can be used to authenticate the service's API requests. The google service credentials must be 
-whitelisted before they will authenticate with the HCA-CLI. The environment variable `GOOGLE_APPLICATION_CREDENTIALS` 
-should be set to the path of google service credentials file. This allows the HCA-CLI to be 
+For HCA/DCP developers using the HCA CLI to connect their service,
+Google service credentials can be used to authenticate the service's API requests. The Google service credentials must be
+whitelisted before they will authenticate with the HCA CLI. The environment variable `GOOGLE_APPLICATION_CREDENTIALS`
+should be set to the path of the Google service credentials file. This allows the HCA CLI to be
 used without requiring user intervention for login.
 
 More info on [google service credentials](https://cloud.google.com/iam/docs/understanding-service-accounts) 
