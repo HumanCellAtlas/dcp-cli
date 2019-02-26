@@ -61,9 +61,9 @@ def check_if_release_is_current(log):
     for i in range(max([len(latest_version_nums), len(this_version_nums)])):
         try:
             if this_version_nums[i] < latest_version_nums[i]:
-                log.warning(f'WARNING: Python (pip) package "hca" is not up-to-date!\n'
-                            f'You have hca version:              {__version__}\n'
-                            f'Please use the latest hca version: {latest_pypi_version[0]}')  # noqa
+                log.warning('WARNING: Python (pip) package "hca" is not up-to-date!\n'
+                            'You have hca version:              \n' + str(__version__) +
+                            'Please use the latest hca version: ' + str(latest_pypi_version[0]))
             # handles the odd case where a user's current __version__ is higher than PyPi's
             elif this_version_nums[i] > latest_version_nums[i]:
                 break
