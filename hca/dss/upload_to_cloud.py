@@ -52,7 +52,7 @@ def _copy_from_s3(path, s3):
 
 def _create_object_name(file_name: str, src_dir: str = ''):
     """
-    Figures out object naming for upload based on path, attempts to normalize the paths from different OS
+    Creates object naming for upload based on path, attempts to normalize the paths from different OS
 
     :param file_name: string for path to file
     :return: a string for the object name to be used in cloud storage
@@ -61,10 +61,15 @@ def _create_object_name(file_name: str, src_dir: str = ''):
     root, file = os.path.split(file_path)
     if not root:
         # base case that path is just a file
+        print(str(file))
         return str(file)
     else:
         intermediate_dirs = root.replace(src_dir, '')
-        return str(os.path.join(intermediate_dirs, file))
+        if intermediate_dirs.startswith("/"):
+            intermediate_dirs = intermediate_dirs.lstrip("/")
+        intermediate_dirs = os.path.join(intermediate_dirs, file)
+        print(str(intermediate_dirs))
+        return str(intermediate_dirs)
 
 
 def upload_to_cloud(file_handles, staging_bucket, replica, from_cloud=False, src_dir=''):
