@@ -94,16 +94,20 @@ class DSSClient(SwaggerClient):
             file_uuid = file_["uuid"]
             file_version = file_["version"]
             filename = file_.get("name", file_uuid)
+            walking_dir = dest_name
 
             globs = metadata_files if file_['indexed'] else data_files
             if not any(fnmatchcase(filename, glob) for glob in globs):
                 continue
 
-            if not os.path.isdir(dest_name):
-                os.makedirs(dest_name)
+            intermediate_path, filename = os.path.split(filename)
+            if intermediate_path:
+                walking_dir = os.path.join(walking_dir, intermediate_path)
+            if not os.path.isdir(walking_dir):
+                os.makedirs(walking_dir)
 
             logger.info("File %s: Retrieving...", filename)
-            file_path = os.path.join(dest_name, filename)
+            file_path = os.path.join(walking_dir, filename)
 
             # Attempt to download the data.  If a retryable exception occurs, we wait a bit and retry again.  The delay
             # increases each time we fail and decreases each time we successfully read a block.  We set a quota for the
@@ -266,7 +270,6 @@ class DSSClient(SwaggerClient):
                                                                     replica=replica, from_cloud=False)
         for file_handle in files_to_upload:
             file_handle.close()
-        #filenames = list(map(os.path.basename, uploaded_keys)) #TODO REMOVE THIS COMMENT, FILENAME IS CREATED HERE
         filenames = list(map(object_name_builder, abs_file_paths, repeat(src_dir)))
         filename_key_list = list(zip(filenames, file_uuids, uploaded_keys))
 

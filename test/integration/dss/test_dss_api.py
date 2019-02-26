@@ -57,7 +57,7 @@ class TestDssApi(unittest.TestCase):
                         with ThreadPoolExecutor(num_threads) as tpe:
                             self.assertTrue(all(x is None for x in tpe.map(f, range(num_threads))))
 
-    def test_python_nested_bundle_upload(self):
+    def test_python_nested_bundle_upload_download(self):
         bundle_path = os.path.join(TEST_DIR, "res", "nestedBundle")
         uploaded_paths = set(x for x in directory_builder(str(bundle_path)))
         uploaded_files = list(map(object_name_builder, uploaded_paths, itertools.repeat(bundle_path)))
@@ -67,8 +67,14 @@ class TestDssApi(unittest.TestCase):
                                  replica="aws",
                                  staging_bucket=self.staging_bucket)
         manifest_files = manifest['files']
-        print(manifest)
         self.assertEqual(list(file['name'] for file in manifest_files).sort(), uploaded_files.sort())
+        bundle_uuid = manifest['bundle_uuid']
+        with self.subTest(bundle_uuid=bundle_uuid):
+            with TemporaryDirectory() as dest_dir:
+                client.download(bundle_uuid=bundle_uuid, replica='aws', dest_name=dest_dir)
+                downloaded_file_paths = list(map(object_name_builder, directory_builder(dest_dir),
+                                                 itertools.repeat(dest_dir)))
+                self.assertEqual(uploaded_files.sort(), downloaded_file_paths.sort())
 
     def test_python_upload_download(self):
 

@@ -43,4 +43,3 @@ def object_name_builder(file_name: str, src_dir: str):
             intermediate_dirs = intermediate_dirs.lstrip("/")
         intermediate_dirs = os.path.join(intermediate_dirs, file)
         return str(intermediate_dirs)
-
