@@ -15,13 +15,14 @@ import re
 import time
 import uuid
 from io import open
+from itertools import repeat
 
 import requests
 from requests.exceptions import ChunkedEncodingError, ConnectionError, ReadTimeout
 
+from hca.dss.util import directory_builder, object_name_builder
 from hca.util import USING_PYTHON2
 from hca.util.compat import glob_escape
-from .util import directory_builder
 from ..util import SwaggerClient
 from ..util.exceptions import SwaggerAPIException
 from .. import logger
@@ -256,17 +257,17 @@ class DSSClient(SwaggerClient):
         version = datetime.utcnow().strftime("%Y-%m-%dT%H%M%S.%fZ")
 
         files_to_upload, files_uploaded = [], []
-
         for filename in directory_builder(src_dir):
             full_file_name = filename.path
             files_to_upload.append(open(full_file_name, "rb"))
 
         logger.info("Uploading %i files from %s to %s", len(files_to_upload), src_dir, staging_bucket)
-        file_uuids, uploaded_keys = upload_to_cloud(files_to_upload, staging_bucket=staging_bucket, replica=replica,
-                                                    from_cloud=False, src_dir=src_dir)
+        file_uuids, uploaded_keys, abs_file_paths = upload_to_cloud(files_to_upload, staging_bucket=staging_bucket,
+                                                                    replica=replica, from_cloud=False)
         for file_handle in files_to_upload:
             file_handle.close()
-        filenames = list(map(os.path.basename, uploaded_keys))
+        #filenames = list(map(os.path.basename, uploaded_keys)) #TODO REMOVE THIS COMMENT, FILENAME IS CREATED HERE
+        filenames = list(map(object_name_builder, abs_file_paths, repeat(src_dir)))
         filename_key_list = list(zip(filenames, file_uuids, uploaded_keys))
 
         for filename, file_uuid, key in filename_key_list:

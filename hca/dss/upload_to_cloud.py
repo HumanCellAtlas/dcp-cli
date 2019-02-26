@@ -50,29 +50,7 @@ def _copy_from_s3(path, s3):
     return file_uuids, key_names
 
 
-def _create_object_name(file_name: str, src_dir: str = ''):
-    """
-    Creates object naming for upload based on path, attempts to normalize the paths from different OS
-
-    :param file_name: string for path to file
-    :return: a string for the object name to be used in cloud storage
-    """
-    file_path = os.path.normpath(os.path.join(file_name))
-    root, file = os.path.split(file_path)
-    if not root:
-        # base case that path is just a file
-        print(str(file))
-        return str(file)
-    else:
-        intermediate_dirs = root.replace(src_dir, '')
-        if intermediate_dirs.startswith("/"):
-            intermediate_dirs = intermediate_dirs.lstrip("/")
-        intermediate_dirs = os.path.join(intermediate_dirs, file)
-        print(str(intermediate_dirs))
-        return str(intermediate_dirs)
-
-
-def upload_to_cloud(file_handles, staging_bucket, replica, from_cloud=False, src_dir=''):
+def upload_to_cloud(file_handles, staging_bucket, replica, from_cloud=False):
     """
     Upload files to cloud.
 
@@ -80,12 +58,12 @@ def upload_to_cloud(file_handles, staging_bucket, replica, from_cloud=False, src
                          metadata uploaded. Else, a list of binary file_handles to upload.
     :param staging_bucket: The aws bucket to upload the files to.
     :param replica: The cloud replica to write to. One of 'aws', 'gc', or 'azure'. No functionality now.
-    :param src_dir: src_dirctory that files are being uploaded from, used for setting object name
     :return: a list of each file's unique key name.
     """
     s3 = boto3.resource("s3")
     file_uuids = []
     key_names = []
+    abs_file_paths = []
 
     if from_cloud:
         file_uuids, key_names = _copy_from_s3(file_handles[0], s3)
@@ -98,7 +76,7 @@ def upload_to_cloud(file_handles, staging_bucket, replica, from_cloud=False, src
                                     multipart_chunksize=multipart_chunksize)
             with ChecksummingBufferedReader(raw_fh, multipart_chunksize) as fh:
                 file_uuid = str(uuid.uuid4())
-                key_name = "{}/{}".format(file_uuid, _create_object_name(fh.raw.name, src_dir))
+                key_name = "{}/{}".format(file_uuid, os.path.basename(fh.raw.name))
                 destination_bucket.upload_fileobj(
                     fh,
                     key_name,
@@ -119,5 +97,6 @@ def upload_to_cloud(file_handles, staging_bucket, replica, from_cloud=False, src
                                                   Tagging=dict(TagSet=encode_tags(metadata)))
                 file_uuids.append(file_uuid)
                 key_names.append(key_name)
+                abs_file_paths.append(fh.raw.name)
 
-    return file_uuids, key_names
+    return file_uuids, key_names, abs_file_paths
