@@ -236,7 +236,7 @@ class TestDssApi(unittest.TestCase):
         subscription_uuid = resp['uuid']
 
         resp = client.get_subscriptions(replica="aws")
-        self.assertTrue(subscription_uuid in [s['uuid'] for s in resp['subscriptions']])
+        self.assertTrue(subscription_uuid in [s['uuid'] for s in resp['subscriptions']], resp)
 
         # GET /subscriptions does not support pagination
         with self.assertRaises(AttributeError):
