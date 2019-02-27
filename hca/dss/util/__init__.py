@@ -6,7 +6,7 @@ def separator_to_camel_case(separated, separator):
     return "".join(x.title() for x in components)
 
 
-def directory_builder(src_dir: str):
+def directory_builder(src_dir):
     """
         Function that recursively locates files within folder
         Note: os.scandir does not guarantee ordering
@@ -20,7 +20,7 @@ def directory_builder(src_dir: str):
             yield x
 
 
-def object_name_builder(file_name: str, src_dir: str):
+def object_name_builder(file_name, src_dir):
     """
     Function creates a name to be uploaded into the manifest
     :param src_dir: string for src directory, used for removing path information
