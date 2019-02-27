@@ -1,25 +1,35 @@
 # coding: utf-8
-
 """
 Human Cell Atlas Command Line Interface
 
 For general help, run ``{prog} help``.
 For help with individual commands, run ``{prog} <command> --help``.
 """
-
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-import os, sys, argparse, logging, json, datetime, traceback, platform
-from io import open
-
+import os
+import sys
+import argparse
+import logging
+import json
+import datetime
+import traceback
+import platform
 import argcomplete
+from io import open
 from botocore.exceptions import NoRegionError
+
+try:
+    import xmlrpclib
+except ImportError:
+    import xmlrpc.client as xmlrpclib
 
 from .version import __version__
 from .dss import cli as dss_cli
 from .upload import cli as upload_cli
 from .util.compat import USING_PYTHON2
 from . import logger, get_config
+
 
 class HCAArgumentParser(argparse.ArgumentParser):
     def __init__(self, *args, **kwargs):
@@ -39,6 +49,28 @@ class HCAArgumentParser(argparse.ArgumentParser):
         if sys.version_info < (2, 7, 9):  # See https://bugs.python.org/issue9351
             self._defaults.pop("entry_point", None)
         return subparser
+
+
+def check_if_release_is_current(log):
+    """Warns the user if their release is behind the latest PyPi __version__."""
+    client = xmlrpclib.ServerProxy('https://pypi.python.org/pypi')
+    latest_pypi_version = client.package_releases('hca')
+
+    latest_version_nums = [int(i) for i in latest_pypi_version[0].split('.')]
+    this_version_nums = [int(i) for i in __version__.split('.')]
+    for i in range(max([len(latest_version_nums), len(this_version_nums)])):
+        try:
+            if this_version_nums[i] < latest_version_nums[i]:
+                log.warning('WARNING: Python (pip) package "hca" is not up-to-date!\n'
+                            'You have hca version:              \n' + str(__version__) +
+                            'Please use the latest hca version: ' + str(latest_pypi_version[0]))
+            # handles the odd case where a user's current __version__ is higher than PyPi's
+            elif this_version_nums[i] > latest_version_nums[i]:
+                break
+        # if 4.2 compared to 4.3.1, this handles the missing element
+        except IndexError:
+            pass
+
 
 def get_parser():
     parser = HCAArgumentParser(description=__doc__, formatter_class=argparse.RawTextHelpFormatter)
@@ -63,6 +95,7 @@ def get_parser():
     argcomplete.autocomplete(parser)
     return parser
 
+
 def main(args=None):
     parser = get_parser()
     if len(sys.argv) < 2:
@@ -75,6 +108,8 @@ def main(args=None):
 
     logging.getLogger("urllib3").setLevel(parsed_args.log_level)
     logging.getLogger("requests").setLevel(parsed_args.log_level)
+
+    check_if_release_is_current(logger)  # warns the user
 
     try:
         result = parsed_args.entry_point(parsed_args)
