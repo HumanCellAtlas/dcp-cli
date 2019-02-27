@@ -19,8 +19,8 @@ def directory_builder(src_dir):
     """
     for x in scandir(os.path.join(src_dir)):
         if x.is_dir(follow_symlinks=False):
-            for y in x:
-                yield y
+            for x in directory_builder(x.path):
+                yield x
         else:
             yield x
 
