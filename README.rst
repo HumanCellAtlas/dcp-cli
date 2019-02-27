@@ -1,8 +1,12 @@
 HCA CLI
 =======
-This repository contains a command line interface (CLI) and Python library for interacting with the Data Coordination
-Platform (DCP) of the Human Cell Atlas (HCA). Currently it allows interaction with the Upload Service and Data Storage
-Service (DSS).
+This repository is a pip installable Command Line Interface (CLI) and Python library (API) for interacting with the
+Data Coordination Platform (DCP) of the Human Cell Atlas (HCA).
+
+Currently the `hca` package supports interaction with the
+[Upload Service](https://github.com/HumanCellAtlas/upload-service) and
+[Data Storage Service (DSS)](https://github.com/HumanCellAtlas/data-store) for services such as uploading, downloading,
+and querying data.
 
 Installation
 ------------
@@ -10,11 +14,9 @@ Installation
 
 Usage
 -----
-The hca package installs a command-line utility :code:`hca`.
+Please read the documentation: https://hca.readthedocs.io/
 
-To see the list of commands you can use, type :code:`hca --help`.  Commands are grouped into major categories that
-roughly correspond to DCP system components, e.g. DSS, Staging Service.  To get detailed help for a particular
-command group type, e.g. :code:`hca upload --help`.
+To see the list of commands you can use, type :code:`hca --help`.
 
 Configuration management
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -34,12 +36,12 @@ https://github.com/kislyuk/tweak#array-merge-operators for a list of these opera
 
 Service to Service Authorization
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Google service credentials must be whitelisted before they will authenticate with the HCA CLI.
 
-For HCA/DCP developers using the HCA CLI to connect their service,
-Google service credentials can be used to authenticate the service's API requests. The Google service credentials must be
-whitelisted before they will authenticate with the HCA CLI. The environment variable `GOOGLE_APPLICATION_CREDENTIALS`
-should be set to the path of the Google service credentials file. This allows the HCA CLI to be
-used without requiring user intervention for login.
+Set the environment variable `GOOGLE_APPLICATION_CREDENTIALS` to the path of your Google service credentials file to
+authenticate.
+
+One can also use: ``hca dss login``.
 
 More info on [google service credentials](https://cloud.google.com/iam/docs/understanding-service-accounts) 
 and how to [create](https://console.cloud.google.com/iam-admin/serviceaccounts). 
