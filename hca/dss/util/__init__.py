@@ -1,4 +1,15 @@
 import os
+import sys
+
+pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))  # noqa
+sys.path.insert(0, pkg_root)  # noqa
+
+from hca.util.compat import USING_PYTHON2
+
+if USING_PYTHON2:
+    import scandir
+else:
+    from os import scandir
 
 
 def separator_to_camel_case(separated, separator):
@@ -15,7 +26,8 @@ def directory_builder(src_dir):
     """
     for x in os.scandir(os.path.join(src_dir)):
         if x.is_dir(follow_symlinks=False):
-            yield from directory_builder(x)
+            for y in x:
+                yield y
         else:
             yield x
 
