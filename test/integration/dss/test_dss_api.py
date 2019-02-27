@@ -58,7 +58,7 @@ class TestDssApi(unittest.TestCase):
                             self.assertTrue(all(x is None for x in tpe.map(f, range(num_threads))))
 
     def test_python_nested_bundle_upload_download(self):
-        bundle_path = os.path.join(TEST_DIR, "res", "nestedBundle")
+        bundle_path = os.path.join(TEST_DIR, "upload", "data")
         uploaded_paths = set(x.path for x in directory_builder(str(bundle_path)))
         uploaded_files = list(map(object_name_builder, uploaded_paths, itertools.repeat(bundle_path)))
         client = hca.dss.DSSClient(swagger_url="https://dss.dev.data.humancellatlas.org/v1/swagger.json")

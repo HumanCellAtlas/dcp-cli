@@ -12,8 +12,8 @@ def separator_to_camel_case(separated, separator):
 
 def directory_builder(src_dir):
     """
-        Function that recursively locates files within folder
-        Note: scandir does not guarantee ordering
+    Function that recursively locates files within folder
+    Note: scandir does not guarantee ordering
     :param src_dir:  string for directory to be parsed through
     :return an iterable of DirEntry objects all files within the src_dir
     """
