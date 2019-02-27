@@ -1,15 +1,8 @@
 import os
 import sys
-
+from scandir import scandir
 pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))  # noqa
 sys.path.insert(0, pkg_root)  # noqa
-
-from hca.util.compat import USING_PYTHON2
-
-if USING_PYTHON2:
-    import scandir
-else:
-    from os import scandir
 
 
 def separator_to_camel_case(separated, separator):
@@ -20,7 +13,7 @@ def separator_to_camel_case(separated, separator):
 def directory_builder(src_dir):
     """
         Function that recursively locates files within folder
-        Note: os.scandir does not guarantee ordering
+        Note: scandir does not guarantee ordering
     :param src_dir:  string for directory to be parsed through
     :return an iterable of DirEntry objects all files within the src_dir
     """
