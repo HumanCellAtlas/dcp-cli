@@ -24,7 +24,7 @@ def directory_builder(src_dir):
     :param src_dir:  string for directory to be parsed through
     :return an iterable of DirEntry objects all files within the src_dir
     """
-    for x in os.scandir(os.path.join(src_dir)):
+    for x in scandir(os.path.join(src_dir)):
         if x.is_dir(follow_symlinks=False):
             for y in x:
                 yield y
