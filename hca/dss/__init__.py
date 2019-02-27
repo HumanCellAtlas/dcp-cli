@@ -274,6 +274,9 @@ class DSSClient(SwaggerClient):
         filename_key_list = list(zip(filenames, file_uuids, uploaded_keys))
 
         for filename, file_uuid, key in filename_key_list:
+            filename = filename.replace('\\', '/')  # for windows paths
+            if filename.startswith('/'):
+                filename = filename.lstrip('/')
             logger.info("File %s: registering...", filename)
 
             # Generating file data

@@ -44,7 +44,5 @@ def object_name_builder(file_name, src_dir):
         return str(file)
     else:
         intermediate_dirs = root.replace(src_dir, '')
-        if intermediate_dirs.startswith("/"):
-            intermediate_dirs = intermediate_dirs.lstrip("/")
         intermediate_dirs = os.path.join(intermediate_dirs, file)
         return str(intermediate_dirs)
