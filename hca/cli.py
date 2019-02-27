@@ -53,6 +53,8 @@ class HCAArgumentParser(argparse.ArgumentParser):
 
 def check_if_release_is_current(log):
     """Warns the user if their release is behind the latest PyPi __version__."""
+    if __version__ == '0.0.0':
+        return
     client = xmlrpclib.ServerProxy('https://pypi.python.org/pypi')
     latest_pypi_version = client.package_releases('hca')
 
@@ -62,7 +64,7 @@ def check_if_release_is_current(log):
         try:
             if this_version_nums[i] < latest_version_nums[i]:
                 log.warning('WARNING: Python (pip) package "hca" is not up-to-date!\n'
-                            'You have hca version:              \n' + str(__version__) +
+                            'You have hca version:              ' + str(__version__) + '\n'
                             'Please use the latest hca version: ' + str(latest_pypi_version[0]))
             # handles the odd case where a user's current __version__ is higher than PyPi's
             elif this_version_nums[i] > latest_version_nums[i]:
