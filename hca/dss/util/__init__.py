@@ -32,11 +32,6 @@ def object_name_builder(file_name, src_dir):
     :param file_name: filename string to be cleaned
     :return: returns a name to be used for the cloud object
     """
-    """
-    Creates object naming for upload based on path, attempts to normalize the paths from different OS
-    :param file_name: string for path to file
-    :return: a string for the object name to be used in cloud storage
-    """
     file_path = os.path.normpath(os.path.join(file_name))
     root, file_name = os.path.split(file_path)
     if not root:
