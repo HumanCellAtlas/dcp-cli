@@ -59,8 +59,8 @@ class TestDssApi(unittest.TestCase):
 
     def test_python_nested_bundle_upload_download(self):
         bundle_path = os.path.join(TEST_DIR, "upload", "data")
-        uploaded_paths = set(x.path for x in directory_builder(str(bundle_path)))
-        uploaded_files = list(map(object_name_builder, uploaded_paths, itertools.repeat(bundle_path)))
+        uploaded_paths = [x.path for x in directory_builder(str(bundle_path))]
+        uploaded_files = [object_name_builder(p, bundle_path) for p in uploaded_paths]
         client = hca.dss.DSSClient(swagger_url="https://dss.dev.data.humancellatlas.org/v1/swagger.json")
 
         manifest = client.upload(src_dir=bundle_path,
@@ -72,9 +72,8 @@ class TestDssApi(unittest.TestCase):
         with self.subTest(bundle_uuid=bundle_uuid):
             with TemporaryDirectory() as dest_dir:
                 client.download(bundle_uuid=bundle_uuid, replica='aws', dest_name=dest_dir)
-                downloaded_file_names = set(x.path for x in directory_builder(dest_dir))
-                downloaded_file_paths = list(map(object_name_builder, downloaded_file_names,
-                                                 itertools.repeat(dest_dir)))
+                downloaded_file_names = [x.path for x in directory_builder(dest_dir)]
+                downloaded_file_paths = [object_name_builder(p, dest_dir) for p in downloaded_file_names]
                 self.assertEqual(uploaded_files.sort(), downloaded_file_paths.sort())
 
     def test_python_upload_download(self):

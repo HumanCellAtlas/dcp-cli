@@ -38,11 +38,10 @@ def object_name_builder(file_name, src_dir):
     :return: a string for the object name to be used in cloud storage
     """
     file_path = os.path.normpath(os.path.join(file_name))
-    root, file = os.path.split(file_path)
+    root, file_name = os.path.split(file_path)
     if not root:
-        # base case that path is just a file
-        return str(file)
+        return str(file_name)
     else:
         intermediate_dirs = root.replace(src_dir, '')
-        intermediate_dirs = os.path.join(intermediate_dirs, file)
+        intermediate_dirs = os.path.join(intermediate_dirs, file_name)
         return str(intermediate_dirs)

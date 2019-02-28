@@ -58,7 +58,7 @@ def upload_to_cloud(file_handles, staging_bucket, replica, from_cloud=False):
                          metadata uploaded. Else, a list of binary file_handles to upload.
     :param staging_bucket: The aws bucket to upload the files to.
     :param replica: The cloud replica to write to. One of 'aws', 'gc', or 'azure'. No functionality now.
-    :return: a list of each file's unique key name.
+    :return: a list of file uuids, key-names, and absolute file paths (local) for uploaded files
     """
     s3 = boto3.resource("s3")
     file_uuids = []

@@ -270,7 +270,7 @@ class DSSClient(SwaggerClient):
                                                                     replica=replica, from_cloud=False)
         for file_handle in files_to_upload:
             file_handle.close()
-        filenames = list(map(object_name_builder, abs_file_paths, repeat(src_dir)))
+        filenames = [object_name_builder(p, src_dir) for p in abs_file_paths]
         filename_key_list = list(zip(filenames, file_uuids, uploaded_keys))
 
         for filename, file_uuid, key in filename_key_list:
