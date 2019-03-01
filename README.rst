@@ -43,12 +43,12 @@ authenticate.
 
 One can also use: ``hca dss login``.
 
-More info on [google service credentials](https://cloud.google.com/iam/docs/understanding-service-accounts) 
-and how to [create](https://console.cloud.google.com/iam-admin/serviceaccounts). 
+More info on `google service credentials <https://cloud.google.com/iam/docs/understanding-service-accounts>`_
+and how to `create <https://console.cloud.google.com/iam-admin/serviceaccounts>`_.
 
 Development
 -----------
-To develop on the CLI, first run `pip install -r requirements-dev.txt`. You can install your locally modified copy of
+To develop on the CLI, first run ``pip install -r requirements-dev.txt``. You can install your locally modified copy of
 the hca package by running `make install` in the repository root directory.
 
 To use the command line interface with a local or test DSS, first run ``hca`` (or ``scripts/hca`` if you want to use the
