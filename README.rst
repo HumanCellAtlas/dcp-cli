@@ -3,9 +3,7 @@ HCA CLI
 This repository is a pip installable Command Line Interface (CLI) and Python library (API) for interacting with the
 Data Coordination Platform (DCP) of the Human Cell Atlas (HCA).
 
-Currently the `hca` package supports interaction with the
-[Upload Service](https://github.com/HumanCellAtlas/upload-service) and
-[Data Storage Service (DSS)](https://github.com/HumanCellAtlas/data-store) for services such as uploading, downloading,
+Currently the `hca` package supports interaction with the `Upload Service <https://github.com/HumanCellAtlas/upload-service>`_ and `Data Storage Service (DSS) <https://github.com/HumanCellAtlas/data-store>`_ for services such as uploading, downloading,
 and querying data.
 
 Installation
@@ -15,6 +13,7 @@ Installation
 Usage
 -----
 `Click here for the CLI documentation. <https://hca.readthedocs.io/en/latest/cli.html>`_
+
 `Click here for the API documentation. <https://hca.readthedocs.io/en/latest/api.html>`_
 
 To see the list of commands you can use, type :code:`hca --help`.
