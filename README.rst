@@ -14,8 +14,8 @@ Installation
 
 Usage
 -----
-[Click here for the CLI documentation.](https://hca.readthedocs.io/en/latest/cli.html)
-[Click here for the API documentation.](https://hca.readthedocs.io/en/latest/api.html)
+`Click here for the CLI documentation. <https://hca.readthedocs.io/en/latest/cli.html>`_
+`Click here for the API documentation. <https://hca.readthedocs.io/en/latest/api.html>`_
 
 To see the list of commands you can use, type :code:`hca --help`.
 
