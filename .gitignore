@@ -42,3 +42,7 @@ npm-debug.log
 
 # Credential files
 /gcs-credentials.json
+
+# virtualenv
+venv/
+v3nv/

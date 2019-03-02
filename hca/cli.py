@@ -37,7 +37,6 @@ class HCAArgumentParser(argparse.ArgumentParser):
         self._subparsers = None
 
     def add_parser_func(self, func, **kwargs):
-
         if self._subparsers is None:
             self._subparsers = self.add_subparsers()
         subparser = self._subparsers.add_parser(func.__name__.replace("_", "-"), **kwargs)
@@ -49,6 +48,14 @@ class HCAArgumentParser(argparse.ArgumentParser):
         if sys.version_info < (2, 7, 9):  # See https://bugs.python.org/issue9351
             self._defaults.pop("entry_point", None)
         return subparser
+
+    def print_help(self, file=None):
+        formatted_help = self.format_help()
+        formatted_help = formatted_help.replace('positional arguments:', 'Positional Arguments:')
+        formatted_help = formatted_help.replace('optional arguments:', 'Optional Arguments:')
+        formatted_help = formatted_help.replace('{prog}', 'hca')  # not converted from the swagger proper
+        print(formatted_help)
+        exit()
 
 
 def check_if_release_is_current(log):
@@ -87,8 +94,9 @@ def get_parser():
                         help=str([logging.getLevelName(i) for i in range(10, 60, 10)]),
                         choices={logging.getLevelName(i) for i in range(10, 60, 10)})
 
-    def help(args):
+    def help(args=None):
         parser.print_help()
+
     parser.add_parser_func(help)
 
     upload_cli.add_commands(parser._subparsers)
@@ -100,9 +108,9 @@ def get_parser():
 
 def main(args=None):
     parser = get_parser()
+
     if len(sys.argv) < 2:
         parser.print_help()
-        parser.exit(1)
 
     parsed_args = parser.parse_args(args=args)
     logging.basicConfig(level=logging.ERROR)
