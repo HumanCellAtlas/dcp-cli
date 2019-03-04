@@ -65,7 +65,7 @@ class S3Agent:
             write_to_terminal = True
         return write_to_terminal
 
-    @retry(wait=wait_fixed(2), stop=stop_after_attempt(3))
+    @retry(reraise=True, wait=wait_fixed(2), stop=stop_after_attempt(3))
     def copy_s3_file(self, s3_path, target_bucket, target_key, content_type, report_progress=False):
         # Here we are using s3's managed copy to allow for s3 to s3 file upload
         # We override any original metadata or content types
@@ -94,7 +94,7 @@ class S3Agent:
             upload_args['Callback'] = self.upload_progress_callback
         self.target_s3.meta.client.copy(**upload_args)
 
-    @retry(wait=wait_fixed(2), stop=stop_after_attempt(3))
+    @retry(reraise=True, wait=wait_fixed(2), stop=stop_after_attempt(3))
     def upload_local_file(self, local_path, target_bucket, target_key, content_type, report_progress=False):
         file_size = os.path.getsize(local_path)
         bucket = self.target_s3.Bucket(target_bucket)

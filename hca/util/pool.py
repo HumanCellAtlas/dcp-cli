@@ -10,7 +10,7 @@ else:
 
 """Based on https://askubuntu.com/questions/668538/cores-vs-threads-how-many-threads-should-i-run-on-this-machine
         and https://github.com/bloomreach/s4cmd/blob/master/s4cmd.py#L121."""
-DEFAULT_THREAD_COUNT = multiprocessing.cpu_count() * 4
+DEFAULT_THREAD_COUNT = multiprocessing.cpu_count() * 2
 
 
 class Worker(Thread):

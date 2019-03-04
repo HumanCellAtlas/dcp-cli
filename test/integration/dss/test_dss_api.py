@@ -235,21 +235,42 @@ class TestDssApi(unittest.TestCase):
         resp = client.put_subscription(es_query=query, callback_url="https://www.example.com", replica="aws")
         subscription_uuid = resp['uuid']
 
-        resp = client.get_subscriptions(replica="aws")
+        resp = client.get_subscriptions(replica="aws", subscription_type='elasticsearch')
+        self.assertTrue(subscription_uuid in [s['uuid'] for s in resp['subscriptions']],
+                        str(subscription_uuid) + ' not found in:\n' + str(resp))
+
+        # GET /subscriptions does not support pagination
+        with self.assertRaises(AttributeError):
+            client.get_subscriptions.iterate(replica="aws", subscription_type='elasticsearch')
+
+        resp = client.get_subscription(replica="aws", uuid=subscription_uuid, subscription_type='elasticsearch')
+        self.assertEqual(subscription_uuid, resp['uuid'])
+
+        resp = client.delete_subscription(uuid=subscription_uuid, replica="aws", subscription_type='elasticsearch')
+        self.assertIn('timeDeleted', resp)
+
+        with self.assertRaisesRegexp(Exception, "Cannot find subscription!"):
+            resp = client.get_subscription(replica="aws", uuid=subscription_uuid, subscription_type='elasticsearch')
+
+        # Test subscriptions version 2 (jmespath subscriptions)
+        resp = client.put_subscription(callback_url="https://www.example.com", replica="aws")
+        subscription_uuid = resp['uuid']
+
+        resp = client.get_subscriptions(replica="aws", subscription_type="jmespath")
         self.assertTrue(subscription_uuid in [s['uuid'] for s in resp['subscriptions']])
 
         # GET /subscriptions does not support pagination
         with self.assertRaises(AttributeError):
-            client.get_subscriptions.iterate(replica="aws")
+            client.get_subscriptions.iterate(replica="aws", subscription_type="jmespath")
 
-        resp = client.get_subscription(replica="aws", uuid=subscription_uuid)
+        resp = client.get_subscription(replica="aws", subscription_type="jmespath", uuid=subscription_uuid)
         self.assertEqual(subscription_uuid, resp['uuid'])
 
-        resp = client.delete_subscription(uuid=subscription_uuid, replica="aws")
+        resp = client.delete_subscription(uuid=subscription_uuid, subscription_type="jmespath", replica="aws")
         self.assertIn('timeDeleted', resp)
 
         with self.assertRaisesRegexp(Exception, "Cannot find subscription!"):
-            resp = client.get_subscription(replica="aws", uuid=subscription_uuid)
+            resp = client.get_subscription(replica="aws", subscription_type="jmespath", uuid=subscription_uuid)
 
     def test_search(self, limit=128):
         client = hca.dss.DSSClient()
@@ -305,7 +326,7 @@ class TestDssApi(unittest.TestCase):
         query = {'bool': {}}
         resp = client.put_subscription(es_query=query, callback_url="https://www.example.com", replica="aws")
         self.assertIn("uuid", resp)
-        client.delete_subscription(uuid=resp["uuid"], replica="aws")
+        client.delete_subscription(uuid=resp["uuid"], replica="aws", subscription_type='elasticsearch')
 
         client.logout()
         self.assertNotIn("oauth2_token", config)

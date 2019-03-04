@@ -1,8 +1,10 @@
 HCA CLI
 =======
-This repository contains a command line interface (CLI) and Python library for interacting with the Data Coordination
-Platform (DCP) of the Human Cell Atlas (HCA). Currently it allows interaction with the Upload Service and Data Storage
-Service (DSS).
+This repository is a pip installable Command Line Interface (CLI) and Python library (API) for interacting with the
+Data Coordination Platform (DCP) of the Human Cell Atlas (HCA).
+
+Currently the `hca` package supports interaction with the `Upload Service <https://github.com/HumanCellAtlas/upload-service>`_ and `Data Storage Service (DSS) <https://github.com/HumanCellAtlas/data-store>`_ for services such as uploading, downloading,
+and querying data.
 
 Installation
 ------------
@@ -10,11 +12,11 @@ Installation
 
 Usage
 -----
-The hca package installs a command-line utility :code:`hca`.
+`Click here for the CLI documentation. <https://hca.readthedocs.io/en/latest/cli.html>`_
 
-To see the list of commands you can use, type :code:`hca --help`.  Commands are grouped into major categories that
-roughly correspond to DCP system components, e.g. DSS, Staging Service.  To get detailed help for a particular
-command group type, e.g. :code:`hca upload --help`.
+`Click here for the API documentation. <https://hca.readthedocs.io/en/latest/api.html>`_
+
+To see the list of commands you can use, type :code:`hca --help`.
 
 Configuration management
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -32,9 +34,21 @@ to combine the sources. Additionally, when the original config value is a list, 
 operators, which let you extend and modify arrays defined in underlying configurations. See
 https://github.com/kislyuk/tweak#array-merge-operators for a list of these operators.
 
+Service to Service Authorization
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Google service credentials must be whitelisted before they will authenticate with the HCA CLI.
+
+Set the environment variable `GOOGLE_APPLICATION_CREDENTIALS` to the path of your Google service credentials file to
+authenticate.
+
+One can also use: ``hca dss login``.
+
+More info on `google service credentials <https://cloud.google.com/iam/docs/understanding-service-accounts>`_
+and how to `create <https://console.cloud.google.com/iam-admin/serviceaccounts>`_.
+
 Development
 -----------
-To develop on the CLI, first run `pip install -r requirements-dev.txt`. You can install your locally modified copy of
+To develop on the CLI, first run ``pip install -r requirements-dev.txt``. You can install your locally modified copy of
 the hca package by running `make install` in the repository root directory.
 
 To use the command line interface with a local or test DSS, first run ``hca`` (or ``scripts/hca`` if you want to use the
