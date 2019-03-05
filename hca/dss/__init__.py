@@ -15,10 +15,12 @@ import re
 import time
 import uuid
 from io import open
+from itertools import repeat
 
 import requests
 from requests.exceptions import ChunkedEncodingError, ConnectionError, ReadTimeout
 
+from hca.dss.util import directory_builder, object_name_builder
 from hca.util import USING_PYTHON2
 from hca.util.compat import glob_escape
 from ..util import SwaggerClient
@@ -92,16 +94,20 @@ class DSSClient(SwaggerClient):
             file_uuid = file_["uuid"]
             file_version = file_["version"]
             filename = file_.get("name", file_uuid)
+            walking_dir = dest_name
 
             globs = metadata_files if file_['indexed'] else data_files
             if not any(fnmatchcase(filename, glob) for glob in globs):
                 continue
 
-            if not os.path.isdir(dest_name):
-                os.makedirs(dest_name)
+            intermediate_path, filename = os.path.split(filename)
+            if intermediate_path:
+                walking_dir = os.path.join(walking_dir, intermediate_path)
+            if not os.path.isdir(walking_dir):
+                os.makedirs(walking_dir)
 
             logger.info("File %s: Retrieving...", filename)
-            file_path = os.path.join(dest_name, filename)
+            file_path = os.path.join(walking_dir, filename)
 
             # Attempt to download the data.  If a retryable exception occurs, we wait a bit and retry again.  The delay
             # increases each time we fail and decreases each time we successfully read a block.  We set a quota for the
@@ -258,19 +264,22 @@ class DSSClient(SwaggerClient):
         version = datetime.utcnow().strftime("%Y-%m-%dT%H%M%S.%fZ")
 
         files_to_upload, files_uploaded = [], []
-        for filename in os.listdir(src_dir):
-            full_file_name = os.path.join(src_dir, filename)
+        for filename in directory_builder(src_dir):
+            full_file_name = filename.path
             files_to_upload.append(open(full_file_name, "rb"))
 
         logger.info("Uploading %i files from %s to %s", len(files_to_upload), src_dir, staging_bucket)
-        file_uuids, uploaded_keys = upload_to_cloud(files_to_upload, staging_bucket=staging_bucket, replica=replica,
-                                                    from_cloud=False)
+        file_uuids, uploaded_keys, abs_file_paths = upload_to_cloud(files_to_upload, staging_bucket=staging_bucket,
+                                                                    replica=replica, from_cloud=False)
         for file_handle in files_to_upload:
             file_handle.close()
-        filenames = list(map(os.path.basename, uploaded_keys))
+        filenames = [object_name_builder(p, src_dir) for p in abs_file_paths]
         filename_key_list = list(zip(filenames, file_uuids, uploaded_keys))
 
         for filename, file_uuid, key in filename_key_list:
+            filename = filename.replace('\\', '/')  # for windows paths
+            if filename.startswith('/'):
+                filename = filename.lstrip('/')
             logger.info("File %s: registering...", filename)
 
             # Generating file data
