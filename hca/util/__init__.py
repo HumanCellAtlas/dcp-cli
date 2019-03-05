@@ -116,7 +116,7 @@ class RetryPolicy(retry.Retry):
     def increment(self, *args, **kwargs):
         _retry = super(RetryPolicy, self).increment(*args, **kwargs)
         last_resp = _retry.history[-1]
-        if last_resp.status in {301}:
+        if last_resp.status == 301:
             log_lvl = logger.info
         else:
             log_lvl = logger.warning
