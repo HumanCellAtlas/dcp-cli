@@ -114,9 +114,13 @@ class RetryPolicy(retry.Retry):
         self.RETRY_AFTER_STATUS_CODES = frozenset(retry_after_status_codes | retry.Retry.RETRY_AFTER_STATUS_CODES)
 
     def increment(self, *args, **kwargs):
-        retry = super(RetryPolicy, self).increment(*args, **kwargs)
-        logger.warning("Retrying: {}".format(retry.history[-1]))
-        return retry
+        _retry = super(RetryPolicy, self).increment(*args, **kwargs)
+        last_resp = retry.history[-1]
+        if last_resp.status in {301}:
+            logger.info("Retrying: {}".format(last_resp))
+        else:
+            logger.warning("Retrying: {}".format(last_resp))
+        return _retry
 
 
 class _ClientMethodFactory(object):
