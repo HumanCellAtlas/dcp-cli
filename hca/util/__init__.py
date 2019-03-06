@@ -549,8 +549,8 @@ class SwaggerClient(object):
             docstring = command.__doc__.format(prog=subparsers._prog_prefix)
             method_args = _parse_docstring(docstring)
             optional_group_parser = subparsers.add_parser(command.__name__.replace("_", "-"),
-                                                  help=method_args['summary'],
-                                                  description=method_args['description'])
+                                                          help=method_args['summary'],
+                                                          description=method_args['description'])
             required_group_parser = optional_group_parser.add_argument_group('Required Arguments')
             for param_name, param_data in sig.parameters.items():
                 params = self._get_command_arg_settings(param_data)
