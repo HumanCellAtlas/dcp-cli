@@ -176,9 +176,6 @@ class _ClientMethodFactory(object):
 
 
 class _PaginatingClientMethodFactory(_ClientMethodFactory):
-    def parse_results(self):
-
-
     def iterate(self, **kwargs):
         page = None
         while page is None or page.links.get("next", {}).get("url"):
