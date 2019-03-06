@@ -55,6 +55,7 @@ class HCAArgumentParser(argparse.ArgumentParser):
         formatted_help = formatted_help.replace('optional arguments:', 'Optional Arguments:')
         formatted_help = formatted_help.replace('{prog}', 'hca')  # not converted from the swagger proper
         print(formatted_help)
+        self.exit()
 
 
 def check_if_release_is_current(log):
