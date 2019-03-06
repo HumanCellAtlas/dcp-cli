@@ -24,7 +24,7 @@ from hca.dss.util import directory_builder, object_name_builder
 from hca.util import USING_PYTHON2
 from hca.util.compat import glob_escape
 from ..util import SwaggerClient
-from .error import APIException
+from ..util.exceptions import SwaggerAPIException
 from .. import logger
 from .upload_to_cloud import upload_to_cloud
 
@@ -135,9 +135,6 @@ class DSSClient(SwaggerClient):
                             if not response.ok:
                                 logger.error("%s", "File {}: GET FAILED.".format(filename))
                                 logger.error("%s", "Response: {}".format(response.text))
-                                if response.headers['X-AWS-REQUEST-ID']:
-                                    logger.error("%s", "X-AWS-REQUEST-ID: {}".format(
-                                        response.headers["X-AWS-REQUEST-ID"]))
                                 break
 
                             consume_bytes = int(fh.tell())
@@ -308,15 +305,17 @@ class DSSClient(SwaggerClient):
                     try:
                         self.head_file(uuid=file_uuid, replica="aws", version=version)
                         break
-                    except APIException as e:
+                    except SwaggerAPIException as e:
                         if e.code != requests.codes.not_found:
                             msg = "File {}: Unexpected server response during registration"
-                            raise RuntimeError(msg.format(filename))
+                            req_id = 'X-AWS-REQUEST-ID: {}'.format(response.headers.get("X-AWS-REQUEST-ID"))
+                            raise RuntimeError(msg.format(filename), req_id)
                         time.sleep(wait)
                         wait = min(60.0, wait * self.UPLOAD_BACKOFF_FACTOR)
                 else:
                     # timed out. :(
-                    raise RuntimeError("File {}: registration FAILED".format(filename))
+                    req_id = 'X-AWS-REQUEST-ID: {}'.format(response.headers.get("X-AWS-REQUEST-ID"))
+                    raise RuntimeError("File {}: registration FAILED".format(filename), req_id)
                 logger.debug("Successfully uploaded file")
 
         file_args = [{'indexed': file_["name"].endswith(".json"),
