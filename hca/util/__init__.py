@@ -180,7 +180,6 @@ class _PaginatingClientMethodFactory(_ClientMethodFactory):
         page = None
         while page is None or page.links.get("next", {}).get("url"):
             page = self._request(kwargs, url=page.links["next"]["url"] if page else None)
-            print(page.text)
             try:
                 for result in page.json()["results"]:
                     yield result
