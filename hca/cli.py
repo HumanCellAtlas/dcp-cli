@@ -55,7 +55,6 @@ class HCAArgumentParser(argparse.ArgumentParser):
         formatted_help = formatted_help.replace('optional arguments:', 'Optional Arguments:')
         formatted_help = formatted_help.replace('{prog}', 'hca')  # not converted from the swagger proper
         print(formatted_help)
-        exit()
 
 
 def check_if_release_is_current(log):
@@ -94,7 +93,7 @@ def get_parser():
                         help=str([logging.getLevelName(i) for i in range(10, 60, 10)]),
                         choices={logging.getLevelName(i) for i in range(10, 60, 10)})
 
-    def help(args=None):
+    def help(args):
         parser.print_help()
 
     parser.add_parser_func(help)
@@ -111,6 +110,7 @@ def main(args=None):
 
     if len(sys.argv) < 2:
         parser.print_help()
+        parser.exit(1)
 
     parsed_args = parser.parse_args(args=args)
     logging.basicConfig(level=logging.ERROR)
