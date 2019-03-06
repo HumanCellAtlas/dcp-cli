@@ -181,11 +181,11 @@ class _PaginatingClientMethodFactory(_ClientMethodFactory):
         while page is None or page.links.get("next", {}).get("url"):
             page = self._request(kwargs, url=page.links["next"]["url"] if page else None).json()
             if "results" in page:
-                for result in page.json()["results"]:
+                for result in page["results"]:
                     yield result
             # assume this is a get bundle response
             else:
-                for file in page.json()["bundle"]["files"]:
+                for file in page["bundle"]["files"]:
                     yield file
 
 
