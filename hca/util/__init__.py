@@ -526,8 +526,9 @@ class SwaggerClient(object):
     def build_argparse_subparsers(self, subparsers, help_menu=False):
         for method_name, method_data in self.methods.items():
             subcommand_name = method_name.replace("_", "-")
-            subparser = subparsers.add_parser(subcommand_name, help=method_data.get("summary"),
-                                                          description=method_data.get("description"))
+            subparser = subparsers.add_parser(subcommand_name,
+                                              help=method_data.get("summary"),
+                                              description=method_data.get("description"))
             if help_menu:
                 required_group_parser = subparser.add_argument_group('Required Arguments')
             for param_name, param in method_data["signature"].parameters.items():
@@ -537,8 +538,10 @@ class SwaggerClient(object):
                 nargs = "+" if param.annotation == typing.List else None
                 if help_menu:
                     subparser = required_group_parser if method_data["args"][param_name]["required"] else subparser
-                subparser.add_argument("--" + param_name.replace("_", "-").replace("/", "-"), dest=param_name,
-                                       type=self._get_param_argparse_type(param.annotation), nargs=nargs,
+                subparser.add_argument("--" + param_name.replace("_", "-").replace("/", "-"),
+                                       dest=param_name,
+                                       type=self._get_param_argparse_type(param.annotation),
+                                       nargs=nargs,
                                        help=method_data["args"][param_name]["doc"],
                                        choices=method_data["args"][param_name]["choices"],
                                        required=method_data["args"][param_name]["required"])
