@@ -80,7 +80,7 @@ def check_if_release_is_current(log):
             pass
 
 
-def get_parser():
+def get_parser(help_menu=False):
     parser = HCAArgumentParser(description=__doc__, formatter_class=argparse.RawTextHelpFormatter)
     version_string = "%(prog)s {version} ({python_impl} {python_version} {platform})"
     parser.add_argument("--version", action="version", version=version_string.format(
@@ -99,14 +99,17 @@ def get_parser():
     parser.add_parser_func(help)
 
     upload_cli.add_commands(parser._subparsers)
-    dss_cli.add_commands(parser._subparsers)
+    dss_cli.add_commands(parser._subparsers, help_menu=help_menu)
 
     argcomplete.autocomplete(parser)
     return parser
 
 
 def main(args=None):
-    parser = get_parser()
+    if '--help' in sys.argv or '-h' in sys.argv:
+        parser = get_parser(help_menu=True)
+    else:
+        parser = get_parser()
 
     if len(sys.argv) < 2:
         parser.print_help()

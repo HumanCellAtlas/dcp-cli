@@ -523,18 +523,20 @@ class SwaggerClient(object):
             return anno.__args__[0]
         return anno
 
-    def build_argparse_subparsers(self, subparsers):
+    def build_argparse_subparsers(self, subparsers, help_menu=False):
         for method_name, method_data in self.methods.items():
             subcommand_name = method_name.replace("_", "-")
-            optional_group_parser = subparsers.add_parser(subcommand_name, help=method_data.get("summary"),
+            subparser = subparsers.add_parser(subcommand_name, help=method_data.get("summary"),
                                                           description=method_data.get("description"))
-            required_group_parser = optional_group_parser.add_argument_group('Required Arguments')
+            if help_menu:
+                required_group_parser = subparser.add_argument_group('Required Arguments')
             for param_name, param in method_data["signature"].parameters.items():
                 if param_name in {"client", "factory"}:
                     continue
                 logger.debug("Registering %s %s %s", method_name, param_name, param.annotation)
                 nargs = "+" if param.annotation == typing.List else None
-                subparser = required_group_parser if method_data["args"][param_name]["required"] else optional_group_parser
+                if help_menu:
+                    subparser = required_group_parser if method_data["args"][param_name]["required"] else subparser
                 subparser.add_argument("--" + param_name.replace("_", "-").replace("/", "-"), dest=param_name,
                                        type=self._get_param_argparse_type(param.annotation), nargs=nargs,
                                        help=method_data["args"][param_name]["doc"],
@@ -548,13 +550,15 @@ class SwaggerClient(object):
                 raise SwaggerClientInternalError("Command {} has no docstring".format(command))
             docstring = command.__doc__.format(prog=subparsers._prog_prefix)
             method_args = _parse_docstring(docstring)
-            optional_group_parser = subparsers.add_parser(command.__name__.replace("_", "-"),
-                                                          help=method_args['summary'],
-                                                          description=method_args['description'])
-            required_group_parser = optional_group_parser.add_argument_group('Required Arguments')
+            command_subparser = subparsers.add_parser(command.__name__.replace("_", "-"),
+                                                      help=method_args['summary'],
+                                                      description=method_args['description'])
+            if help_menu:
+                required_group_parser = command_subparser.add_argument_group('Required Arguments')
             for param_name, param_data in sig.parameters.items():
                 params = self._get_command_arg_settings(param_data)
-                command_subparser = required_group_parser if params.get('required', False) else optional_group_parser
+                if help_menu:
+                    command_subparser = required_group_parser if params.get('required', False) else command_subparser
                 command_subparser.add_argument("--" + param_name.replace("_", "-"),
                                                help=method_args['params'].get(param_name, None),
                                                **params)
