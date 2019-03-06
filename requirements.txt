@@ -15,5 +15,4 @@ commonmark >= 0.7.4, < 0.8
 docutils >= 0.14, < 1
 PyJWT >= 1.6.4
 tenacity >=5.0.2, < 5.1
-scandir >=1.9.0
 puremagic < 1.5

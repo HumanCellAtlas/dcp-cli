@@ -16,7 +16,6 @@ pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '
 sys.path.insert(0, pkg_root)  # noqa
 
 import hca.dss
-from hca.dss.util import directory_builder, object_name_builder
 from hca.util.compat import USING_PYTHON2
 from test import reset_tweak_changes, TEST_DIR
 
@@ -56,25 +55,6 @@ class TestDssApi(unittest.TestCase):
 
                         with ThreadPoolExecutor(num_threads) as tpe:
                             self.assertTrue(all(x is None for x in tpe.map(f, range(num_threads))))
-
-    def test_python_nested_bundle_upload_download(self):
-        bundle_path = os.path.join(TEST_DIR, "upload", "data")
-        uploaded_paths = [x.path for x in directory_builder(str(bundle_path))]
-        uploaded_files = [object_name_builder(p, bundle_path) for p in uploaded_paths]
-        client = hca.dss.DSSClient(swagger_url="https://dss.dev.data.humancellatlas.org/v1/swagger.json")
-
-        manifest = client.upload(src_dir=bundle_path,
-                                 replica="aws",
-                                 staging_bucket=self.staging_bucket)
-        manifest_files = manifest['files']
-        self.assertEqual(list(file['name'] for file in manifest_files).sort(), uploaded_files.sort())
-        bundle_uuid = manifest['bundle_uuid']
-        with self.subTest(bundle_uuid=bundle_uuid):
-            with TemporaryDirectory() as dest_dir:
-                client.download(bundle_uuid=bundle_uuid, replica='aws', dest_name=dest_dir)
-                downloaded_file_names = [x.path for x in directory_builder(dest_dir)]
-                downloaded_file_paths = [object_name_builder(p, dest_dir) for p in downloaded_file_names]
-                self.assertEqual(uploaded_files.sort(), downloaded_file_paths.sort())
 
     def test_python_upload_download(self):
 
@@ -316,7 +296,7 @@ class TestDssApi(unittest.TestCase):
 
 
     @reset_tweak_changes
-    def test_python_login_logout_service_account(self):
+    def test_python_login_logout_service_acount(self):
         client = hca.dss.DSSClient()
         query = {'bool': {}}
         resp = client.put_subscription(es_query=query, callback_url="https://www.example.com", replica="aws")
