@@ -119,7 +119,7 @@ class RetryPolicy(retry.Retry):
         if retry_after_status_codes is None:
             retry_after_status_codes = [301] + list(range(500, 512))
         super(RetryPolicy, self).__init__(*args, **kwargs)
-        self.RETRY_AFTER_STATUS_CODES = frozenset(retry_after_status_codes | retry.Retry.RETRY_AFTER_STATUS_CODES)
+        self.RETRY_AFTER_STATUS_CODES = frozenset(set(retry_after_status_codes) | retry.Retry.RETRY_AFTER_STATUS_CODES)
 
     def increment(self, *args, **kwargs):
         _retry = super(RetryPolicy, self).increment(*args, **kwargs)
