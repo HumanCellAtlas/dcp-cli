@@ -118,7 +118,7 @@ class RetryPolicy(retry.Retry):
     DEFAULT_METHOD_WHITELIST = frozenset(['HEAD', 'GET', 'PUT', 'DELETE', 'OPTIONS', 'TRACE', 'POST'])
 
     def __init__(self,
-                 retry_after_status_codes={301, 500},
+                 retry_after_status_codes={301},
                  method_whitelist=DEFAULT_METHOD_WHITELIST,
                  *args, **kwargs):
         super(RetryPolicy, self).__init__(*args, **kwargs)
