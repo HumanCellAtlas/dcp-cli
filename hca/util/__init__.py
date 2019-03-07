@@ -115,11 +115,9 @@ from .fs_helper import FSHelper as fs
 
 
 class RetryPolicy(retry.Retry):
-    def __init__(self, retry_after_status_codes=None, *args, **kwargs):
-        if retry_after_status_codes is None:
-            retry_after_status_codes = [301] + list(range(500, 512))
+    def __init__(self, retry_after_status_codes={301}, *args, **kwargs):
         super(RetryPolicy, self).__init__(*args, **kwargs)
-        self.RETRY_AFTER_STATUS_CODES = frozenset(set(retry_after_status_codes) | retry.Retry.RETRY_AFTER_STATUS_CODES)
+        self.RETRY_AFTER_STATUS_CODES = frozenset(retry_after_status_codes | retry.Retry.RETRY_AFTER_STATUS_CODES)
 
     def increment(self, *args, **kwargs):
         _retry = super(RetryPolicy, self).increment(*args, **kwargs)
@@ -202,7 +200,7 @@ class SwaggerClient(object):
     retry_policy = RetryPolicy(read=10,
                                status=10,
                                backoff_factor=0.1,
-                               status_forcelist=frozenset({500, 502, 503, 504}))
+                               status_forcelist=frozenset(set(range(500, 512))))
     token_expiration = 3600
     _authenticated_session = None
     _session = None
