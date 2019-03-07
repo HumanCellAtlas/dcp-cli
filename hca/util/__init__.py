@@ -356,21 +356,18 @@ class SwaggerClient(object):
 
     def _get_oauth_token_from_service_account_credentials(self):
         scopes = ["https://www.googleapis.com/auth/userinfo.email"]
-        assert 'GOOGLE_APPLICATION_CREDENTIALS' in os.environ
+        # assert 'GOOGLE_APPLICATION_CREDENTIALS' in os.environ
         from google.auth.transport.requests import Request as GoogleAuthRequest
-        from google.oauth2.service_account import Credentials as ServiceAccountCredentials
+        from google.auth import default as AccountCredentials
         logger.info("Found GOOGLE_APPLICATION_CREDENTIALS environment variable. "
                     "Using service account credentials for authentication.")
-        service_account_credentials_filename = os.environ['GOOGLE_APPLICATION_CREDENTIALS']
+        # service_account_credentials_filename = os.environ['GOOGLE_APPLICATION_CREDENTIALS']
 
-        if not os.path.isfile(service_account_credentials_filename):
-            msg = 'File "{}" referenced by the GOOGLE_APPLICATION_CREDENTIALS environment variable does not exist'
-            raise Exception(msg.format(service_account_credentials_filename))
+        # if not os.path.isfile(service_account_credentials_filename):
+        #     msg = 'File "{}" referenced by the GOOGLE_APPLICATION_CREDENTIALS environment variable does not exist'
+        #     raise Exception(msg.format(service_account_credentials_filename))
 
-        credentials = ServiceAccountCredentials.from_service_account_file(
-            service_account_credentials_filename,
-            scopes=scopes
-        )
+        credentials, _ = AccountCredentials(scopes=scopes)
         r = GoogleAuthRequest()
         credentials.refresh(r)
         r.session.close()
