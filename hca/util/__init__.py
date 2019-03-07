@@ -115,9 +115,15 @@ from .fs_helper import FSHelper as fs
 
 
 class RetryPolicy(retry.Retry):
-    def __init__(self, retry_after_status_codes={301}, *args, **kwargs):
+    DEFAULT_METHOD_WHITELIST = frozenset(['HEAD', 'GET', 'PUT', 'DELETE', 'OPTIONS', 'TRACE', 'POST'])
+
+    def __init__(self,
+                 retry_after_status_codes={301, 500},
+                 method_whitelist=DEFAULT_METHOD_WHITELIST,
+                 *args, **kwargs):
         super(RetryPolicy, self).__init__(*args, **kwargs)
         self.RETRY_AFTER_STATUS_CODES = frozenset(retry_after_status_codes | retry.Retry.RETRY_AFTER_STATUS_CODES)
+        self.method_whitelist = method_whitelist  # methods not on this list will not be retried
 
     def increment(self, *args, **kwargs):
         _retry = super(RetryPolicy, self).increment(*args, **kwargs)
