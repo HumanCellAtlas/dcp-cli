@@ -126,7 +126,7 @@ class RetryPolicy(retry.Retry):
         self.RETRY_AFTER_STATUS_CODES = frozenset(retry_after_status_codes | retry.Retry.RETRY_AFTER_STATUS_CODES)
         self.read = read
         self.status = status
-        self.backoff_factor =backoff_factor
+        self.backoff_factor = backoff_factor
         self.status_forcelist = status_forcelist
 
     def increment(self, *args, **kwargs):
