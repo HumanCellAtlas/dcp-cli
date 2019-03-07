@@ -15,7 +15,6 @@ import re
 import time
 import uuid
 from io import open
-from itertools import repeat
 
 import requests
 from requests.exceptions import ChunkedEncodingError, ConnectionError, ReadTimeout
