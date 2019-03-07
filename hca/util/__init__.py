@@ -218,7 +218,7 @@ class SwaggerClient(object):
         "array": typing.List,
         "object": typing.Mapping
     }
-    _audience = "https://dev.data.humancellatlas.org/"  # TODO derive from swagger
+    _audience = "https://data.humancellatlas.org/"  # TODO derive from swagger
     # The read timeout should be longer than DSS' API Gateway timeout to avoid races with the client and the gateway
     # hanging up at the same time. It's better to consistently get a 504 from the server than a read timeout from the
     # client or sometimes one and sometimes the other.
