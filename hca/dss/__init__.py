@@ -299,12 +299,14 @@ class DSSClient(SwaggerClient):
                     except SwaggerAPIException as e:
                         if e.code != requests.codes.not_found:
                             msg = "File {}: Unexpected server response during registration"
-                            raise RuntimeError(msg.format(filename))
+                            req_id = 'X-AWS-REQUEST-ID: {}'.format(response.headers.get("X-AWS-REQUEST-ID"))
+                            raise RuntimeError(msg.format(filename), req_id)
                         time.sleep(wait)
                         wait = min(60.0, wait * self.UPLOAD_BACKOFF_FACTOR)
                 else:
                     # timed out. :(
-                    raise RuntimeError("File {}: registration FAILED".format(filename))
+                    req_id = 'X-AWS-REQUEST-ID: {}'.format(response.headers.get("X-AWS-REQUEST-ID"))
+                    raise RuntimeError("File {}: registration FAILED".format(filename), req_id)
                 logger.debug("Successfully uploaded file")
 
         file_args = [{'indexed': file_["name"].endswith(".json"),
