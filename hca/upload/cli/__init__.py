@@ -22,7 +22,6 @@ def add_commands(subparsers):
 
     upload_parser.set_defaults(entry_point=_help)
     help_parser.set_defaults(entry_point=_help)
-
     SelectCommand.add_parser(upload_subparsers)
     UploadCommand.add_parser(upload_subparsers)
     ListAreaCommand.add_parser(upload_subparsers)

@@ -37,7 +37,6 @@ class HCAArgumentParser(argparse.ArgumentParser):
         self._subparsers = None
 
     def add_parser_func(self, func, **kwargs):
-
         if self._subparsers is None:
             self._subparsers = self.add_subparsers()
         subparser = self._subparsers.add_parser(func.__name__.replace("_", "-"), **kwargs)
@@ -49,6 +48,14 @@ class HCAArgumentParser(argparse.ArgumentParser):
         if sys.version_info < (2, 7, 9):  # See https://bugs.python.org/issue9351
             self._defaults.pop("entry_point", None)
         return subparser
+
+    def print_help(self, file=None):
+        formatted_help = self.format_help()
+        formatted_help = formatted_help.replace('positional arguments:', 'Positional Arguments:')
+        formatted_help = formatted_help.replace('optional arguments:', 'Optional Arguments:')
+        formatted_help = formatted_help.replace('{prog}', 'hca')  # not converted from the swagger proper
+        print(formatted_help)
+        self.exit()
 
 
 def check_if_release_is_current(log):
@@ -74,7 +81,7 @@ def check_if_release_is_current(log):
             pass
 
 
-def get_parser():
+def get_parser(help_menu=False):
     parser = HCAArgumentParser(description=__doc__, formatter_class=argparse.RawTextHelpFormatter)
     version_string = "%(prog)s {version} ({python_impl} {python_version} {platform})"
     parser.add_argument("--version", action="version", version=version_string.format(
@@ -89,17 +96,22 @@ def get_parser():
 
     def help(args):
         parser.print_help()
+
     parser.add_parser_func(help)
 
     upload_cli.add_commands(parser._subparsers)
-    dss_cli.add_commands(parser._subparsers)
+    dss_cli.add_commands(parser._subparsers, help_menu=help_menu)
 
     argcomplete.autocomplete(parser)
     return parser
 
 
 def main(args=None):
-    parser = get_parser()
+    if '--help' in sys.argv or '-h' in sys.argv:
+        parser = get_parser(help_menu=True)
+    else:
+        parser = get_parser()
+
     if len(sys.argv) < 2:
         parser.print_help()
         parser.exit(1)
