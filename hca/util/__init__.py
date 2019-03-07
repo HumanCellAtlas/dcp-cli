@@ -117,7 +117,7 @@ from .fs_helper import FSHelper as fs
 class RetryPolicy(retry.Retry):
     def __init__(self, retry_after_status_codes=None, *args, **kwargs):
         if retry_after_status_codes is None:
-            retry_after_status_codes = [301] + list(range(500, 511))
+            retry_after_status_codes = [301] + list(range(500, 512))
         super(RetryPolicy, self).__init__(*args, **kwargs)
         self.RETRY_AFTER_STATUS_CODES = frozenset(retry_after_status_codes | retry.Retry.RETRY_AFTER_STATUS_CODES)
 
