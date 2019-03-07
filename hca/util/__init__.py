@@ -115,9 +115,19 @@ from .fs_helper import FSHelper as fs
 
 
 class RetryPolicy(retry.Retry):
-    def __init__(self, retry_after_status_codes={301}, *args, **kwargs):
+    def __init__(self,
+                 retry_after_status_codes={301},
+                 read=10,
+                 status=10,
+                 backoff_factor=0.1,
+                 status_forcelist=frozenset(set(range(500, 512))),
+                 *args, **kwargs):
         super(RetryPolicy, self).__init__(*args, **kwargs)
         self.RETRY_AFTER_STATUS_CODES = frozenset(retry_after_status_codes | retry.Retry.RETRY_AFTER_STATUS_CODES)
+        self.read = read
+        self.status = status
+        self.backoff_factor =backoff_factor
+        self.status_forcelist = status_forcelist
 
     def increment(self, *args, **kwargs):
         _retry = super(RetryPolicy, self).increment(*args, **kwargs)
@@ -197,10 +207,7 @@ class _PaginatingClientMethodFactory(_ClientMethodFactory):
 
 class SwaggerClient(object):
     scheme = "https"
-    retry_policy = RetryPolicy(read=10,
-                               status=10,
-                               backoff_factor=0.1,
-                               status_forcelist=frozenset(set(range(500, 512))))
+    retry_policy = RetryPolicy()
     token_expiration = 3600
     _authenticated_session = None
     _session = None
