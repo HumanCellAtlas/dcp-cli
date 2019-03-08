@@ -99,14 +99,14 @@ class DSSClient(SwaggerClient):
             if not any(fnmatchcase(filename, glob) for glob in globs):
                 continue
 
-            intermediate_path, filename = os.path.split(filename)
+            intermediate_path, filename_base = os.path.split(filename)
             if intermediate_path:
                 walking_dir = os.path.join(walking_dir, intermediate_path)
             if not os.path.isdir(walking_dir):
                 os.makedirs(walking_dir)
 
             logger.info("File %s: Retrieving...", filename)
-            file_path = os.path.join(walking_dir, filename)
+            file_path = os.path.join(walking_dir, filename_base)
 
             # Attempt to download the data.  If a retryable exception occurs, we wait a bit and retry again.  The delay
             # increases each time we fail and decreases each time we successfully read a block.  We set a quota for the
