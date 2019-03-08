@@ -115,15 +115,9 @@ from .fs_helper import FSHelper as fs
 
 
 class RetryPolicy(retry.Retry):
-    DEFAULT_METHOD_WHITELIST = frozenset(['HEAD', 'GET', 'PUT', 'DELETE', 'OPTIONS', 'TRACE', 'POST'])
-
-    def __init__(self,
-                 retry_after_status_codes={301},
-                 method_whitelist=DEFAULT_METHOD_WHITELIST,
-                 *args, **kwargs):
+    def __init__(self, retry_after_status_codes={301}, *args, **kwargs):
         super(RetryPolicy, self).__init__(*args, **kwargs)
         self.RETRY_AFTER_STATUS_CODES = frozenset(retry_after_status_codes | retry.Retry.RETRY_AFTER_STATUS_CODES)
-        self.method_whitelist = method_whitelist  # methods not on this list will not be retried
 
     def increment(self, *args, **kwargs):
         _retry = super(RetryPolicy, self).increment(*args, **kwargs)
@@ -137,10 +131,40 @@ class RetryPolicy(retry.Retry):
 
 
 class _ClientMethodFactory(object):
-
     def __init__(self, client, parameters, path_parameters, http_method, method_name, method_data, body_props):
         self.__dict__.update(locals())
         self._context_manager_response = None
+
+    def request_with_retries_on_post_search(self, session, url, query, json_input, stream, headers):
+        """
+        Submit a request and retry POST search requests specifically.
+
+        We don't currently retry on POST requests, and this is intended as a temporary fix until
+        the swagger is updated and changes applied to prod.  In the meantime, this function will add
+        retries specifically for POST search (and any other POST requests will not be retried).
+        """
+        status_code = 500
+        if '/v1/search' in url:
+            retry_count = 10
+        else:
+            retry_count = 1
+        while status_code in (500, 502, 503, 504) and retry_count > 0:
+            try:
+                res = session.request(self.http_method,
+                                      url,
+                                      params=query,
+                                      json=json_input,
+                                      stream=stream,
+                                      headers=headers,
+                                      timeout=self.client.timeout_policy)
+                status_code = res.status_code
+                retry_count -= 1
+            except SwaggerAPIException:
+                if retry_count > 0:
+                    pass
+                else:
+                    raise
+        return res
 
     def _request(self, req_args, url=None, stream=False, headers=None):
         supplied_path_params = [p for p in req_args if p in self.path_parameters and req_args[p] is not None]
@@ -159,8 +183,7 @@ class _ClientMethodFactory(object):
         # TODO: (akislyuk) if using service account credentials, use manual refresh here
         json_input = body if self.body_props else None
         headers = headers if headers else {}
-        res = session.request(self.http_method, url, params=query, json=json_input, stream=stream, headers=headers,
-                              timeout=self.client.timeout_policy)
+        res = self.request_with_retries_on_post_search(session, url, query, json_input, stream, headers)
         if res.status_code >= 400:
             raise SwaggerAPIException(response=res)
         return res
