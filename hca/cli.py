@@ -111,8 +111,9 @@ def main(args=None):
         parser = get_parser(help_menu=True)
     else:
         parser = get_parser()
-
-    if args and len(args) < 2:
+        if not args:
+            args = sys.argv
+    if len(args) < 2:
         parser.print_help()
         parser.exit(1)
 
