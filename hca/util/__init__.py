@@ -131,10 +131,42 @@ class RetryPolicy(retry.Retry):
 
 
 class _ClientMethodFactory(object):
-
     def __init__(self, client, parameters, path_parameters, http_method, method_name, method_data, body_props):
         self.__dict__.update(locals())
         self._context_manager_response = None
+
+    def request_with_retries_on_post_search(self, session, url, query, json_input, stream, headers):
+        """
+        Submit a request and retry POST search requests specifically.
+
+        We don't currently retry on POST requests, and this is intended as a temporary fix until
+        the swagger is updated and changes applied to prod.  In the meantime, this function will add
+        retries specifically for POST search (and any other POST requests will not be retried).
+        """
+        # TODO: Revert this PR as soon as the appropriate swagger definitions have percolated up
+        # to prod and merged; see https://github.com/HumanCellAtlas/data-store/pull/1961
+        status_code = 500
+        if '/v1/search' in url:
+            retry_count = 10
+        else:
+            retry_count = 1
+        while status_code in (500, 502, 503, 504) and retry_count > 0:
+            try:
+                res = session.request(self.http_method,
+                                      url,
+                                      params=query,
+                                      json=json_input,
+                                      stream=stream,
+                                      headers=headers,
+                                      timeout=self.client.timeout_policy)
+                status_code = res.status_code
+                retry_count -= 1
+            except SwaggerAPIException:
+                if retry_count > 0:
+                    pass
+                else:
+                    raise
+        return res
 
     def _request(self, req_args, url=None, stream=False, headers=None):
         supplied_path_params = [p for p in req_args if p in self.path_parameters and req_args[p] is not None]
@@ -153,8 +185,7 @@ class _ClientMethodFactory(object):
         # TODO: (akislyuk) if using service account credentials, use manual refresh here
         json_input = body if self.body_props else None
         headers = headers if headers else {}
-        res = session.request(self.http_method, url, params=query, json=json_input, stream=stream, headers=headers,
-                              timeout=self.client.timeout_policy)
+        res = self.request_with_retries_on_post_search(session, url, query, json_input, stream, headers)
         if res.status_code >= 400:
             raise SwaggerAPIException(response=res)
         return res
