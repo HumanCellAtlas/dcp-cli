@@ -107,12 +107,13 @@ def get_parser(help_menu=False):
 
 
 def main(args=None):
+    if not args:
+        args = sys.argv
     if '--help' in sys.argv or '-h' in sys.argv:
         parser = get_parser(help_menu=True)
     else:
         parser = get_parser()
-        if not args:
-            args = sys.argv
+
     if len(args) < 2:
         parser.print_help()
         parser.exit(1)
