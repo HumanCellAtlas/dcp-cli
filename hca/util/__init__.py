@@ -143,6 +143,8 @@ class _ClientMethodFactory(object):
         the swagger is updated and changes applied to prod.  In the meantime, this function will add
         retries specifically for POST search (and any other POST requests will not be retried).
         """
+        # TODO: Revert this PR as soon as the appropriate swagger definitions have percolated up
+        # to prod and merged; see https://github.com/HumanCellAtlas/data-store/pull/1961
         status_code = 500
         if '/v1/search' in url:
             retry_count = 10
