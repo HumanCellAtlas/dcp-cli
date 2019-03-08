@@ -16,7 +16,7 @@ pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '
 sys.path.insert(0, pkg_root)  # noqa
 
 import hca.dss
-from hca.dss.util import directory_builder, object_name_builder
+from hca.dss.util import iter_paths, object_name_builder
 from hca.util.compat import USING_PYTHON2
 from test import reset_tweak_changes, TEST_DIR
 
@@ -59,7 +59,7 @@ class TestDssApi(unittest.TestCase):
 
     def test_python_nested_bundle_upload_download(self):
         bundle_path = os.path.join(TEST_DIR, "upload", "data")
-        uploaded_paths = [x.path for x in directory_builder(str(bundle_path))]
+        uploaded_paths = [x.path for x in iter_paths(str(bundle_path))]
         uploaded_files = [object_name_builder(p, bundle_path) for p in uploaded_paths]
         client = hca.dss.DSSClient(swagger_url="https://dss.dev.data.humancellatlas.org/v1/swagger.json")
 
@@ -72,7 +72,7 @@ class TestDssApi(unittest.TestCase):
         with self.subTest(bundle_uuid=bundle_uuid):
             with TemporaryDirectory() as dest_dir:
                 client.download(bundle_uuid=bundle_uuid, replica='aws', dest_name=dest_dir)
-                downloaded_file_names = [x.path for x in directory_builder(dest_dir)]
+                downloaded_file_names = [x.path for x in iter_paths(dest_dir)]
                 downloaded_file_paths = [object_name_builder(p, dest_dir) for p in downloaded_file_names]
                 self.assertEqual(uploaded_files.sort(), downloaded_file_paths.sort())
 

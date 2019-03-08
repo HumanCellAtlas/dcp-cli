@@ -7,7 +7,7 @@ def separator_to_camel_case(separated, separator):
     return "".join(x.title() for x in components)
 
 
-def directory_builder(src_dir):
+def iter_paths(src_dir):
     """
     Function that recursively locates files within folder
     Note: scandir does not guarantee ordering
@@ -16,7 +16,7 @@ def directory_builder(src_dir):
     """
     for x in scandir(os.path.join(src_dir)):
         if x.is_dir(follow_symlinks=False):
-            for x in directory_builder(x.path):
+            for x in iter_paths(x.path):
                 yield x
         else:
             yield x
@@ -26,14 +26,7 @@ def object_name_builder(file_name, src_dir):
     """
     Function creates a name to be uploaded into the manifest
     :param src_dir: string for src directory, used for removing path information
-    :param file_name: filename string to be cleaned
+    :param file_name: string for a path to file to be cleaned
     :return: returns a name to be used for the cloud object
     """
-    file_path = os.path.normpath(os.path.join(file_name))
-    root, file_name = os.path.split(file_path)
-    if not root:
-        return str(file_name)
-    else:
-        intermediate_dirs = root.replace(src_dir, '')
-        intermediate_dirs = os.path.join(intermediate_dirs, file_name)
-        return str(intermediate_dirs)
+    return os.path.normpath(file_name).replace(src_dir, "")

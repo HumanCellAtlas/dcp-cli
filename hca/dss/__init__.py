@@ -19,7 +19,7 @@ from io import open
 import requests
 from requests.exceptions import ChunkedEncodingError, ConnectionError, ReadTimeout
 
-from hca.dss.util import directory_builder, object_name_builder
+from hca.dss.util import iter_paths, object_name_builder
 from hca.util import USING_PYTHON2
 from hca.util.compat import glob_escape
 from ..util import SwaggerClient
@@ -260,7 +260,7 @@ class DSSClient(SwaggerClient):
         version = datetime.utcnow().strftime("%Y-%m-%dT%H%M%S.%fZ")
 
         files_to_upload, files_uploaded = [], []
-        for filename in directory_builder(src_dir):
+        for filename in iter_paths(src_dir):
             full_file_name = filename.path
             files_to_upload.append(open(full_file_name, "rb"))
 

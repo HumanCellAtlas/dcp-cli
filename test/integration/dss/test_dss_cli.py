@@ -30,35 +30,37 @@ class TestDssCLI(unittest.TestCase):
         self.assertIn("results", result)
 
     def test_get_files_cli(self):
-        filename = "SRR2967608_1.fastq.gz"
-        dirpath = os.path.join(TEST_DIR, "res", "bundle")
-        file_path = os.path.join(dirpath, filename)
-        dest_dir = tempfile.mkdtemp(dir=os.getcwd(), prefix="cli-test-", suffix=".tmp")
-        replica = "aws"
-        staging_bucket = "org-humancellatlas-dss-cli-test"
+            try:
+                filename = "SRR2967608_1.fastq.gz"
+                dirpath = os.path.join(TEST_DIR, "res", "bundle")
+                file_path = os.path.join(dirpath, filename)
+                dest_dir = tempfile.mkdtemp(dir=os.getcwd(), prefix="cli-test-", suffix=".tmp")
+                replica = "aws"
+                staging_bucket = "org-humancellatlas-dss-cli-test"
 
-        upload_args = ['dss', 'upload', '--src-dir', dirpath, '--replica', replica, '--staging-bucket', staging_bucket]
-        with CapturingIO('stdout') as stdout_upload:
-            hca.cli.main(args=upload_args)
-        upload_res = json.loads(stdout_upload.captured())
-        for f in upload_res['files']:
-            print(f)
-            if f["name"] == filename:
-                file_uuid = f['uuid']
-                break
+                upload_args = ['dss', 'upload', '--src-dir', dirpath, '--replica', replica,
+                               '--staging-bucket', staging_bucket]
+                with CapturingIO('stdout') as stdout_upload:
+                    hca.cli.main(args=upload_args)
+                upload_res = json.loads(stdout_upload.captured())
+                for f in upload_res['files']:
+                    print(f)
+                    if f["name"] == filename:
+                        file_uuid = f['uuid']
+                        break
 
-        download_args = ['dss', 'download', '--bundle-uuid', upload_res['bundle_uuid'], '--replica', replica,
-                         '--dest-name', dest_dir]
-        with CapturingIO('stdout') as stdout_download:
-            hca.cli.main(args=download_args)
+                download_args = ['dss', 'download', '--bundle-uuid', upload_res['bundle_uuid'],
+                                 '--replica', replica, '--dest-name', dest_dir]
+                with CapturingIO('stdout') as stdout_download:
+                    hca.cli.main(args=download_args)
 
-        with open(os.path.join(dest_dir, filename), 'rb') as download_data:
-            download_content = download_data.read()
-        with open(file_path, "rb") as bytes_fh:
-            file_content = bytes_fh.read()
-            self.assertEqual(file_content, download_content)
-
-        shutil.rmtree(dest_dir)
+                with open(os.path.join(dest_dir, filename), 'rb') as download_data:
+                    download_content = download_data.read()
+                with open(file_path, "rb") as bytes_fh:
+                    file_content = bytes_fh.read()
+                    self.assertEqual(file_content, download_content)
+            finally:
+                shutil.rmtree(dest_dir)
 
     @reset_tweak_changes
     def test_cli_login(self):
