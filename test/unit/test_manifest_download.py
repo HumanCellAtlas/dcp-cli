@@ -56,19 +56,20 @@ class TestManifestDownload(unittest.TestCase):
         files_present = {os.path.join(dir_path, f)
                          for dir_path, _, files in scandir.walk('.')
                          for f in files}
+        version_dir = os.path.join('.', '.hca', 'v2', 'files_2_4')
         files_expected = {
             os.path.join('.', 'manifest.tsv'),
-            os.path.join('.', 'ad', '3fc1', 'ad3fc1e4898e0bce096be5151964a81929dbd2a92bd5ed56a39a8e133053831d'),
-            os.path.join('.', '8f', '3507', '8f35071eaeedd9d6f575a8b0f291daeac4c1dfdfa133b5c561232a00bf18c4b4'),
-            os.path.join('.', '8f', '3404', '8f3404db04bdede03e9128a4b48599d0ecde5b2e58ed9ce52ce84c3d54a3429c'),
+            os.path.join(version_dir, 'ad', '3fc1', 'ad3fc1e4898e0bce096be5151964a81929dbd2a92bd5ed56a39a8e133053831d'),
+            os.path.join(version_dir, '8f', '3507', '8f35071eaeedd9d6f575a8b0f291daeac4c1dfdfa133b5c561232a00bf18c4b4'),
+            os.path.join(version_dir, '8f', '3404', '8f3404db04bdede03e9128a4b48599d0ecde5b2e58ed9ce52ce84c3d54a3429c'),
         }
         self.assertEqual(files_present, files_expected)
 
-    @patch('hca.dss.DSSClient.DIRECTORY_NAME_LENGTHS', [1, 2, 3])
+    @patch('hca.dss.DSSClient.DIRECTORY_NAME_LENGTHS', [1, 3, 2])
     def test_file_path(self):
         self.assertRaises(AssertionError, self.dss._file_path, 'a')
         parts = self.dss._file_path('abcdefghij').split(os.sep)
-        self.assertEqual(parts, ['a', 'bc', 'def', 'abcdefghij'])
+        self.assertEqual(parts, ['.hca', 'v2', 'files_1_3_2', 'a', 'bcd', 'ef', 'abcdefghij'])
 
     @patch('hca.dss.DSSClient._download_file', side_effect=_fake_download)
     def test_manifest_download(self, download_func):
@@ -81,13 +82,14 @@ class TestManifestDownload(unittest.TestCase):
 
     @patch('hca.dss.DSSClient._download_file', side_effect=_fake_download)
     def test_manifest_download_partial(self, _):
+        """Test download when some files are already present"""
         _touch_file(self.dss._file_path(self.manifest[1][4]))
         self.dss.download_manifest_v2('manifest.tsv', 'aws')
         self._assert_all_files_downloaded()
 
     @patch('logging.Logger.warning')
     @patch('hca.dss.DSSClient._download_file', side_effect=[None, ValueError(), KeyError()])
-    def test_manifest_download_failed(self, download_func, warning_log):
+    def test_manifest_download_failed(self, _, warning_log):
         self.assertRaises(RuntimeError, self.dss.download_manifest_v2, 'manifest.tsv', 'aws')
         self.assertEqual(warning_log.call_count, 2)
 
