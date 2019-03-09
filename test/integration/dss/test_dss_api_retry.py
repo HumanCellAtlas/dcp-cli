@@ -44,7 +44,7 @@ class TestDssApiRetry(unittest.TestCase):
                 fh.write(b"HELLO WORLD")
                 fh.flush()
                 fh.seek(0)
-                _, uploaded_keys = upload_to_cloud(
+                _, uploaded_keys, _ = upload_to_cloud(
                     [fh],
                     staging_bucket=TestDssApiRetry.staging_bucket,
                     replica="aws",
