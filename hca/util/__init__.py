@@ -152,6 +152,7 @@ class _ClientMethodFactory(object):
             retry_count = 1
         while status_code in (500, 502, 503, 504) and retry_count > 0:
             try:
+                retry_count -= 1
                 res = session.request(self.http_method,
                                       url,
                                       params=query,
@@ -160,7 +161,6 @@ class _ClientMethodFactory(object):
                                       headers=headers,
                                       timeout=self.client.timeout_policy)
                 status_code = res.status_code
-                retry_count -= 1
             except SwaggerAPIException:
                 if retry_count > 0:
                     pass
