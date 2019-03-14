@@ -5,6 +5,7 @@ Data Storage System
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
+import errno
 from collections import defaultdict
 import csv
 from datetime import datetime
@@ -17,6 +18,7 @@ import uuid
 from io import open
 
 import requests
+from atomicwrites import atomic_write
 from requests.exceptions import ChunkedEncodingError, ConnectionError, ReadTimeout
 
 from hca.dss.util import iter_paths, object_name_builder
@@ -33,10 +35,13 @@ class DSSClient(SwaggerClient):
     Client for the Data Storage Service API.
     """
     UPLOAD_BACKOFF_FACTOR = 1.618
+    # This variable is the configuration for download_manifest_v2. It specifies the length of the names of nested
+    # directories for downloaded files.
+    DIRECTORY_NAME_LENGTHS = [2, 4]
 
     def __init__(self, *args, **kwargs):
         super(DSSClient, self).__init__(*args, **kwargs)
-        self.commands += [self.download, self.download_manifest, self.upload]
+        self.commands += [self.download, self.download_manifest, self.download_manifest_v2, self.upload]
 
     def download(self, bundle_uuid, replica, version="", dest_name="",
                  metadata_files=('*',), data_files=('*',),
@@ -107,87 +112,184 @@ class DSSClient(SwaggerClient):
 
             logger.info("File %s: Retrieving...", filename)
             file_path = os.path.join(walking_dir, filename_base)
+            self._download_file(file_uuid, file_["sha256"], file_path, replica, file_['size'],
+                                file_version=file_version, num_retries=num_retries, min_delay_seconds=min_delay_seconds)
 
-            # Attempt to download the data.  If a retryable exception occurs, we wait a bit and retry again.  The delay
-            # increases each time we fail and decreases each time we successfully read a block.  We set a quota for the
-            # number of failures that goes up with every successful block read and down with each failure.
-            #
-            # If we can, we will attempt HTTP resume.  However, we verify that the server supports HTTP resume.  If the
-            # ranged get doesn't yield the correct header, then we start over.
-            delay = min_delay_seconds
-            retries_left = num_retries
-            hasher = hashlib.sha256()
-            with open(file_path, "wb") as fh:
-                if file_['size'] == 0:
-                    logger.info("%s", "File {}: CREATED (empty). Stored at {}.".format(filename, file_path))
-                    continue
-                while True:
+    def _download_file(self,
+                       file_uuid,
+                       file_sha256,
+                       dest_path,
+                       replica,
+                       size,
+                       file_version="",
+                       num_retries=10,
+                       min_delay_seconds=0.25):
+        """
+        Attempt to download the data.  If a retryable exception occurs, we wait a bit and retry again.  The delay
+        increases each time we fail and decreases each time we successfully read a block.  We set a quota for the
+        number of failures that goes up with every successful block read and down with each failure.
+
+        If we can, we will attempt HTTP resume.  However, we verify that the server supports HTTP resume.  If the
+        ranged get doesn't yield the correct header, then we start over.
+        """
+        delay = min_delay_seconds
+        retries_left = num_retries
+        hasher = hashlib.sha256()
+        directory, _ = os.path.split(dest_path)
+        try:
+            os.makedirs(directory)
+        except OSError as e:
+            if e.errno != errno.EEXIST:
+                raise
+        with atomic_write(dest_path, mode="wb", overwrite=True) as fh:
+            if size == 0:
+                logger.info("%s", "File {}: CREATED (empty). Stored at {}.".format(file_uuid, dest_path))
+                return
+            while True:
+                try:
+                    response = self.get_file._request(
+                        dict(uuid=file_uuid, version=file_version, replica=replica),
+                        stream=True,
+                        headers={
+                            'Range': "bytes={}-".format(fh.tell())
+                        },
+                    )
                     try:
-                        response = self.get_file._request(
-                            dict(uuid=file_uuid, version=file_version, replica=replica),
-                            stream=True,
-                            headers={
-                                'Range': "bytes={}-".format(fh.tell())
-                            },
-                        )
-                        try:
-                            if not response.ok:
-                                logger.error("%s", "File {}: GET FAILED.".format(filename))
-                                logger.error("%s", "Response: {}".format(response.text))
-                                break
-
-                            consume_bytes = int(fh.tell())
-                            server_start = 0
-                            content_range_header = response.headers.get('Content-Range', None)
-                            if content_range_header is not None:
-                                cre = re.compile("bytes (\d+)-(\d+)")
-                                mo = cre.search(content_range_header)
-                                if mo is not None:
-                                    server_start = int(mo.group(1))
-
-                            consume_bytes -= server_start
-                            assert consume_bytes >= 0
-                            if server_start > 0 and consume_bytes == 0:
-                                logger.info("%s", "File {}: Resuming at {}.".format(
-                                    filename, server_start))
-                            elif consume_bytes > 0:
-                                logger.info("%s", "File {}: Resuming at {}. Dropping {} bytes to match".format(
-                                    filename, server_start, consume_bytes))
-
-                                while consume_bytes > 0:
-                                    bytes_to_read = min(consume_bytes, 1024*1024)
-                                    content = response.iter_content(chunk_size=bytes_to_read)
-                                    chunk = next(content)
-                                    if chunk:
-                                        consume_bytes -= len(chunk)
-
-                            for chunk in response.iter_content(chunk_size=1024*1024):
-                                if chunk:
-                                    fh.write(chunk)
-                                    hasher.update(chunk)
-                                    retries_left = min(retries_left + 1, num_retries)
-                                    delay = max(delay / 2, min_delay_seconds)
+                        if not response.ok:
+                            logger.error("%s", "File {}: GET FAILED.".format(file_uuid))
+                            logger.error("%s", "Response: {}".format(response.text))
                             break
-                        finally:
-                            response.close()
-                    except (ChunkedEncodingError, ConnectionError, ReadTimeout):
-                        if retries_left > 0:
-                            # resume!!
-                            logger.info("%s", "File {}: GET FAILED. Attempting to resume.".format(
-                                filename, file_path))
-                            time.sleep(delay)
-                            delay *= 2
-                            retries_left -= 1
-                            continue
-                        raise
 
-            if hasher.hexdigest().lower() != file_["sha256"].lower():
-                os.remove(file_path)
-                logger.error("%s", "File {}: GET FAILED. Checksum mismatch.".format(filename))
+                        consume_bytes = int(fh.tell())
+                        server_start = 0
+                        content_range_header = response.headers.get('Content-Range', None)
+                        if content_range_header is not None:
+                            cre = re.compile("bytes (\d+)-(\d+)")
+                            mo = cre.search(content_range_header)
+                            if mo is not None:
+                                server_start = int(mo.group(1))
+
+                        consume_bytes -= server_start
+                        assert consume_bytes >= 0
+                        if server_start > 0 and consume_bytes == 0:
+                            logger.info("%s", "File {}: Resuming at {}.".format(
+                                file_uuid, server_start))
+                        elif consume_bytes > 0:
+                            logger.info("%s", "File {}: Resuming at {}. Dropping {} bytes to match".format(
+                                file_uuid, server_start, consume_bytes))
+
+                            while consume_bytes > 0:
+                                bytes_to_read = min(consume_bytes, 1024*1024)
+                                content = response.iter_content(chunk_size=bytes_to_read)
+                                chunk = next(content)
+                                if chunk:
+                                    consume_bytes -= len(chunk)
+
+                        for chunk in response.iter_content(chunk_size=1024*1024):
+                            if chunk:
+                                fh.write(chunk)
+                                hasher.update(chunk)
+                                retries_left = min(retries_left + 1, num_retries)
+                                delay = max(delay / 2, min_delay_seconds)
+                        break
+                    finally:
+                        response.close()
+                except (ChunkedEncodingError, ConnectionError, ReadTimeout):
+                    if retries_left > 0:
+                        logger.info("%s", "File {}: GET FAILED. Attempting to resume.".format(
+                            file_uuid, dest_path))
+                        time.sleep(delay)
+                        delay *= 2
+                        retries_left -= 1
+                        continue
+                    raise
+
+            if hasher.hexdigest().lower() != file_sha256.lower():
+                os.remove(dest_path)
+                logger.error("%s", "File {}: GET FAILED. Checksum mismatch.".format(file_uuid))
                 raise ValueError("Expected sha256 {} Received sha256 {}".format(
-                    file_["sha256"].lower(), hasher.hexdigest().lower()))
+                    file_sha256.lower(), hasher.hexdigest().lower()))
             else:
-                logger.info("%s", "File {}: GET SUCCEEDED. Stored at {}.".format(filename, file_path))
+                logger.info("%s", "File {}: GET SUCCEEDED. Stored at {}.".format(file_uuid, dest_path))
+
+    @classmethod
+    def _file_path(cls, checksum):
+        """
+        returns a file's relative local path based on the nesting parameters and the files hash
+        :param checksum: a string checksum
+        :return: relative Path object
+        """
+        assert(sum(cls.DIRECTORY_NAME_LENGTHS) <= len(checksum))
+        checksum_index = 0
+        path_pieces = []
+        for prefix_length in cls.DIRECTORY_NAME_LENGTHS:
+            path_pieces.append(checksum[checksum_index:(checksum_index + prefix_length)])
+            checksum_index += prefix_length
+        path_pieces.append(checksum)
+        return os.path.join(*path_pieces)
+
+    @classmethod
+    def _parse_manifest(cls, manifest):
+        with open(manifest) as f:
+            # unicode_literals is on so all strings are unicode. CSV wants a str so we need to jump through a hoop.
+            delimiter = '\t'.encode('ascii') if USING_PYTHON2 else '\t'
+            reader = csv.DictReader(f, delimiter=delimiter, quoting=csv.QUOTE_NONE)
+            return list(reader)
+
+    def download_manifest_v2(self, manifest, replica, num_retries=10, min_delay_seconds=0.25):
+        """
+        Process the given manifest file in TSV (tab-separated values) format and download the files referenced by it.
+        The files are downloaded in the version 2 format.
+
+        This download format will serve as the main storage format for downloaded files. If a user specifies a different
+        format for download (coming in the future) the files will first be downloaded in this format, then hard-linked
+        to the user's preferred format.
+
+        :param str manifest: path to a TSV (tab-separated values) file listing files to download
+        :param str replica: the replica to download from. The supported replicas are: `aws` for Amazon Web Services, and
+            `gcp` for Google Cloud Platform. [aws, gcp]
+        :param int num_retries: The initial quota of download failures to accept before exiting due to
+            failures. The number of retries increase and decrease as file chucks succeed and fail.
+        :param float min_delay_seconds: The minimum number of seconds to wait in between retries.
+
+        Process the given manifest file in TSV (tab-separated values) format and download the files
+        referenced by it.
+
+        Each row in the manifest represents one file in DSS. The manifest must have a header row. The header row
+        must declare the following columns:
+
+        * `bundle_uuid` - the UUID of the bundle containing the file in DSS.
+
+        * `bundle_version` - the version of the bundle containing the file in DSS.
+
+        * `file_name` - the name of the file as specified in the bundle.
+
+        The TSV may have additional columns. Those columns will be ignored. The ordering of the columns is
+        insignificant because the TSV is required to have a header row.
+        """
+        rows = self._parse_manifest(manifest)
+        errors = 0
+        for row in rows:
+            file_uuid = row['file_uuid']
+            sha = row['file_sha256']
+            path = self._file_path(sha)
+            version = row['file_version']
+            size = row['file_size']
+            if os.path.exists(path):
+                logger.info("File %s already present. Skipping download.", file_uuid)
+            else:
+                logger.info("File %s: Retrieving...", file_uuid)
+                try:
+                    self._download_file(file_uuid, sha, path, replica, size,
+                                        file_version=version, num_retries=num_retries, min_delay_seconds=min_delay_seconds)
+                except Exception as e:
+                    errors += 1
+                    logger.warning('Failed to download file %s version %s from replica %s',
+                                   file_uuid, version, replica, exc_info=e)
+        if errors:
+            raise RuntimeError('{} file(s) failed to download'.format(errors))
+        else:
+            return {}
 
     def download_manifest(self, manifest, replica, num_retries=10, min_delay_seconds=0.25):
         """
