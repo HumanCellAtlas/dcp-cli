@@ -219,9 +219,10 @@ class DSSClient(SwaggerClient):
         :param checksum: a string checksum
         :return: relative Path object
         """
-        assert(sum(cls.DIRECTORY_NAME_LENGTHS) <= len(checksum))
+        file_prefix = '_'.join(['files'] + list(map(str, cls.DIRECTORY_NAME_LENGTHS)))
+        path_pieces = ['.hca', 'v2', file_prefix]
         checksum_index = 0
-        path_pieces = []
+        assert(sum(cls.DIRECTORY_NAME_LENGTHS) <= len(checksum))
         for prefix_length in cls.DIRECTORY_NAME_LENGTHS:
             path_pieces.append(checksum[checksum_index:(checksum_index + prefix_length)])
             checksum_index += prefix_length
