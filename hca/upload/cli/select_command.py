@@ -24,6 +24,8 @@ class SelectCommand(UploadCLICommand):
             self._select_area_by_alias(args.uri_or_alias)
 
     def _save_and_select_area_by_uri(self, uri_string):
+        if not uri_string.endswith('/'):
+            uri_string += '/'
         area = UploadArea(uri=uri_string)
         area.select()
         print("Upload area %s selected." % area.uuid)
