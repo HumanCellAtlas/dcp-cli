@@ -1,5 +1,6 @@
 flake8==3.5.0
 moto==1.3.3
+truffleHog==2.0.98
 coverage
 pyyaml
 responses
