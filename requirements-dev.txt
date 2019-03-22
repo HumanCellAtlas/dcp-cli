@@ -1,4 +1,3 @@
-awscli
 backports.tempfile
 coverage
 flake8==3.5.0
