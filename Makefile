@@ -4,6 +4,8 @@ test: lint install integrationtests unittests
 	coverage combine
 	rm -f .coverage.*
 
+test-win: install-win integrationtests unittests
+
 unittests:
 	coverage run -p --source=hca -m unittest discover -v -t . -s test/unit
 
@@ -35,6 +37,8 @@ build: version
 install: clean build
 	pip install --upgrade dist/*.whl
 
+install-win: clean
+
 init_docs:
 	cd docs; sphinx-quickstart
 
@@ -48,3 +52,4 @@ clean:
 .PHONY: test unit integration lint install release docs clean
 
 include common.mk
+

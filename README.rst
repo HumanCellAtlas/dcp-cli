@@ -83,6 +83,11 @@ Bugs
 ~~~~
 Please report bugs, issues, feature requests, etc. on `GitHub <https://github.com/HumanCellAtlas/dcp-cli/issues>`_.
 
+
+Security Policy
+---------------
+See our [Security Policy](https://github.com/HumanCellAtlas/dcp/blob/master/SECURITY.md).
+
 License
 -------
 Licensed under the terms of the `MIT License <https://opensource.org/licenses/MIT>`_.

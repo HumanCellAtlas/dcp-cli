@@ -6,8 +6,10 @@ Data Storage System
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import errno
+import multiprocessing
 from collections import defaultdict
 import csv
+import concurrent.futures
 from datetime import datetime
 from fnmatch import fnmatchcase
 import hashlib
@@ -132,85 +134,93 @@ class DSSClient(SwaggerClient):
         If we can, we will attempt HTTP resume.  However, we verify that the server supports HTTP resume.  If the
         ranged get doesn't yield the correct header, then we start over.
         """
-        delay = min_delay_seconds
-        retries_left = num_retries
-        hasher = hashlib.sha256()
         directory, _ = os.path.split(dest_path)
-        try:
-            os.makedirs(directory)
-        except OSError as e:
-            if e.errno != errno.EEXIST:
-                raise
+        if directory:
+            try:
+                os.makedirs(directory)
+            except OSError as e:
+                if e.errno != errno.EEXIST:
+                    raise
         with atomic_write(dest_path, mode="wb", overwrite=True) as fh:
             if size == 0:
                 logger.info("%s", "File {}: CREATED (empty). Stored at {}.".format(file_uuid, dest_path))
                 return
-            while True:
-                try:
-                    response = self.get_file._request(
-                        dict(uuid=file_uuid, version=file_version, replica=replica),
-                        stream=True,
-                        headers={
-                            'Range': "bytes={}-".format(fh.tell())
-                        },
-                    )
-                    try:
-                        if not response.ok:
-                            logger.error("%s", "File {}: GET FAILED.".format(file_uuid))
-                            logger.error("%s", "Response: {}".format(response.text))
-                            break
 
-                        consume_bytes = int(fh.tell())
-                        server_start = 0
-                        content_range_header = response.headers.get('Content-Range', None)
-                        if content_range_header is not None:
-                            cre = re.compile("bytes (\d+)-(\d+)")
-                            mo = cre.search(content_range_header)
-                            if mo is not None:
-                                server_start = int(mo.group(1))
+            download_hash = self._do_download_file(file_uuid, file_version, replica, fh, num_retries, min_delay_seconds)
 
-                        consume_bytes -= server_start
-                        assert consume_bytes >= 0
-                        if server_start > 0 and consume_bytes == 0:
-                            logger.info("%s", "File {}: Resuming at {}.".format(
-                                file_uuid, server_start))
-                        elif consume_bytes > 0:
-                            logger.info("%s", "File {}: Resuming at {}. Dropping {} bytes to match".format(
-                                file_uuid, server_start, consume_bytes))
-
-                            while consume_bytes > 0:
-                                bytes_to_read = min(consume_bytes, 1024*1024)
-                                content = response.iter_content(chunk_size=bytes_to_read)
-                                chunk = next(content)
-                                if chunk:
-                                    consume_bytes -= len(chunk)
-
-                        for chunk in response.iter_content(chunk_size=1024*1024):
-                            if chunk:
-                                fh.write(chunk)
-                                hasher.update(chunk)
-                                retries_left = min(retries_left + 1, num_retries)
-                                delay = max(delay / 2, min_delay_seconds)
-                        break
-                    finally:
-                        response.close()
-                except (ChunkedEncodingError, ConnectionError, ReadTimeout):
-                    if retries_left > 0:
-                        logger.info("%s", "File {}: GET FAILED. Attempting to resume.".format(
-                            file_uuid, dest_path))
-                        time.sleep(delay)
-                        delay *= 2
-                        retries_left -= 1
-                        continue
-                    raise
-
-            if hasher.hexdigest().lower() != file_sha256.lower():
-                os.remove(dest_path)
+            if download_hash.lower() != file_sha256.lower():
+                # No need to delete what's been written. atomic_write ensures we're cleaned up
                 logger.error("%s", "File {}: GET FAILED. Checksum mismatch.".format(file_uuid))
                 raise ValueError("Expected sha256 {} Received sha256 {}".format(
-                    file_sha256.lower(), hasher.hexdigest().lower()))
+                    file_sha256.lower(), download_hash.lower()))
             else:
                 logger.info("%s", "File {}: GET SUCCEEDED. Stored at {}.".format(file_uuid, dest_path))
+
+    def _do_download_file(self, file_uuid, file_version, replica, fh, num_retries, min_delay_seconds):
+        """
+        Abstracts away complications for downloading a file, handling retries and delays, and computes its hash
+        """
+        hasher = hashlib.sha256()
+        delay = min_delay_seconds
+        retries_left = num_retries
+        while True:
+            try:
+                response = self.get_file._request(
+                    dict(uuid=file_uuid, version=file_version, replica=replica),
+                    stream=True,
+                    headers={
+                        'Range': "bytes={}-".format(fh.tell())
+                    },
+                )
+                try:
+                    if not response.ok:
+                        logger.error("%s", "File {}: GET FAILED.".format(file_uuid))
+                        logger.error("%s", "Response: {}".format(response.text))
+                        break
+
+                    consume_bytes = int(fh.tell())
+                    server_start = 0
+                    content_range_header = response.headers.get('Content-Range', None)
+                    if content_range_header is not None:
+                        cre = re.compile("bytes (\d+)-(\d+)")
+                        mo = cre.search(content_range_header)
+                        if mo is not None:
+                            server_start = int(mo.group(1))
+
+                    consume_bytes -= server_start
+                    assert consume_bytes >= 0
+                    if server_start > 0 and consume_bytes == 0:
+                        logger.info("%s", "File {}: Resuming at {}.".format(
+                            file_uuid, server_start))
+                    elif consume_bytes > 0:
+                        logger.info("%s", "File {}: Resuming at {}. Dropping {} bytes to match".format(
+                            file_uuid, server_start, consume_bytes))
+
+                        while consume_bytes > 0:
+                            bytes_to_read = min(consume_bytes, 1024*1024)
+                            content = response.iter_content(chunk_size=bytes_to_read)
+                            chunk = next(content)
+                            if chunk:
+                                consume_bytes -= len(chunk)
+
+                    for chunk in response.iter_content(chunk_size=1024*1024):
+                        if chunk:
+                            fh.write(chunk)
+                            hasher.update(chunk)
+                            retries_left = min(retries_left + 1, num_retries)
+                            delay = max(delay / 2, min_delay_seconds)
+                    break
+                finally:
+                    response.close()
+            except (ChunkedEncodingError, ConnectionError, ReadTimeout):
+                if retries_left > 0:
+                    logger.info("%s", "File {}: GET FAILED. Attempting to resume.".format(file_uuid))
+                    time.sleep(delay)
+                    delay *= 2
+                    retries_left -= 1
+                    continue
+                raise
+        return hasher.hexdigest()
 
     @classmethod
     def _file_path(cls, checksum):
@@ -219,10 +229,11 @@ class DSSClient(SwaggerClient):
         :param checksum: a string checksum
         :return: relative Path object
         """
+        checksum = checksum.lower()
+        assert(sum(cls.DIRECTORY_NAME_LENGTHS) <= len(checksum))
         file_prefix = '_'.join(['files'] + list(map(str, cls.DIRECTORY_NAME_LENGTHS)))
         path_pieces = ['.hca', 'v2', file_prefix]
         checksum_index = 0
-        assert(sum(cls.DIRECTORY_NAME_LENGTHS) <= len(checksum))
         for prefix_length in cls.DIRECTORY_NAME_LENGTHS:
             path_pieces.append(checksum[checksum_index:(checksum_index + prefix_length)])
             checksum_index += prefix_length
@@ -233,11 +244,43 @@ class DSSClient(SwaggerClient):
     def _parse_manifest(cls, manifest):
         with open(manifest) as f:
             # unicode_literals is on so all strings are unicode. CSV wants a str so we need to jump through a hoop.
-            delimiter = '\t'.encode('ascii') if USING_PYTHON2 else '\t'
+            delimiter = b'\t' if USING_PYTHON2 else '\t'
             reader = csv.DictReader(f, delimiter=delimiter, quoting=csv.QUOTE_NONE)
-            return list(reader)
+            return reader.fieldnames, list(reader)
 
-    def download_manifest_v2(self, manifest, replica, num_retries=10, min_delay_seconds=0.25):
+    def _write_output_manifest(self, manifest):
+        """
+        Adds the file path column to the manifest and writes the copy to the current directory. If the original manifest
+        is in the current directory it is overwritten with a warning.
+        """
+        output = os.path.basename(manifest)
+        fieldnames, source_manifest = self._parse_manifest(manifest)
+        if 'file_path' not in fieldnames:
+            fieldnames.append('file_path')
+        with atomic_write(output, overwrite=True) as f:
+            delimiter = b'\t' if USING_PYTHON2 else '\t'
+            writer = csv.DictWriter(f, fieldnames, delimiter=delimiter, quoting=csv.QUOTE_NONE)
+            writer.writeheader()
+            for row in source_manifest:
+                row['file_path'] = self._file_path(row['file_sha256'])
+                writer.writerow(row)
+            if os.path.isfile(output):
+                logger.warning('Overwriting manifest %s to include column for file paths')
+
+    def _download_row(self, row, replica, num_retries, min_delay_seconds):
+        file_uuid, sha, version, size = row['file_uuid'], row['file_sha256'], row['file_version'], row['file_size']
+        path = self._file_path(sha)
+        if os.path.exists(path):
+            logger.info("File %s already present. Skipping download.", file_uuid)
+        else:
+            logger.info("File %s: Retrieving...", file_uuid)
+            self._download_file(file_uuid, sha, path, replica, size,
+                                file_version=version, num_retries=num_retries, min_delay_seconds=min_delay_seconds)
+
+    def download_manifest_v2(self, manifest, replica,
+                             num_retries=10,
+                             min_delay_seconds=0.25,
+                             threads=multiprocessing.cpu_count() * 5):
         """
         Process the given manifest file in TSV (tab-separated values) format and download the files referenced by it.
         The files are downloaded in the version 2 format.
@@ -252,6 +295,7 @@ class DSSClient(SwaggerClient):
         :param int num_retries: The initial quota of download failures to accept before exiting due to
             failures. The number of retries increase and decrease as file chucks succeed and fail.
         :param float min_delay_seconds: The minimum number of seconds to wait in between retries.
+        :param int threads: The number of threads. Defaults to CPU count * 5
 
         Process the given manifest file in TSV (tab-separated values) format and download the files
         referenced by it.
@@ -259,30 +303,24 @@ class DSSClient(SwaggerClient):
         Each row in the manifest represents one file in DSS. The manifest must have a header row. The header row
         must declare the following columns:
 
-        * `bundle_uuid` - the UUID of the bundle containing the file in DSS.
+        * `file_uuid` - the UUID of the file in DSS.
 
-        * `bundle_version` - the version of the bundle containing the file in DSS.
-
-        * `file_name` - the name of the file as specified in the bundle.
+        * `file_version` - the version of the file in DSS.
 
         The TSV may have additional columns. Those columns will be ignored. The ordering of the columns is
         insignificant because the TSV is required to have a header row.
         """
-        rows = self._parse_manifest(manifest)
+        fieldnames, rows = self._parse_manifest(manifest)
         errors = 0
-        for row in rows:
-            file_uuid = row['file_uuid']
-            sha = row['file_sha256']
-            path = self._file_path(sha)
-            version = row['file_version']
-            size = row['file_size']
-            if os.path.exists(path):
-                logger.info("File %s already present. Skipping download.", file_uuid)
-            else:
-                logger.info("File %s: Retrieving...", file_uuid)
+        with concurrent.futures.ThreadPoolExecutor(max_workers=threads) as executor:
+            # We cannot use executor.map() because map does not continue after the first exception
+            futures_to_info = {executor.submit(self._download_row, row, replica, num_retries, min_delay_seconds):
+                               (row['file_uuid'], row['file_version'])
+                               for row in rows}
+            for future in concurrent.futures.as_completed(futures_to_info):
+                file_uuid, version = futures_to_info[future]
                 try:
-                    self._download_file(file_uuid, sha, path, replica, size,
-                                        file_version=version, num_retries=num_retries, min_delay_seconds=min_delay_seconds)
+                    future.result()
                 except Exception as e:
                     errors += 1
                     logger.warning('Failed to download file %s version %s from replica %s',
@@ -290,6 +328,7 @@ class DSSClient(SwaggerClient):
         if errors:
             raise RuntimeError('{} file(s) failed to download'.format(errors))
         else:
+            self._write_output_manifest(manifest)
             return {}
 
     def download_manifest(self, manifest, replica, num_retries=10, min_delay_seconds=0.25):
@@ -322,7 +361,7 @@ class DSSClient(SwaggerClient):
         with open(manifest) as f:
             bundles = defaultdict(set)
             # unicode_literals is on so all strings are unicode. CSV wants a str so we need to jump through a hoop.
-            delimiter = '\t'.encode('ascii') if USING_PYTHON2 else '\t'
+            delimiter = b'\t' if USING_PYTHON2 else '\t'
             reader = csv.DictReader(f, delimiter=delimiter, quoting=csv.QUOTE_NONE)
             for row in reader:
                 bundles[(row['bundle_uuid'], row['bundle_version'])].add(row['file_name'])
