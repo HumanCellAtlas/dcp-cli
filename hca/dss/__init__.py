@@ -7,6 +7,8 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import errno
 import multiprocessing
+import platform
+import sys
 from collections import defaultdict
 import csv
 import concurrent.futures
@@ -114,8 +116,44 @@ class DSSClient(SwaggerClient):
 
             logger.info("File %s: Retrieving...", filename)
             file_path = os.path.join(walking_dir, filename_base)
-            self._download_file(file_uuid, file_["sha256"], file_path, replica, file_['size'],
+            self._download_and_link_to_filestore(file_path,
+                                                 file_uuid,
+                                                 file_["sha256"],
+                                                 replica,
+                                                 file_['size'],
+                                                 file_version=file_version,
+                                                 num_retries=num_retries,
+                                                 min_delay_seconds=min_delay_seconds)
+
+    def _download_and_link_to_filestore(self, file_path, file_uuid, sha, replica, size, file_version, num_retries, min_delay_seconds):
+        file_store_path = self._download_to_filestore(file_uuid, sha, replica, size,
+                                                      file_version=file_version,
+                                                      num_retries=num_retries,
+                                                      min_delay_seconds=min_delay_seconds)
+        if sys.version_info < (3,) and platform.system() == 'Windows':
+            # Hardlinks not supported with Python 2 on Windows
+            raise ValueError('Upgrade Python or use a real OS')
+        os.link(file_store_path, file_path)
+
+    def _download_to_filestore(self,
+                               file_uuid,
+                               file_sha256,
+                               replica,
+                               size,
+                               file_version="",
+                               num_retries=10,
+                               min_delay_seconds=0.25):
+        """
+        Attempt to download the data and save it in the 'filestore' location dictated by self._file_path()
+        """
+        dest_path = self._file_path(file_sha256)
+        if os.path.exists(dest_path):
+            logger.info("File %s already present. Skipping download.", file_uuid)
+        else:
+            logger.info("File %s: Retrieving...", file_uuid)
+            self._download_file(file_uuid, file_sha256, dest_path, replica, size,
                                 file_version=file_version, num_retries=num_retries, min_delay_seconds=min_delay_seconds)
+        return dest_path
 
     def _download_file(self,
                        file_uuid,
@@ -267,16 +305,6 @@ class DSSClient(SwaggerClient):
             if os.path.isfile(output):
                 logger.warning('Overwriting manifest %s to include column for file paths')
 
-    def _download_row(self, row, replica, num_retries, min_delay_seconds):
-        file_uuid, sha, version, size = row['file_uuid'], row['file_sha256'], row['file_version'], row['file_size']
-        path = self._file_path(sha)
-        if os.path.exists(path):
-            logger.info("File %s already present. Skipping download.", file_uuid)
-        else:
-            logger.info("File %s: Retrieving...", file_uuid)
-            self._download_file(file_uuid, sha, path, replica, size,
-                                file_version=version, num_retries=num_retries, min_delay_seconds=min_delay_seconds)
-
     def download_manifest_v2(self, manifest, replica,
                              num_retries=10,
                              min_delay_seconds=0.25,
@@ -312,11 +340,22 @@ class DSSClient(SwaggerClient):
         """
         fieldnames, rows = self._parse_manifest(manifest)
         errors = 0
+
         with concurrent.futures.ThreadPoolExecutor(max_workers=threads) as executor:
+            def row_future(row):
+                return executor.submit(self._download_to_filestore,
+                                       row['file_uuid'],
+                                       row['file_sha256'],
+                                       replica,
+                                       row['file_size'],
+                                       file_version=row['file_version'],
+                                       num_retries=num_retries,
+                                       min_delay_seconds=min_delay_seconds)
             # We cannot use executor.map() because map does not continue after the first exception
-            futures_to_info = {executor.submit(self._download_row, row, replica, num_retries, min_delay_seconds):
-                               (row['file_uuid'], row['file_version'])
-                               for row in rows}
+            futures_to_info = {
+                row_future(row): (row['file_uuid'], row['file_version'])
+                for row in rows
+            }
             for future in concurrent.futures.as_completed(futures_to_info):
                 file_uuid, version = futures_to_info[future]
                 try:
@@ -356,7 +395,6 @@ class DSSClient(SwaggerClient):
 
         The TSV may have additional columns. Those columns will be ignored. The ordering of the columns is
         insignificant because the TSV is required to have a header row.
-
         """
         with open(manifest) as f:
             bundles = defaultdict(set)
