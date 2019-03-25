@@ -1,4 +1,5 @@
 import errno
+import logging
 import os
 import shutil
 import sys
@@ -11,6 +12,8 @@ import six
 from mock import patch
 
 from hca.dss import DSSClient
+
+logging.basicConfig()
 
 
 def _touch_file(path):
@@ -25,6 +28,43 @@ def _touch_file(path):
 
 def _fake_download_file(*args, **kwargs):
     _touch_file(args[2])
+
+
+def _fake_get_bundle(*args, **kwargs):
+    bundle_dict = {
+        'files': [
+            {
+                'uuid': 'a_uuid',
+                'version': '1_version',
+                'name': 'a_file_name',
+                'indexed': False,
+                'sha256': 'ad3fc1e4898e0bce096be5151964a81929dbd2a92bd5ed56a39a8e133053831d',
+                'size': 12
+            }, {
+                'uuid': 'b_uuid',
+                'version': '2_version',
+                'name': 'b_file_name',
+                'indexed': False,
+                'sha256': '8f35071eaeedd9d6f575a8b0f291daeac4c1dfdfa133b5c561232a00bf18c4b4',
+                'size': 4
+            }, {
+                'uuid': 'c_uuid',
+                'version': '3_version',
+                'name': 'c_file_name',
+                'indexed': False,
+                'sha256': '8f3404db04bdede03e9128a4b48599d0ecde5b2e58ed9ce52ce84c3d54a3429c',
+                'size': 36
+            }, {
+                'uuid': 'd_uuid',
+                'version': '4_version',
+                'name': 'metadata_file.pdf',
+                'indexed': True,
+                'sha256': '8ffe4838ac08672041f73f82e5f8361860627271ec31aa479fbb65f2ccc46d05',
+                'size': 9
+            }
+        ]
+    }
+    return {'bundle': bundle_dict}
 
 
 class TestManifestDownload(unittest.TestCase):
@@ -60,7 +100,7 @@ class TestManifestDownload(unittest.TestCase):
         with open('manifest.tsv', 'w') as f:
             f.write('\n'.join(['\t'.join(row) for row in manifest]))
 
-    def _assert_all_files_downloaded(self):
+    def _assert_all_files_downloaded(self, more_files=None):
         files_present = {os.path.join(dir_path, f)
                          for dir_path, _, files in scandir.walk('.')
                          for f in files}
@@ -70,6 +110,8 @@ class TestManifestDownload(unittest.TestCase):
             os.path.join(self.version_dir, '8f', '3507', '8f35071eaeedd9d6f575a8b0f291daeac4c1dfdfa133b5c561232a00bf18c4b4'),
             os.path.join(self.version_dir, '8f', '3404', '8f3404db04bdede03e9128a4b48599d0ecde5b2e58ed9ce52ce84c3d54a3429c'),
         }
+        if more_files:
+            files_expected.update(more_files)
         self.assertEqual(files_present, files_expected)
 
     def _assert_manifest_updated_with_paths(self):
@@ -186,6 +228,35 @@ class TestManifestDownload(unittest.TestCase):
             os.path.join(self.version_dir, 'fa', 'keha', 'fakehash')
         }
         self.assertEqual(files_present, files_expected)
+
+    @patch('hca.dss.DSSClient.get_bundle', side_effect=_fake_get_bundle)
+    @patch('hca.dss.DSSClient._download_file', side_effect=_fake_download_file)
+    def test_manifest_download_bundle(self, download_file_func, _):
+        self.dss.download_manifest(self.manifest_file, 'aws')
+        files_present = {os.path.join(dir_path, f)
+                         for dir_path, _, files in scandir.walk('.')
+                         for f in files}
+        data_files = {
+            os.path.join('.', 'a_uuid', 'a_file_name'),
+            os.path.join('.', 'b_uuid', 'b_file_name'),
+            os.path.join('.', 'c_uuid', 'c_file_name'),
+        }
+        metadata_files = {
+            os.path.join(self.version_dir, '8f', 'fe48', '8ffe4838ac08672041f73f82e5f8361860627271ec31aa479fbb65f2ccc46d05'),
+            os.path.join('.', 'a_uuid', 'metadata_file.pdf'),
+            os.path.join('.', 'b_uuid', 'metadata_file.pdf'),
+            os.path.join('.', 'c_uuid', 'metadata_file.pdf'),
+        }
+        bundle_files = data_files.union(metadata_files)
+        self._assert_all_files_downloaded(more_files=bundle_files)
+        for linked_file in data_files:
+            self.assertEqual(os.stat(linked_file).st_nlink, 2,
+                             'Expected one link for the "filestore" entry and link in bundle download')
+        for linked_file in metadata_files:
+            self.assertEqual(os.stat(linked_file).st_nlink, 4,
+                             'Expected one link for the "filestore" entry and one for each bundle')
+        self.assertEqual(download_file_func.call_count, 4,
+                         'Expected one call for each unique file: 3 data and 1 metadata')
 
 
 if __name__ == "__main__":
