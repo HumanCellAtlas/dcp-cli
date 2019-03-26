@@ -37,7 +37,6 @@ stages:
 .windows-test-base:
   stage: test
   before_script:
-    - cd dcp-cli
     - virtualenv venv3
     - venv3\Scripts\activate
     - pip install -r requirements-dev.txt
