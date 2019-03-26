@@ -43,7 +43,7 @@ stages:
     - .\scripts\fetch_secret.py --secret-name gcp-credentials.json > gcp-credentials.json
     - set GOOGLE_APPLICATION_CREDENTIALS=%cd%\gcp-credentials.json
   script:
-    - make win-test
+    - make test-win
 test-2.7:
   extends: .linux-test-base
   variables:
