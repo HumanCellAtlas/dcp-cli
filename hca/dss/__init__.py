@@ -9,7 +9,7 @@ import errno
 import multiprocessing
 import platform
 import sys
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 import csv
 import concurrent.futures
 from datetime import datetime
@@ -32,6 +32,29 @@ from ..util import SwaggerClient
 from ..util.exceptions import SwaggerAPIException
 from .. import logger
 from .upload_to_cloud import upload_to_cloud
+
+
+class DSSFile(namedtuple('DSSFile', ['uuid', 'version', 'sha256', 'size', 'indexed', 'replica'])):
+    """
+    Local representation of a file on the DSS
+    """
+    @classmethod
+    def from_manifest_row(cls, row, replica):
+        return cls(uuid=row['file_uuid'],
+                   version=row.get('file_version', ''),
+                   sha256=row['file_sha256'],
+                   size=row['file_size'],
+                   indexed=row['file_indexed'],
+                   replica=replica)
+
+    @classmethod
+    def from_dss_bundle_response(cls, file_dict, replica):
+        return cls(uuid=file_dict['uuid'],
+                   version=file_dict['version'],
+                   sha256=file_dict['sha256'],
+                   size=file_dict['size'],
+                   indexed=file_dict['indexed'],
+                   replica=replica)
 
 
 class DSSClient(SwaggerClient):
@@ -59,10 +82,10 @@ class DSSClient(SwaggerClient):
         :param str version: The version to download, else if not specified, download the latest. The version is a
             timestamp of bundle creation in RFC3339
         :param str dest_name: The destination file path for the download
-        :param list metadata_files: one or more shell patterns against which all metadata files in the bundle will be
+        :param iterable metadata_files: one or more shell patterns against which all metadata files in the bundle will be
             matched case-sensitively. A file is considered a metadata file if the `indexed` property in the manifest is
             set. If and only if a metadata file matches any of the patterns in `metadata_files` will it be downloaded.
-        :param list data_files: one or more shell patterns against which all data files in the bundle will be matched
+        :param iterable data_files: one or more shell patterns against which all data files in the bundle will be matched
             case-sensitively. A file is considered a data file if the `indexed` property in the manifest is not set. The
             file will be downloaded only if a data file matches any of the patterns in `data_files` will it be
             downloaded.
@@ -99,9 +122,8 @@ class DSSClient(SwaggerClient):
                                  "'{filename}' or a case derivation thereof".format(filename=filename, **bundle))
 
         for file_ in files.values():
-            file_uuid = file_["uuid"]
-            file_version = file_["version"]
-            filename = file_.get("name", file_uuid)
+            dssfile = DSSFile.from_dss_bundle_response(file_, replica)
+            filename = file_.get("name", dssfile.uuid)
             walking_dir = dest_name
 
             globs = metadata_files if file_['indexed'] else data_files
@@ -116,18 +138,11 @@ class DSSClient(SwaggerClient):
 
             logger.info("File %s: Retrieving...", filename)
             file_path = os.path.join(walking_dir, filename_base)
-            self._download_and_link_to_filestore(file_path,
-                                                 file_uuid,
-                                                 file_["sha256"],
-                                                 replica,
-                                                 file_['size'],
-                                                 file_version=file_version,
-                                                 num_retries=num_retries,
-                                                 min_delay_seconds=min_delay_seconds)
+            self._download_and_link_to_filestore(dssfile, file_path,
+                                                 num_retries=num_retries, min_delay_seconds=min_delay_seconds)
 
-    def _download_and_link_to_filestore(self, file_path, file_uuid, sha, replica, size, file_version, num_retries, min_delay_seconds):
-        file_store_path = self._download_to_filestore(file_uuid, sha, replica, size,
-                                                      file_version=file_version,
+    def _download_and_link_to_filestore(self, dssfile, file_path, num_retries, min_delay_seconds):
+        file_store_path = self._download_to_filestore(dssfile,
                                                       num_retries=num_retries,
                                                       min_delay_seconds=min_delay_seconds)
         if sys.version_info < (3,) and platform.system() == 'Windows':
@@ -135,35 +150,19 @@ class DSSClient(SwaggerClient):
             raise ValueError('Upgrade Python or use a real OS')
         os.link(file_store_path, file_path)
 
-    def _download_to_filestore(self,
-                               file_uuid,
-                               file_sha256,
-                               replica,
-                               size,
-                               file_version="",
-                               num_retries=10,
-                               min_delay_seconds=0.25):
+    def _download_to_filestore(self, dssfile, num_retries=10, min_delay_seconds=0.25):
         """
         Attempt to download the data and save it in the 'filestore' location dictated by self._file_path()
         """
-        dest_path = self._file_path(file_sha256)
+        dest_path = self._file_path(dssfile.sha256)
         if os.path.exists(dest_path):
-            logger.info("File %s already present. Skipping download.", file_uuid)
+            logger.info("File %s already present. Skipping download.", dssfile.uuid)
         else:
-            logger.info("File %s: Retrieving...", file_uuid)
-            self._download_file(file_uuid, file_sha256, dest_path, replica, size,
-                                file_version=file_version, num_retries=num_retries, min_delay_seconds=min_delay_seconds)
+            logger.info("File %s: Retrieving...", dssfile.uuid)
+            self._download_file(dssfile, dest_path, num_retries=num_retries, min_delay_seconds=min_delay_seconds)
         return dest_path
 
-    def _download_file(self,
-                       file_uuid,
-                       file_sha256,
-                       dest_path,
-                       replica,
-                       size,
-                       file_version="",
-                       num_retries=10,
-                       min_delay_seconds=0.25):
+    def _download_file(self, dssfile, dest_path, num_retries=10, min_delay_seconds=0.25):
         """
         Attempt to download the data.  If a retryable exception occurs, we wait a bit and retry again.  The delay
         increases each time we fail and decreases each time we successfully read a block.  We set a quota for the
@@ -180,23 +179,23 @@ class DSSClient(SwaggerClient):
                 if e.errno != errno.EEXIST:
                     raise
         with atomic_write(dest_path, mode="wb", overwrite=True) as fh:
-            if size == 0:
-                logger.info("%s", "File {}: CREATED (empty). Stored at {}.".format(file_uuid, dest_path))
+            if dssfile.size == 0:
+                logger.info("%s", "File {}: CREATED (empty). Stored at {}.".format(dssfile.uuid, dest_path))
                 return
 
-            download_hash = self._do_download_file(file_uuid, file_version, replica, fh, num_retries, min_delay_seconds)
+            download_hash = self._do_download_file(dssfile, fh, num_retries, min_delay_seconds)
 
-            if download_hash.lower() != file_sha256.lower():
+            if download_hash.lower() != dssfile.sha256.lower():
                 # No need to delete what's been written. atomic_write ensures we're cleaned up
-                logger.error("%s", "File {}: GET FAILED. Checksum mismatch.".format(file_uuid))
+                logger.error("%s", "File {}: GET FAILED. Checksum mismatch.".format(dssfile.uuid))
                 raise ValueError("Expected sha256 {} Received sha256 {}".format(
-                    file_sha256.lower(), download_hash.lower()))
+                    dssfile.sha256.lower(), download_hash.lower()))
             else:
-                logger.info("%s", "File {}: GET SUCCEEDED. Stored at {}.".format(file_uuid, dest_path))
+                logger.info("%s", "File {}: GET SUCCEEDED. Stored at {}.".format(dssfile.uuid, dest_path))
 
-    def _do_download_file(self, file_uuid, file_version, replica, fh, num_retries, min_delay_seconds):
+    def _do_download_file(self, dssfile, fh, num_retries, min_delay_seconds):
         """
-        Abstracts away complications for downloading a file, handling retries and delays, and computes its hash
+        Abstracts away complications for downloading a file, handles retries and delays, and computes its hash
         """
         hasher = hashlib.sha256()
         delay = min_delay_seconds
@@ -204,7 +203,7 @@ class DSSClient(SwaggerClient):
         while True:
             try:
                 response = self.get_file._request(
-                    dict(uuid=file_uuid, version=file_version, replica=replica),
+                    dict(uuid=dssfile.uuid, version=dssfile.version, replica=dssfile.replica),
                     stream=True,
                     headers={
                         'Range': "bytes={}-".format(fh.tell())
@@ -212,7 +211,7 @@ class DSSClient(SwaggerClient):
                 )
                 try:
                     if not response.ok:
-                        logger.error("%s", "File {}: GET FAILED.".format(file_uuid))
+                        logger.error("%s", "File {}: GET FAILED.".format(dssfile.uuid))
                         logger.error("%s", "Response: {}".format(response.text))
                         break
 
@@ -229,10 +228,10 @@ class DSSClient(SwaggerClient):
                     assert consume_bytes >= 0
                     if server_start > 0 and consume_bytes == 0:
                         logger.info("%s", "File {}: Resuming at {}.".format(
-                            file_uuid, server_start))
+                            dssfile.uuid, server_start))
                     elif consume_bytes > 0:
                         logger.info("%s", "File {}: Resuming at {}. Dropping {} bytes to match".format(
-                            file_uuid, server_start, consume_bytes))
+                            dssfile.uuid, server_start, consume_bytes))
 
                         while consume_bytes > 0:
                             bytes_to_read = min(consume_bytes, 1024*1024)
@@ -252,7 +251,7 @@ class DSSClient(SwaggerClient):
                     response.close()
             except (ChunkedEncodingError, ConnectionError, ReadTimeout):
                 if retries_left > 0:
-                    logger.info("%s", "File {}: GET FAILED. Attempting to resume.".format(file_uuid))
+                    logger.info("%s", "File {}: GET FAILED. Attempting to resume.".format(dssfile.uuid))
                     time.sleep(delay)
                     delay *= 2
                     retries_left -= 1
@@ -342,28 +341,20 @@ class DSSClient(SwaggerClient):
         errors = 0
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=threads) as executor:
-            def row_future(row):
-                return executor.submit(self._download_to_filestore,
-                                       row['file_uuid'],
-                                       row['file_sha256'],
-                                       replica,
-                                       row['file_size'],
-                                       file_version=row['file_version'],
-                                       num_retries=num_retries,
-                                       min_delay_seconds=min_delay_seconds)
-            # We cannot use executor.map() because map does not continue after the first exception
-            futures_to_info = {
-                row_future(row): (row['file_uuid'], row['file_version'])
-                for row in rows
-            }
-            for future in concurrent.futures.as_completed(futures_to_info):
-                file_uuid, version = futures_to_info[future]
+            futures_to_dssfile = {}
+            for row in rows:
+                dssfile = DSSFile.from_manifest_row(row, replica)
+                future = executor.submit(self._download_to_filestore, dssfile,
+                                         num_retries=num_retries, min_delay_seconds=min_delay_seconds)
+                futures_to_dssfile[future] = dssfile
+            for future in concurrent.futures.as_completed(futures_to_dssfile):
+                dssfile = futures_to_dssfile[future]
                 try:
                     future.result()
                 except Exception as e:
                     errors += 1
                     logger.warning('Failed to download file %s version %s from replica %s',
-                                   file_uuid, version, replica, exc_info=e)
+                                   dssfile.uuid, dssfile.version, dssfile.replica, exc_info=e)
         if errors:
             raise RuntimeError('{} file(s) failed to download'.format(errors))
         else:

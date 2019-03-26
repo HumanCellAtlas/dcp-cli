@@ -27,7 +27,7 @@ def _touch_file(path):
 
 
 def _fake_download_file(*args, **kwargs):
-    _touch_file(args[2])
+    _touch_file(args[1])
 
 
 def _fake_get_bundle(*args, **kwargs):
@@ -212,7 +212,7 @@ class TestManifestDownload(unittest.TestCase):
             Wait for friends before trying to "download" the same fake file
             """
             barrier.wait()
-            fh = args[3]
+            fh = args[1]
             fh.write(six.b('Here we write some stuff so that the fake download takes some time. '
                            'This helps ensure that multiple threads are writing at once and thus '
                            'allows us to test for race conditions.'))
