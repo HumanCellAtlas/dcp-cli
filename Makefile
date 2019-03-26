@@ -48,12 +48,12 @@ clean:
 	-rm -rf *.egg-info
 
 clean-win:
-    rmdir /s /q build
-    rmdir /s /q dist
-    for %f in (*.egg-info) do rmdir /s /q %f
+	rmdir /s /q build
+	rmdir /s /q dist
+	for %f in (*.egg-info) do rmdir /s /q %f
 
 install-win: clean-win
-    for %f in (dist\*.whl) do pip install --upgrade %f
+	for %f in (dist\*.whl) do pip install --upgrade %f
 
 test-win: install-win integrationtests unittests
 
