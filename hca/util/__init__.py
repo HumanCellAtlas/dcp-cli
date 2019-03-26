@@ -316,7 +316,7 @@ class SwaggerClient(object):
                     res = self.get_session().get(self.swagger_url)
                     res.raise_for_status()
                     assert "swagger" in res.json()
-                    fs.atomic_write(os.path.basename(swagger_filename), self.config.user_config_dir, res.content)
+                    fs.atomic_write(swagger_filename, res.content)
                 with open(swagger_filename) as fh:
                     self._swagger_spec = self.load_swagger_json(fh)
         return self._swagger_spec
