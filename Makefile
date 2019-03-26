@@ -4,7 +4,6 @@ test: lint install integrationtests unittests
 	coverage combine
 	rm -f .coverage.*
 
-test-win: install-win integrationtests unittests
 
 unittests:
 	coverage run -p --source=hca -m unittest discover -v -t . -s test/unit
@@ -37,7 +36,6 @@ build: version
 install: clean build
 	pip install --upgrade dist/*.whl
 
-install-win: clean
 
 init_docs:
 	cd docs; sphinx-quickstart
@@ -48,6 +46,16 @@ docs:
 clean:
 	-rm -rf build dist
 	-rm -rf *.egg-info
+
+clean-win:
+    rmdir /s /q build
+    rmdir /s /q dist
+    for %f in (*.egg-info) do rmdir /s /q %f
+
+install-win: clean-win
+    for %f in (dist\*.whl) do pip install --upgrade %f
+
+test-win: install-win integrationtests unittests
 
 .PHONY: test unit integration lint install release docs clean
 
