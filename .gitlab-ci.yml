@@ -63,6 +63,6 @@ test-3.6:
     PYTHON_VERSION: "3.6"
 
 test-3.6-win:
-  extends: .win-test-base
+  extends: .windows-test-base
   tags:
     - windows
