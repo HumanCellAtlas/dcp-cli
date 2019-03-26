@@ -3,7 +3,7 @@
 set -euo pipefail
 
 if [[ $# != 1 ]]; then
-	echo "This script fetches a secret value from AWS Secretsmanager, given a secret name."
+    echo "This script fetches a secret value from AWS Secretsmanager, given a secret name."
     echo "Usage: $(basename $0) secret-name"
     echo "Example: $(basename $0) gcp-credentials.json"
     exit 1
