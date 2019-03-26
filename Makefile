@@ -52,7 +52,7 @@ clean-win:
 	rmdir /s /q dist
 	for %f in (*.egg-info) do rmdir /s /q %f
 
-install-win: clean-win
+install-win:
 	for %f in (dist\*.whl) do pip install --upgrade %f
 
 test-win: install-win integrationtests unittests
