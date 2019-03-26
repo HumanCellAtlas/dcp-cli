@@ -49,10 +49,10 @@ clean:
 clean-win:
 	rmdir /s /q build
 	rmdir /s /q dist
-	foreach ($f in get-ChildItem dist\*.whl) {rm $f.fullname}
+	foreach ($f in *.egg-info) {rm $f.fullname}
 
 install-win:
-	foreach ($f in get-ChildItem dist\*.whl) {pip install --upgrade $f.fullname}
+	foreach ($f in get-ChildItem dist\\*.whl) {pip install --upgrade $f.fullname}
 
 test-win: install-win integrationtests unittests
 
