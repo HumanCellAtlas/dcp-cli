@@ -40,7 +40,7 @@ stages:
     - virtualenv venv3
     - venv3\Scripts\activate
     - pip install -r requirements-dev.txt
-    - scripts/fetch_secrets.py --secret-name gcp-credentials.json > gcp-credentials.json
+    - python scripts/fetch_secrets.py --secret-name gcp-credentials.json > gcp-credentials.json
     - set GOOGLE_APPLICATION_CREDENTIALS=%cd%\gcp-credentials.json
   script:
     - make win-test
