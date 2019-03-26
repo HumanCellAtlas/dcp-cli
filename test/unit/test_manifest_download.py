@@ -1,6 +1,7 @@
 import errno
 import logging
 import os
+import platform
 import shutil
 import sys
 import tempfile
@@ -229,12 +230,15 @@ class TestManifestDownload(unittest.TestCase):
         }
         self.assertEqual(files_present, files_expected)
 
+    @unittest.skipIf(sys.version_info < (3,) and platform.system() == 'Windows',
+                     'os.stat() returns dummy values with Python 2.7 on Windows')
+    # I (jesse) tested this manually on Python 2.7 on Windows 10 and hardlinks worked
     @patch('hca.dss.DSSClient.get_bundle', side_effect=_fake_get_bundle)
     @patch('hca.dss.DSSClient._download_file', side_effect=_fake_download_file)
     def test_manifest_download_bundle(self, download_file_func, _):
         self.dss.download_manifest(self.manifest_file, 'aws')
         files_present = {os.path.join(dir_path, f)
-                         for dir_path, _, files in scandir.walk('.')
+                         for dir_path, _, files in walk('.')
                          for f in files}
         data_files = {
             os.path.join('.', 'a_uuid', 'a_file_name'),

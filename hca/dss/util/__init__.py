@@ -1,5 +1,8 @@
 import os
 
+import platform
+import sys
+
 from ...util.compat import scandir
 
 
@@ -31,3 +34,22 @@ def object_name_builder(file_name, src_dir):
     :return: returns a name to be used for the cloud object
     """
     return os.path.normpath(file_name).replace(src_dir, "")
+
+
+def hardlink(source, link_name):
+    """
+    Create a hardlink in a portable way
+
+    The code for Windows support is adapted from:
+    https://github.com/sunshowers/ntfs/blob/master/ntfsutils/hardlink.py
+    """
+    if sys.version_info < (3,) and platform.system() == 'Windows':  # pragma: no cover
+        import ctypes
+        create_hard_link = ctypes.windll.kernel32.CreateHardLinkW
+        create_hard_link.argtypes = [ctypes.c_wchar_p, ctypes.c_wchar_p, ctypes.c_void_p]
+        create_hard_link.restype = ctypes.wintypes.BOOL
+        res = create_hard_link(link_name, source, None)
+        if res == 0:
+            raise ctypes.WinError()
+    else:
+        os.link(source, link_name)

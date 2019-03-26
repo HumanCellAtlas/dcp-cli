@@ -7,8 +7,6 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import errno
 import multiprocessing
-import platform
-import sys
 from collections import defaultdict, namedtuple
 import csv
 import concurrent.futures
@@ -25,7 +23,7 @@ import requests
 from atomicwrites import atomic_write
 from requests.exceptions import ChunkedEncodingError, ConnectionError, ReadTimeout
 
-from hca.dss.util import iter_paths, object_name_builder
+from hca.dss.util import iter_paths, object_name_builder, hardlink
 from hca.util import USING_PYTHON2
 from hca.util.compat import glob_escape
 from ..util import SwaggerClient
@@ -145,10 +143,7 @@ class DSSClient(SwaggerClient):
         file_store_path = self._download_to_filestore(dssfile,
                                                       num_retries=num_retries,
                                                       min_delay_seconds=min_delay_seconds)
-        if sys.version_info < (3,) and platform.system() == 'Windows':
-            # Hardlinks not supported with Python 2 on Windows
-            raise ValueError('Upgrade Python or use a real OS')
-        os.link(file_store_path, file_path)
+        hardlink(file_store_path, file_path)
 
     def _download_to_filestore(self, dssfile, num_retries=10, min_delay_seconds=0.25):
         """
