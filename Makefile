@@ -46,13 +46,17 @@ clean:
 	-rm -rf build dist
 	-rm -rf *.egg-info
 
-clean-win:
-	rmdir /s /q build
-	rmdir /s /q dist
-	foreach ($f in *.egg-info) {rm $f.fullname}
+build-win:
+	cmd.exe /c "rmdir /s /q dist 2>nul & exit 0 "
+	cmd.exe /c "python .\setup.py bdist_wheel"
 
-install-win:
-	foreach ($f in get-ChildItem dist\\*.whl) {pip install --upgrade $f.fullname}
+clean-win:
+	cmd.exe /c "rmdir /s /q build 2>nul & exit 0 "
+	cmd.exe /c "rmdir /s /q dist 2>nul & exit 0 "
+	cmd.exe /c "for %%f in (*.egg-info) do rmdir /s /q %%f 2>nul & exit 0 "
+
+install-win: clean-win build-win
+	cmd.exe /c "for %%f in (dist\*.whl) do pip install --upgrade %%f"
 
 test-win: install-win integrationtests unittests
 
