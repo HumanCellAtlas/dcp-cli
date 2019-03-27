@@ -14,7 +14,7 @@ def main(secret_name: str = None):
     test_stage = os.environ.get("DSS_TEST_STAGE")
     secret_value = secret_client.get_secret_value(SecretId=
                                                   '{}/{}/{}'.format(secret_store,test_stage,secret_name))
-    return secret_value
+    return secret_value["SecretString"]
 
 
 
