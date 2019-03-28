@@ -3,7 +3,6 @@
 import os
 import boto3
 import argparse
-import json
 import codecs
 
 secret_client = boto3.client("secretsmanager")
@@ -30,7 +29,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     secret_string = main(secret_name=args.secret_name)
     if args.write:
-        with open(args.secret_name, 'wb') as f:
-            json.dump(secret_string, codecs.getwriter('utf-8')(f), ensure_ascii=False)
+        with codecs.open(args.secret_name, 'w', encoding='utf-8') as f:
+            f.write(secret_string)
     else:
         print(secret_string)
