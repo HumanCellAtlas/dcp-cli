@@ -3,6 +3,8 @@
 import os
 import boto3
 import argparse
+import json
+import codecs
 
 secret_client = boto3.client("secretsmanager")
 
@@ -20,6 +22,15 @@ if __name__ == '__main__':
                         required=True,
                         help='the secret value that we would like to fetch'
                         )
+    parser.add_argument("--write",
+                        default=False,
+                        action='store_true',
+                        help='write to file, where filename is the secret_name parameter'
+                        )
     args = parser.parse_args()
     secret_string = main(secret_name=args.secret_name)
-    print(secret_string)
+    if args.write:
+        with open(args.secret_name, 'wb') as f:
+            json.dump(secret_string, codecs.getwriter('utf-8')(f), ensure_ascii=False)
+    else:
+        print(secret_string)
