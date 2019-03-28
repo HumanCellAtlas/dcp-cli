@@ -244,9 +244,28 @@ class DSSClient(SwaggerClient):
     def _parse_manifest(cls, manifest):
         with open(manifest) as f:
             # unicode_literals is on so all strings are unicode. CSV wants a str so we need to jump through a hoop.
-            delimiter = '\t'.encode('ascii') if USING_PYTHON2 else '\t'
+            delimiter = b'\t' if USING_PYTHON2 else '\t'
             reader = csv.DictReader(f, delimiter=delimiter, quoting=csv.QUOTE_NONE)
-            return list(reader)
+            return reader.fieldnames, list(reader)
+
+    def _write_output_manifest(self, manifest):
+        """
+        Adds the file path column to the manifest and writes the copy to the current directory. If the original manifest
+        is in the current directory it is overwritten with a warning.
+        """
+        output = os.path.basename(manifest)
+        fieldnames, source_manifest = self._parse_manifest(manifest)
+        if 'file_path' not in fieldnames:
+            fieldnames.append('file_path')
+        with atomic_write(output, overwrite=True) as f:
+            delimiter = b'\t' if USING_PYTHON2 else '\t'
+            writer = csv.DictWriter(f, fieldnames, delimiter=delimiter, quoting=csv.QUOTE_NONE)
+            writer.writeheader()
+            for row in source_manifest:
+                row['file_path'] = self._file_path(row['file_sha256'])
+                writer.writerow(row)
+            if os.path.isfile(output):
+                logger.warning('Overwriting manifest %s to include column for file paths')
 
     def _download_row(self, row, replica, num_retries, min_delay_seconds):
         file_uuid, sha, version, size = row['file_uuid'], row['file_sha256'], row['file_version'], row['file_size']
@@ -291,7 +310,7 @@ class DSSClient(SwaggerClient):
         The TSV may have additional columns. Those columns will be ignored. The ordering of the columns is
         insignificant because the TSV is required to have a header row.
         """
-        rows = self._parse_manifest(manifest)
+        fieldnames, rows = self._parse_manifest(manifest)
         errors = 0
         with concurrent.futures.ThreadPoolExecutor(max_workers=threads) as executor:
             # We cannot use executor.map() because map does not continue after the first exception
@@ -309,6 +328,7 @@ class DSSClient(SwaggerClient):
         if errors:
             raise RuntimeError('{} file(s) failed to download'.format(errors))
         else:
+            self._write_output_manifest(manifest)
             return {}
 
     def download_manifest(self, manifest, replica, num_retries=10, min_delay_seconds=0.25):
@@ -341,7 +361,7 @@ class DSSClient(SwaggerClient):
         with open(manifest) as f:
             bundles = defaultdict(set)
             # unicode_literals is on so all strings are unicode. CSV wants a str so we need to jump through a hoop.
-            delimiter = '\t'.encode('ascii') if USING_PYTHON2 else '\t'
+            delimiter = b'\t' if USING_PYTHON2 else '\t'
             reader = csv.DictReader(f, delimiter=delimiter, quoting=csv.QUOTE_NONE)
             for row in reader:
                 bundles[(row['bundle_uuid'], row['bundle_version'])].add(row['file_name'])

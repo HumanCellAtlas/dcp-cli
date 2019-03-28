@@ -1,0 +1,55 @@
+variables:
+  AWS_DEFAULT_REGION: "us-east-1"
+  DSS_SECRETS_STORE: "dcp/dss"
+  DSS_TEST_STAGE: "dev"
+  BOTO_CONFIG: "/dev/null"
+
+stages:
+    - test
+
+.linux-test-base:
+  stage: test
+  image: ubuntu:18.04
+  before_script:
+    - IFS='.'; semver=($PYTHON_VERSION); PYTHON_MAJOR=${semver[0]}; unset IFS
+    - export DEBIAN_FRONTEND=noninteractive
+    - apt-get update --quiet
+    - apt-get install --assume-yes --no-install-recommends software-properties-common
+    - add-apt-repository --yes ppa:deadsnakes/ppa
+    - apt-get update --quiet
+    - apt-get install --assume-yes --no-install-recommends curl jq make python${PYTHON_MAJOR/2/}-pip python${PYTHON_VERSION}-dev
+    - python${PYTHON_VERSION} -m pip install --upgrade pip==10.0.1
+    - python${PYTHON_VERSION} -m pip install virtualenv==16.0.0
+    - rm -f /usr/bin/python; ln -s /usr/bin/python${PYTHON_VERSION} /usr/bin/python
+    - rm -f /usr/bin/pip; ln -s /usr/bin/pip${PYTHON_MAJOR} /usr/bin/pip
+    - virtualenv ~/venv
+    - source ~/venv/bin/activate
+    - pip install -r requirements-dev.txt
+    - scripts/fetch_secret.sh gcp-credentials.json > gcp-credentials.json
+    - export GOOGLE_APPLICATION_CREDENTIALS=$(pwd -P)/gcp-credentials.json
+    - sed -i -e s/dss.data.humancellatlas.org/dss.$DSS_TEST_STAGE.data.humancellatlas.org/ hca/default_config.json
+    - make install
+  script:
+    - make test
+  except:
+    - tags
+
+test-2.7:
+  extends: .linux-test-base
+  variables:
+    PYTHON_VERSION: "2.7"
+
+test-3.4:
+  extends: .linux-test-base
+  variables:
+    PYTHON_VERSION: "3.4"
+
+test-3.5:
+  extends: .linux-test-base
+  variables:
+    PYTHON_VERSION: "3.5"
+
+test-3.6:
+  extends: .linux-test-base
+  variables:
+    PYTHON_VERSION: "3.6"

@@ -1,11 +1,12 @@
-flake8==3.5.0
-moto==1.3.3
+backports.tempfile
 coverage
+flake8==3.5.0
+mock
+moto>1.3.3
 pyyaml
 responses
-backports.tempfile
-mock
-unittest2
 Sphinx
 sphinx-argparse
+truffleHog==2.0.98
+unittest2
 -r requirements.txt

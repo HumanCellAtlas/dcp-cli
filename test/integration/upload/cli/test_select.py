@@ -22,18 +22,29 @@ class TestUploadCliSelectCommand(UploadTestCase):
 
     def setUp(self):
         super(self.__class__, self).setUp()
-        self.area_uuid = str(uuid.uuid4())
-        self.uri = "s3://org-humancellatlas-upload-test/{}/".format(self.area_uuid)
+        self._area_uuid = str(uuid.uuid4())
+        self._uri = "s3://org-humancellatlas-upload-test/{}/".format(self._area_uuid)
 
     def test_when_given_an_unrecognized_urn_it_stores_it_in_upload_area_list_and_sets_it_as_current_area(self):
         with CapturingIO('stdout') as stdout:
-            args = Namespace(uri_or_alias=self.uri)
+            args = Namespace(uri_or_alias=self._uri)
             SelectCommand(args)
 
         config = hca.get_config()
-        self.assertIn(self.area_uuid, config.upload.areas)
-        self.assertEqual(self.uri, config.upload.areas[self.area_uuid]['uri'])
-        self.assertEqual(self.area_uuid, config.upload.current_area)
+        self.assertIn(self._area_uuid, config.upload.areas)
+        self.assertEqual(self._uri, config.upload.areas[self._area_uuid]['uri'])
+        self.assertEqual(self._area_uuid, config.upload.current_area)
+
+    def test_when_given_an_unrecognized_uri_without_slash_it_sets_it_as_current_area(self):
+        uri_without_slash = "s3://org-humancellatlas-upload-test/{}".format(self._area_uuid)
+        with CapturingIO('stdout') as stdout:
+            args = Namespace(uri_or_alias=uri_without_slash)
+            SelectCommand(args)
+
+        config = hca.get_config()
+        self.assertIn(self._area_uuid, config.upload.areas)
+        self.assertEqual(self._uri, config.upload.areas[self._area_uuid]['uri'])
+        self.assertEqual(self._area_uuid, config.upload.current_area)
 
     def test_when_given_a_uri_it_prints_an_alias(self):
         config = hca.get_config()

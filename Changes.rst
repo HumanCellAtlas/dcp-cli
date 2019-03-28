@@ -1,3 +1,28 @@
+Changes for v4.9.0 (2019-03-21)
+===============================
+
+Updating boto3 version since the previous 1.7-1.8 requirement is
+incompatible with upload service. (#282) Centralize SECURITY.md, and
+delete security.txt. (#281) Add a trufflehog regex check. (#283) Add
+paths to manifest after v2 download (fixes #248) allow for not providing
+slashes when selecting upload area (#280) Parellelize downloads for
+manifest (fixes #236) Add version dir for manifest download (fixes #251)
+Deduplicate file downloads (fixes #234) Bump tweak dependency to v1.0.2
+(#271) Add security.txt. (#270) Amend retry counter placement.
+Slash-Support : supporting '/' within upload/download for files in
+bundles (#266) [Easy] Temporary fix to allow POST requests to be
+retried. (#267) modified Error API (#225) Support get bundle iteration.
+(#264) Properly place and print required vs. non-required args in the
+help menu. Addresses #219. (#254) 301 retries are logged as info (#257)
+Update README.rst Revert "Slash support (#247)" (#263) Revert "Update
+README.rst" Slash-Support causing cli issues This reverts commit
+a4fbe451028c64553ae11743f21db5e6b5cc957e. Slash support (#247) Update
+README.rst Update README.rst Update README.rst Add readthedocs link to
+the readme usage section. (#250) Check the CLI version. (#249) Add a
+function to warn the user if the CLI version is out of date. (#246)
+Adding GOOGLE\_APPLICATION\_CREDENTIALS to readme. (#242) puremagic <
+1.5 (#245)
+
 Changes for v4.8.0 (2019-02-22)
 ===============================
 
