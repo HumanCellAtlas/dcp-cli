@@ -123,7 +123,7 @@ class UploadArea:
             number_of_errors = len(self.s3agent.failed_uploads)
             if number_of_errors == 0:
                 print(
-                    f"Completed upload of %d files to upload area %s\n" %
+                    "Completed upload of %d files to upload area %s\n" %
                     (self.s3agent.file_upload_completed_count, self.uuid))
             else:
                 error = "\nThe following files failed:"
