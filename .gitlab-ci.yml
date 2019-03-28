@@ -37,7 +37,7 @@ stages:
   stage: test
   before_script:
     #currently 3.6.8 is offered by the windows-runner
-    - $env:WINDOWS_PYTHON = python -c 'import sys  ;print(".".join([sys.version[0],sys.version[2]]))'
+    - $env:WINDOWS_PYTHON = python -c 'import sys  ; print(sys.version[0:3])'
     - if (-NOT $env:WINDOWS_PYTHON -eq ${PYTHON_VERSION}) { echo "python missmatch"; exit(1) }
     - virtualenv venv3
     - venv3\Scripts\activate
@@ -70,6 +70,6 @@ test-3.6:
 test-3.6-win:
   extends: .windows-test-base
   variables:
-    PYTHON_VERSIO: "3.8"
+    PYTHON_VERSIO: "3.6"
   tags:
     - windows
