@@ -1,4 +1,8 @@
-SHELL=/bin/bash
+ifeq ($(OS),Windows_NT)
+	SHELL=cmd.exe
+else
+	SHELL=/bin/bash
+endif
 
 test: lint install integrationtests unittests
 	coverage combine
@@ -22,7 +26,7 @@ integration: lint install integrationtests
 	rm -f .coverage.*
 
 lint:
-	./setup.py flake8
+	python ./setup.py flake8
 
 version: hca/version.py
 
@@ -47,23 +51,21 @@ clean:
 	-rm -rf *.egg-info
 
 build-win:
-	cmd.exe /c "rmdir /s /q dist 2>nul & exit 0 "
-	cmd.exe /c "python .\setup.py bdist_wheel"
+	rmdir /s /q dist 2>nul & exit 0
+	python .\setup.py bdist_wheel
 
 clean-win:
-	cmd.exe /c "rmdir /s /q build 2>nul & exit 0 "
-	cmd.exe /c "rmdir /s /q dist 2>nul & exit 0 "
-	cmd.exe /c "for %%f in (*.egg-info) do rmdir /s /q %%f 2>nul & exit 0 "
+	rmdir /s /q build 2>nul & exit 0
+	rmdir /s /q dist 2>nul & exit 0
+	for %%f in (*.egg-info) do rmdir /s /q %%f 2>nul & exit 0
 
 install-win: clean-win build-win
-	cmd.exe /c "for %%f in (dist\*.whl) do pip install --upgrade %%f"
+	for %%f in (dist\*.whl) do pip install --upgrade %%f
 
-lint-win:
-	cmd.exe /c "python .\setup.py flake8"
 
-test-win: lint-win install-win integrationtests unittests
+test-win: lint install-win integrationtests unittests
 	coverage combine
-	cmd.exe /c "for %%f in (.coverage.*) do del /Q /F %%f 2>nul & exit 0"
+	for %%f in (.coverage.*) do del %%f 2>nul exit 0
 
 .PHONY: test unit integration lint install release docs clean
 
