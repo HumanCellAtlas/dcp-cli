@@ -58,7 +58,12 @@ clean-win:
 install-win: clean-win build-win
 	cmd.exe /c "for %%f in (dist\*.whl) do pip install --upgrade %%f"
 
-test-win: install-win integrationtests unittests
+lint-win:
+	cmd.exe /c "python .\setup.py flake8"
+
+test-win: lint-win install-win integrationtests unittests
+	coverage combine
+	cmd.exe /c "for %%f in (.coverage.*) do del /Q /F %%f 2>nul & exit 0"
 
 .PHONY: test unit integration lint install release docs clean
 

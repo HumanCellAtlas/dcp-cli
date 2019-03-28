@@ -28,7 +28,6 @@ stages:
     - scripts/fetch_secret.sh gcp-credentials.json > gcp-credentials.json
     - export GOOGLE_APPLICATION_CREDENTIALS=$(pwd -P)/gcp-credentials.json
     - sed -i -e s/dss.data.humancellatlas.org/dss.$DSS_TEST_STAGE.data.humancellatlas.org/ hca/default_config.json
-    - make install
   script:
     - make test
   except:
@@ -37,6 +36,7 @@ stages:
 .windows-test-base:
   stage: test
   before_script:
+    #currently 3.6.8 is offered by the windows-runner
     - virtualenv venv3
     - venv3\Scripts\activate
     - pip install -r requirements-dev.txt
