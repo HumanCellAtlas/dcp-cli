@@ -30,11 +30,11 @@ class UploadAreaFilesStatusCheck(object):
                 'Total Number of Files: {}\n'
                 'CHECKSUMS\n'.format(upload_area, checksum_statuses["TOTAL_NUM_FILES"]))
         del checksum_statuses['TOTAL_NUM_FILES']
-        for category, value in checksum_statuses.items():
-            f.write("\t{} files: {}\n".format(category, value))
+        for category in sorted(checksum_statuses):
+            f.write("\t{} files: {}\n".format(category, checksum_statuses[category]))
         f.write('VALIDATIONS\n')
-        for category, value in validation_statuses.items():
-            f.write("\t{} files: {}\n".format(category, value))
+        for category in sorted(validation_statuses):
+            f.write("\t{} files: {}\n".format(category, validation_statuses[category]))
         f.close()
 
 
