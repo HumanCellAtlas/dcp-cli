@@ -1,5 +1,6 @@
 import os
-from scandir import scandir
+
+from ...util.compat import scandir
 
 
 def separator_to_camel_case(separated, separator):

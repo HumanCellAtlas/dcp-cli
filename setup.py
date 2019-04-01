@@ -22,7 +22,10 @@ setup(
             'futures == 3.2.0',
             'pyopenssl >= 17.5.0'
         ],
-        ':python_version < "3.5"': ['typing >= 3.6.2, < 4'],
+        ':python_version < "3.5"': [
+            'typing >= 3.6.2, < 4',
+            'scandir >= 1.9.0, < 2'
+        ],
     },
     packages=find_packages(exclude=['test']),
     entry_points={
