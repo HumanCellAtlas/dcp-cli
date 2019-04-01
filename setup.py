@@ -19,10 +19,13 @@ setup(
         ':python_version == "2.7"': [
             'enum34 >= 1.1.6, < 2',
             'funcsigs >= 1.0.2, < 2',
-            'futures == 3.2.0',
+            'futures >= 3.2.0, < 4',
             'pyopenssl >= 17.5.0'
         ],
-        ':python_version < "3.5"': ['typing >= 3.6.2, < 4'],
+        ':python_version < "3.5"': [
+            'typing >= 3.6.2, < 4',
+            'scandir >= 1.9.0, < 2'
+        ],
     },
     packages=find_packages(exclude=['test']),
     entry_points={

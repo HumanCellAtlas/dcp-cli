@@ -6,10 +6,10 @@ import tempfile
 import threading
 import unittest
 
-import scandir
 import six
 from mock import patch
 
+from hca.util.compat import walk
 from hca.dss import DSSClient
 
 
@@ -62,7 +62,7 @@ class TestManifestDownload(unittest.TestCase):
 
     def _assert_all_files_downloaded(self):
         files_present = {os.path.join(dir_path, f)
-                         for dir_path, _, files in scandir.walk('.')
+                         for dir_path, _, files in walk('.')
                          for f in files}
         files_expected = {
             os.path.join('.', os.path.basename(self.manifest_file)),
@@ -179,7 +179,7 @@ class TestManifestDownload(unittest.TestCase):
         with patch('hca.dss.DSSClient._do_download_file', side_effect=_fake_do_download_file_with_barrier):
             self.dss.download_manifest_v2('manifest.tsv', 'aws', threads=3)
         files_present = {os.path.join(dir_path, f)
-                         for dir_path, _, files in scandir.walk('.')
+                         for dir_path, _, files in walk('.')
                          for f in files}
         files_expected = {
             os.path.join('.', 'manifest.tsv'),
