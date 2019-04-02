@@ -1,16 +1,11 @@
 matrix:
   include:
-  - stage: "linux 2.7"
-    os: linux
-    python: 2.7
-  - stage: "linux 3.6"
-    os: linux
-    python: 3.6
-    
+    - os: linux
+      python: 2.7
+    - os: linux
+      python: 3.6
+
 language: python
-python:
-  - 2.7
-  - 3.6
 cache: pip
 sudo: false
 env:
