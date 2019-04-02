@@ -1,25 +1,3 @@
-language: python
-cache: pip
-python:
-- 2.7
-- 3.4
-- 3.5
-- 3.6
-before_install:
-- openssl aes-256-cbc -K $encrypted_266b385b8e6e_key -iv $encrypted_266b385b8e6e_iv
-  -in travis-gcp-service-account-credentials.json.enc -out travis-gcp-service-account-credentials.json
-  -d
-- sed -i -e s/dss.data.humancellatlas.org/dss.$DSS_TEST_STAGE.data.humancellatlas.org/ hca/default_config.json
-install:
-- pip install -r requirements-dev.txt
-- wget -O regex.json https://raw.githubusercontent.com/HumanCellAtlas/dcplib/master/components/trufflehog_regex_patterns.json
-- trufflehog --regex --rules regex.json --entropy=False https://github.com/HumanCellAtlas/data-store.git
-- rm regex.json
-- make install
-script:
-- make test
-after_success:
-- bash <(curl -s https://codecov.io/bash)
 sudo: false
 env:
   global:
@@ -29,3 +7,29 @@ env:
   - GOOGLE_APPLICATION_CREDENTIALS=travis-gcp-service-account-credentials.json
   - DSS_TEST_STAGE=dev
   - BOTO_CONFIG=/dev/null
+matrix:
+  include:
+  - os: linux
+    python:
+      - 2.7
+      - 3.4
+      - 3.5
+      - 3.6
+      - 3.7
+    before_install:
+      - openssl aes-256-cbc -K $encrypted_266b385b8e6e_key -iv $encrypted_266b385b8e6e_iv
+        -in travis-gcp-service-account-credentials.json.enc -out travis-gcp-service-account-credentials.json
+        -d
+      - sed -i -e s/dss.data.humancellatlas.org/dss.$DSS_TEST_STAGE.data.humancellatlas.org/ hca/default_config.json
+    install:
+      - pip install -r requirements-dev.txt
+      - wget -O regex.json https://raw.githubusercontent.com/HumanCellAtlas/dcplib/master/components/trufflehog_regex_patterns.json
+      - trufflehog --regex --rules regex.json --entropy=False https://github.com/HumanCellAtlas/data-store.git
+      - rm regex.json
+      - make install
+    script:
+      - make test
+    after_success:
+      - bash <(curl -s https://codecov.io/bash)
+
+
