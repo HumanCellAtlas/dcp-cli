@@ -7,9 +7,10 @@ env:
   - GOOGLE_APPLICATION_CREDENTIALS=travis-gcp-service-account-credentials.json
   - DSS_TEST_STAGE=dev
   - BOTO_CONFIG=/dev/null
-matrix:
+jobs:
   include:
-  - os: linux
+  - stage: "linux"
+    os: linux
     python:
       - 2.7
       - 3.4
