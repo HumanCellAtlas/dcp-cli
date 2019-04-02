@@ -1,15 +1,5 @@
 matrix:
   include:
-    - os: linux
-      python: 2.7
-    - os: linux
-      python: 3.4
-    - os: linux
-      python: 3.5
-    - os: linux
-      python: 3.6
-    - os: linux
-      python: 3.7
     - os: windows
       language: sh
       python: "3.7"
@@ -25,8 +15,15 @@ matrix:
         - export PATH="/c/Python27:/c/Python27/Scripts:$PATH"
         - python -m pip install --upgrade pip wheel
 language: python
+python:
+  - "2.7"
+  - "3.4"
+  - "3.5"
+  - "3.6"
 cache: pip
 sudo: false
+git:
+  submodules: false
 env:
   global:
   - secure: F4114AVsajBPgK2lhGA+oKUwICiq50ziJk7USgT587GRCXR3rt/ERdOzZd2lBfmb6i2jR6YKcZ1/W4qp5D7EC1qyOgfXUQbKFuJ00JsMD3C/PJXQWQxtaBfhFOaKxXPzpKKo2oJhkC2kqTpC6ch6gjMCupUoAgJZd7KVRS4pkkxSNF9FhObl6etUfod76XHnPKfMCzZQGVkLJsg1i5dbiwKz5TsCBfXcVb0xgFE0MgwmAuIkrou0RH+Ag/XMNEY8NFRd0Nuf3hC4CJ07K9U/rlfkxDuRHN8otd3dMAoZV8ZPO87wPgvJ+S62BKvWXQd2f0CzqTCrQsS9tJoHyQvfz8lVGpYd8+Qywfw7Ao6k+lGEm6bmeZjPQ0Pnk/s3AD255fCsBKaA9bVUQ423vwmiebYM/5sHCsThtqx61gJyjojFDmN5rFgPtdOlVJXU3ka20jpsa/wCyys9TzdaHvM7Q8NWkwfk090+WqgWLlvwsAIqpoZLm1ZwVm66V51Z1el+/zaw05BDoRrNFIaP1oV3dYyb8aki/fWSLcQ2DSP54a1SZkUCiiD/mOxalZZdG4yRL3wRV6bSKeWppt/dX0SHXmPEPWW930YVaLz5peCsHcB3Zvd7IOAGUWs7wCRAq26lYruvi6cqD3UtHJl+/ghv+oy/Hgpk2x8rcVKIlvMuD5A=
