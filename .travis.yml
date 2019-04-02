@@ -1,3 +1,12 @@
+matrix:
+  include:
+  - stage: "linux 2.7"
+    os: linux
+    python: 2.7
+  - stage: "linux 3.6"
+    os: linux
+    python: 3.6
+    
 language: python
 python:
   - 2.7
@@ -12,14 +21,7 @@ env:
   - GOOGLE_APPLICATION_CREDENTIALS=travis-gcp-service-account-credentials.json
   - DSS_TEST_STAGE=dev
   - BOTO_CONFIG=/dev/null
-jobs:
-  include:
-  - stage: "linux 2.7"
-    os: linux
-    python: 2.7
-  - stage: "linux 3.6"
-    os: linux
-    python: 3.6
+
 before_install:
   - openssl aes-256-cbc -K $encrypted_266b385b8e6e_key -iv $encrypted_266b385b8e6e_iv
     -in travis-gcp-service-account-credentials.json.enc -out travis-gcp-service-account-credentials.json
