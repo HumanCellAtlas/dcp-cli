@@ -232,7 +232,7 @@ class TestManifestDownload(unittest.TestCase):
 
     @unittest.skipIf(sys.version_info < (3,) and platform.system() == 'Windows',
                      'os.stat() returns dummy values with Python 2.7 on Windows')
-    # I (jesse) tested this manually on Python 2.7 on Windows 10 and hardlinks worked
+    # I (Jesse) tested this manually on Python 2.7 on Windows 10 and hard links worked
     @patch('hca.dss.DSSClient.get_bundle', side_effect=_fake_get_bundle)
     @patch('hca.dss.DSSClient._download_file', side_effect=_fake_download_file)
     def test_manifest_download_bundle(self, download_file_func, _):

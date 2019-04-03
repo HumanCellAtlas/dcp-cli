@@ -120,8 +120,8 @@ class DSSClient(SwaggerClient):
                                  "'{filename}' or a case derivation thereof".format(filename=filename, **bundle))
 
         for file_ in files.values():
-            dssfile = DSSFile.from_dss_bundle_response(file_, replica)
-            filename = file_.get("name", dssfile.uuid)
+            dss_file = DSSFile.from_dss_bundle_response(file_, replica)
+            filename = file_.get("name", dss_file.uuid)
             walking_dir = dest_name
 
             globs = metadata_files if file_['indexed'] else data_files
@@ -136,28 +136,28 @@ class DSSClient(SwaggerClient):
 
             logger.info("File %s: Retrieving...", filename)
             file_path = os.path.join(walking_dir, filename_base)
-            self._download_and_link_to_filestore(dssfile, file_path,
+            self._download_and_link_to_filestore(dss_file, file_path,
                                                  num_retries=num_retries, min_delay_seconds=min_delay_seconds)
 
-    def _download_and_link_to_filestore(self, dssfile, file_path, num_retries, min_delay_seconds):
-        file_store_path = self._download_to_filestore(dssfile,
+    def _download_and_link_to_filestore(self, dss_file, file_path, num_retries, min_delay_seconds):
+        file_store_path = self._download_to_filestore(dss_file,
                                                       num_retries=num_retries,
                                                       min_delay_seconds=min_delay_seconds)
         hardlink(file_store_path, file_path)
 
-    def _download_to_filestore(self, dssfile, num_retries=10, min_delay_seconds=0.25):
+    def _download_to_filestore(self, dss_file, num_retries=10, min_delay_seconds=0.25):
         """
         Attempt to download the data and save it in the 'filestore' location dictated by self._file_path()
         """
-        dest_path = self._file_path(dssfile.sha256)
+        dest_path = self._file_path(dss_file.sha256)
         if os.path.exists(dest_path):
-            logger.info("File %s already present. Skipping download.", dssfile.uuid)
+            logger.info("File %s already present. Skipping download.", dss_file.uuid)
         else:
-            logger.info("File %s: Retrieving...", dssfile.uuid)
-            self._download_file(dssfile, dest_path, num_retries=num_retries, min_delay_seconds=min_delay_seconds)
+            logger.info("File %s: Retrieving...", dss_file.uuid)
+            self._download_file(dss_file, dest_path, num_retries=num_retries, min_delay_seconds=min_delay_seconds)
         return dest_path
 
-    def _download_file(self, dssfile, dest_path, num_retries=10, min_delay_seconds=0.25):
+    def _download_file(self, dss_file, dest_path, num_retries=10, min_delay_seconds=0.25):
         """
         Attempt to download the data.  If a retryable exception occurs, we wait a bit and retry again.  The delay
         increases each time we fail and decreases each time we successfully read a block.  We set a quota for the
@@ -174,21 +174,21 @@ class DSSClient(SwaggerClient):
                 if e.errno != errno.EEXIST:
                     raise
         with atomic_write(dest_path, mode="wb", overwrite=True) as fh:
-            if dssfile.size == 0:
-                logger.info("%s", "File {}: CREATED (empty). Stored at {}.".format(dssfile.uuid, dest_path))
+            if dss_file.size == 0:
+                logger.info("%s", "File {}: CREATED (empty). Stored at {}.".format(dss_file.uuid, dest_path))
                 return
 
-            download_hash = self._do_download_file(dssfile, fh, num_retries, min_delay_seconds)
+            download_hash = self._do_download_file(dss_file, fh, num_retries, min_delay_seconds)
 
-            if download_hash.lower() != dssfile.sha256.lower():
+            if download_hash.lower() != dss_file.sha256.lower():
                 # No need to delete what's been written. atomic_write ensures we're cleaned up
-                logger.error("%s", "File {}: GET FAILED. Checksum mismatch.".format(dssfile.uuid))
+                logger.error("%s", "File {}: GET FAILED. Checksum mismatch.".format(dss_file.uuid))
                 raise ValueError("Expected sha256 {} Received sha256 {}".format(
-                    dssfile.sha256.lower(), download_hash.lower()))
+                    dss_file.sha256.lower(), download_hash.lower()))
             else:
-                logger.info("%s", "File {}: GET SUCCEEDED. Stored at {}.".format(dssfile.uuid, dest_path))
+                logger.info("%s", "File {}: GET SUCCEEDED. Stored at {}.".format(dss_file.uuid, dest_path))
 
-    def _do_download_file(self, dssfile, fh, num_retries, min_delay_seconds):
+    def _do_download_file(self, dss_file, fh, num_retries, min_delay_seconds):
         """
         Abstracts away complications for downloading a file, handles retries and delays, and computes its hash
         """
@@ -198,7 +198,7 @@ class DSSClient(SwaggerClient):
         while True:
             try:
                 response = self.get_file._request(
-                    dict(uuid=dssfile.uuid, version=dssfile.version, replica=dssfile.replica),
+                    dict(uuid=dss_file.uuid, version=dss_file.version, replica=dss_file.replica),
                     stream=True,
                     headers={
                         'Range': "bytes={}-".format(fh.tell())
@@ -206,7 +206,7 @@ class DSSClient(SwaggerClient):
                 )
                 try:
                     if not response.ok:
-                        logger.error("%s", "File {}: GET FAILED.".format(dssfile.uuid))
+                        logger.error("%s", "File {}: GET FAILED.".format(dss_file.uuid))
                         logger.error("%s", "Response: {}".format(response.text))
                         break
 
@@ -223,10 +223,10 @@ class DSSClient(SwaggerClient):
                     assert consume_bytes >= 0
                     if server_start > 0 and consume_bytes == 0:
                         logger.info("%s", "File {}: Resuming at {}.".format(
-                            dssfile.uuid, server_start))
+                            dss_file.uuid, server_start))
                     elif consume_bytes > 0:
                         logger.info("%s", "File {}: Resuming at {}. Dropping {} bytes to match".format(
-                            dssfile.uuid, server_start, consume_bytes))
+                            dss_file.uuid, server_start, consume_bytes))
 
                         while consume_bytes > 0:
                             bytes_to_read = min(consume_bytes, 1024*1024)
@@ -246,7 +246,7 @@ class DSSClient(SwaggerClient):
                     response.close()
             except (ChunkedEncodingError, ConnectionError, ReadTimeout):
                 if retries_left > 0:
-                    logger.info("%s", "File {}: GET FAILED. Attempting to resume.".format(dssfile.uuid))
+                    logger.info("%s", "File {}: GET FAILED. Attempting to resume.".format(dss_file.uuid))
                     time.sleep(delay)
                     delay *= 2
                     retries_left -= 1
@@ -336,20 +336,20 @@ class DSSClient(SwaggerClient):
         errors = 0
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=threads) as executor:
-            futures_to_dssfile = {}
+            futures_to_dss_file = {}
             for row in rows:
-                dssfile = DSSFile.from_manifest_row(row, replica)
-                future = executor.submit(self._download_to_filestore, dssfile,
+                dss_file = DSSFile.from_manifest_row(row, replica)
+                future = executor.submit(self._download_to_filestore, dss_file,
                                          num_retries=num_retries, min_delay_seconds=min_delay_seconds)
-                futures_to_dssfile[future] = dssfile
-            for future in concurrent.futures.as_completed(futures_to_dssfile):
-                dssfile = futures_to_dssfile[future]
+                futures_to_dss_file[future] = dss_file
+            for future in concurrent.futures.as_completed(futures_to_dss_file):
+                dss_file = futures_to_dss_file[future]
                 try:
                     future.result()
                 except Exception as e:
                     errors += 1
                     logger.warning('Failed to download file %s version %s from replica %s',
-                                   dssfile.uuid, dssfile.version, dssfile.replica, exc_info=e)
+                                   dss_file.uuid, dss_file.version, dss_file.replica, exc_info=e)
         if errors:
             raise RuntimeError('{} file(s) failed to download'.format(errors))
         else:
