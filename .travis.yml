@@ -2,10 +2,10 @@ matrix:
   include:
     - os: windows
       language: sh
-      python: "3.7"
+      python: "3.6"
       before_install:
-        - choco install python3
-        - export PATH="/c/Python37:/c/Python37/Scripts:$PATH"
+        - powershell --Command 'Invoke-WebRequest -Uri "https://www.python.org/ftp/python/3.6.8/python-3.6.8rc1-amd64.exe" -Outfile "./python-installer.exe"'
+        - powershell --Command 'python-installer.exe /quiet InstallAllUsers=1 PrependPath=1 Include_test=0'
         - python -m pip install --upgrade pip wheel
     - os: windows
       language: shell
