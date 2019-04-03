@@ -74,7 +74,6 @@ class TestSwaggerClient(unittest.TestCase):
             self.assertTrue(mock_makedirs.called)
             mock_get.assert_called_with(self.swagger_url)
             mock_atomic_write.assert_called_with(mock.ANY,
-                                                 mock.ANY,
                                                  self.test_response._content)
 
     def test_get_swagger_spec_cache_valid(self):
@@ -109,7 +108,6 @@ class TestSwaggerClient(unittest.TestCase):
             test = self.client.swagger_spec
             mock_get.assert_called_with(mock.ANY)
             mock_atomic_write.assert_called_with(mock.ANY,
-                                                 mock.ANY,
                                                  self.test_response._content)
 
     def test_get_swagger_spec_local_config(self):
