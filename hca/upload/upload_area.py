@@ -17,10 +17,6 @@ from .upload_config import UploadConfig
 class UploadArea:
 
     @classmethod
-    def all(cls):
-        return [cls(uuid=uuid) for uuid in UploadConfig().areas.keys()]
-
-    @classmethod
     def from_alias(cls, uuid_or_alias):
         matching_areas = UploadArea.areas_matching_alias(alias=uuid_or_alias)
         if len(matching_areas) == 0:

@@ -51,10 +51,6 @@ def list_area(area_uuid, detail=False):
         yield file_info
 
 
-def list_areas():
-    return [{'uuid': area.uuid, 'is_selected': area.is_selected} for area in UploadArea.all()]
-
-
 def get_credentials(area_uuid):
     """
     Return a set of credentials that may be used to access the Upload Area.
