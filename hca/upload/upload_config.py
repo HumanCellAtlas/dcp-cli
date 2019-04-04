@@ -1,8 +1,4 @@
-import six
-
 from .. import get_config
-
-from .lib.upload_area_urn import UploadAreaURN
 
 
 class UploadConfig:
@@ -17,7 +13,6 @@ class UploadConfig:
     def __init__(self):
         self._load_config()
         self._set_defaults()
-        self._convert_to_uris()  # Remove in a month or two
 
     def _load_config(self):
         self._config = get_config()
@@ -35,9 +30,6 @@ class UploadConfig:
             self._config.upload.production_api_url = self.DEFAULT_PRODUCTION_API_URL
         if 'preprod_api_url_template' not in self._config.upload:
             self._config.upload.preprod_api_url_template = self.DEFAULT_PREPROD_API_URL_TEMPLATE
-        # Old style.  Remove after 2018:
-        if 'upload_service_api_url_template' in self._config.upload:
-            del self._config.upload['upload_service_api_url_template']
         self.save()
 
     @property
@@ -78,25 +70,3 @@ class UploadConfig:
 
     def save(self):
         self._config.save()
-
-    """
-    Convert:
-      "areas": {
-        "deadbeef-dead-dead-dead-beeeeeeeeef": "dcp:upl:aws:dev:deadbeef-dead-dead-dead-beeeeeeeeeef:ENCRYPTEDCREDS"
-      }
-      to
-      "areas": {
-        "deadbeef-dead-dead-dead-beeeeeeeeeef": {
-          "uri": "s3://org-humancellatlas-upload-dev/deadbeef-dead-dead-dead-beeeeeeeeeef/"
-        }
-      }
-    """
-    def _convert_to_uris(self):
-        for area_id, area_data in self.areas.items():
-            if isinstance(area_data, six.text_type):
-                urn = UploadAreaURN(area_data)
-                bucket_name = self.bucket_name_template.format(deployment_stage=urn.deployment_stage)
-                self.areas[area_id] = {
-                    "uri": "s3://{bucket_name}/{area_id}/".format(bucket_name=bucket_name, area_id=area_id)
-                }
-        self.save()
