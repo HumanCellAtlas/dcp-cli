@@ -3,7 +3,7 @@ import re
 from hca.upload import UploadConfig, UploadArea
 
 from hca.upload.cli.common import UploadCLICommand
-from hca.upload.upload_submission_state import FileStatusCheck
+from hca.upload.lib.upload_submission_state import FileStatusCheck
 
 
 class ListFileStatusCommand(UploadCLICommand):

@@ -12,7 +12,7 @@ sys.path.insert(0, pkg_root)  # noqa
 
 from test import TEST_DIR
 from test.integration.upload import UploadTestCase
-from hca.upload.s3_agent import WRITE_PERCENT_THRESHOLD
+from hca.upload.lib.s3_agent import WRITE_PERCENT_THRESHOLD
 
 
 class TestUploadFileUpload(UploadTestCase):

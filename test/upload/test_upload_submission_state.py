@@ -2,7 +2,7 @@ import filecmp
 import os
 import unittest
 from mock import Mock, patch
-from hca.upload.upload_submission_state import FileStatusCheck, UploadAreaFilesStatusCheck
+from hca.upload.lib.upload_submission_state import FileStatusCheck, UploadAreaFilesStatusCheck
 
 
 class TestFileStatusCheck(unittest.TestCase):
@@ -41,8 +41,8 @@ class TestFileStatusCheck(unittest.TestCase):
         }
         self.file_status = FileStatusCheck('dev')
 
-    @patch('hca.upload.api_client.ApiClient.checksum_status')
-    @patch('hca.upload.api_client.ApiClient._make_request')
+    @patch('hca.upload.lib.api_client.ApiClient.checksum_status')
+    @patch('hca.upload.lib.api_client.ApiClient._make_request')
     def test_validated_file_status(self, mock_make_request, mock_checksum_status):
         mock_response = Mock()
         mock_response.json.return_value = self.validated_response_body
@@ -54,7 +54,7 @@ class TestFileStatusCheck(unittest.TestCase):
         assert valid_file == 'VALIDATED'
         mock_make_request.assert_called_once_with('get', path='/area/uuid/filename/validate')
 
-    @patch('hca.upload.api_client.ApiClient._make_request')
+    @patch('hca.upload.lib.api_client.ApiClient._make_request')
     def test_checksumming_scheduled_file_status(self, mock_make_request):
         mock_response = Mock()
         mock_response.json.return_value = self.checksum_scheduled_response_body
@@ -65,8 +65,8 @@ class TestFileStatusCheck(unittest.TestCase):
         assert checksum_scheduled == 'CHECKSUMMING_SCHEDULED'
         mock_make_request.assert_called_once_with('get', '/area/uuid/filename/checksum')
 
-    @patch('hca.upload.api_client.ApiClient.checksum_status')
-    @patch('hca.upload.api_client.ApiClient.validation_status')
+    @patch('hca.upload.lib.api_client.ApiClient.checksum_status')
+    @patch('hca.upload.lib.api_client.ApiClient.validation_status')
     def test_validation_scheduled_file_status(self, mock_validation_status, mock_checksum_status):
         mock_validation_status.return_value = self.validation_scheduled_response_body
         mock_checksum_status.return_value = self.checksummed_response_body
@@ -95,8 +95,8 @@ class TestUploadAreaStatusCheck(unittest.TestCase):
     def tearDownClass(clsr):
         os.remove('test_status_report.txt')
 
-    @patch('hca.upload.api_client.ApiClient.checksum_statuses')
-    @patch('hca.upload.api_client.ApiClient._make_request')
+    @patch('hca.upload.lib.api_client.ApiClient.checksum_statuses')
+    @patch('hca.upload.lib.api_client.ApiClient._make_request')
     def test_get_file_statuses_correctly_sets_number_unscheduled_for_validation(self, mock_make_request,
                                                                                 mock_checksum_statuses):
         mock_response = Mock()
@@ -110,8 +110,8 @@ class TestUploadAreaStatusCheck(unittest.TestCase):
         assert validations_statuses['VALIDATION_UNSCHEDULED'] == 1
         mock_make_request.assert_called_once_with('get', '/area/upload_area_id/validations')
 
-    @patch('hca.upload.api_client.ApiClient._make_request')
-    @patch('hca.upload.api_client.ApiClient.validation_statuses')
+    @patch('hca.upload.lib.api_client.ApiClient._make_request')
+    @patch('hca.upload.lib.api_client.ApiClient.validation_statuses')
     def test_report_generated_correctly(self, mock_validation_statuses, mock_make_request):
         mock_validation_statuses.return_value = self.validations_response_body
         mock_response = Mock()

@@ -6,7 +6,7 @@ except ImportError:
 import requests
 from tenacity import retry, stop_after_attempt, wait_fixed
 
-from .upload_config import UploadConfig
+from ..upload_config import UploadConfig
 
 
 class UploadApiException(RuntimeError):

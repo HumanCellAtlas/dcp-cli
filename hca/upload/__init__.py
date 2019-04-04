@@ -3,11 +3,11 @@ Upload Service
 **************
 """
 
-from .credentials_manager import CredentialsManager
+from .lib.credentials_manager import CredentialsManager
+from .lib.api_client import ApiClient
 from .upload_config import UploadConfig
 from .upload_area import UploadArea, UploadAreaURI
 from .exceptions import UploadException
-from .api_client import ApiClient
 
 
 def select_area(**kwargs):

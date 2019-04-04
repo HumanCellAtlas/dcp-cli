@@ -1,7 +1,7 @@
 import base64
 import json
 
-from .exceptions import UploadException
+from ..exceptions import UploadException
 
 
 class UploadAreaURN:

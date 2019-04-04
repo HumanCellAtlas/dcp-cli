@@ -5,11 +5,11 @@ import re
 from dcplib.media_types import DcpMediaType
 
 from hca.util.pool import ThreadPool
-from .api_client import ApiClient
-from .client_side_checksum_handler import ClientSideChecksumHandler
-from .credentials_manager import CredentialsManager
+from .lib.api_client import ApiClient
+from .lib.client_side_checksum_handler import ClientSideChecksumHandler
+from .lib.credentials_manager import CredentialsManager
 from .exceptions import UploadException
-from .s3_agent import S3Agent
+from .lib.s3_agent import S3Agent
 from .upload_area_uri import UploadAreaURI
 from .upload_config import UploadConfig
 

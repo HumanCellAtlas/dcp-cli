@@ -1,6 +1,6 @@
 from hca.upload import UploadArea, UploadConfig
 
-from hca.upload.upload_submission_state import UploadAreaFilesStatusCheck
+from hca.upload.lib.upload_submission_state import UploadAreaFilesStatusCheck
 
 from hca.upload.cli.common import UploadCLICommand
 

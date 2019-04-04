@@ -2,7 +2,7 @@ import six
 
 from .. import get_config
 
-from .upload_area_urn import UploadAreaURN
+from .lib.upload_area_urn import UploadAreaURN
 
 
 class UploadConfig:
