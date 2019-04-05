@@ -45,6 +45,21 @@ class UploadArea:
     def deployment_stage(self):
         return self.uri.deployment_stage
 
+    def get_credentials(self):
+        """
+        Return a set of credentials that may be used to access the Upload Area folder in the S3 bucket
+        :return: a dict containing AWS credentials in a format suitable for passing to Boto3
+            or if capitalized, used as environment variables
+        """
+        creds_mgr = CredentialsManager(self)
+        creds = creds_mgr.get_credentials_from_upload_api()
+        return {
+            'aws_access_key_id': creds['access_key'],
+            'aws_secret_access_key': creds['secret_key'],
+            'aws_session_token': creds['token'],
+            'expiry_time': creds['expiry_time']
+        }
+
     def list(self, detail=False):
         """
         A generator that yields information about each file in the upload area

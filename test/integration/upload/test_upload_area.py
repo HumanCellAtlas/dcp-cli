@@ -15,6 +15,23 @@ from test.integration.upload import UploadTestCase
 from hca.upload.lib.s3_agent import WRITE_PERCENT_THRESHOLD
 
 
+class TestUploadArea(UploadTestCase):
+
+    def test_get_credentials(self):
+
+        area = self.mock_current_upload_area()
+        creds_url = self.simulate_credentials_api(area_uuid=area.uuid)
+
+        creds = area.get_credentials()
+
+        self.assertEqual(len(responses.calls), 1)
+        self.assertEqual(responses.calls[0].request.url, creds_url)
+        self.assertIn('aws_access_key_id', creds)
+        self.assertIn('aws_secret_access_key', creds)
+        self.assertIn('aws_session_token', creds)
+        self.assertIn('expiry_time', creds)
+
+
 class TestUploadAreaFileUpload(UploadTestCase):
 
     def setUp(self):

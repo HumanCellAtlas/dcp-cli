@@ -1,4 +1,4 @@
-from .. import get_credentials, UploadException, UploadConfig
+from .. import UploadArea, UploadException, UploadConfig
 from .common import UploadCLICommand
 
 
@@ -21,9 +21,11 @@ class CredsCommand(UploadCLICommand):
         alias = args.uuid_or_alias
         try:
             area_uuid = UploadConfig().area_uuid_from_partial_uuid(partial_uuid=alias)
-            creds = get_credentials(area_uuid)
+            area = UploadArea(uuid=area_uuid)
+            creds = area.get_credentials()
+            del creds['expiry_time']
             for k, v in creds.items():
-                print("{key}={value}".format(key=k, value=v))
+                print("{key}={value}".format(key=k.upper(), value=v))
 
         except UploadException as e:
             print(str(e))

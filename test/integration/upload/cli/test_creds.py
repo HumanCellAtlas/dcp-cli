@@ -28,6 +28,8 @@ class TestUploadCliCredsCommand(UploadTestCase):
             args = Namespace(uuid_or_alias=area.uuid)
             CredsCommand(args)
 
+        non_blank_lines = [s for s in stdout.captured().split("\n") if s]
+        self.assertEqual(3, len(non_blank_lines))
         six.assertRegex(self, stdout.captured(), "AWS_ACCESS_KEY_ID=")
         six.assertRegex(self, stdout.captured(), "AWS_SECRET_ACCESS_KEY=")
         six.assertRegex(self, stdout.captured(), "AWS_SESSION_TOKEN=")
