@@ -1,5 +1,5 @@
-from .. import list_current_area
 from .common import UploadCLICommand
+from ..upload_area import UploadArea, UploadConfig
 
 
 class ListAreaCommand(UploadCLICommand):
@@ -14,7 +14,8 @@ class ListAreaCommand(UploadCLICommand):
         list_area_parser.add_argument('-l', '--long', action='store_true', help="Long listing - show file details.")
 
     def __init__(self, args):
-        for f in list_current_area(detail=args.long):
+        config = UploadConfig()
+        for f in UploadArea(uuid=config.current_area).list(detail=args.long):
             print(f['name'])
             if args.long:
                 print("\t%-12s %d bytes\n\t%-12s %s\n\t%-12s %s" % (

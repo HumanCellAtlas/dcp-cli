@@ -45,17 +45,6 @@ class UploadArea:
     def deployment_stage(self):
         return self.uri.deployment_stage
 
-    @property
-    def is_selected(self):
-        return UploadConfig().current_area == self.uuid
-
-    def select(self):
-        config = UploadConfig()
-        config.select_area(self.uuid)
-
-    def forget(self):
-        UploadConfig().forget_area(self.uuid)
-
     def list(self, detail=False):
         """
         A generator that yields information about each file in the upload area

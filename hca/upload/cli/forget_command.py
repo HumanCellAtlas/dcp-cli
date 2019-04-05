@@ -1,4 +1,4 @@
-from .. import forget_area, UploadException
+from .. import UploadException, UploadConfig
 from .common import UploadCLICommand
 
 
@@ -20,7 +20,9 @@ class ForgetCommand(UploadCLICommand):
     def __init__(self, args):
         alias = args.uuid_or_alias
         try:
-            area_uuid = forget_area(alias)
+            config = UploadConfig()
+            area_uuid = config.area_uuid_from_partial_uuid(partial_uuid=alias)
+            config.forget_area(area_uuid)
             print("Forgetting about area {uuid}".format(uuid=area_uuid))
         except UploadException as e:
             print(str(e))
