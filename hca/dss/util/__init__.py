@@ -1,3 +1,4 @@
+import errno
 import os
 
 import platform
@@ -52,4 +53,8 @@ def hardlink(source, link_name):
         if res == 0:
             raise ctypes.WinError()
     else:
-        os.link(source, link_name)
+        try:
+            os.link(source, link_name)
+        except OSError as e:
+            if e.errno != errno.EEXIST:
+                raise
