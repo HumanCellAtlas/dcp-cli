@@ -237,9 +237,6 @@ class TestManifestDownload(unittest.TestCase):
     @patch('hca.dss.DSSClient._download_file', side_effect=_fake_download_file)
     def test_manifest_download_bundle(self, download_file_func, _):
         self.dss.download_manifest(self.manifest_file, 'aws')
-        files_present = {os.path.join(dir_path, f)
-                         for dir_path, _, files in walk('.')
-                         for f in files}
         data_files = {
             os.path.join('.', 'a_uuid', 'a_file_name'),
             os.path.join('.', 'b_uuid', 'b_file_name'),
@@ -261,6 +258,17 @@ class TestManifestDownload(unittest.TestCase):
                              'Expected one link for the "filestore" entry and one for each bundle')
         self.assertEqual(download_file_func.call_count, 4,
                          'Expected one call for each unique file: 3 data and 1 metadata')
+        self.dss.download_manifest(self.manifest_file, 'aws')
+        self.assertEqual(download_file_func.call_count, 4)
+
+    def test_link_fail(self):
+        """
+        If linking raises some other OSError, make sure that percolates up
+        """
+        with patch('os.link', side_effect=OSError()), \
+                patch('hca.dss.DSSClient.get_bundle', side_effect=_fake_get_bundle), \
+                patch('hca.dss.DSSClient._download_file', side_effect=_fake_download_file):
+            self.assertRaises(RuntimeError, self.dss.download_manifest, self.manifest_file, 'aws')
 
 
 if __name__ == "__main__":
