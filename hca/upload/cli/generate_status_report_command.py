@@ -1,4 +1,4 @@
-from hca.upload import UploadArea, UploadConfig
+from hca.upload import UploadConfig
 
 from hca.upload.lib.upload_submission_state import UploadAreaFilesStatusCheck
 
@@ -27,15 +27,16 @@ class GenerateStatusReportCommand(UploadCLICommand):
                                                    default=None)
 
     def __init__(self, args):
-        upload_area = args.uuid
+        area_uuid = args.uuid
         env = args.env
         out_put = args.output_file_name
         config = UploadConfig()
-        if not upload_area:
-            upload_area = config.current_area
+        if not area_uuid:
+            area_uuid = config.current_area
         if not env:
-            env = UploadArea(uuid=upload_area).deployment_stage
+            area_uri = config.area_uri(area_uuid)
+            env = area_uri.deployment_stage
         if not out_put:
-            out_put = upload_area
-        UploadAreaFilesStatusCheck(env).check_file_statuses(upload_area, out_put)
-        print('File status report for {}/{} generated, located {}.txt'.format(env, upload_area, out_put))
+            out_put = area_uuid
+        UploadAreaFilesStatusCheck(env).check_file_statuses(area_uuid, out_put)
+        print('File status report for {}/{} generated, located {}.txt'.format(env, area_uuid, out_put))

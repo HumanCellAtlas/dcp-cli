@@ -20,8 +20,10 @@ class CredsCommand(UploadCLICommand):
     def __init__(self, args):
         alias = args.uuid_or_alias
         try:
-            area_uuid = UploadConfig().area_uuid_from_partial_uuid(partial_uuid=alias)
-            area = UploadArea(uuid=area_uuid)
+            config = UploadConfig()
+            area_uuid = config.area_uuid_from_partial_uuid(partial_uuid=alias)
+            area_uri = config.area_uri(area_uuid)
+            area = UploadArea(uri=area_uri)
             creds = area.get_credentials()
             del creds['expiry_time']
             for k, v in creds.items():

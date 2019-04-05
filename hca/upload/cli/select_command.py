@@ -1,4 +1,4 @@
-from ..upload_area import UploadException, UploadAreaURI, UploadConfig
+from hca.upload import UploadException, UploadAreaURI, UploadConfig
 from .common import UploadCLICommand
 
 
@@ -28,7 +28,7 @@ class SelectCommand(UploadCLICommand):
             uri_string += '/'
         uri = UploadAreaURI(uri_string)
         config = UploadConfig()
-        if uri.area_uuid in config.areas.keys():
+        if uri.area_uuid in config.areas:
             config.select_area(uri.area_uuid)
         else:
             config.add_area(uri)

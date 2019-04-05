@@ -2,6 +2,7 @@ import re
 
 from .. import get_config
 from .exceptions import UploadException
+from .upload_area_uri import UploadAreaURI
 
 
 class UploadConfig:
@@ -38,10 +39,11 @@ class UploadConfig:
     @property
     def areas(self):
         """
-
-        :return:
+        Return list of all known areas
+        :return: list of UUIDs
+        :rtype: list
         """
-        return self._config.upload.areas
+        return list(self._config.upload.areas.keys())
 
     @property
     def current_area(self):
@@ -76,10 +78,21 @@ class UploadConfig:
     @property
     def production_api_url(self):
         """
-
         :return: the currently configured base URL for the production REST API of the Upload Service
         """
         return self._config.upload.production_api_url
+
+    def area_uri(self, area_uuid):
+        """
+        Return the URI for an Upload Area
+        :param area_uuid: UUID of area for which we want URI
+        :return: Upload Area URI object
+        :rtype: UploadAreaURI
+        :raises UploadException: if area does not exist
+        """
+        if area_uuid not in self.areas:
+            raise UploadException("I don't know about area {uuid}".format(uuid=area_uuid))
+        return UploadAreaURI(self._config.upload.areas[area_uuid]['uri'])
 
     def add_area(self, uri):
         """

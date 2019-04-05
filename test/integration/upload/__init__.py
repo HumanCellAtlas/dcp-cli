@@ -49,11 +49,11 @@ class UploadTestCase(unittest.TestCase):
             area_uuid = str(uuid.uuid4())
         if not bucket_name:
             bucket_name = self.UPLOAD_BUCKET_NAME_TEMPLATE.format(deployment_stage=self.deployment_stage)
-        area_uri = "s3://{bucket}/{uuid}/".format(bucket=bucket_name, uuid=area_uuid)
-        uri = UploadAreaURI(area_uri)
+        area_uri_str = "s3://{bucket}/{uuid}/".format(bucket=bucket_name, uuid=area_uuid)
+        area_uri = UploadAreaURI(area_uri_str)
         config = UploadConfig()
-        config.add_area(uri)
-        area = UploadArea(uuid=uri.area_uuid)
+        config.add_area(area_uri)
+        area = UploadArea(uri=area_uri)
         return area
 
     def simulate_credentials_api(self, area_uuid,

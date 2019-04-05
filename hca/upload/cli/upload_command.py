@@ -3,9 +3,8 @@ import sys
 
 import boto3
 
-from ..upload_config import UploadConfig
+from hca.upload import UploadConfig, UploadArea
 from .common import UploadCLICommand
-from ..upload_area import UploadArea
 
 
 class UploadCommand(UploadCLICommand):
@@ -47,7 +46,10 @@ class UploadCommand(UploadCLICommand):
         self._check_args(args)
         for upload_path in args.upload_paths:
             self._load_file_paths_from_upload_path(args, upload_path)
-        area = UploadArea(uuid=UploadConfig().current_area)
+        config = UploadConfig()
+        area_uuid = config.current_area
+        area_uri = config.area_uri(area_uuid)
+        area = UploadArea(uri=area_uri)
         area.upload_files(self.file_paths,
                           self.file_size_sum,
                           target_filename=args.target_filename,

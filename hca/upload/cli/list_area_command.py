@@ -1,5 +1,5 @@
+from hca.upload import UploadArea, UploadConfig
 from .common import UploadCLICommand
-from ..upload_area import UploadArea, UploadConfig
 
 
 class ListAreaCommand(UploadCLICommand):
@@ -15,7 +15,11 @@ class ListAreaCommand(UploadCLICommand):
 
     def __init__(self, args):
         config = UploadConfig()
-        for f in UploadArea(uuid=config.current_area).list(detail=args.long):
+        area_uuid = config.current_area
+        area_uri = config.area_uri(area_uuid)
+        upload_area = UploadArea(uri=area_uri)
+
+        for f in upload_area.list(detail=args.long):
             print(f['name'])
             if args.long:
                 print("\t%-12s %d bytes\n\t%-12s %s\n\t%-12s %s" % (

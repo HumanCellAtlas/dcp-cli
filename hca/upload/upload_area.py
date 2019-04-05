@@ -11,30 +11,19 @@ from .lib.credentials_manager import CredentialsManager
 from .exceptions import UploadException
 from .lib.s3_agent import S3Agent
 from .upload_area_uri import UploadAreaURI
-from .upload_config import UploadConfig
 
 
 class UploadArea:
 
-    def __init__(self, **kwargs):
+    def __init__(self, uri):
         """
-        You must supply either a uuid or uri keyword argument.
+        Initialize an UploadArea object.  Does not actually create an Upload Area.
 
-        :param uuid: The UUID of an existing Upload Area that we know about.
-        :param uri: A URI for a new area.
+        :param UploadAreaURI uri: The URI of the Area.
         """
-        if 'uuid' in kwargs:
-            uuid = kwargs['uuid']
-            areas = UploadConfig().areas
-            if uuid not in areas:
-                raise UploadException("I'm not aware of upload area \"%s\"" % uuid)
-            self.uri = UploadAreaURI(areas[uuid]['uri'])
-        elif 'uri' in kwargs:
-            self.uri = UploadAreaURI(kwargs['uri'])
-            UploadConfig().add_area(self.uri)
-        else:
-            raise UploadException("You must provide a uuid or URI")
-        self.uuid = self.uri.area_uuid
+        if not isinstance(uri, UploadAreaURI):
+            raise UploadException("You must provide an UploadAreaURI")
+        self.uri = uri
         self.s3_agent = None
         self.upload_api_client = ApiClient(self.uri.deployment_stage)
 
@@ -44,6 +33,10 @@ class UploadArea:
     @property
     def deployment_stage(self):
         return self.uri.deployment_stage
+
+    @property
+    def uuid(self):
+        return self.uri.area_uuid
 
     def get_credentials(self):
         """

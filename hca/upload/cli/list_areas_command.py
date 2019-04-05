@@ -16,7 +16,7 @@ class ListAreasCommand(UploadCLICommand):
         list_areas_parser.set_defaults(entry_point=ListAreasCommand)
 
     def __init__(self, args):
-        for uuid in UploadConfig().areas.keys():
+        for uuid in UploadConfig().areas:
             sys.stdout.write(uuid)
             if uuid == UploadConfig().current_area:
                 sys.stdout.write(" <- selected")

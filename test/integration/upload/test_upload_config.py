@@ -39,7 +39,7 @@ class TestUploadConfig(UploadTestCase):
         config.save()
 
     def test_areas__when_there_are_some__returns_areas(self):
-        self.assertEqual(self.areas_config, UploadConfig().areas)
+        self.assertEqual(sorted([self.a_uuid, self.b_uuid]), sorted(UploadConfig().areas))
 
     def test_areas__when_the_upload_tweak_config_is_not_setup__does_not_error(self):
         config = hca.get_config()
@@ -61,6 +61,20 @@ class TestUploadConfig(UploadTestCase):
 
     def test_production_api_url(self):
         self.assertEqual("https://bogo_prod_api_url", UploadConfig().production_api_url)
+
+    def test_area_uri(self):
+        area_uuid = str(uuid.uuid4())
+        uri = self._make_area_uri(area_uuid)
+        config = hca.get_config()
+        config.upload = {
+            'areas': {area_uuid: {'uri': uri}},
+        }
+        config.save()
+
+        area_uri = UploadConfig().area_uri(area_uuid)
+
+        self.assertIsInstance(area_uri, UploadAreaURI)
+        self.assertEqual(uri, area_uri.uri)
 
     def test_add_area(self):
         config = UploadConfig()
@@ -85,12 +99,12 @@ class TestUploadConfig(UploadTestCase):
 
     def test_forget_area(self):
         upload_config = UploadConfig()
-        self.assertEqual(sorted([self.a_uuid, self.b_uuid]), sorted((upload_config.areas.keys())))
+        self.assertEqual(sorted([self.a_uuid, self.b_uuid]), sorted(upload_config.areas))
 
         upload_config.forget_area(self.a_uuid)
 
         config = hca.get_config()
-        self.assertEqual([self.b_uuid], list(config.upload.areas.keys()))
+        self.assertEqual([self.b_uuid], list(config.upload.areas))
         self.assertEqual(None, config.upload.current_area)
 
     def test_area_uuid_from_partial_uuid__when_given_a_non_matching_partial__raises(self):
