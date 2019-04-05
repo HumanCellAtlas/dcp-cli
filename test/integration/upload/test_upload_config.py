@@ -1,20 +1,16 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-import json
 import os
-import random
 import sys
 import unittest
 import uuid
-
-import responses
 
 pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))  # noqa
 sys.path.insert(0, pkg_root)  # noqa
 
 import hca
-from hca.upload import UploadConfig, UploadAreaURI
+from hca.upload import UploadConfig, UploadAreaURI, UploadException
 from test.integration.upload import UploadTestCase
 
 
@@ -96,6 +92,41 @@ class TestUploadConfig(UploadTestCase):
         config = hca.get_config()
         self.assertEqual([self.b_uuid], list(config.upload.areas.keys()))
         self.assertEqual(None, config.upload.current_area)
+
+    def test_area_uuid_from_partial_uuid__when_given_a_non_matching_partial__raises(self):
+        with self.assertRaises(UploadException):
+            UploadConfig().area_uuid_from_partial_uuid(partial_uuid='underscore_will_never_appear_in_uuid')
+
+    def test_area_uuid_from_partial_uuid__when_given_a_partial_matching_several_areas__raises(self):
+        uuid1 = '11111111-1111-1111-1111-111111111111'
+        uuid2 = '11111111-2222-2222-2222-222222222222'
+        config = hca.get_config()
+        config.upload = {
+            'areas': {
+                uuid1: {'uri': "s3://foo/{}/".format(uuid1)},
+                uuid2: {'uri': "s3://foo/{}/".format(uuid2)},
+            },
+        }
+        config.save()
+
+        with self.assertRaises(UploadException):
+            UploadConfig().area_uuid_from_partial_uuid(partial_uuid='11111111')
+
+    def test_area_uuid_from_partial_uuid__when_given_a_single_partial__returns_uuid(self):
+        uuid1 = '11111111-1111-1111-1111-111111111111'
+        uuid2 = '22222222-2222-2222-2222-222222222222'
+        config = hca.get_config()
+        config.upload = {
+            'areas': {
+                uuid1: {'uri': "s3://foo/{}/".format(uuid1)},
+                uuid2: {'uri': "s3://foo/{}/".format(uuid2)},
+            },
+        }
+        config.save()
+
+        uuid = UploadConfig().area_uuid_from_partial_uuid(partial_uuid='11111111')
+
+        self.assertEqual(uuid1, uuid)
 
 
 if __name__ == "__main__":

@@ -16,21 +16,6 @@ from .upload_config import UploadConfig
 
 class UploadArea:
 
-    @classmethod
-    def from_alias(cls, uuid_or_alias):
-        matching_areas = UploadArea.areas_matching_alias(alias=uuid_or_alias)
-        if len(matching_areas) == 0:
-            raise UploadException("Sorry I don't recognize area \"%s\"" % (uuid_or_alias,))
-        elif len(matching_areas) == 1:
-            return matching_areas[0]
-        else:
-            raise UploadException(
-                "\"%s\" matches more than one area, please provide more characters." % (uuid_or_alias,))
-
-    @classmethod
-    def areas_matching_alias(cls, alias):
-        return [cls(uuid=uuid) for uuid in UploadConfig().areas if re.match(alias, uuid)]
-
     def __init__(self, **kwargs):
         """
         You must supply either a uuid or uri keyword argument.
@@ -63,14 +48,6 @@ class UploadArea:
     @property
     def is_selected(self):
         return UploadConfig().current_area == self.uuid
-
-    @property
-    def unique_prefix(self):
-        for prefix_len in range(1, len(self.uuid)):
-            prefix = self.uuid[0:prefix_len]
-            matches = UploadArea.areas_matching_alias(prefix)
-            if len(matches) == 1:
-                return prefix
 
     def select(self):
         config = UploadConfig()

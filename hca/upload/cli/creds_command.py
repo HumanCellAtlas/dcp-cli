@@ -1,4 +1,4 @@
-from .. import get_credentials, UploadArea, UploadException
+from .. import get_credentials, UploadException, UploadConfig
 from .common import UploadCLICommand
 
 
@@ -20,9 +20,8 @@ class CredsCommand(UploadCLICommand):
     def __init__(self, args):
         alias = args.uuid_or_alias
         try:
-
-            area = UploadArea.from_alias(alias)
-            creds = get_credentials(area.uuid)
+            area_uuid = UploadConfig().area_uuid_from_partial_uuid(partial_uuid=alias)
+            creds = get_credentials(area_uuid)
             for k, v in creds.items():
                 print("{key}={value}".format(key=k, value=v))
 

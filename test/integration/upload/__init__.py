@@ -8,7 +8,7 @@ from moto import mock_s3, mock_sts
 import responses
 
 import hca
-from hca.upload import UploadArea
+from hca.upload import UploadArea, UploadConfig, UploadAreaURI
 from test import TweakResetter
 
 
@@ -38,7 +38,7 @@ class UploadTestCase(unittest.TestCase):
 
     def mock_current_upload_area(self, area_uuid=None, bucket_name=None):
         area = self.mock_upload_area(area_uuid=area_uuid, bucket_name=bucket_name)
-        area.select()
+        UploadConfig().select_area(area.uuid)
         return area
 
     def mock_upload_area(self, area_uuid=None, bucket_name=None):
@@ -49,7 +49,11 @@ class UploadTestCase(unittest.TestCase):
             area_uuid = str(uuid.uuid4())
         if not bucket_name:
             bucket_name = self.UPLOAD_BUCKET_NAME_TEMPLATE.format(deployment_stage=self.deployment_stage)
-        area = UploadArea(uri="s3://{bucket}/{uuid}/".format(bucket=bucket_name, uuid=area_uuid))
+        area_uri = "s3://{bucket}/{uuid}/".format(bucket=bucket_name, uuid=area_uuid)
+        uri = UploadAreaURI(area_uri)
+        config = UploadConfig()
+        config.add_area(uri)
+        area = UploadArea(uuid=uri.area_uuid)
         return area
 
     def simulate_credentials_api(self, area_uuid,

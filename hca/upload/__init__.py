@@ -30,9 +30,10 @@ def forget_area(uuid_or_alias):
     """
     Remove an area from our cache of upload areas.
     """
-    area = UploadArea.from_alias(uuid_or_alias)
-    area.forget()
-    return area
+    config = UploadConfig()
+    area_uuid = config.area_uuid_from_partial_uuid(partial_uuid=uuid_or_alias)
+    config.forget_area(area_uuid)
+    return area_uuid
 
 
 def list_current_area(detail=False):

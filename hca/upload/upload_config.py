@@ -1,4 +1,7 @@
+import re
+
 from .. import get_config
+from .exceptions import UploadException
 
 
 class UploadConfig:
@@ -108,6 +111,36 @@ class UploadConfig:
         if area_uuid in self._config.upload.areas:
             del self._config.upload.areas[area_uuid]
             self.save()
+
+    def area_uuid_from_partial_uuid(self, partial_uuid):
+        """
+        Given a partial UUID (a prefix), see if we have know about an Upload Area matching it.
+        :param (str) partial_uuid: UUID prefix
+        :return: a matching UUID
+        :rtype: str
+        :raises UploadException: if no or more than one UUIDs match.
+        """
+        matching_areas = [uuid for uuid in self.areas if re.match(partial_uuid, uuid)]
+        if len(matching_areas) == 0:
+            raise UploadException("Sorry I don't recognize area \"%s\"" % (partial_uuid,))
+        elif len(matching_areas) == 1:
+            return matching_areas[0]
+        else:
+            raise UploadException(
+                "\"%s\" matches more than one area, please provide more characters." % (partial_uuid,))
+
+    def unique_prefix(self, area_uuid):
+        """
+        Find the minimum prefix required to address this Upload Area UUID uniquely.
+        :param (str) area_uuid: UUID of Upload Area
+        :return: a string with the minimum prefix required to be unique
+        :rtype: str
+        """
+        for prefix_len in range(1, len(area_uuid)):
+            prefix = area_uuid[0:prefix_len]
+            matching_areas = [uuid for uuid in self.areas if re.match(prefix, uuid)]
+            if len(matching_areas) == 1:
+                return prefix
 
     def save(self):
         self._config.save()
