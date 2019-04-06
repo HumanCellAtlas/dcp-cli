@@ -3,7 +3,7 @@ import sys
 
 import boto3
 
-from hca.upload import UploadConfig, UploadArea
+from hca.upload import UploadService, UploadConfig
 from .common import UploadCLICommand
 
 
@@ -49,7 +49,8 @@ class UploadCommand(UploadCLICommand):
         config = UploadConfig()
         area_uuid = config.current_area
         area_uri = config.area_uri(area_uuid)
-        area = UploadArea(uri=area_uri)
+        upload_service = UploadService(deployment_stage=area_uri.deployment_stage)
+        area = upload_service.upload_area(area_uri=area_uri)
         area.upload_files(self.file_paths,
                           self.file_size_sum,
                           target_filename=args.target_filename,

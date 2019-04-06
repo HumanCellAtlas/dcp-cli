@@ -1,11 +1,9 @@
 import mimetypes
 import os
-import re
 
 from dcplib.media_types import DcpMediaType
 
 from hca.util.pool import ThreadPool
-from .lib.api_client import ApiClient
 from .lib.client_side_checksum_handler import ClientSideChecksumHandler
 from .lib.credentials_manager import CredentialsManager
 from .exceptions import UploadException
@@ -15,7 +13,7 @@ from .upload_area_uri import UploadAreaURI
 
 class UploadArea:
 
-    def __init__(self, uri):
+    def __init__(self, uri, upload_service):
         """
         Initialize an UploadArea object.  Does not actually create an Upload Area.
 
@@ -24,8 +22,8 @@ class UploadArea:
         if not isinstance(uri, UploadAreaURI):
             raise UploadException("You must provide an UploadAreaURI")
         self.uri = uri
+        self.upload_service = upload_service
         self.s3_agent = None
-        self.upload_api_client = ApiClient(self.uri.deployment_stage)
 
     def __str__(self):
         return "UploadArea {uri}".format(uri=self.uri)
@@ -66,7 +64,7 @@ class UploadArea:
         for page in s3agent.list_bucket_by_page(bucket_name=self.uri.bucket_name, key_prefix=key_prefix):
             file_list = [key[key_prefix_length:] for key in page]  # cut off upload-area-id/
             if detail:
-                files_info = self.upload_api_client.files_info(self.uuid, file_list)
+                files_info = self.upload_service.api_client.files_info(self.uuid, file_list)
             else:
                 files_info = [{'name': filename} for filename in file_list]
             for file_info in files_info:
@@ -137,7 +135,8 @@ class UploadArea:
                 self.s3agent.upload_local_file(file_path, target_bucket, target_key, content_type, checksums,
                                                report_progress=report_progress)
             self.s3agent.file_upload_completed_count += 1
-            self.upload_api_client.file_upload_notification(self.uuid, target_filename or os.path.basename(file_path))
+            self.upload_service.api_client.file_upload_notification(self.uuid,
+                                                                    target_filename or os.path.basename(file_path))
             print("Upload complete of %s to upload area %s" % (file_path, self.uri))
         except Exception as e:
             self.s3agent.failed_uploads[file_path] = e

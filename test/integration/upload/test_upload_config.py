@@ -16,10 +16,6 @@ from test.integration.upload import UploadTestCase
 
 class TestUploadConfig(UploadTestCase):
 
-    @staticmethod
-    def _make_area_uri(area_uuid=None):
-        return "s3://foo/{}/".format(area_uuid or str(uuid.uuid4()))
-
     def setUp(self):
         super(self.__class__, self).setUp()
         self.a_uuid = str(uuid.uuid4())

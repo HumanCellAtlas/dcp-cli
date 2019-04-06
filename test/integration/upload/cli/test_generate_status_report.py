@@ -1,5 +1,3 @@
-import unittest
-
 from argparse import Namespace
 from mock import patch
 from test.integration.upload import UploadTestCase

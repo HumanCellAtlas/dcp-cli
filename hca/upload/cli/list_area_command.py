@@ -1,4 +1,4 @@
-from hca.upload import UploadArea, UploadConfig
+from hca.upload import UploadService, UploadConfig
 from .common import UploadCLICommand
 
 
@@ -17,7 +17,8 @@ class ListAreaCommand(UploadCLICommand):
         config = UploadConfig()
         area_uuid = config.current_area
         area_uri = config.area_uri(area_uuid)
-        upload_area = UploadArea(uri=area_uri)
+        upload_service = UploadService(deployment_stage=area_uri.deployment_stage)
+        upload_area = upload_service.upload_area(area_uri=area_uri)
 
         for f in upload_area.list(detail=args.long):
             print(f['name'])
