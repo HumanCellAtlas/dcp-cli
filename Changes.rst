@@ -1,3 +1,12 @@
+Changes for v4.10.0 (2019-04-05)
+================================
+
+-  Update bundle download to link to filestore (fixes #277) (#285)
+
+-  Remove scandir dependency when it is included in Python (#289)
+
+-  Add clientside checksumming in Upload Service CLI (#252)
+
 Changes for v4.9.0 (2019-03-21)
 ===============================
 
