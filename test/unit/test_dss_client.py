@@ -68,7 +68,8 @@ def _fake_get_bundle(*args, **kwargs):
     return {'bundle': bundle_dict}
 
 
-barrier = threading.Barrier(3)
+if sys.version_info >= (3,):
+    barrier = threading.Barrier(3)
 
 
 def _fake_do_download_file_with_barrier(*args, **kwargs):
@@ -318,6 +319,14 @@ class TestDownload(AbstractTestDSSClient):
         more_files.add(os.path.join(self.version_dir, '8f', 'fe48',
                                     '8ffe4838ac08672041f73f82e5f8361860627271ec31aa479fbb65f2ccc46d05'))
         self._assert_all_files_downloaded(more_files=more_files)
+
+    @patch('hca.dss.DSSClient.get_bundle', side_effect=_fake_get_bundle)
+    @patch('logging.Logger.warning')
+    @patch('hca.dss.DSSClient._download_file', side_effect=[None, ValueError(), KeyError()])
+    def test_manifest_download_failed(self, _, warning_log, __):
+        self.assertRaises(RuntimeError, self.dss.download, 'any_bundle_uuid', 'aws')
+        self.assertEqual(warning_log.call_count, 4)
+        self._assert_manifest_not_updated()
 
 
 if __name__ == "__main__":

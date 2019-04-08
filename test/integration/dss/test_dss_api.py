@@ -12,6 +12,7 @@ import tempfile
 import uuid
 from fnmatch import fnmatchcase
 
+
 pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))  # noqa
 sys.path.insert(0, pkg_root)  # noqa
 
@@ -134,7 +135,6 @@ class TestDssApi(unittest.TestCase):
 
     def test_python_manifest_download(self):
 
-        dirpath = os.path.dirname(os.path.realpath(__file__))
         bundle_path = os.path.join(TEST_DIR, "res", "bundle")
         uploaded_files = set(os.listdir(bundle_path))
         client = hca.dss.DSSClient()
@@ -161,17 +161,24 @@ class TestDssApi(unittest.TestCase):
                     try:
                         with open('manifest.tsv', 'w') as manifest:
                             tsv = csv.DictWriter(manifest,
-                                                 fieldnames=('bundle_uuid', 'bundle_version', 'file_name'),
+                                                 fieldnames=('bundle_uuid',
+                                                             'bundle_version',
+                                                             'file_name',
+                                                             'file_sha256'),
                                                  delimiter='\t',
                                                  quoting=csv.QUOTE_NONE)
                             tsv.writeheader()
                             tsv.writerow(dict(bundle_uuid=bundle_uuid,
                                               bundle_version=bundle_version,
-                                              file_name=data_files[0]))
+                                              file_name=data_files[0],
+                                              file_sha256=
+                                              '9b4c0dde8683f924975d0867903dc7a967f46bee5c0a025c451b9ba73e43f120'))
                             if bad_bundle:
                                 tsv.writerow(dict(bundle_uuid=str(uuid.uuid4()),
                                                   bundle_version=bundle_version,
-                                                  file_name=data_files[0]))
+                                                  file_name=data_files[0],
+                                                  file_sha256=
+                                                  '9b4c0dde8683f924975d0867903dc7a967f46bee5c0a025c451b9ba73e43f120'))
 
                         dest_dir = os.path.join(work_dir, bundle_uuid)
                         try:
