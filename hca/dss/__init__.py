@@ -411,24 +411,26 @@ class DSSClient(SwaggerClient):
         The TSV may have additional columns. Those columns will be ignored. The ordering of the columns is
         insignificant because the TSV is required to have a header row.
         """
-        errors = 0
-        with concurrent.futures.ThreadPoolExecutor(self.threads) as executor:
-            futures_to_dss_file = {executor.submit(task): dss_file
-                                   for (dss_file, task) in
-                                   self._download_manifest_tasks(manifest,
+        file_errors = 0
+        file_task, bundle_errors = self._download_manifest_tasks(manifest,
                                                                  replica,
                                                                  num_retries=num_retries,
-                                                                 min_delay_seconds=min_delay_seconds)}
+                                                                 min_delay_seconds=min_delay_seconds)
+        with concurrent.futures.ThreadPoolExecutor(self.threads) as executor:
+            futures_to_dss_file = {executor.submit(task): dss_file
+                                   for dss_file, task in file_task}
             for future in concurrent.futures.as_completed(futures_to_dss_file):
                 dss_file = futures_to_dss_file[future]
                 try:
                     future.result()
                 except Exception as e:
-                    errors += 1
+                    file_errors += 1
                     logger.warning('Failed to download file %s version %s from replica %s',
                                    dss_file.uuid, dss_file.version, dss_file.replica, exc_info=e)
-        if errors:
-            raise RuntimeError('{} file(s) failed to download'.format(errors))
+        if file_errors or bundle_errors:
+            bundle_error_str = '{} bundle(s) failed to download'.format(bundle_errors) if bundle_errors else ''
+            file_error_str = '{} file(s) failed to download'.format(file_errors) if file_errors else ''
+            raise RuntimeError(bundle_error_str + (' and ' if bundle_errors and file_errors else '') + file_error_str)
         else:
             self._write_output_manifest(manifest)
             logger.info('Primary copies of the files have been downloaded to `.hca` and linked '
@@ -442,16 +444,23 @@ class DSSClient(SwaggerClient):
             reader = csv.DictReader(f, delimiter=delimiter, quoting=csv.QUOTE_NONE)
             for row in reader:
                 bundles[(row['bundle_uuid'], row['bundle_version'])].add(row['file_name'])
+        tasks = []
+        errors = 0
         for (bundle_uuid, bundle_version), data_files in bundles.items():
             data_globs = tuple(glob_escape(file_name) for file_name in data_files if file_name)
             logger.info('Downloading bundle %s version %s ...', bundle_uuid, bundle_version)
-            for task in self._download_tasks(bundle_uuid,
-                                             replica,
-                                             version=bundle_version,
-                                             data_files=data_globs,
-                                             num_retries=num_retries,
-                                             min_delay_seconds=min_delay_seconds):
-                yield task
+            try:
+                for task in self._download_tasks(bundle_uuid,
+                                                 replica,
+                                                 version=bundle_version,
+                                                 data_files=data_globs,
+                                                 num_retries=num_retries,
+                                                 min_delay_seconds=min_delay_seconds):
+                    tasks.append(task)
+            except Exception as e:
+                errors += 1
+                logger.warning('Bundle %s failed to download', bundle_uuid, exc_info=e)
+        return tasks, errors
 
     def upload(self, src_dir, replica, staging_bucket, timeout_seconds=1200):
         """
