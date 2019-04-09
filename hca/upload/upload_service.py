@@ -1,4 +1,4 @@
-from . import UploadAreaURI, UploadArea
+from . import UploadAreaURI, UploadArea, UploadConfig
 from .lib.api_client import ApiClient
 
 
@@ -17,6 +17,14 @@ class UploadService:
         self.api_token = api_token
         self.api_client = ApiClient(deployment_stage=self.deployment_stage,
                                     authentication_token=self.api_token)
+
+    @staticmethod
+    def config():
+        """
+        :return: Upload Service configuration data
+        :rtype: UploadConfig
+        """
+        return UploadConfig()
 
     def create_area(self, area_uuid):
         """

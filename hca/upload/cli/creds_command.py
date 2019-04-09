@@ -1,4 +1,4 @@
-from hca.upload import UploadService, UploadException, UploadConfig
+from hca.upload import UploadService, UploadException
 from .common import UploadCLICommand
 
 
@@ -20,7 +20,7 @@ class CredsCommand(UploadCLICommand):
     def __init__(self, args):
         alias = args.uuid_or_alias
         try:
-            config = UploadConfig()
+            config = UploadService.config()
             area_uuid = config.area_uuid_from_partial_uuid(partial_uuid=alias)
             area_uri = config.area_uri(area_uuid)
             upload = UploadService(deployment_stage=area_uri.deployment_stage)
