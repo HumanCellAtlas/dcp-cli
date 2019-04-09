@@ -4,6 +4,8 @@
 import os
 import sys
 import unittest
+import uuid
+from mock import Mock, patch
 
 import responses
 
@@ -13,9 +15,16 @@ sys.path.insert(0, pkg_root)  # noqa
 from test import TEST_DIR
 from test.integration.upload import UploadTestCase
 from hca.upload.lib.s3_agent import WRITE_PERCENT_THRESHOLD
+from hca.upload import UploadAreaURI, UploadService
 
 
 class TestUploadArea(UploadTestCase):
+
+    def _create_upload_area(self):
+        upload = UploadService(deployment_stage=self.deployment_stage)
+        area_uuid = str(uuid.uuid4())
+        area_uri = UploadAreaURI(self._make_area_uri(area_uuid=area_uuid))
+        return upload.upload_area(area_uri=area_uri)
 
     def test_get_credentials(self):
 
@@ -30,6 +39,132 @@ class TestUploadArea(UploadTestCase):
         self.assertIn('aws_secret_access_key', creds)
         self.assertIn('aws_session_token', creds)
         self.assertIn('expiry_time', creds)
+
+    def test_delete(self):
+        with patch('hca.upload.upload_service.ApiClient') as mock_api_client_class:
+            mock_delete_area = Mock(return_value=True)
+            mock_api_client = Mock(delete_area=mock_delete_area)
+            mock_api_client_class.return_value = mock_api_client
+
+            area = self._create_upload_area()
+            area.delete()
+
+            mock_delete_area.assert_called_once_with(area_uuid=area.uuid)
+
+    def test_exists(self):
+        with patch('hca.upload.upload_service.ApiClient') as mock_api_client_class:
+            mock_area_exists = Mock(return_value=False)
+            mock_api_client = Mock(area_exists=mock_area_exists)
+            mock_api_client_class.return_value = mock_api_client
+
+            area = self._create_upload_area()
+            result = area.exists()
+
+            mock_area_exists.assert_called_once_with(area_uuid=area.uuid)
+            self.assertFalse(result)
+
+    def test_validate_files(self):
+        with patch('hca.upload.upload_service.ApiClient') as mock_api_client_class:
+            validation_id = "validation234"
+            mock_validate_files_method = Mock(return_value=validation_id)
+            mock_api_client = Mock(validate_files=mock_validate_files_method)
+            mock_api_client_class.return_value = mock_api_client
+
+            area = self._create_upload_area()
+            docker_img = "bogo_image"
+            orig_val_id = "validation123"
+            files = ['file1', 'file2']
+            env = {'KEY': 'someval'}
+
+            result = area.validate_files(file_list=files, validator_image=docker_img,
+                                         original_validation_id=orig_val_id, environment=env)
+
+            mock_validate_files_method.assert_called_once_with(area_uuid=area.uuid,
+                                                               file_list=files,
+                                                               validator_image=docker_img,
+                                                               original_validation_id=orig_val_id,
+                                                               environment=env)
+            self.assertEqual(validation_id, result)
+
+    def test_store_file(self):
+        with patch('hca.upload.upload_service.ApiClient') as mock_api_client_class:
+            file_info = {'files': 'info'}
+            mock_store_file_method = Mock(return_value=file_info)
+            mock_api_client = Mock(store_file=mock_store_file_method)
+            mock_api_client_class.return_value = mock_api_client
+
+            area = self._create_upload_area()
+            filename = "bogofile"
+            content = "bogobogobogo"
+            content_type = "application/bogo"
+
+            result = area.store_file(filename=filename, file_content=content, content_type=content_type)
+
+            mock_store_file_method.assert_called_once_with(area_uuid=area.uuid,
+                                                           filename=filename,
+                                                           file_content=content,
+                                                           content_type=content_type)
+            self.assertEqual(file_info, result)
+
+    def test_checksum_status(self):
+        with patch('hca.upload.upload_service.ApiClient') as mock_api_client_class:
+            checksum_status = {'checksum': 'status'}
+            mock_checksum_status_method = Mock(return_value=checksum_status)
+            mock_api_client = Mock(checksum_status=mock_checksum_status_method)
+            mock_api_client_class.return_value = mock_api_client
+
+            area = self._create_upload_area()
+            filename = "bogofile"
+
+            result = area.checksum_status(filename=filename)
+
+            mock_checksum_status_method.assert_called_once_with(area_uuid=area.uuid,
+                                                                filename=filename)
+            self.assertEqual(checksum_status, result)
+
+    def test_validation_status(self):
+        with patch('hca.upload.upload_service.ApiClient') as mock_api_client_class:
+            validation_status = {'validation': 'status'}
+            mock_validation_status_method = Mock(return_value=validation_status)
+            mock_api_client = Mock(validation_status=mock_validation_status_method)
+            mock_api_client_class.return_value = mock_api_client
+
+            area = self._create_upload_area()
+            filename = "bogofile"
+
+            result = area.validation_status(filename=filename)
+
+            mock_validation_status_method.assert_called_once_with(area_uuid=area.uuid,
+                                                                  filename=filename)
+            self.assertEqual(validation_status, result)
+
+    def test_checksum_statuses(self):
+        with patch('hca.upload.upload_service.ApiClient') as mock_api_client_class:
+            checksum_statuses = {'checksum': 'statuses'}
+            mock_checksum_statuses_method = Mock(return_value=checksum_statuses)
+            mock_api_client = Mock(checksum_statuses=mock_checksum_statuses_method)
+            mock_api_client_class.return_value = mock_api_client
+
+            area = self._create_upload_area()
+
+            result = area.checksum_statuses()
+
+            mock_checksum_statuses_method.assert_called_once_with(area_uuid=area.uuid)
+            self.assertEqual(checksum_statuses, result)
+
+    def test_validation_statuses(self):
+        with patch('hca.upload.upload_service.ApiClient') as mock_api_client_class:
+            validation_statuses = {'validation': 'statuses'}
+            mock_validation_statuses_method = Mock(return_value=validation_statuses)
+            mock_api_client = Mock(validation_statuses=mock_validation_statuses_method)
+            mock_api_client_class.return_value = mock_api_client
+
+            area = self._create_upload_area()
+
+            result = area.validation_statuses()
+
+            mock_validation_statuses_method.assert_called_once_with(area_uuid=area.uuid)
+            self.assertEqual(validation_statuses, result)
 
 
 class TestUploadAreaFileUpload(UploadTestCase):
