@@ -6,9 +6,8 @@ from boto3.s3.transfer import TransferConfig
 from botocore.config import Config
 from botocore.credentials import CredentialResolver
 from botocore.session import get_session
-from tenacity import retry, wait_fixed, stop_after_attempt
-
 from dcplib import s3_multipart
+from tenacity import retry, wait_fixed, stop_after_attempt
 
 WRITE_PERCENT_THRESHOLD = 0.1
 
@@ -51,17 +50,19 @@ class S3Agent:
         files_remaining = self.file_count - self.file_upload_completed_count
         if self.should_write_to_terminal():
             self.bytes_transferred_at_last_sys_write = self.cumulative_bytes_transferred
-            sys.stdout.write("Completed %s/%s with %s of %s files remaining \r" % (sizeof_fmt(self.cumulative_bytes_transferred),
-                                                                                   sizeof_fmt(self.file_size_sum),
-                                                                                   files_remaining,
-                                                                                   self.file_count))
+            sys.stdout.write(
+                "Completed %s/%s with %s of %s files remaining \r" % (sizeof_fmt(self.cumulative_bytes_transferred),
+                                                                      sizeof_fmt(self.file_size_sum),
+                                                                      files_remaining,
+                                                                      self.file_count))
             sys.stdout.flush()
 
     def should_write_to_terminal(self):
         write_to_terminal = False
         bytes_difference = self.cumulative_bytes_transferred - self.bytes_transferred_at_last_sys_write
         # Only write to terminal if have surpassed threshold since last message
-        if float(bytes_difference) / float(self.file_size_sum) * 100 > WRITE_PERCENT_THRESHOLD:
+        if self.file_size_sum > 0 and float(bytes_difference) / float(
+                self.file_size_sum) * 100 > WRITE_PERCENT_THRESHOLD:
             write_to_terminal = True
         return write_to_terminal
 
