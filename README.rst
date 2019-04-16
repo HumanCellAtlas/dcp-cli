@@ -86,7 +86,7 @@ Please report bugs, issues, feature requests, etc. on `GitHub <https://github.co
 
 Security Policy
 ---------------
-See our [Security Policy](https://github.com/HumanCellAtlas/dcp/blob/master/SECURITY.md).
+See our `Security Policy <https://github.com/HumanCellAtlas/dcp/blob/master/SECURITY.md>`_.
 
 License
 -------
