@@ -77,7 +77,11 @@ class DSSClient(SwaggerClient):
         return datetime.utcnow().strftime("%Y-%m-%dT%H%M%S.%fZ")
 
     def create_version(self):
-        """ Print a timestamp that can be used for versioning"""
+        """ 
+            :param
+
+            Print a timestamp that can be used for versioning
+        """
         print(self._create_version())
 
     def download(self, bundle_uuid, replica, version="", dest_name="",
