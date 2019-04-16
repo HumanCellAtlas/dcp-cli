@@ -39,7 +39,7 @@ stages:
     #currently 3.6.8 is offered by the windows-runner
     - $env:WINDOWS_PYTHON = python -c 'import sys  ; print(sys.version[0:3])'
     - if (-NOT $env:WINDOWS_PYTHON -eq ${PYTHON_VERSION}) { echo "python missmatch"; exit(1) }
-    - virtualenv venv3
+    - python -m virtualenv venv3
     - python -m venv3\Scripts\activate
     - python -m pip install -r requirements-dev.txt
     - python .\scripts\fetch_secret.py --secret-name gcp-credentials.json --write
