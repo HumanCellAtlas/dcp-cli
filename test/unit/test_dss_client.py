@@ -1,16 +1,20 @@
 import errno
+import logging
 import os
+import platform
 import shutil
 import sys
 import tempfile
 import threading
 import unittest
 
-import scandir
 import six
 from mock import patch
 
+from hca.util.compat import walk
 from hca.dss import DSSClient
+
+logging.basicConfig()
 
 
 def _touch_file(path):
@@ -24,10 +28,63 @@ def _touch_file(path):
 
 
 def _fake_download_file(*args, **kwargs):
-    _touch_file(args[2])
+    _touch_file(args[1])
 
 
-class TestManifestDownload(unittest.TestCase):
+def _fake_get_bundle(*args, **kwargs):
+    bundle_dict = {
+        'files': [
+            {
+                'uuid': 'a_uuid',
+                'version': '1_version',
+                'name': 'a_file_name',
+                'indexed': False,
+                'sha256': 'ad3fc1e4898e0bce096be5151964a81929dbd2a92bd5ed56a39a8e133053831d',
+                'size': 12
+            }, {
+                'uuid': 'b_uuid',
+                'version': '2_version',
+                'name': 'b_file_name',
+                'indexed': False,
+                'sha256': '8f35071eaeedd9d6f575a8b0f291daeac4c1dfdfa133b5c561232a00bf18c4b4',
+                'size': 4
+            }, {
+                'uuid': 'c_uuid',
+                'version': '3_version',
+                'name': 'c_file_name',
+                'indexed': False,
+                'sha256': '8f3404db04bdede03e9128a4b48599d0ecde5b2e58ed9ce52ce84c3d54a3429c',
+                'size': 36
+            }, {
+                'uuid': 'd_uuid',
+                'version': '4_version',
+                'name': 'metadata_file.pdf',
+                'indexed': True,
+                'sha256': '8ffe4838ac08672041f73f82e5f8361860627271ec31aa479fbb65f2ccc46d05',
+                'size': 9
+            }
+        ]
+    }
+    return {'bundle': bundle_dict}
+
+
+if sys.version_info >= (3,):
+    barrier = threading.Barrier(3)
+
+
+def _fake_do_download_file_with_barrier(*args, **kwargs):
+    """
+    Wait for friends before trying to "download" the same fake file
+    """
+    barrier.wait()
+    fh = args[1]
+    fh.write(six.b('Here we write some stuff so that the fake download takes some time. '
+                   'This helps ensure that multiple threads are writing at once and thus '
+                   'allows us to test for race conditions.'))
+    return 'FAKEhash'
+
+
+class AbstractTestDSSClient(unittest.TestCase):
     manifest = list(zip(
         ('bundle_uuid', 'a_uuid', 'b_uuid', 'c_uuid'),
         ('bundle_version', '1_version', '1_version', '1_version'),
@@ -45,6 +102,7 @@ class TestManifestDownload(unittest.TestCase):
     version_dir = os.path.join('.', '.hca', 'v2', 'files_2_4')
 
     def setUp(self):
+        super(AbstractTestDSSClient, self).setUp()
         self.prev_wd = os.getcwd()
         self.tmp_dir = tempfile.mkdtemp()
         os.chdir(self.tmp_dir)
@@ -55,22 +113,27 @@ class TestManifestDownload(unittest.TestCase):
     def tearDown(self):
         os.chdir(self.prev_wd)
         shutil.rmtree(self.tmp_dir)
+        super(AbstractTestDSSClient, self).tearDown()
 
     def _write_manifest(self, manifest):
         with open('manifest.tsv', 'w') as f:
             f.write('\n'.join(['\t'.join(row) for row in manifest]))
 
-    def _assert_all_files_downloaded(self):
-        files_present = {os.path.join(dir_path, f)
-                         for dir_path, _, files in scandir.walk('.')
-                         for f in files}
+    def _files_present(self):
+        return {os.path.join(dir_path, f)
+                for dir_path, _, files in walk('.')
+                for f in files}
+
+    def _assert_all_files_downloaded(self, more_files=None):
         files_expected = {
             os.path.join('.', os.path.basename(self.manifest_file)),
             os.path.join(self.version_dir, 'ad', '3fc1', 'ad3fc1e4898e0bce096be5151964a81929dbd2a92bd5ed56a39a8e133053831d'),
             os.path.join(self.version_dir, '8f', '3507', '8f35071eaeedd9d6f575a8b0f291daeac4c1dfdfa133b5c561232a00bf18c4b4'),
             os.path.join(self.version_dir, '8f', '3404', '8f3404db04bdede03e9128a4b48599d0ecde5b2e58ed9ce52ce84c3d54a3429c'),
         }
-        self.assertEqual(files_present, files_expected)
+        if more_files:
+            files_expected.update(more_files)
+        self.assertEqual(self._files_present(), files_expected)
 
     def _assert_manifest_updated_with_paths(self):
         output_manifest = os.path.basename(self.manifest_file)
@@ -91,6 +154,9 @@ class TestManifestDownload(unittest.TestCase):
     def _assert_manifest_not_updated(self):
         for row in self.dss._parse_manifest(self.manifest_file):
             self.assertNotIn('file_path', row)
+
+
+class TestManifestDownloadFilestore(AbstractTestDSSClient):
 
     @patch('hca.dss.DSSClient.DIRECTORY_NAME_LENGTHS', [1, 3, 2])
     def test_file_path(self):
@@ -157,35 +223,110 @@ class TestManifestDownload(unittest.TestCase):
         for at least two threads to be ready before beginning.
         """
         # make a new manifest with all the same hashes
+        self.dss.threads = 3  # 3 threads for three files with barrier size 3
         new_manifest = [self.manifest[0]]
         for row in self.manifest[1:]:
             new_row = list(row)
             new_row[4] = 'fakeHASH'
             new_manifest.append(new_row)
         self._write_manifest(new_manifest)
-        barrier = threading.Barrier(3)
-
-        def _fake_do_download_file_with_barrier(*args, **kwargs):
-            """
-            Wait for friends before trying to "download" the same fake file
-            """
-            barrier.wait()
-            fh = args[3]
-            fh.write(six.b('Here we write some stuff so that the fake download takes some time. '
-                           'This helps ensure that multiple threads are writing at once and thus '
-                           'allows us to test for race conditions.'))
-            return 'FAKEhash'
-
         with patch('hca.dss.DSSClient._do_download_file', side_effect=_fake_do_download_file_with_barrier):
-            self.dss.download_manifest_v2('manifest.tsv', 'aws', threads=3)
-        files_present = {os.path.join(dir_path, f)
-                         for dir_path, _, files in scandir.walk('.')
-                         for f in files}
+            self.dss.download_manifest_v2('manifest.tsv', 'aws')
         files_expected = {
             os.path.join('.', 'manifest.tsv'),
             os.path.join(self.version_dir, 'fa', 'keha', 'fakehash')
         }
-        self.assertEqual(files_present, files_expected)
+        self.assertEqual(self._files_present(), files_expected)
+
+
+class TestManifestDownloadBundle(AbstractTestDSSClient):
+
+    def setUp(self):
+        super(TestManifestDownloadBundle, self).setUp()
+        self.data_files = {
+            os.path.join('.', 'a_uuid', 'a_file_name'),
+            os.path.join('.', 'b_uuid', 'b_file_name'),
+            os.path.join('.', 'c_uuid', 'c_file_name'),
+        }
+        self.metadata_files = {
+            os.path.join(self.version_dir, '8f', 'fe48', '8ffe4838ac08672041f73f82e5f8361860627271ec31aa479fbb65f2ccc46d05'),
+            os.path.join('.', 'a_uuid', 'metadata_file.pdf'),
+            os.path.join('.', 'b_uuid', 'metadata_file.pdf'),
+            os.path.join('.', 'c_uuid', 'metadata_file.pdf'),
+        }
+
+    def _assert_links(self):
+        # os.stat() returns dummy values with Python 2.7 on Windows so we have to skip
+        # I (Jesse) tested this manually on Python 2.7 on Windows 10 and hard links worked
+        if sys.version_info >= (3,) or platform.system() != 'Windows':
+            for linked_file in self.data_files:
+                self.assertEqual(os.stat(linked_file).st_nlink, 2,
+                                 'Expected one link for the "filestore" entry and link in bundle download')
+            for linked_file in self.metadata_files:
+                self.assertEqual(os.stat(linked_file).st_nlink, 4,
+                                 'Expected one link for the "filestore" entry and one for each bundle')
+
+    def _assert_all_files_downloaded(self, more_files=None):
+        bundle_files = self.data_files.union(self.metadata_files)
+        more_files = bundle_files.union(more_files) if more_files else bundle_files
+        super(TestManifestDownloadBundle, self)._assert_all_files_downloaded(more_files=more_files)
+
+    @patch('hca.dss.DSSClient.get_bundle', side_effect=_fake_get_bundle)
+    @patch('hca.dss.DSSClient._download_file', side_effect=_fake_download_file)
+    def test_manifest_download_bundle(self, _, __):
+        self.dss.download_manifest(self.manifest_file, 'aws')
+        self._assert_all_files_downloaded()
+        self.dss.download_manifest(self.manifest_file, 'aws')
+        self._assert_all_files_downloaded()
+        self._assert_manifest_updated_with_paths()
+
+    @unittest.skipIf(sys.version_info < (3,) and platform.system() == 'Windows',
+                     'os.stat() returns dummy values with Python 2.7 on Windows')
+    @patch('hca.dss.DSSClient.get_bundle', side_effect=_fake_get_bundle)
+    @patch('hca.dss.DSSClient._download_file', side_effect=_fake_download_file)
+    def test_manifest_download_bundle_parallel(self, _, __):
+        self.dss.threads = 3  # 3 threads for three files with barrier size 3
+        new_manifest = [self.manifest[0]]
+        for row in self.manifest[1:]:
+            new_row = list(row)
+            new_row[4] = 'fakeHASH'
+            new_manifest.append(new_row)
+        self._write_manifest(new_manifest)
+        with patch('hca.dss.DSSClient._do_download_file', side_effect=_fake_do_download_file_with_barrier):
+            self.dss.download_manifest('manifest.tsv', 'aws')
+        self._assert_all_files_downloaded(more_files=self.data_files.union(self.metadata_files))
+        self._assert_links()
+        self.dss.download_manifest(self.manifest_file, 'aws')
+
+    def test_link_fail(self):
+        """
+        If linking raises some other OSError, make sure that percolates up
+        """
+        with patch('os.link', side_effect=OSError()), \
+                patch('hca.dss.DSSClient.get_bundle', side_effect=_fake_get_bundle), \
+                patch('hca.dss.DSSClient._download_file', side_effect=_fake_download_file):
+            self.assertRaises(RuntimeError, self.dss.download_manifest, self.manifest_file, 'aws')
+
+
+class TestDownload(AbstractTestDSSClient):
+
+    @patch('hca.dss.DSSClient.get_bundle', side_effect=_fake_get_bundle)
+    @patch('hca.dss.DSSClient._download_file', side_effect=_fake_download_file)
+    def test_download(self, _, __):
+        self.dss.download('any_bundle_uuid', 'aws')
+        more_files = {os.path.join('.', 'any_bundle_uuid', file_name)
+                      for file_name in ['a_file_name', 'b_file_name', 'c_file_name', 'metadata_file.pdf']}
+        more_files.add(os.path.join(self.version_dir, '8f', 'fe48',
+                                    '8ffe4838ac08672041f73f82e5f8361860627271ec31aa479fbb65f2ccc46d05'))
+        self._assert_all_files_downloaded(more_files=more_files)
+
+    @patch('hca.dss.DSSClient.get_bundle', side_effect=_fake_get_bundle)
+    @patch('logging.Logger.warning')
+    @patch('hca.dss.DSSClient._download_file', side_effect=[None, ValueError(), KeyError()])
+    def test_manifest_download_failed(self, _, warning_log, __):
+        self.assertRaises(RuntimeError, self.dss.download, 'any_bundle_uuid', 'aws')
+        self.assertEqual(warning_log.call_count, 4)
+        self._assert_manifest_not_updated()
 
 
 if __name__ == "__main__":

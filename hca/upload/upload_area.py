@@ -1,16 +1,17 @@
+import mimetypes
 import os
 import re
-import mimetypes
 
 from dcplib.media_types import DcpMediaType
 
+from hca.util.pool import ThreadPool
 from .api_client import ApiClient
+from .client_side_checksum_handler import ClientSideChecksumHandler
 from .credentials_manager import CredentialsManager
 from .exceptions import UploadException
 from .s3_agent import S3Agent
-from .upload_config import UploadConfig
 from .upload_area_uri import UploadAreaURI
-from hca.util.pool import ThreadPool
+from .upload_config import UploadConfig
 
 
 class UploadArea:
@@ -121,7 +122,9 @@ class UploadArea:
         if report_progress:
             number_of_errors = len(self.s3agent.failed_uploads)
             if number_of_errors == 0:
-                print("Completed upload of %s files to upload area %s\n" % (self.s3agent.file_upload_completed_count, self.uuid))
+                print(
+                    "Completed upload of %d files to upload area %s\n" %
+                    (self.s3agent.file_upload_completed_count, self.uuid))
             else:
                 error = "\nThe following files failed:"
                 for k, v in self.s3agent.failed_uploads.items():
@@ -158,7 +161,10 @@ class UploadArea:
             else:
                 target_key = "%s/%s" % (self.uuid, target_filename or os.path.basename(file_path))
                 content_type = str(DcpMediaType.from_file(file_path, dcp_type))
-                self.s3agent.upload_local_file(file_path, target_bucket, target_key, content_type,
+                checksum_handler = ClientSideChecksumHandler(file_path)
+                checksum_handler.compute_checksum()
+                checksums = checksum_handler.get_checksum_metadata_tag()
+                self.s3agent.upload_local_file(file_path, target_bucket, target_key, content_type, checksums,
                                                report_progress=report_progress)
             self.s3agent.file_upload_completed_count += 1
             self.upload_api_client.file_upload_notification(self.uuid, target_filename or os.path.basename(file_path))

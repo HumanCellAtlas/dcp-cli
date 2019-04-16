@@ -6,9 +6,8 @@ from boto3.s3.transfer import TransferConfig
 from botocore.config import Config
 from botocore.credentials import CredentialResolver
 from botocore.session import get_session
-from tenacity import retry, wait_fixed, stop_after_attempt
-
 from dcplib import s3_multipart
+from tenacity import retry, wait_fixed, stop_after_attempt
 
 WRITE_PERCENT_THRESHOLD = 0.1
 
@@ -51,22 +50,24 @@ class S3Agent:
         files_remaining = self.file_count - self.file_upload_completed_count
         if self.should_write_to_terminal():
             self.bytes_transferred_at_last_sys_write = self.cumulative_bytes_transferred
-            sys.stdout.write("Completed %s/%s with %s of %s files remaining \r" % (sizeof_fmt(self.cumulative_bytes_transferred),
-                                                                                   sizeof_fmt(self.file_size_sum),
-                                                                                   files_remaining,
-                                                                                   self.file_count))
+            sys.stdout.write(
+                "Completed %s/%s with %s of %s files remaining \r" % (sizeof_fmt(self.cumulative_bytes_transferred),
+                                                                      sizeof_fmt(self.file_size_sum),
+                                                                      files_remaining,
+                                                                      self.file_count))
             sys.stdout.flush()
 
     def should_write_to_terminal(self):
         write_to_terminal = False
         bytes_difference = self.cumulative_bytes_transferred - self.bytes_transferred_at_last_sys_write
         # Only write to terminal if have surpassed threshold since last message
-        if float(bytes_difference) / float(self.file_size_sum) * 100 > WRITE_PERCENT_THRESHOLD:
+        if self.file_size_sum > 0 and float(bytes_difference) / float(
+                self.file_size_sum) * 100 > WRITE_PERCENT_THRESHOLD:
             write_to_terminal = True
         return write_to_terminal
 
     @retry(reraise=True, wait=wait_fixed(2), stop=stop_after_attempt(3))
-    def copy_s3_file(self, s3_path, target_bucket, target_key, content_type, report_progress=False):
+    def copy_s3_file(self, s3_path, target_bucket, target_key, content_type, checksums={}, report_progress=False):
         # Here we are using s3's managed copy to allow for s3 to s3 file upload
         # We override any original metadata or content types
         s3_path_split = s3_path.replace("s3://", "").split("/", 1)
@@ -83,7 +84,8 @@ class S3Agent:
             'ExtraArgs': {
                 'ContentType': content_type,
                 'MetadataDirective': 'REPLACE',
-                'ACL': 'bucket-owner-full-control'
+                'ACL': 'bucket-owner-full-control',
+                'Metadata': checksums
             },
             'Config': self.transfer_config(file_size),
             'SourceClient': self.source_s3_client,
@@ -95,12 +97,12 @@ class S3Agent:
         self.target_s3.meta.client.copy(**upload_args)
 
     @retry(reraise=True, wait=wait_fixed(2), stop=stop_after_attempt(3))
-    def upload_local_file(self, local_path, target_bucket, target_key, content_type, report_progress=False):
+    def upload_local_file(self, local_path, target_bucket, target_key, content_type, checksums, report_progress=False):
         file_size = os.path.getsize(local_path)
         bucket = self.target_s3.Bucket(target_bucket)
         obj = bucket.Object(target_key)
         upload_fileobj_args = {
-            'ExtraArgs': {'ContentType': content_type, 'ACL': 'bucket-owner-full-control'},
+            'ExtraArgs': {'ContentType': content_type, 'ACL': 'bucket-owner-full-control', 'Metadata': checksums},
             'Config': self.transfer_config(file_size)
         }
         if report_progress:

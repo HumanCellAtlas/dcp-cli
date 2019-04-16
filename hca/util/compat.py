@@ -26,4 +26,9 @@ if USING_PYTHON2:
 else:
     from glob import escape as glob_escape
 
-__all__ = ('USING_PYTHON2', 'glob_escape')
+if sys.version_info < (3, 5):
+    from scandir import scandir, walk
+else:
+    from os import scandir, walk
+
+__all__ = ('USING_PYTHON2', 'glob_escape', 'scandir', 'walk')
