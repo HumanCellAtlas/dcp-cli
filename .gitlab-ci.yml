@@ -40,8 +40,8 @@ stages:
     - $env:WINDOWS_PYTHON = python -c 'import sys  ; print(sys.version[0:3])'
     - if (-NOT $env:WINDOWS_PYTHON -eq ${PYTHON_VERSION}) { echo "python missmatch"; exit(1) }
     - virtualenv venv3
-    - venv3\Scripts\activate
-    - pip install -r requirements-dev.txt
+    - python -m venv3\Scripts\activate
+    - python -m pip install -r requirements-dev.txt
     - python .\scripts\fetch_secret.py --secret-name gcp-credentials.json --write
     - $env:GOOGLE_APPLICATION_CREDENTIALS = (Convert-Path .\gcp-credentials.json)
     - (Get-Content .\hca\default_config.json).replace('dss.data.humancellatlas.org',"dss.${DSS_TEST_STAGE}.data.humancellatlas.org")| Set-Content  .\hca\default_config.json
