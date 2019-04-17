@@ -3,9 +3,9 @@ import sys
 
 import boto3
 
-from ..upload_config import UploadConfig
 from .common import UploadCLICommand
 from ..upload_area import UploadArea
+from ..upload_config import UploadConfig
 
 
 class UploadCommand(UploadCLICommand):
@@ -25,10 +25,10 @@ class UploadCommand(UploadCLICommand):
                                    help="Path to files or directories to be uploaded.")
         upload_parser.add_argument('-t', '--target-filename', metavar="<filename>", default=None,
                                    help="Filename to use in upload area (if you wish to change it during upload)." +
-                                   " Only valid when one file is being uploaded.")
+                                        " Only valid when one file is being uploaded.")
         upload_parser.add_argument('--file-extension', metavar="<fileextension>", default=None,
                                    help="File extension to limit which files should be uploaded" +
-                                   " Only valid when directories are targeted for upload.")
+                                        " Only valid when directories are targeted for upload.")
         upload_parser.add_argument('--no-transfer-acceleration', action='store_true',
                                    help="""Don't use Amazon S3 Transfer Acceleration.
                                            By default we using the aforementioned service to upload via an endpoint
@@ -37,6 +37,9 @@ class UploadCommand(UploadCLICommand):
                                            Acceleration Speed Comparison Tool to determine whether you should use
                                            this option: {url}.""".format(url=cls.COMPARISON_TOOL))
         upload_parser.add_argument('-q', '--quiet', action='store_true', help="Suppress normal output.")
+        upload_parser.add_argument('-s', '--sync', action='store_true',
+                                   help="If set to true, do not upload files to an area in which the file has already "
+                                        "been uploaded before")
         upload_parser.set_defaults(entry_point=UploadCommand)
 
     def __init__(self, args):
@@ -53,7 +56,8 @@ class UploadCommand(UploadCLICommand):
                           target_filename=args.target_filename,
                           use_transfer_acceleration=(not args.no_transfer_acceleration),
                           report_progress=(not args.quiet),
-                          dcp_type="data")
+                          dcp_type="data",
+                          sync=(args.sync))
 
     def _load_config(self):
         self.config = UploadConfig()
