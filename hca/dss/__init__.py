@@ -77,10 +77,11 @@ class DSSClient(SwaggerClient):
         return datetime.utcnow().strftime("%Y-%m-%dT%H%M%S.%fZ")
 
     def create_version(self):
-        """ 
+        """
             :param
 
-            Print a timestamp that can be used for versioning
+            Prints a timestamp that can be used for versioning
+
         """
         print(self._create_version())
 
