@@ -83,6 +83,13 @@ class TestDssCLI(unittest.TestCase):
 
         self.assertEqual(json.loads(stdout.captured())["es_query"], {})
 
+    def test_version_output(self):
+        args = ["dss", "create-version"]
+        with CapturingIO('stdout') as stdout:
+            hca.cli.main(args=args)
+        print(stdout.captured())
+        self.assertTrue(stdout.captured())
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -70,7 +70,20 @@ class DSSClient(SwaggerClient):
 
     def __init__(self, *args, **kwargs):
         super(DSSClient, self).__init__(*args, **kwargs)
-        self.commands += [self.download, self.download_manifest, self.download_manifest_v2, self.upload]
+        self.commands += [self.download, self.download_manifest, self.download_manifest_v2, self.upload,
+                          self.create_version]
+
+    def _create_version(self):
+        return datetime.utcnow().strftime("%Y-%m-%dT%H%M%S.%fZ")
+
+    def create_version(self):
+        """
+            :param
+
+            Prints a timestamp that can be used for versioning
+
+        """
+        print(self._create_version())
 
     def download(self, bundle_uuid, replica, version="", dest_name="",
                  metadata_files=('*',), data_files=('*',),
