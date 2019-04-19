@@ -11,6 +11,7 @@ secret_client = boto3.client("secretsmanager")
 def main(secret_name: str = None):
     secret_store = os.environ.get('DSS_SECRETS_STORE')
     test_stage = os.environ.get("DSS_TEST_STAGE")
+    print("SecretID: {}/{}/{}".format(secret_store, test_stage, secret_name))
     secret_value = secret_client.get_secret_value(SecretId='{}/{}/{}'.format(secret_store, test_stage, secret_name))
     return secret_value["SecretString"]
 
