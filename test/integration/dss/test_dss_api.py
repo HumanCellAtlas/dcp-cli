@@ -200,7 +200,7 @@ class TestDssApi(unittest.TestCase):
                         os.chdir(cwd)
 
     def test_python_upload_lg_file(self):
-        with TemporaryDirectory() as src_dir, TemporaryDirectory() as dest_dir:
+        with TemporaryDirectory(dir=os.getcwd()) as src_dir, TemporaryDirectory(dir=os.getcwd()) as dest_dir:
             with tempfile.NamedTemporaryFile(dir=src_dir, suffix=".bin") as fh:
                 fh.write(os.urandom(64 * 1024 * 1024 + 1))
                 fh.flush()
