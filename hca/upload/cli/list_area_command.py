@@ -1,4 +1,4 @@
-from .. import list_current_area
+from hca.upload import UploadService, UploadConfig
 from .common import UploadCLICommand
 
 
@@ -14,7 +14,13 @@ class ListAreaCommand(UploadCLICommand):
         list_area_parser.add_argument('-l', '--long', action='store_true', help="Long listing - show file details.")
 
     def __init__(self, args):
-        for f in list_current_area(detail=args.long):
+        config = UploadConfig()
+        area_uuid = config.current_area
+        area_uri = config.area_uri(area_uuid)
+        upload_service = UploadService(deployment_stage=area_uri.deployment_stage)
+        upload_area = upload_service.upload_area(area_uri=area_uri)
+
+        for f in upload_area.list(detail=args.long):
             print(f['name'])
             if args.long:
                 print("\t%-12s %d bytes\n\t%-12s %s\n\t%-12s %s" % (

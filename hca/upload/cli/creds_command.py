@@ -1,4 +1,4 @@
-from .. import get_credentials, UploadArea, UploadException
+from hca.upload import UploadService, UploadException
 from .common import UploadCLICommand
 
 
@@ -20,11 +20,15 @@ class CredsCommand(UploadCLICommand):
     def __init__(self, args):
         alias = args.uuid_or_alias
         try:
-
-            area = UploadArea.from_alias(alias)
-            creds = get_credentials(area.uuid)
+            config = UploadService.config()
+            area_uuid = config.area_uuid_from_partial_uuid(partial_uuid=alias)
+            area_uri = config.area_uri(area_uuid)
+            upload = UploadService(deployment_stage=area_uri.deployment_stage)
+            area = upload.upload_area(area_uri=area_uri)
+            creds = area.get_credentials()
+            del creds['expiry_time']
             for k, v in creds.items():
-                print("{key}={value}".format(key=k, value=v))
+                print("{key}={value}".format(key=k.upper(), value=v))
 
         except UploadException as e:
             print(str(e))

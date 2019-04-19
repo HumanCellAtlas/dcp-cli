@@ -3,9 +3,8 @@ import sys
 
 import boto3
 
-from ..upload_config import UploadConfig
+from hca.upload import UploadService
 from .common import UploadCLICommand
-from ..upload_area import UploadArea
 
 
 class UploadCommand(UploadCLICommand):
@@ -47,7 +46,11 @@ class UploadCommand(UploadCLICommand):
         self._check_args(args)
         for upload_path in args.upload_paths:
             self._load_file_paths_from_upload_path(args, upload_path)
-        area = UploadArea(uuid=UploadConfig().current_area)
+        config = UploadService.config()
+        area_uuid = config.current_area
+        area_uri = config.area_uri(area_uuid)
+        upload_service = UploadService(deployment_stage=area_uri.deployment_stage)
+        area = upload_service.upload_area(area_uri=area_uri)
         area.upload_files(self.file_paths,
                           self.file_size_sum,
                           target_filename=args.target_filename,
@@ -56,7 +59,7 @@ class UploadCommand(UploadCLICommand):
                           dcp_type="data")
 
     def _load_config(self):
-        self.config = UploadConfig()
+        self.config = UploadService.config()
         if not self.config.current_area:
             sys.stderr.write("\nThere is no upload area selected.\n" +
                              "Please select one with \"{cmdname} upload select <uri_or_alias>\"\n\n".format(

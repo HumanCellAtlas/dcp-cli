@@ -1,8 +1,8 @@
 import filecmp
 import os
 import unittest
-from mock import patch
-from hca.upload.upload_submission_state import FileStatusCheck, UploadAreaFilesStatusCheck
+from mock import Mock, patch
+from hca.upload.lib.upload_submission_state import FileStatusCheck, UploadAreaFilesStatusCheck
 
 
 class TestFileStatusCheck(unittest.TestCase):
@@ -41,30 +41,38 @@ class TestFileStatusCheck(unittest.TestCase):
         }
         self.file_status = FileStatusCheck('dev')
 
-
-    @patch('hca.upload.api_client.ApiClient.checksum_status')
-    @patch('hca.upload.api_client.ApiClient._get')
-    def test_validated_file_status(self, mock_get, mock_checksum_status):
-        mock_get.return_value = self.validated_response_body
+    @patch('hca.upload.lib.api_client.ApiClient.checksum_status')
+    @patch('hca.upload.lib.api_client.ApiClient._make_request')
+    def test_validated_file_status(self, mock_make_request, mock_checksum_status):
+        mock_response = Mock()
+        mock_response.json.return_value = self.validated_response_body
+        mock_make_request.return_value = mock_response
         mock_checksum_status.return_value = self.checksummed_response_body
+
         valid_file = self.file_status.check_file_status('uuid', 'filename')
+
         assert valid_file == 'VALIDATED'
-        mock_get.assert_called_once_with('https://upload.dev.data.humancellatlas.org/v1/area/uuid/filename/validate')
+        mock_make_request.assert_called_once_with('get', path='/area/uuid/filename/validate')
 
+    @patch('hca.upload.lib.api_client.ApiClient._make_request')
+    def test_checksumming_scheduled_file_status(self, mock_make_request):
+        mock_response = Mock()
+        mock_response.json.return_value = self.checksum_scheduled_response_body
+        mock_make_request.return_value = mock_response
 
-    @patch('hca.upload.api_client.ApiClient._get')
-    def test_checksumming_scheduled_file_status(self, mock_get):
-        mock_get.return_value = self.checksum_scheduled_response_body
         checksum_scheduled = self.file_status.check_file_status('uuid', 'filename')
-        assert checksum_scheduled == 'CHECKSUMMING_SCHEDULED'
-        mock_get.assert_called_once_with('https://upload.dev.data.humancellatlas.org/v1/area/uuid/filename/checksum')
 
-    @patch('hca.upload.api_client.ApiClient.checksum_status')
-    @patch('hca.upload.api_client.ApiClient.validation_status')
+        assert checksum_scheduled == 'CHECKSUMMING_SCHEDULED'
+        mock_make_request.assert_called_once_with('get', '/area/uuid/filename/checksum')
+
+    @patch('hca.upload.lib.api_client.ApiClient.checksum_status')
+    @patch('hca.upload.lib.api_client.ApiClient.validation_status')
     def test_validation_scheduled_file_status(self, mock_validation_status, mock_checksum_status):
         mock_validation_status.return_value = self.validation_scheduled_response_body
         mock_checksum_status.return_value = self.checksummed_response_body
+
         valid_file = self.file_status.check_file_status('uuid', 'filename')
+
         assert valid_file == 'VALIDATION_SCHEDULED'
 
 
@@ -87,27 +95,34 @@ class TestUploadAreaStatusCheck(unittest.TestCase):
     def tearDownClass(clsr):
         os.remove('test_status_report.txt')
 
-    @patch('hca.upload.api_client.ApiClient.checksum_statuses')
-    @patch('hca.upload.api_client.ApiClient._get')
-    def test_get_file_statuses_correctly_sets_number_unscheduled_for_validation(self, mock_get,
+    @patch('hca.upload.lib.api_client.ApiClient.checksum_statuses')
+    @patch('hca.upload.lib.api_client.ApiClient._make_request')
+    def test_get_file_statuses_correctly_sets_number_unscheduled_for_validation(self, mock_make_request,
                                                                                 mock_checksum_statuses):
-        mock_get.return_value = self.validations_response_body
+        mock_response = Mock()
+        mock_response.json.return_value = self.validations_response_body
+        mock_make_request.return_value = mock_response
         mock_checksum_statuses.return_value = self.checksums_response_body
 
         checksum_statuses, validations_statuses = self.upload_area_status_checker.get_file_statuses('upload_area_id')
+
         assert checksum_statuses == self.checksums_response_body
         assert validations_statuses['VALIDATION_UNSCHEDULED'] == 1
-        mock_get.assert_called_once_with('https://upload.dev.data.humancellatlas.org/v1/area/upload_area_id/validations')
+        mock_make_request.assert_called_once_with('get', '/area/upload_area_id/validations')
 
-    @patch('hca.upload.api_client.ApiClient._get')
-    @patch('hca.upload.api_client.ApiClient.validation_statuses')
-    def test_report_generated_correctly(self, mock_validation_statuses, mock_get):
+    @patch('hca.upload.lib.api_client.ApiClient._make_request')
+    @patch('hca.upload.lib.api_client.ApiClient.validation_statuses')
+    def test_report_generated_correctly(self, mock_validation_statuses, mock_make_request):
         mock_validation_statuses.return_value = self.validations_response_body
-        mock_get.return_value = self.checksums_response_body
+        mock_response = Mock()
+        mock_response.json.return_value = self.checksums_response_body
+        mock_make_request.return_value = mock_response
 
         self.upload_area_status_checker.check_file_statuses('upload_area_id', 'test_status_report')
-        mock_get.assert_called_once_with('https://upload.dev.data.humancellatlas.org/v1/area/upload_area_id/checksums')
+
+        mock_make_request.assert_called_once_with('get', '/area/upload_area_id/checksums')
         assert filecmp.cmp('test_status_report.txt', 'data/mock_upload_area_status_report.txt')
+
 
 if __name__ == "__main__":
     unittest.main()
