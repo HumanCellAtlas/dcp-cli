@@ -200,18 +200,19 @@ class TestDssApi(unittest.TestCase):
                         os.chdir(cwd)
 
     def test_python_upload_lg_file(self):
-        with tempfile.mkdtemp(dir=os.getcwd()) as src_dir, tempfile.mkdtemp(dir=os.getcwd()) as dest_dir:
-            with tempfile.NamedTemporaryFile(dir=src_dir, suffix=".bin") as fh:
-                fh.write(os.urandom(64 * 1024 * 1024 + 1))
-                fh.flush()
+        src_dir = tempfile.mkdtemp(dir=os.getcwd())
+        dest_dir = tempfile.mkdtemp(dir=os.getcwd())
+        with tempfile.NamedTemporaryFile(dir=src_dir, suffix=".bin") as fh:
+            fh.write(os.urandom(64 * 1024 * 1024 + 1))
+            fh.flush()
 
-                client = hca.dss.DSSClient()
-                bundle_output = client.upload(src_dir=src_dir, replica="aws", staging_bucket=self.staging_bucket)
+            client = hca.dss.DSSClient()
+            bundle_output = client.upload(src_dir=src_dir, replica="aws", staging_bucket=self.staging_bucket)
 
-                client.download(bundle_output['bundle_uuid'], replica="aws", dest_name=dest_dir)
+            client.download(bundle_output['bundle_uuid'], replica="aws", dest_name=dest_dir)
 
-                downloaded_file = os.path.join(dest_dir, os.path.basename(fh.name))
-                self.assertTrue(filecmp.cmp(fh.name, downloaded_file, False))
+            downloaded_file = os.path.join(dest_dir, os.path.basename(fh.name))
+            self.assertTrue(filecmp.cmp(fh.name, downloaded_file, False))
 
     def test_python_bindings(self):
         bundle_path = os.path.join(TEST_DIR, "res", "bundle")
