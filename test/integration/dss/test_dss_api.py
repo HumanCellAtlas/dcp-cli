@@ -272,7 +272,7 @@ class TestDssApi(unittest.TestCase):
         query = {'bool': {}}
         resp = client.put_subscription(es_query=query, callback_url="https://www.example.com", replica="aws")
         subscription_uuid = resp['uuid']
-        print(subscription_uuid)
+        print('subscription id: {}'.format(subscription_uuid))
 
         resp = client.get_subscriptions(replica="aws", subscription_type='elasticsearch')
         self.assertTrue(subscription_uuid in [s['uuid'] for s in resp['subscriptions']],
