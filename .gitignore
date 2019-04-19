@@ -42,3 +42,6 @@ npm-debug.log
 
 # Credential files
 /gcs-credentials.json
+
+# Version file
+hca/version.py
