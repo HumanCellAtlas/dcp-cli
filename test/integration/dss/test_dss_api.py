@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
-
+import errno
 from concurrent.futures import ThreadPoolExecutor
 import csv
 import datetime
@@ -72,7 +72,7 @@ class TestDssApi(unittest.TestCase):
         bundle_uuid = manifest['bundle_uuid']
         with self.subTest(bundle_uuid=bundle_uuid):
             with TemporaryDirectory() as dest_dir:
-                client.download(bundle_uuid=bundle_uuid, replica='aws', dest_name=dest_dir)
+                client.download(bundle_uuid=bundle_uuid, replica='aws', download_dir=dest_dir)
                 downloaded_file_names = [x.path for x in iter_paths(dest_dir)]
                 downloaded_file_paths = [object_name_builder(p, dest_dir) for p in downloaded_file_names]
                 self.assertEqual(uploaded_files.sort(), downloaded_file_paths.sort())
@@ -118,19 +118,29 @@ class TestDssApi(unittest.TestCase):
 
                     with TemporaryDirectory() as dest_dir:
                         client.download(bundle_uuid=bundle_uuid,
-                                        dest_name=dest_dir,
+                                        download_dir=dest_dir,
                                         replica="aws",
                                         data_files=data_globs,
                                         metadata_files=metadata_globs)
                         # Check that contents are the same
-                        downloaded_files = set(os.listdir(dest_dir))
+                        try:
+                            downloaded_files = set(os.listdir(os.path.join(dest_dir, bundle_uuid)))
+                        except OSError as e:
+                            if e.errno != errno.ENOENT:
+                                raise
+                            downloaded_files = set()
+                        if '.hca' in downloaded_files:
+                            # Since we set the download_dir for download, .hca dir will appear,
+                            # but only if globs are non-empty
+                            assert not all(glob in [(), ('',)] for glob in [metadata_globs, data_globs])
+                            downloaded_files.remove('.hca')
                         self.assertEqual(expect_downloaded_files, downloaded_files)
                         for file in downloaded_files:
                             manifest_entry = next(entry for entry in manifest['files'] if entry['name'] == file)
                             globs = metadata_globs if manifest_entry['indexed'] else data_globs
                             self.assertTrue(any(fnmatchcase(file, glob) for glob in globs))
                             uploaded_file = os.path.join(bundle_path, file)
-                            downloaded_file = os.path.join(dest_dir, file)
+                            downloaded_file = os.path.join(dest_dir, bundle_uuid, file)
                             self.assertTrue(filecmp.cmp(uploaded_file, downloaded_file, False))
 
     def test_python_manifest_download(self):
@@ -209,10 +219,9 @@ class TestDssApi(unittest.TestCase):
                 client = hca.dss.DSSClient()
                 bundle_output = client.upload(src_dir=src_dir, replica="aws", staging_bucket=self.staging_bucket)
 
-                client.download(bundle_output['bundle_uuid'], replica="aws", dest_name=dest_dir)
+                client.download(bundle_output['bundle_uuid'], replica="aws", download_dir=dest_dir)
 
-                downloaded_file = os.path.join(dest_dir, os.path.basename(fh.name))
-
+                downloaded_file = os.path.join(dest_dir, bundle_output['bundle_uuid'], os.path.basename(fh.name))
                 self.assertTrue(filecmp.cmp(fh.name, downloaded_file, False))
 
     def test_python_bindings(self):
@@ -223,7 +232,7 @@ class TestDssApi(unittest.TestCase):
         bundle_uuid = bundle_output['bundle_uuid']
 
         with TemporaryDirectory() as dest_dir:
-            client.download(bundle_uuid=bundle_output['bundle_uuid'], replica="aws", dest_name=dest_dir)
+            client.download(bundle_uuid=bundle_output['bundle_uuid'], replica="aws", download_dir=dest_dir)
 
         # Test get-files and head-files
         file_ = bundle_output['files'][0]
