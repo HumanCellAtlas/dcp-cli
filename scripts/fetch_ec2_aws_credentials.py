@@ -27,8 +27,8 @@ def get_default_aws_folder():
 
 def get_ec2_security_credentials(role_name):
     ec2_auth_url_role = ec2_auth_url + role_name
-    res = requests.get(ec2_auth_url)
-    return json.dumps(res.raw())
+    res = requests.get(ec2_auth_url_role)
+    return json.dumps(res.json())
 
 
 def write_string_to_file(path_to_file, string_to_write):
