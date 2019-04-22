@@ -9,7 +9,6 @@ ec2_auth_url = 'http://169.254.169.254/latest/meta-data/iam/security-credentials
 credential_string = """[default]
 aws_access_key_id = {}
 aws_secret_access_key = {}
-token = {}
 """
 
 config_string = """[default]
@@ -60,7 +59,6 @@ if __name__ == '__main__':
         credential_path = os.path.join(get_default_aws_folder(), "credentials")
         write_string_to_file(config_path, config_string.format(args.region_name))
         write_string_to_file(credential_path, credential_string.format(security_credentials['AccessKeyId'],
-                                                                       security_credentials['SecretAccessKey'],
-                                                                       security_credentials['Token']))
+                                                                       security_credentials['SecretAccessKey']))
     else:
         print(security_credentials)
