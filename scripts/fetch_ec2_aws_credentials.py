@@ -20,7 +20,7 @@ region = {}
 
 def get_default_aws_folder():
     if os.name is 'nt':
-        return "%UserProfile%\.aws"
+        return os.path.join(os.environ.get("UserProfile"), ".aws")
     else:
         return "~/.aws"
 
@@ -28,12 +28,12 @@ def get_default_aws_folder():
 def get_ec2_security_credentials(role_name):
     ec2_auth_url_role = ec2_auth_url + role_name
     res = requests.get(ec2_auth_url_role)
-    return json.dumps(res.json())
+    return res.json()
 
 
 def write_string_to_file(path_to_file, string_to_write):
     print("attempting to modify: {}".format(path_to_file))
-    with open(path_to_file, "w") as file:
+    with open(path_to_file, "w+") as file:
         file.write(string_to_write)
         file.close()
 
@@ -59,7 +59,7 @@ if __name__ == '__main__':
         config_path = os.path.join(get_default_aws_folder(), "config")
         credential_path = os.path.join(get_default_aws_folder(), "credentials")
         write_string_to_file(config_path, config_string.format(args.region_name))
-        write_string_to_file(credential_path, credential_string.format(security_credentials['AccessKeyID'],
+        write_string_to_file(credential_path, credential_string.format(security_credentials['AccessKeyId'],
                                                                        security_credentials['SecretAccessKey'],
                                                                        security_credentials['Token']))
     else:
