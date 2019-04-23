@@ -284,7 +284,7 @@ class TestDssApi(unittest.TestCase):
 
             resp = client.get_subscription(replica="aws", uuid=subscription_uuid, subscription_type='elasticsearch')
             self.assertEqual(subscription_uuid, resp['uuid'])
-    
+
             resp = client.delete_subscription(uuid=subscription_uuid, replica="aws", subscription_type='elasticsearch')
             self.assertIn('timeDeleted', resp)
 
@@ -370,6 +370,7 @@ class TestDssApi(unittest.TestCase):
 
         client.logout()
         self.assertNotIn("oauth2_token", config)
+
 
 
 if __name__ == "__main__":
