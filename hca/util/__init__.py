@@ -107,8 +107,9 @@ from urllib3.util import retry, timeout
 from jsonpointer import resolve_pointer
 from threading import Lock
 
+
 from .. import get_config, logger
-from .compat import USING_PYTHON2
+from .compat import USING_PYTHON2, urljoin
 from .exceptions import SwaggerAPIException, SwaggerClientInternalError
 from ._docs import _pagination_docstring, _streaming_docstring, _md2rst, _parse_docstring
 from .fs_helper import FSHelper as fs
@@ -373,12 +374,8 @@ class SwaggerClient(object):
             scopes = ["openid", "email", "offline_access"]
             if remote:
                 import google_auth_oauthlib.flow
-                if USING_PYTHON2:
-                    from backports import urllib
-                else:
-                    import urllib
                 application_secrets = self.application_secrets
-                redirect_uri = urllib.parse.urljoin(application_secrets['installed']['auth_uri'], "/echo")
+                redirect_uri = urljoin(application_secrets['installed']['auth_uri'], "/echo")
                 flow = google_auth_oauthlib.flow.Flow.from_client_config(self.application_secrets, scopes=scopes,
                                                                          redirect_uri=redirect_uri)
 
