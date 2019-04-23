@@ -36,4 +36,4 @@ if sys.version_info < (3, 5):
 else:
     from os import scandir, walk
 
-__all__ = ('USING_PYTHON2', 'glob_escape', 'scandir', 'walk', 'urlparse')
+__all__ = ('USING_PYTHON2', 'glob_escape', 'scandir', 'walk', 'urljoin')
