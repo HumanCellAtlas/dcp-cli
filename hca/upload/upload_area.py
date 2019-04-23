@@ -237,4 +237,6 @@ class UploadArea:
                                                                     target_filename or os.path.basename(file_path))
             print("Upload complete of %s to upload area %s" % (file_path, self.uri))
         except Exception as e:
+            print("\nWhile uploading {file} encountered exception {klass}{args}: {e}".format(
+                file=file_path, klass=type(e), args=e.args, e=str(e)))
             self.s3agent.failed_uploads[file_path] = e
