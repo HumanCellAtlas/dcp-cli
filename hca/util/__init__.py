@@ -378,7 +378,6 @@ class SwaggerClient(object):
                 else:
                     import urllib
                 application_secrets = self.application_secrets
-                print(application_secrets)
                 redirect_uri = urllib.parse.urljoin(application_secrets['installed']['auth_uri'], "/echo")
                 flow = google_auth_oauthlib.flow.Flow.from_client_config(self.application_secrets, scopes=scopes,
                                                                          redirect_uri=redirect_uri)
