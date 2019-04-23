@@ -367,6 +367,8 @@ class SwaggerClient(object):
 
         This command may open a browser window to ask for your
         consent to use web service authentication credentials.
+
+        Use --remote if using the CLI in a remote environment
         """
         if access_token:
             credentials = argparse.Namespace(token=access_token, refresh_token=None, id_token=None)
