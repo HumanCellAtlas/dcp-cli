@@ -1,3 +1,8 @@
+Changes for v5.0.1 (2019-04-23)
+===============================
+
+upload: add some error verbosity for debugging purposes
+
 Changes for v5.0.0 (2019-04-23)
 ===============================
 
