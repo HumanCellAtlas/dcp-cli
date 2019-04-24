@@ -73,9 +73,6 @@ class DSSClient(SwaggerClient):
         self.commands += [self.download, self.download_manifest, self.download_manifest_v2, self.upload,
                           self.create_version]
 
-    def _create_version(self):
-        return datetime.utcnow().strftime("%Y-%m-%dT%H%M%S.%fZ")
-
     def create_version(self):
         """
             :param
@@ -85,9 +82,114 @@ class DSSClient(SwaggerClient):
         """
         print(self._create_version())
 
-    def download(self, bundle_uuid, replica, version="", download_dir="",
-                 metadata_files=('*',), data_files=('*',),
-                 num_retries=10, min_delay_seconds=0.25):
+    def _create_version(self):
+        return datetime.utcnow().strftime("%Y-%m-%dT%H%M%S.%fZ")
+
+    def upload(self, src_dir, replica, staging_bucket, timeout_seconds=1200):
+        """
+        Upload a directory of files from the local filesystem and create a bundle containing the uploaded files.
+
+        :param str src_dir: file path to a directory of files to upload to the replica.
+        :param str replica: the replica to upload to. The supported replicas are: `aws` for Amazon Web Services, and
+            `gcp` for Google Cloud Platform. [aws, gcp]
+        :param str staging_bucket: a client controlled AWS S3 storage bucket to upload from.
+        :param int timeout_seconds: the time to wait for a file to upload to replica.
+
+        Upload a directory of files from the local filesystem and create a bundle containing the uploaded files.
+        This method requires the use of a client-controlled object storage bucket to stage the data for upload.
+        """
+        bundle_uuid = str(uuid.uuid4())
+        version = datetime.utcnow().strftime("%Y-%m-%dT%H%M%S.%fZ")
+
+        files_to_upload, files_uploaded = [], []
+        for filename in iter_paths(src_dir):
+            full_file_name = filename.path
+            files_to_upload.append(open(full_file_name, "rb"))
+
+        logger.info("Uploading %i files from %s to %s", len(files_to_upload), src_dir, staging_bucket)
+        file_uuids, uploaded_keys, abs_file_paths = upload_to_cloud(files_to_upload, staging_bucket=staging_bucket,
+                                                                    replica=replica, from_cloud=False)
+        for file_handle in files_to_upload:
+            file_handle.close()
+        filenames = [object_name_builder(p, src_dir) for p in abs_file_paths]
+        filename_key_list = list(zip(filenames, file_uuids, uploaded_keys))
+
+        for filename, file_uuid, key in filename_key_list:
+            filename = filename.replace('\\', '/')  # for windows paths
+            if filename.startswith('/'):
+                filename = filename.lstrip('/')
+            logger.info("File %s: registering...", filename)
+
+            # Generating file data
+            creator_uid = self.config.get("creator_uid", 0)
+            source_url = "s3://{}/{}".format(staging_bucket, key)
+            logger.info("File %s: registering from %s -> uuid %s", filename, source_url, file_uuid)
+
+            response = self.put_file._request(dict(
+                uuid=file_uuid,
+                bundle_uuid=bundle_uuid,
+                version=version,
+                creator_uid=creator_uid,
+                source_url=source_url
+            ))
+            files_uploaded.append(dict(name=filename, version=version, uuid=file_uuid, creator_uid=creator_uid))
+
+            if response.status_code in (requests.codes.ok, requests.codes.created):
+                logger.info("File %s: Sync copy -> %s", filename, version)
+            else:
+                assert response.status_code == requests.codes.accepted
+                logger.info("File %s: Async copy -> %s", filename, version)
+
+                timeout = time.time() + timeout_seconds
+                wait = 1.0
+                while time.time() < timeout:
+                    try:
+                        self.head_file(uuid=file_uuid, replica="aws", version=version)
+                        break
+                    except SwaggerAPIException as e:
+                        if e.code != requests.codes.not_found:
+                            msg = "File {}: Unexpected server response during registration"
+                            req_id = 'X-AWS-REQUEST-ID: {}'.format(response.headers.get("X-AWS-REQUEST-ID"))
+                            raise RuntimeError(msg.format(filename), req_id)
+                        time.sleep(wait)
+                        wait = min(60.0, wait * self.UPLOAD_BACKOFF_FACTOR)
+                else:
+                    # timed out. :(
+                    req_id = 'X-AWS-REQUEST-ID: {}'.format(response.headers.get("X-AWS-REQUEST-ID"))
+                    raise RuntimeError("File {}: registration FAILED".format(filename), req_id)
+                logger.debug("Successfully uploaded file")
+
+        file_args = [{'indexed': file_["name"].endswith(".json"),
+                      'name': file_['name'],
+                      'version': file_['version'],
+                      'uuid': file_['uuid']} for file_ in files_uploaded]
+
+        logger.info("%s", "Bundle {}: Registering...".format(bundle_uuid))
+
+        response = self.put_bundle(uuid=bundle_uuid,
+                                   version=version,
+                                   replica=replica,
+                                   creator_uid=creator_uid,
+                                   files=file_args)
+        logger.info("%s", "Bundle {}: Registered successfully".format(bundle_uuid))
+
+        return {
+            "bundle_uuid": bundle_uuid,
+            "creator_uid": creator_uid,
+            "replica": replica,
+            "version": response["version"],
+            "files": files_uploaded
+        }
+
+    def download(self,
+                 bundle_uuid,
+                 replica,
+                 version="",
+                 download_dir="",
+                 metadata_files=('*',),
+                 data_files=('*',),
+                 num_retries=10,
+                 min_delay_seconds=0.25):
         """
         Download a bundle and save it to the local filesystem as a directory.
 
@@ -140,6 +242,113 @@ class DSSClient(SwaggerClient):
         if errors:
             raise RuntimeError('{} file(s) failed to download'.format(errors))
 
+    def download_manifest_v2(self, manifest, replica,
+                             num_retries=10,
+                             min_delay_seconds=0.25,
+                             download_dir='.'):
+        """
+        Process the given manifest file in TSV (tab-separated values) format and download the files referenced by it.
+        The files are downloaded in the version 2 format.
+
+        This download format will serve as the main storage format for downloaded files. If a user specifies a different
+        format for download (coming in the future) the files will first be downloaded in this format, then hard-linked
+        to the user's preferred format.
+
+        :param str manifest: path to a TSV (tab-separated values) file listing files to download
+        :param str replica: the replica to download from. The supported replicas are: `aws` for Amazon Web Services, and
+            `gcp` for Google Cloud Platform. [aws, gcp]
+        :param int num_retries: The initial quota of download failures to accept before exiting due to
+            failures. The number of retries increase and decrease as file chucks succeed and fail.
+        :param float min_delay_seconds: The minimum number of seconds to wait in between retries.
+
+        Process the given manifest file in TSV (tab-separated values) format and download the files
+        referenced by it.
+
+        Each row in the manifest represents one file in DSS. The manifest must have a header row. The header row
+        must declare the following columns:
+
+        * `file_uuid` - the UUID of the file in DSS.
+
+        * `file_version` - the version of the file in DSS.
+
+        The TSV may have additional columns. Those columns will be ignored. The ordering of the columns is
+        insignificant because the TSV is required to have a header row.
+        """
+        fieldnames, rows = self._parse_manifest(manifest)
+        errors = 0
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=self.threads) as executor:
+            futures_to_dss_file = {}
+            for row in rows:
+                dss_file = DSSFile.from_manifest_row(row, replica)
+                future = executor.submit(self._download_to_filestore, download_dir, dss_file,
+                                         num_retries=num_retries, min_delay_seconds=min_delay_seconds)
+                futures_to_dss_file[future] = dss_file
+            for future in concurrent.futures.as_completed(futures_to_dss_file):
+                dss_file = futures_to_dss_file[future]
+                try:
+                    future.result()
+                except Exception as e:
+                    errors += 1
+                    logger.warning('Failed to download file %s version %s from replica %s',
+                                   dss_file.uuid, dss_file.version, dss_file.replica, exc_info=e)
+        if errors:
+            raise RuntimeError('{} file(s) failed to download'.format(errors))
+        else:
+            self._write_output_manifest(manifest, download_dir)
+
+    def download_manifest(self, manifest, replica, num_retries=10, min_delay_seconds=0.25, download_dir=''):
+        """
+        Process the given manifest file in TSV (tab-separated values) format and download the files referenced by it.
+
+        :param str manifest: path to a TSV (tab-separated values) file listing files to download
+        :param str replica: the replica to download from. The supported replicas are: `aws` for Amazon Web Services, and
+            `gcp` for Google Cloud Platform. [aws, gcp]
+        :param int num_retries: The initial quota of download failures to accept before exiting due to
+            failures. The number of retries increase and decrease as file chucks succeed and fail.
+        :param float min_delay_seconds: The minimum number of seconds to wait in between retries.
+
+        Process the given manifest file in TSV (tab-separated values) format and download the files
+        referenced by it.
+
+        Each row in the manifest represents one file in DSS. The manifest must have a header row. The header row
+        must declare the following columns:
+
+        * `bundle_uuid` - the UUID of the bundle containing the file in DSS.
+
+        * `bundle_version` - the version of the bundle containing the file in DSS.
+
+        * `file_name` - the name of the file as specified in the bundle.
+
+        The TSV may have additional columns. Those columns will be ignored. The ordering of the columns is
+        insignificant because the TSV is required to have a header row.
+        """
+        file_errors = 0
+        file_task, bundle_errors = self._download_manifest_tasks(manifest,
+                                                                 replica,
+                                                                 num_retries,
+                                                                 min_delay_seconds,
+                                                                 download_dir)
+        with concurrent.futures.ThreadPoolExecutor(self.threads) as executor:
+            futures_to_dss_file = {executor.submit(task): dss_file
+                                   for dss_file, task in file_task}
+            for future in concurrent.futures.as_completed(futures_to_dss_file):
+                dss_file = futures_to_dss_file[future]
+                try:
+                    future.result()
+                except Exception as e:
+                    file_errors += 1
+                    logger.warning('Failed to download file %s version %s from replica %s',
+                                   dss_file.uuid, dss_file.version, dss_file.replica, exc_info=e)
+        if file_errors or bundle_errors:
+            bundle_error_str = '{} bundle(s) failed to download'.format(bundle_errors) if bundle_errors else ''
+            file_error_str = '{} file(s) failed to download'.format(file_errors) if file_errors else ''
+            raise RuntimeError(bundle_error_str + (' and ' if bundle_errors and file_errors else '') + file_error_str)
+        else:
+            self._write_output_manifest(manifest, download_dir)
+            logger.info('Primary copies of the files have been downloaded to `.hca` and linked '
+                        'into per-bundle subdirectories of the current directory.')
+
     def _download_tasks(self,
                         bundle_uuid,
                         replica,
@@ -189,12 +398,32 @@ class DSSClient(SwaggerClient):
                                               num_retries=num_retries,
                                               min_delay_seconds=min_delay_seconds)
 
-    def _download_and_link_to_filestore(self, download_dir, dss_file, file_path, num_retries, min_delay_seconds):
-        file_store_path = self._download_to_filestore(download_dir,
-                                                      dss_file,
-                                                      num_retries=num_retries,
-                                                      min_delay_seconds=min_delay_seconds)
-        hardlink(file_store_path, file_path)
+    def _download_manifest_tasks(self, manifest, replica, num_retries, min_delay_seconds, download_dir):
+        with open(manifest) as f:
+            bundles = defaultdict(set)
+            # unicode_literals is on so all strings are unicode. CSV wants a str so we need to jump through a hoop.
+            delimiter = b'\t' if USING_PYTHON2 else '\t'
+            reader = csv.DictReader(f, delimiter=delimiter, quoting=csv.QUOTE_NONE)
+            for row in reader:
+                bundles[(row['bundle_uuid'], row['bundle_version'])].add(row['file_name'])
+        tasks = []
+        errors = 0
+        for (bundle_uuid, bundle_version), data_files in bundles.items():
+            data_globs = tuple(glob_escape(file_name) for file_name in data_files if file_name)
+            logger.info('Downloading bundle %s version %s ...', bundle_uuid, bundle_version)
+            try:
+                for task in self._download_tasks(bundle_uuid,
+                                                 replica,
+                                                 version=bundle_version,
+                                                 download_dir=download_dir,
+                                                 data_files=data_globs,
+                                                 num_retries=num_retries,
+                                                 min_delay_seconds=min_delay_seconds):
+                    tasks.append(task)
+            except Exception as e:
+                errors += 1
+                logger.warning('Bundle %s failed to download', bundle_uuid, exc_info=e)
+        return tasks, errors
 
     def _download_to_filestore(self, download_dir, dss_file, num_retries=10, min_delay_seconds=0.25):
         """
@@ -208,6 +437,13 @@ class DSSClient(SwaggerClient):
             self._download_file(dss_file, dest_path, num_retries=num_retries, min_delay_seconds=min_delay_seconds)
             logger.info("Download '%s' to '%s'.", dss_file.name, dest_path)
         return dest_path
+
+    def _download_and_link_to_filestore(self, download_dir, dss_file, file_path, num_retries, min_delay_seconds):
+        file_store_path = self._download_to_filestore(download_dir,
+                                                      dss_file,
+                                                      num_retries=num_retries,
+                                                      min_delay_seconds=min_delay_seconds)
+        hardlink(file_store_path, file_path)
 
     def _download_file(self, dss_file, dest_path, num_retries=10, min_delay_seconds=0.25):
         """
@@ -322,14 +558,6 @@ class DSSClient(SwaggerClient):
         path_pieces.append(checksum)
         return os.path.join(*path_pieces)
 
-    @classmethod
-    def _parse_manifest(cls, manifest):
-        with open(manifest) as f:
-            # unicode_literals is on so all strings are unicode. CSV wants a str so we need to jump through a hoop.
-            delimiter = b'\t' if USING_PYTHON2 else '\t'
-            reader = csv.DictReader(f, delimiter=delimiter, quoting=csv.QUOTE_NONE)
-            return reader.fieldnames, list(reader)
-
     def _write_output_manifest(self, manifest, filestore_root):
         """
         Adds the file path column to the manifest and writes the copy to the current directory. If the original manifest
@@ -350,232 +578,10 @@ class DSSClient(SwaggerClient):
                 logger.warning('Overwriting manifest %s', output)
         logger.info('Rewrote manifest %s with additional column containing path to downloaded files.', output)
 
-    def download_manifest_v2(self, manifest, replica,
-                             num_retries=10,
-                             min_delay_seconds=0.25,
-                             download_dir='.'):
-        """
-        Process the given manifest file in TSV (tab-separated values) format and download the files referenced by it.
-        The files are downloaded in the version 2 format.
-
-        This download format will serve as the main storage format for downloaded files. If a user specifies a different
-        format for download (coming in the future) the files will first be downloaded in this format, then hard-linked
-        to the user's preferred format.
-
-        :param str manifest: path to a TSV (tab-separated values) file listing files to download
-        :param str replica: the replica to download from. The supported replicas are: `aws` for Amazon Web Services, and
-            `gcp` for Google Cloud Platform. [aws, gcp]
-        :param int num_retries: The initial quota of download failures to accept before exiting due to
-            failures. The number of retries increase and decrease as file chucks succeed and fail.
-        :param float min_delay_seconds: The minimum number of seconds to wait in between retries.
-
-        Process the given manifest file in TSV (tab-separated values) format and download the files
-        referenced by it.
-
-        Each row in the manifest represents one file in DSS. The manifest must have a header row. The header row
-        must declare the following columns:
-
-        * `file_uuid` - the UUID of the file in DSS.
-
-        * `file_version` - the version of the file in DSS.
-
-        The TSV may have additional columns. Those columns will be ignored. The ordering of the columns is
-        insignificant because the TSV is required to have a header row.
-        """
-        fieldnames, rows = self._parse_manifest(manifest)
-        errors = 0
-
-        with concurrent.futures.ThreadPoolExecutor(max_workers=self.threads) as executor:
-            futures_to_dss_file = {}
-            for row in rows:
-                dss_file = DSSFile.from_manifest_row(row, replica)
-                future = executor.submit(self._download_to_filestore, download_dir, dss_file,
-                                         num_retries=num_retries, min_delay_seconds=min_delay_seconds)
-                futures_to_dss_file[future] = dss_file
-            for future in concurrent.futures.as_completed(futures_to_dss_file):
-                dss_file = futures_to_dss_file[future]
-                try:
-                    future.result()
-                except Exception as e:
-                    errors += 1
-                    logger.warning('Failed to download file %s version %s from replica %s',
-                                   dss_file.uuid, dss_file.version, dss_file.replica, exc_info=e)
-        if errors:
-            raise RuntimeError('{} file(s) failed to download'.format(errors))
-        else:
-            self._write_output_manifest(manifest, download_dir)
-
-    def download_manifest(self, manifest, replica, num_retries=10, min_delay_seconds=0.25, download_dir=''):
-        """
-        Process the given manifest file in TSV (tab-separated values) format and download the files referenced by it.
-
-        :param str manifest: path to a TSV (tab-separated values) file listing files to download
-        :param str replica: the replica to download from. The supported replicas are: `aws` for Amazon Web Services, and
-            `gcp` for Google Cloud Platform. [aws, gcp]
-        :param int num_retries: The initial quota of download failures to accept before exiting due to
-            failures. The number of retries increase and decrease as file chucks succeed and fail.
-        :param float min_delay_seconds: The minimum number of seconds to wait in between retries.
-
-        Process the given manifest file in TSV (tab-separated values) format and download the files
-        referenced by it.
-
-        Each row in the manifest represents one file in DSS. The manifest must have a header row. The header row
-        must declare the following columns:
-
-        * `bundle_uuid` - the UUID of the bundle containing the file in DSS.
-
-        * `bundle_version` - the version of the bundle containing the file in DSS.
-
-        * `file_name` - the name of the file as specified in the bundle.
-
-        The TSV may have additional columns. Those columns will be ignored. The ordering of the columns is
-        insignificant because the TSV is required to have a header row.
-        """
-        file_errors = 0
-        file_task, bundle_errors = self._download_manifest_tasks(manifest,
-                                                                 replica,
-                                                                 num_retries,
-                                                                 min_delay_seconds,
-                                                                 download_dir)
-        with concurrent.futures.ThreadPoolExecutor(self.threads) as executor:
-            futures_to_dss_file = {executor.submit(task): dss_file
-                                   for dss_file, task in file_task}
-            for future in concurrent.futures.as_completed(futures_to_dss_file):
-                dss_file = futures_to_dss_file[future]
-                try:
-                    future.result()
-                except Exception as e:
-                    file_errors += 1
-                    logger.warning('Failed to download file %s version %s from replica %s',
-                                   dss_file.uuid, dss_file.version, dss_file.replica, exc_info=e)
-        if file_errors or bundle_errors:
-            bundle_error_str = '{} bundle(s) failed to download'.format(bundle_errors) if bundle_errors else ''
-            file_error_str = '{} file(s) failed to download'.format(file_errors) if file_errors else ''
-            raise RuntimeError(bundle_error_str + (' and ' if bundle_errors and file_errors else '') + file_error_str)
-        else:
-            self._write_output_manifest(manifest, download_dir)
-            logger.info('Primary copies of the files have been downloaded to `.hca` and linked '
-                        'into per-bundle subdirectories of the current directory.')
-
-    def _download_manifest_tasks(self, manifest, replica, num_retries, min_delay_seconds, download_dir):
+    @classmethod
+    def _parse_manifest(cls, manifest):
         with open(manifest) as f:
-            bundles = defaultdict(set)
             # unicode_literals is on so all strings are unicode. CSV wants a str so we need to jump through a hoop.
             delimiter = b'\t' if USING_PYTHON2 else '\t'
             reader = csv.DictReader(f, delimiter=delimiter, quoting=csv.QUOTE_NONE)
-            for row in reader:
-                bundles[(row['bundle_uuid'], row['bundle_version'])].add(row['file_name'])
-        tasks = []
-        errors = 0
-        for (bundle_uuid, bundle_version), data_files in bundles.items():
-            data_globs = tuple(glob_escape(file_name) for file_name in data_files if file_name)
-            logger.info('Downloading bundle %s version %s ...', bundle_uuid, bundle_version)
-            try:
-                for task in self._download_tasks(bundle_uuid,
-                                                 replica,
-                                                 version=bundle_version,
-                                                 download_dir=download_dir,
-                                                 data_files=data_globs,
-                                                 num_retries=num_retries,
-                                                 min_delay_seconds=min_delay_seconds):
-                    tasks.append(task)
-            except Exception as e:
-                errors += 1
-                logger.warning('Bundle %s failed to download', bundle_uuid, exc_info=e)
-        return tasks, errors
-
-    def upload(self, src_dir, replica, staging_bucket, timeout_seconds=1200):
-        """
-        Upload a directory of files from the local filesystem and create a bundle containing the uploaded files.
-
-        :param str src_dir: file path to a directory of files to upload to the replica.
-        :param str replica: the replica to upload to. The supported replicas are: `aws` for Amazon Web Services, and
-            `gcp` for Google Cloud Platform. [aws, gcp]
-        :param str staging_bucket: a client controlled AWS S3 storage bucket to upload from.
-        :param int timeout_seconds: the time to wait for a file to upload to replica.
-
-        Upload a directory of files from the local filesystem and create a bundle containing the uploaded files.
-        This method requires the use of a client-controlled object storage bucket to stage the data for upload.
-        """
-        bundle_uuid = str(uuid.uuid4())
-        version = datetime.utcnow().strftime("%Y-%m-%dT%H%M%S.%fZ")
-
-        files_to_upload, files_uploaded = [], []
-        for filename in iter_paths(src_dir):
-            full_file_name = filename.path
-            files_to_upload.append(open(full_file_name, "rb"))
-
-        logger.info("Uploading %i files from %s to %s", len(files_to_upload), src_dir, staging_bucket)
-        file_uuids, uploaded_keys, abs_file_paths = upload_to_cloud(files_to_upload, staging_bucket=staging_bucket,
-                                                                    replica=replica, from_cloud=False)
-        for file_handle in files_to_upload:
-            file_handle.close()
-        filenames = [object_name_builder(p, src_dir) for p in abs_file_paths]
-        filename_key_list = list(zip(filenames, file_uuids, uploaded_keys))
-
-        for filename, file_uuid, key in filename_key_list:
-            filename = filename.replace('\\', '/')  # for windows paths
-            if filename.startswith('/'):
-                filename = filename.lstrip('/')
-            logger.info("File %s: registering...", filename)
-
-            # Generating file data
-            creator_uid = self.config.get("creator_uid", 0)
-            source_url = "s3://{}/{}".format(staging_bucket, key)
-            logger.info("File %s: registering from %s -> uuid %s", filename, source_url, file_uuid)
-
-            response = self.put_file._request(dict(
-                uuid=file_uuid,
-                bundle_uuid=bundle_uuid,
-                version=version,
-                creator_uid=creator_uid,
-                source_url=source_url
-            ))
-            files_uploaded.append(dict(name=filename, version=version, uuid=file_uuid, creator_uid=creator_uid))
-
-            if response.status_code in (requests.codes.ok, requests.codes.created):
-                logger.info("File %s: Sync copy -> %s", filename, version)
-            else:
-                assert response.status_code == requests.codes.accepted
-                logger.info("File %s: Async copy -> %s", filename, version)
-
-                timeout = time.time() + timeout_seconds
-                wait = 1.0
-                while time.time() < timeout:
-                    try:
-                        self.head_file(uuid=file_uuid, replica="aws", version=version)
-                        break
-                    except SwaggerAPIException as e:
-                        if e.code != requests.codes.not_found:
-                            msg = "File {}: Unexpected server response during registration"
-                            req_id = 'X-AWS-REQUEST-ID: {}'.format(response.headers.get("X-AWS-REQUEST-ID"))
-                            raise RuntimeError(msg.format(filename), req_id)
-                        time.sleep(wait)
-                        wait = min(60.0, wait * self.UPLOAD_BACKOFF_FACTOR)
-                else:
-                    # timed out. :(
-                    req_id = 'X-AWS-REQUEST-ID: {}'.format(response.headers.get("X-AWS-REQUEST-ID"))
-                    raise RuntimeError("File {}: registration FAILED".format(filename), req_id)
-                logger.debug("Successfully uploaded file")
-
-        file_args = [{'indexed': file_["name"].endswith(".json"),
-                      'name': file_['name'],
-                      'version': file_['version'],
-                      'uuid': file_['uuid']} for file_ in files_uploaded]
-
-        logger.info("%s", "Bundle {}: Registering...".format(bundle_uuid))
-
-        response = self.put_bundle(uuid=bundle_uuid,
-                                   version=version,
-                                   replica=replica,
-                                   creator_uid=creator_uid,
-                                   files=file_args)
-        logger.info("%s", "Bundle {}: Registered successfully".format(bundle_uuid))
-
-        return {
-            "bundle_uuid": bundle_uuid,
-            "creator_uid": creator_uid,
-            "replica": replica,
-            "version": response["version"],
-            "files": files_uploaded
-        }
+            return reader.fieldnames, list(reader)
