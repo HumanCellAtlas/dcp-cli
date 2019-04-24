@@ -125,7 +125,9 @@ def main(args=None):
     logging.getLogger("urllib3").setLevel(parsed_args.log_level)
     logging.getLogger("requests").setLevel(parsed_args.log_level)
 
-    check_if_release_is_current(logger)  # warns the user
+    # check to see if user run (should warn) or as a service (should not bog down with frequent pypi calls)
+    if os.environ['GOOGLE_APPLICATION_CREDENTIALS']:
+        check_if_release_is_current(logger)  # warns the user
 
     try:
         result = parsed_args.entry_point(parsed_args)
