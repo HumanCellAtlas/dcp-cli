@@ -37,6 +37,7 @@ stages:
   stage: test
   before_script:
     #currently 3.6.8 is offered by the windows-runner
+    - python --version
     - $env:WINDOWS_PYTHON = python -c 'import sys  ; print(sys.version[0:3])'
     - if (-NOT $env:WINDOWS_PYTHON -eq ${PYTHON_VERSION}) { echo "python missmatch"; exit(1) }
     - virtualenv venv3
