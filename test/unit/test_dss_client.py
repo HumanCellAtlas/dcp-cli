@@ -337,6 +337,16 @@ class TestManifestDownloadBundle(AbstractTestDSSClient):
     def test_download_dir_dot_dir(self):
         self._test_download_dir(os.path.join('.', 'a_nested_dir'))
 
+    @patch('hca.dss.DSSClient.get_bundle', side_effect=_fake_get_bundle)
+    @patch('hca.dss.DSSClient._download_file', side_effect=_fake_download_file)
+    def test_manifest_download_bad_file(self, _, __):
+        """
+        Ensure error is raised if a user created file has the same name as the one
+        we're trying to download.
+        """
+        _touch_file(os.path.join(self.manifest[1][0], self.manifest[1][3]))
+        self.assertRaises(RuntimeError, self.dss.download_manifest, self.manifest_file, 'aws')
+
     @unittest.skipIf(sys.version_info < (3,) and platform.system() == 'Windows',
                      'os.stat() returns dummy values with Python 2.7 on Windows')
     @patch('hca.dss.DSSClient.get_bundle', side_effect=_fake_get_bundle)
