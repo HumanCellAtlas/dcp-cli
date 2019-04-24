@@ -241,7 +241,7 @@ class ApiClient:
 
     def _url(self, path):
         if self.deployment_stage == 'prod':
-            return "".format(base=UploadConfig().production_api_url, path=path)
+            return "{base}{path}".format(base=UploadConfig().production_api_url, path=path)
         else:
             return "{base}{path}".format(
                 base=UploadConfig().preprod_api_url_template.format(deployment_stage=self.deployment_stage),
