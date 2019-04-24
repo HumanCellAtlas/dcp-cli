@@ -1,3 +1,23 @@
+Changes for v5.0.0 (2019-04-23)
+===============================
+
+Data Store
+----------
+
+-  Raise error if duplicate file is present (fixes #298)
+-  Add download\_dir option (fixes #308)
+-  Create Version Method (#304)
+-  Handle bundle errors better; Fix test
+-  Download bundles concurrently (#287)
+
+Upload
+------
+
+-  Upload: covert Upload API to be object-based See classes
+   UploadService and UploadArea
+-  Expose the rest of the Upload API through UploadArea
+-  Handle special characters in filenames
+
 Changes for v4.10.0 (2019-04-05)
 ================================
 
