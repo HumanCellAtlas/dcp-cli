@@ -1,3 +1,8 @@
+Changes for v5.0.2 (2019-04-24)
+===============================
+
+upload: fix prod url formatting for requests
+
 Changes for v5.0.1 (2019-04-23)
 ===============================
 
