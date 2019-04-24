@@ -125,7 +125,9 @@ def main(args=None):
     logging.getLogger("urllib3").setLevel(parsed_args.log_level)
     logging.getLogger("requests").setLevel(parsed_args.log_level)
 
-    check_if_release_is_current(logger)  # warns the user
+    # TODO: Disable when called as a service (i.e. GOOGLE_APPLICATION_CREDENTIALS is set)
+    # This caused some slowdown on the query-service and needs to be fixed
+    # check_if_release_is_current(logger)  # warns the user
 
     try:
         result = parsed_args.entry_point(parsed_args)
