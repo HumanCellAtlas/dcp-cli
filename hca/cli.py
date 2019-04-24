@@ -126,7 +126,7 @@ def main(args=None):
     logging.getLogger("requests").setLevel(parsed_args.log_level)
 
     # check to see if user run (should warn) or as a service (should not bog down with frequent pypi calls)
-    if os.environ['GOOGLE_APPLICATION_CREDENTIALS']:
+    if os.environ.get('GOOGLE_APPLICATION_CREDENTIALS'):
         check_if_release_is_current(logger)  # warns the user
 
     try:
