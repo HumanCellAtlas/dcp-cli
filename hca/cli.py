@@ -127,6 +127,9 @@ def main(args=None):
 
     # TODO: Disable when called as a service (i.e. GOOGLE_APPLICATION_CREDENTIALS is set)
     # This caused some slowdown on the query-service and needs to be fixed
+    # A good pattern for this is to write the last time that the version was checked into the config.
+    # *If the config is writable* (not on a read only filesystem), *and* the check was last done more than
+    # T seconds ago (e.g. 1 week ago), *then* perform a check.
     # check_if_release_is_current(logger)  # warns the user
 
     try:
