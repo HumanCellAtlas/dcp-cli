@@ -70,9 +70,22 @@ class DSSClient(SwaggerClient):
 
     def __init__(self, *args, **kwargs):
         super(DSSClient, self).__init__(*args, **kwargs)
-        self.commands += [self.download, self.download_manifest, self.download_manifest_v2, self.upload]
+        self.commands += [self.download, self.download_manifest, self.download_manifest_v2, self.upload,
+                          self.create_version]
 
-    def download(self, bundle_uuid, replica, version="", dest_name="",
+    def _create_version(self):
+        return datetime.utcnow().strftime("%Y-%m-%dT%H%M%S.%fZ")
+
+    def create_version(self):
+        """
+            :param
+
+            Prints a timestamp that can be used for versioning
+
+        """
+        print(self._create_version())
+
+    def download(self, bundle_uuid, replica, version="", download_dir="",
                  metadata_files=('*',), data_files=('*',),
                  num_retries=10, min_delay_seconds=0.25):
         """
@@ -111,7 +124,7 @@ class DSSClient(SwaggerClient):
                                    for dss_file, task in self._download_tasks(bundle_uuid,
                                                                               replica,
                                                                               version,
-                                                                              dest_name,
+                                                                              download_dir,
                                                                               metadata_files,
                                                                               data_files,
                                                                               num_retries,
@@ -127,12 +140,15 @@ class DSSClient(SwaggerClient):
         if errors:
             raise RuntimeError('{} file(s) failed to download'.format(errors))
 
-    def _download_tasks(self, bundle_uuid, replica, version="", dest_name="",
-                        metadata_files=('*',), data_files=('*',),
-                        num_retries=10, min_delay_seconds=0.25):
-        if not dest_name:
-            dest_name = bundle_uuid
-
+    def _download_tasks(self,
+                        bundle_uuid,
+                        replica,
+                        version="",
+                        download_dir="",
+                        metadata_files=('*',),
+                        data_files=('*',),
+                        num_retries=10,
+                        min_delay_seconds=0.25):
         bundle = self.get_bundle(uuid=bundle_uuid, replica=replica, version=version if version else None)["bundle"]
 
         files = {}
@@ -152,7 +168,7 @@ class DSSClient(SwaggerClient):
         for file_ in files.values():
             dss_file = DSSFile.from_dss_bundle_response(file_, replica)
             filename = file_.get("name", dss_file.uuid)
-            walking_dir = dest_name
+            walking_dir = os.path.join(download_dir, bundle_uuid)
 
             globs = metadata_files if file_['indexed'] else data_files
             if not any(fnmatchcase(filename, glob) for glob in globs):
@@ -167,22 +183,24 @@ class DSSClient(SwaggerClient):
             logger.info("File %s: Retrieving...", filename)
             file_path = os.path.join(walking_dir, filename_base)
             yield dss_file, functools.partial(self._download_and_link_to_filestore,
+                                              download_dir,
                                               dss_file,
                                               file_path,
                                               num_retries=num_retries,
                                               min_delay_seconds=min_delay_seconds)
 
-    def _download_and_link_to_filestore(self, dss_file, file_path, num_retries, min_delay_seconds):
-        file_store_path = self._download_to_filestore(dss_file,
+    def _download_and_link_to_filestore(self, download_dir, dss_file, file_path, num_retries, min_delay_seconds):
+        file_store_path = self._download_to_filestore(download_dir,
+                                                      dss_file,
                                                       num_retries=num_retries,
                                                       min_delay_seconds=min_delay_seconds)
         hardlink(file_store_path, file_path)
 
-    def _download_to_filestore(self, dss_file, num_retries=10, min_delay_seconds=0.25):
+    def _download_to_filestore(self, download_dir, dss_file, num_retries=10, min_delay_seconds=0.25):
         """
         Attempt to download the data and save it in the 'filestore' location dictated by self._file_path()
         """
-        dest_path = self._file_path(dss_file.sha256)
+        dest_path = self._file_path(dss_file.sha256, download_dir)
         if os.path.exists(dest_path):
             logger.info("Skipping download of '%s' because it already exists at '%s'.", dss_file.name, dest_path)
         else:
@@ -286,15 +304,16 @@ class DSSClient(SwaggerClient):
         return hasher.hexdigest()
 
     @classmethod
-    def _file_path(cls, checksum):
+    def _file_path(cls, checksum, download_dir):
         """
         returns a file's relative local path based on the nesting parameters and the files hash
         :param checksum: a string checksum
+        :param download_dir: root directory for filestore
         :return: relative Path object
         """
         checksum = checksum.lower()
         file_prefix = '_'.join(['files'] + list(map(str, cls.DIRECTORY_NAME_LENGTHS)))
-        path_pieces = ['.hca', 'v2', file_prefix]
+        path_pieces = [download_dir, '.hca', 'v2', file_prefix]
         checksum_index = 0
         assert(sum(cls.DIRECTORY_NAME_LENGTHS) <= len(checksum))
         for prefix_length in cls.DIRECTORY_NAME_LENGTHS:
@@ -311,7 +330,7 @@ class DSSClient(SwaggerClient):
             reader = csv.DictReader(f, delimiter=delimiter, quoting=csv.QUOTE_NONE)
             return reader.fieldnames, list(reader)
 
-    def _write_output_manifest(self, manifest):
+    def _write_output_manifest(self, manifest, filestore_root):
         """
         Adds the file path column to the manifest and writes the copy to the current directory. If the original manifest
         is in the current directory it is overwritten with a warning.
@@ -325,7 +344,7 @@ class DSSClient(SwaggerClient):
             writer = csv.DictWriter(f, fieldnames, delimiter=delimiter, quoting=csv.QUOTE_NONE)
             writer.writeheader()
             for row in source_manifest:
-                row['file_path'] = self._file_path(row['file_sha256'])
+                row['file_path'] = self._file_path(row['file_sha256'], filestore_root)
                 writer.writerow(row)
             if os.path.isfile(output):
                 logger.warning('Overwriting manifest %s', output)
@@ -333,7 +352,8 @@ class DSSClient(SwaggerClient):
 
     def download_manifest_v2(self, manifest, replica,
                              num_retries=10,
-                             min_delay_seconds=0.25):
+                             min_delay_seconds=0.25,
+                             download_dir='.'):
         """
         Process the given manifest file in TSV (tab-separated values) format and download the files referenced by it.
         The files are downloaded in the version 2 format.
@@ -369,7 +389,7 @@ class DSSClient(SwaggerClient):
             futures_to_dss_file = {}
             for row in rows:
                 dss_file = DSSFile.from_manifest_row(row, replica)
-                future = executor.submit(self._download_to_filestore, dss_file,
+                future = executor.submit(self._download_to_filestore, download_dir, dss_file,
                                          num_retries=num_retries, min_delay_seconds=min_delay_seconds)
                 futures_to_dss_file[future] = dss_file
             for future in concurrent.futures.as_completed(futures_to_dss_file):
@@ -383,9 +403,9 @@ class DSSClient(SwaggerClient):
         if errors:
             raise RuntimeError('{} file(s) failed to download'.format(errors))
         else:
-            self._write_output_manifest(manifest)
+            self._write_output_manifest(manifest, download_dir)
 
-    def download_manifest(self, manifest, replica, num_retries=10, min_delay_seconds=0.25):
+    def download_manifest(self, manifest, replica, num_retries=10, min_delay_seconds=0.25, download_dir=''):
         """
         Process the given manifest file in TSV (tab-separated values) format and download the files referenced by it.
 
@@ -414,8 +434,9 @@ class DSSClient(SwaggerClient):
         file_errors = 0
         file_task, bundle_errors = self._download_manifest_tasks(manifest,
                                                                  replica,
-                                                                 num_retries=num_retries,
-                                                                 min_delay_seconds=min_delay_seconds)
+                                                                 num_retries,
+                                                                 min_delay_seconds,
+                                                                 download_dir)
         with concurrent.futures.ThreadPoolExecutor(self.threads) as executor:
             futures_to_dss_file = {executor.submit(task): dss_file
                                    for dss_file, task in file_task}
@@ -432,11 +453,11 @@ class DSSClient(SwaggerClient):
             file_error_str = '{} file(s) failed to download'.format(file_errors) if file_errors else ''
             raise RuntimeError(bundle_error_str + (' and ' if bundle_errors and file_errors else '') + file_error_str)
         else:
-            self._write_output_manifest(manifest)
+            self._write_output_manifest(manifest, download_dir)
             logger.info('Primary copies of the files have been downloaded to `.hca` and linked '
                         'into per-bundle subdirectories of the current directory.')
 
-    def _download_manifest_tasks(self, manifest, replica, num_retries, min_delay_seconds):
+    def _download_manifest_tasks(self, manifest, replica, num_retries, min_delay_seconds, download_dir):
         with open(manifest) as f:
             bundles = defaultdict(set)
             # unicode_literals is on so all strings are unicode. CSV wants a str so we need to jump through a hoop.
@@ -453,6 +474,7 @@ class DSSClient(SwaggerClient):
                 for task in self._download_tasks(bundle_uuid,
                                                  replica,
                                                  version=bundle_version,
+                                                 download_dir=download_dir,
                                                  data_files=data_globs,
                                                  num_retries=num_retries,
                                                  min_delay_seconds=min_delay_seconds):

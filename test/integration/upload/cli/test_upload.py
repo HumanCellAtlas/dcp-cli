@@ -167,8 +167,8 @@ class TestUploadCliUploadCommand(UploadTestCase):
     def test_no_transfer_acceleration_option_sets_up_botocore_config_correctly(self):
         import botocore
 
-        with patch('hca.upload.s3_agent.S3Agent.upload_local_file'), \
-             patch('hca.upload.s3_agent.Config', new=Mock(wraps=botocore.config.Config)) as mock_config:
+        with patch('hca.upload.lib.s3_agent.S3Agent.upload_local_file'), \
+             patch('hca.upload.lib.s3_agent.Config', new=Mock(wraps=botocore.config.Config)) as mock_config:
             args = Namespace(upload_paths=['LICENSE'], target_filename=None, quiet=True, file_extension=None, sync=True)
             args.no_transfer_acceleration = False
 

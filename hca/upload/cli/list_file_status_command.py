@@ -1,9 +1,9 @@
 import re
 
-from hca.upload import UploadConfig, UploadArea
+from hca.upload import UploadConfig
 
 from hca.upload.cli.common import UploadCLICommand
-from hca.upload.upload_submission_state import FileStatusCheck
+from hca.upload.lib.upload_submission_state import FileStatusCheck
 
 
 class ListFileStatusCommand(UploadCLICommand):
@@ -26,16 +26,17 @@ class ListFileStatusCommand(UploadCLICommand):
                                                default=None)
 
     def __init__(self, args):
-        upload_area = args.uuid
+        area_uuid = args.uuid
         env = args.env
         config = UploadConfig()
-        if not upload_area:
-            upload_area = config.current_area
+        if not area_uuid:
+            area_uuid = config.current_area
         if not env:
-            env = UploadArea(uuid=upload_area).deployment_stage
+            area_uri = config.area_uri(area_uuid)
+            env = area_uri.deployment_stage
         filename = args.filename
-        status = FileStatusCheck(env).check_file_status(upload_area, filename)
+        status = FileStatusCheck(env).check_file_status(area_uuid, filename)
         if re.search('STATUS_RETRIEVAL_ERROR', status):
             print(status)
         else:
-            print("File: {} in UploadArea: {}/{} is currently {}".format(filename, env, upload_area, status))
+            print("File: {} in UploadArea: {}/{} is currently {}".format(filename, env, area_uuid, status))

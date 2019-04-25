@@ -1,61 +1,29 @@
 import mimetypes
 import os
-import re
 
 from dcplib.media_types import DcpMediaType
 
 from hca.util.pool import ThreadPool
-from .api_client import ApiClient
-from .client_side_checksum_handler import ClientSideChecksumHandler
-from .credentials_manager import CredentialsManager
+from .lib.client_side_checksum_handler import ClientSideChecksumHandler
+from .lib.credentials_manager import CredentialsManager
 from .exceptions import UploadException
-from .s3_agent import S3Agent
+from .lib.s3_agent import S3Agent
 from .upload_area_uri import UploadAreaURI
-from .upload_config import UploadConfig
 
 
 class UploadArea:
 
-    @classmethod
-    def all(cls):
-        return [cls(uuid=uuid) for uuid in UploadConfig().areas.keys()]
-
-    @classmethod
-    def from_alias(cls, uuid_or_alias):
-        matching_areas = UploadArea.areas_matching_alias(alias=uuid_or_alias)
-        if len(matching_areas) == 0:
-            raise UploadException("Sorry I don't recognize area \"%s\"" % (uuid_or_alias,))
-        elif len(matching_areas) == 1:
-            return matching_areas[0]
-        else:
-            raise UploadException(
-                "\"%s\" matches more than one area, please provide more characters." % (uuid_or_alias,))
-
-    @classmethod
-    def areas_matching_alias(cls, alias):
-        return [cls(uuid=uuid) for uuid in UploadConfig().areas if re.match(alias, uuid)]
-
-    def __init__(self, **kwargs):
+    def __init__(self, uri, upload_service):
         """
-        You must supply either a uuid or uri keyword argument.
+        Initialize an UploadArea object.  Does not actually create an Upload Area.
 
-        :param uuid: The UUID of an existing Upload Area that we know about.
-        :param uri: A URI for a new area.
+        :param UploadAreaURI uri: The URI of the Area.
         """
-        if 'uuid' in kwargs:
-            uuid = kwargs['uuid']
-            areas = UploadConfig().areas
-            if uuid not in areas:
-                raise UploadException("I'm not aware of upload area \"%s\"" % uuid)
-            self.uri = UploadAreaURI(areas[uuid]['uri'])
-        elif 'uri' in kwargs:
-            self.uri = UploadAreaURI(kwargs['uri'])
-            UploadConfig().add_area(self.uri)
-        else:
-            raise UploadException("You must provide a uuid or URI")
-        self.uuid = self.uri.area_uuid
+        if not isinstance(uri, UploadAreaURI):
+            raise UploadException("You must provide an UploadAreaURI")
+        self.uri = uri
+        self.upload_service = upload_service
         self.s3_agent = None
-        self.upload_api_client = ApiClient(self.uri.deployment_stage)
 
     def __str__(self):
         return "UploadArea {uri}".format(uri=self.uri)
@@ -65,23 +33,41 @@ class UploadArea:
         return self.uri.deployment_stage
 
     @property
-    def is_selected(self):
-        return UploadConfig().current_area == self.uuid
+    def uuid(self):
+        return self.uri.area_uuid
 
-    @property
-    def unique_prefix(self):
-        for prefix_len in range(1, len(self.uuid)):
-            prefix = self.uuid[0:prefix_len]
-            matches = UploadArea.areas_matching_alias(prefix)
-            if len(matches) == 1:
-                return prefix
+    def delete(self):
+        """
+        Request deletion of this Upload Area by the Upload Service.
+        Although this call will return quickly, deletion of large Upload Areas takes some time,
+        so is performed asynchronously.
+        :return: True
+        :raises UploadApiException: if the Area was not deleted
+        """
+        return self.upload_service.api_client.delete_area(area_uuid=self.uuid)
 
-    def select(self):
-        config = UploadConfig()
-        config.select_area(self.uuid)
+    def exists(self):
+        """
+        Check if the Upload Area represented by this object actually exists.
+        :return: True if the Area exists, False otherwise.
+        :rtype: bool
+        """
+        return self.upload_service.api_client.area_exists(area_uuid=self.uuid)
 
-    def forget(self):
-        UploadConfig().forget_area(self.uuid)
+    def get_credentials(self):
+        """
+        Return a set of credentials that may be used to access the Upload Area folder in the S3 bucket
+        :return: a dict containing AWS credentials in a format suitable for passing to Boto3
+            or if capitalized, used as environment variables
+        """
+        creds_mgr = CredentialsManager(self)
+        creds = creds_mgr.get_credentials_from_upload_api()
+        return {
+            'aws_access_key_id': creds['access_key'],
+            'aws_secret_access_key': creds['secret_key'],
+            'aws_session_token': creds['token'],
+            'expiry_time': creds['expiry_time']
+        }
 
     def list(self, detail=False):
         """
@@ -96,11 +82,29 @@ class UploadArea:
         for page in s3agent.list_bucket_by_page(bucket_name=self.uri.bucket_name, key_prefix=key_prefix):
             file_list = [key[key_prefix_length:] for key in page]  # cut off upload-area-id/
             if detail:
-                files_info = self.upload_api_client.files_info(self.uuid, file_list)
+                files_info = self.upload_service.api_client.files_info(self.uuid, file_list)
             else:
                 files_info = [{'name': filename} for filename in file_list]
             for file_info in files_info:
                 yield file_info
+
+    def store_file(self, filename, file_content, content_type):
+        """
+        Store a small file in an Upload Area
+
+        :param str area_uuid: A RFC4122-compliant ID for the upload area
+        :param str filename: The name the file will have in the Upload Area
+        :param str file_content: The contents of the file
+        :param str content_type: The MIME-type for the file
+        :return: information about the stored file (similar to that returned by files_info)
+        :rtype: dict
+        :raises UploadApiException: if file could not be stored
+        """
+
+        return self.upload_service.api_client.store_file(area_uuid=self.uuid,
+                                                         filename=filename,
+                                                         file_content=file_content,
+                                                         content_type=content_type)
 
     def upload_files(self, file_paths, file_size_sum=0, dcp_type="data", target_filename=None,
                      use_transfer_acceleration=True, report_progress=False, sync=True):
@@ -132,6 +136,68 @@ class UploadArea:
                     error += "\n%s: [Exception] %s" % (k, v)
                 error += "\nPlease retry or contact an hca administrator at data-help@humancellatlas.org for help.\n"
                 raise UploadException(error)
+
+    def validate_files(self, file_list, validator_image, original_validation_id="", environment={}):
+        """
+        Invoke supplied validator Docker image and give it access to the file/s.
+        The validator must be based off the base validator Docker image.
+
+        :param list file_list: A list of files within the Upload Area to be validated
+        :param str validator_image: the location of a docker image to use for validation
+        :param str original_validation_id: [optional]
+        :param dict environment: [optional] list of environment variable to set for the validator
+        :return: ID of scheduled validation
+        :rtype: dict
+        :raises UploadApiException: if information could not be obtained
+        """
+        return self.upload_service.api_client.validate_files(area_uuid=self.uuid,
+                                                             file_list=file_list,
+                                                             validator_image=validator_image,
+                                                             original_validation_id=original_validation_id,
+                                                             environment=environment)
+
+    def checksum_status(self, filename):
+        """
+        Retrieve checksum status and values for a file
+
+        :param str filename: The name of the file within the Upload Area
+        :return: a dict with checksum information
+        :rtype: dict
+        :raises UploadApiException: if information could not be obtained
+        """
+        return self.upload_service.api_client.checksum_status(area_uuid=self.uuid, filename=filename)
+
+    def checksum_statuses(self):
+        """
+        Retrieve counts of files in Upload Area in each checksumming state: scheduled for checksumming, checksumming,
+        checksummed, and unscheduled.
+
+        :return: a dict with key for each state and value being the count of files in that state
+        :rtype: dict
+        :raises UploadApiException: if information could not be obtained
+        """
+        return self.upload_service.api_client.checksum_statuses(area_uuid=self.uuid)
+
+    def validation_status(self, filename):
+        """
+        Get status and results of latest validation job for a file.
+
+        :param str filename: The name of the file within the Upload Area
+        :return: a dict with validation information
+        :rtype: dict
+        :raises UploadApiException: if information could not be obtained
+        """
+        return self.upload_service.api_client.validation_status(area_uuid=self.uuid, filename=filename)
+
+    def validation_statuses(self):
+        """
+        Get count of validation statuses for all files in upload_area
+
+        :return: a dict with key for each state and value being the count of files in that state
+        :rtype: dict
+        :raises UploadApiException: if information could not be obtained
+        """
+        return self.upload_service.api_client.validation_statuses(area_uuid=self.uuid)
 
     def _setup_s3_agent_for_file_upload(self, file_count=0, file_size_sum=0, use_transfer_acceleration=True):
         creds_provider = CredentialsManager(upload_area=self)
@@ -168,7 +234,10 @@ class UploadArea:
                 self.s3agent.upload_local_file(file_path, target_bucket, target_key, content_type, checksums,
                                                report_progress=report_progress, sync=sync)
             self.s3agent.file_upload_completed_count += 1
-            self.upload_api_client.file_upload_notification(self.uuid, target_filename or os.path.basename(file_path))
+            self.upload_service.api_client.file_upload_notification(self.uuid,
+                                                                    target_filename or os.path.basename(file_path))
             print("Upload complete of %s to upload area %s" % (file_path, self.uri))
         except Exception as e:
+            print("\nWhile uploading {file} encountered exception {klass}{args}: {e}".format(
+                file=file_path, klass=type(e), args=e.args, e=str(e)))
             self.s3agent.failed_uploads[file_path] = e

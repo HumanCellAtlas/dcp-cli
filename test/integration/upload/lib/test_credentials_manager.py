@@ -8,11 +8,11 @@ import unittest
 
 import responses
 
-pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))  # noqa
+pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..', '..'))  # noqa
 sys.path.insert(0, pkg_root)  # noqa
 
 from hca.upload import UploadConfig
-from hca.upload.credentials_manager import CredentialsManager
+from hca.upload.lib.credentials_manager import CredentialsManager
 from test.integration.upload import UploadTestCase
 
 call_count = 0

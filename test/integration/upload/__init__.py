@@ -8,7 +8,7 @@ from moto import mock_s3, mock_sts
 import responses
 
 import hca
-from hca.upload import UploadArea
+from hca.upload import UploadService, UploadConfig, UploadAreaURI
 from test import TweakResetter
 
 
@@ -30,6 +30,9 @@ class UploadTestCase(unittest.TestCase):
         self.upload_bucket_name = self.UPLOAD_BUCKET_NAME_TEMPLATE.format(deployment_stage=self.deployment_stage)
         self.upload_bucket = boto3.resource('s3').Bucket(self.upload_bucket_name)
         self.upload_bucket.create()
+        # Upload Service
+        self.api_token = "bogo-api-token"
+        self.upload_service = UploadService(deployment_stage=self.deployment_stage, api_token=self.api_token)
 
     def tearDown(self):
         self.s3_mock.stop()
@@ -38,7 +41,7 @@ class UploadTestCase(unittest.TestCase):
 
     def mock_current_upload_area(self, area_uuid=None, bucket_name=None):
         area = self.mock_upload_area(area_uuid=area_uuid, bucket_name=bucket_name)
-        area.select()
+        UploadConfig().select_area(area.uuid)
         return area
 
     def mock_upload_area(self, area_uuid=None, bucket_name=None):
@@ -49,7 +52,11 @@ class UploadTestCase(unittest.TestCase):
             area_uuid = str(uuid.uuid4())
         if not bucket_name:
             bucket_name = self.UPLOAD_BUCKET_NAME_TEMPLATE.format(deployment_stage=self.deployment_stage)
-        area = UploadArea(uri="s3://{bucket}/{uuid}/".format(bucket=bucket_name, uuid=area_uuid))
+        area_uri_str = "s3://{bucket}/{uuid}/".format(bucket=bucket_name, uuid=area_uuid)
+        area_uri = UploadAreaURI(area_uri_str)
+        config = UploadConfig()
+        config.add_area(area_uri)
+        area = self.upload_service.upload_area(area_uri=area_uri)
         return area
 
     def simulate_credentials_api(self, area_uuid,
@@ -69,15 +76,6 @@ class UploadTestCase(unittest.TestCase):
         responses.add(responses.POST, creds_url, json=creds, status=201)
         return creds_url
 
-    def simulate_file_upload_notification_api(self, area_uuid, filename,
-                                              api_host="upload.{stage}.data.humancellatlas.org",
-                                              stage='test'):
-        if re.search('\{stage\}', api_host):
-            api_host = api_host.format(stage=stage)
-        url = 'https://{api_host}/v1/area/{uuid}/{name}'.format(api_host=api_host, uuid=area_uuid, name=filename)
-        responses.add(responses.POST, url, status=202)
-        return url
-
     def _setup_tweak_config(self):
         config = hca.get_config()
         config.upload = {
@@ -85,3 +83,8 @@ class UploadTestCase(unittest.TestCase):
             'bucket_name_template': self.UPLOAD_BUCKET_NAME_TEMPLATE
         }
         config.save()
+
+    def _make_area_uri(self, area_uuid=None):
+        return "s3://{bucket}/{uuid}/".format(bucket=self.upload_bucket_name,
+                                              uuid=(area_uuid or str(uuid.uuid4())))
+

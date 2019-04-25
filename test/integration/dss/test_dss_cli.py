@@ -43,18 +43,12 @@ class TestDssCLI(unittest.TestCase):
                 with CapturingIO('stdout') as stdout_upload:
                     hca.cli.main(args=upload_args)
                 upload_res = json.loads(stdout_upload.captured())
-                for f in upload_res['files']:
-                    print(f)
-                    if f["name"] == filename:
-                        file_uuid = f['uuid']
-                        break
-
                 download_args = ['dss', 'download', '--bundle-uuid', upload_res['bundle_uuid'],
-                                 '--replica', replica, '--dest-name', dest_dir]
-                with CapturingIO('stdout') as stdout_download:
+                                 '--replica', replica, '--download-dir', dest_dir]
+                with CapturingIO('stdout'):
                     hca.cli.main(args=download_args)
 
-                with open(os.path.join(dest_dir, filename), 'rb') as download_data:
+                with open(os.path.join(dest_dir, upload_res['bundle_uuid'], filename), 'rb') as download_data:
                     download_content = download_data.read()
                 with open(file_path, "rb") as bytes_fh:
                     file_content = bytes_fh.read()
@@ -82,6 +76,13 @@ class TestDssCLI(unittest.TestCase):
             hca.cli.main(args)
 
         self.assertEqual(json.loads(stdout.captured())["es_query"], {})
+
+    def test_version_output(self):
+        args = ["dss", "create-version"]
+        with CapturingIO('stdout') as stdout:
+            hca.cli.main(args=args)
+        print(stdout.captured())
+        self.assertTrue(stdout.captured())
 
 
 if __name__ == "__main__":
