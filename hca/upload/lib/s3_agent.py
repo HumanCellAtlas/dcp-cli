@@ -5,6 +5,7 @@ import boto3
 from boto3.s3.transfer import TransferConfig
 from botocore.config import Config
 from botocore.credentials import CredentialResolver
+from botocore.exceptions import ClientError
 from botocore.session import get_session
 from dcplib import s3_multipart
 from tenacity import retry, wait_fixed, stop_after_attempt
@@ -97,7 +98,12 @@ class S3Agent:
         self.target_s3.meta.client.copy(**upload_args)
 
     @retry(reraise=True, wait=wait_fixed(2), stop=stop_after_attempt(3))
-    def upload_local_file(self, local_path, target_bucket, target_key, content_type, checksums, report_progress=False):
+    def upload_local_file(self, local_path, target_bucket, target_key, content_type, checksums, report_progress=False,
+                          sync=True):
+        if sync:
+            if self._item_exists_in_bucket(target_bucket, target_key, checksums):
+                return
+
         file_size = os.path.getsize(local_path)
         bucket = self.target_s3.Bucket(target_bucket)
         obj = bucket.Object(target_key)
@@ -120,3 +126,16 @@ class S3Agent:
     def transfer_config(cls, file_size):
         return TransferConfig(multipart_threshold=s3_multipart.MULTIPART_THRESHOLD,
                               multipart_chunksize=s3_multipart.get_s3_multipart_chunk_size(file_size))
+
+    def _item_exists_in_bucket(self, bucket, key, checksums):
+        """ Returns true if the key already exists in the current bucket and the clientside checksum matches the
+        file's checksums, and false otherwise."""
+        try:
+            obj = self.target_s3.meta.client.head_object(Bucket=bucket, Key=key)
+            if obj and obj.containsKey('Metadata'):
+                if obj['Metadata'] == checksums:
+                    return True
+        except ClientError:
+            # An exception from calling `head_object` indicates that no file with the specified name could be found
+            # in the specified bucket.
+            return False
