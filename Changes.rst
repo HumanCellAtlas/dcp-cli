@@ -1,3 +1,11 @@
+Changes for v5.1.0 (2019-04-25)
+===============================
+
+uplaod: If a file has already been uploaded to a bucket, skip uploading
+it if the sync argument is set to True (by default it is set to true).
+(#306) upload: use smaller reads when doing client-side checksumming
+Disable version checking until a better solution is found. (#315)
+
 Changes for v5.0.2 (2019-04-24)
 ===============================
 
