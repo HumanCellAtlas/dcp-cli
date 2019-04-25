@@ -69,15 +69,11 @@ class DSSClient(SwaggerClient):
 
     def __init__(self, *args, **kwargs):
         super(DSSClient, self).__init__(*args, **kwargs)
-        self.commands += [self.download, self.download_manifest, self.download_manifest_v2, self.upload,
-                          self.create_version]
+        self.commands += [self.upload, self.download, self.download_manifest, self.create_version]
 
     def create_version(self):
         """
-            :param
-
-            Prints a timestamp that can be used for versioning
-
+        Prints a timestamp that can be used for versioning
         """
         print(self._create_version())
 
@@ -241,38 +237,75 @@ class DSSClient(SwaggerClient):
         if errors:
             raise RuntimeError('{} file(s) failed to download'.format(errors))
 
-    def download_manifest_v2(self, manifest, replica,
-                             num_retries=10,
-                             min_delay_seconds=0.25,
-                             download_dir='.'):
+    # FIXME: Formatting of help messages is broken
+    def download_manifest(self,
+                          manifest,
+                          replica,
+                          layout='none',
+                          num_retries=10,
+                          min_delay_seconds=0.25,
+                          download_dir=''):
         """
         Process the given manifest file in TSV (tab-separated values) format and download the files referenced by it.
-        The files are downloaded in the version 2 format.
+
+        :param str layout: The layout of the downloaded files. Currently two options are supported, 'none' (the
+            default), and 'bundle'.
+        :param str manifest: The path to a TSV (tab-separated values) file listing files to download. If the directory
+            for download already contains the manifest, the manifest will be overwritten to include a column with paths
+            into the filestore.
+        :param str replica: The replica from which to download. The supported replicas are: `aws` for Amazon Web
+            Services, and `gcp` for Google Cloud Platform. [aws, gcp]
+        :param int num_retries: The initial quota of download failures to accept before exiting due to
+            failures. The number of retries increase and decrease as file chucks succeed and fail.
+        :param float min_delay_seconds: The minimum number of seconds to wait in between retries for downloading any
+            file
+        :param str download_dir: The directory into which to download
+
+        Files are always downloaded to a cache / filestore directory called '.hca'. This directory is created in the
+        current directory where download is initiated. A copy of the manifest used is also written to the current
+        directory. This manifest has an added column that lists the paths of the files within the '.hca' filestore.
+
+        The default layout is **none**. In this layout all of the files are downloaded to the filestore and the
+        recommended way of accessing the files in by parsing the manifest copy that's written to the download
+        directory.
+
+        The bundle layout still downloads all of files to the filestore. For each bundle mentioned in the
+        manifest a directory is created. All relevant metadata files for each bundle are linked into these
+        directories in addition to relevant data files mentioned in the manifest.
+
+
+        Each row in the manifest represents one file in DSS. The manifest must have a header row. The header row
+        must declare the following columns:
+
+        * `bundle_uuid` - the UUID of the bundle containing the file in DSS.
+
+        * `bundle_version` - the version of the bundle containing the file in DSS.
+
+        * `file_name` - the name of the file as specified in the bundle.
+
+        The TSV may have additional columns. Those columns will be ignored. The ordering of the columns is
+        insignificant because the TSV is required to have a header row.
 
         This download format will serve as the main storage format for downloaded files. If a user specifies a different
         format for download (coming in the future) the files will first be downloaded in this format, then hard-linked
         to the user's preferred format.
 
-        :param str manifest: path to a TSV (tab-separated values) file listing files to download
-        :param str replica: the replica to download from. The supported replicas are: `aws` for Amazon Web Services, and
-            `gcp` for Google Cloud Platform. [aws, gcp]
-        :param int num_retries: The initial quota of download failures to accept before exiting due to
-            failures. The number of retries increase and decrease as file chucks succeed and fail.
-        :param float min_delay_seconds: The minimum number of seconds to wait in between retries.
-
-        Process the given manifest file in TSV (tab-separated values) format and download the files
-        referenced by it.
-
-        Each row in the manifest represents one file in DSS. The manifest must have a header row. The header row
-        must declare the following columns:
-
-        * `file_uuid` - the UUID of the file in DSS.
-
-        * `file_version` - the version of the file in DSS.
-
         The TSV may have additional columns. Those columns will be ignored. The ordering of the columns is
         insignificant because the TSV is required to have a header row.
         """
+        if layout == 'none':
+            self._download_manifest_filestore(manifest, replica, num_retries, min_delay_seconds, download_dir)
+        elif layout == 'bundle':
+            self._download_manifest_bundle(manifest, replica, num_retries, min_delay_seconds, download_dir)
+        else:
+            raise ValueError('Invalid layout {} not one of [none, bundle]'.format(layout))
+
+    def _download_manifest_filestore(self,
+                                     manifest,
+                                     replica,
+                                     num_retries,
+                                     min_delay_seconds,
+                                     download_dir):
         fieldnames, rows = self._parse_manifest(manifest)
         errors = 0
 
@@ -296,32 +329,12 @@ class DSSClient(SwaggerClient):
         else:
             self._write_output_manifest(manifest, download_dir)
 
-    def download_manifest(self, manifest, replica, num_retries=10, min_delay_seconds=0.25, download_dir=''):
-        """
-        Process the given manifest file in TSV (tab-separated values) format and download the files referenced by it.
-
-        :param str manifest: path to a TSV (tab-separated values) file listing files to download
-        :param str replica: the replica to download from. The supported replicas are: `aws` for Amazon Web Services, and
-            `gcp` for Google Cloud Platform. [aws, gcp]
-        :param int num_retries: The initial quota of download failures to accept before exiting due to
-            failures. The number of retries increase and decrease as file chucks succeed and fail.
-        :param float min_delay_seconds: The minimum number of seconds to wait in between retries.
-
-        Process the given manifest file in TSV (tab-separated values) format and download the files
-        referenced by it.
-
-        Each row in the manifest represents one file in DSS. The manifest must have a header row. The header row
-        must declare the following columns:
-
-        * `bundle_uuid` - the UUID of the bundle containing the file in DSS.
-
-        * `bundle_version` - the version of the bundle containing the file in DSS.
-
-        * `file_name` - the name of the file as specified in the bundle.
-
-        The TSV may have additional columns. Those columns will be ignored. The ordering of the columns is
-        insignificant because the TSV is required to have a header row.
-        """
+    def _download_manifest_bundle(self,
+                                  manifest,
+                                  replica,
+                                  num_retries,
+                                  min_delay_seconds,
+                                  download_dir):
         file_errors = 0
         file_task, bundle_errors = self._download_manifest_tasks(manifest,
                                                                  replica,
