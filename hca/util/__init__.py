@@ -255,6 +255,7 @@ class SwaggerClient(object):
     # client or sometimes one and sometimes the other.
     #
     timeout_policy = timeout.Timeout(connect=20, read=40)
+    max_redirects = 1024
 
     def __init__(self, config=None, swagger_url=None, **session_kwargs):
         self.config = config or get_config()
@@ -347,6 +348,7 @@ class SwaggerClient(object):
     def get_session(self):
         if self._session is None:
             self._session = requests.Session(**self._session_kwargs)
+            self._session.max_redirects = self.max_redirects
             self._session.headers.update({"User-Agent": self.__class__.__name__})
             self._set_retry_policy(self._session)
         return self._session
