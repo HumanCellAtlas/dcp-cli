@@ -102,7 +102,7 @@ except ImportError:
 
 import requests
 
-from requests.adapters import HTTPAdapter
+from requests.adapters import HTTPAdapter, DEFAULT_POOLSIZE
 from requests_oauthlib import OAuth2Session
 from urllib3.util import retry, timeout
 from jsonpointer import resolve_pointer
@@ -467,7 +467,7 @@ class SwaggerClient(object):
         return self._authenticated_session
 
     def _set_retry_policy(self, session):
-        adapter = HTTPAdapter(max_retries=self.retry_policy, pool_maxsize=DEFAULT_THREAD_COUNT)
+        adapter = HTTPAdapter(max_retries=self.retry_policy, pool_maxsize=max(DEFAULT_THREAD_COUNT, DEFAULT_POOLSIZE))
         session.mount('http://', adapter)
         session.mount('https://', adapter)
 
