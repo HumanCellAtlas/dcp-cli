@@ -7,7 +7,6 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import errno
 import functools
-import multiprocessing
 from collections import defaultdict, namedtuple
 import csv
 import concurrent.futures
@@ -27,7 +26,7 @@ from requests.exceptions import ChunkedEncodingError, ConnectionError, ReadTimeo
 from hca.dss.util import iter_paths, object_name_builder, hardlink
 from hca.util import USING_PYTHON2
 from hca.util.compat import glob_escape
-from ..util import SwaggerClient
+from ..util import SwaggerClient, DEFAULT_THREAD_COUNT
 from ..util.exceptions import SwaggerAPIException
 from .. import logger
 from .upload_to_cloud import upload_to_cloud
@@ -66,7 +65,7 @@ class DSSClient(SwaggerClient):
     # This variable is the configuration for download_manifest_v2. It specifies the length of the names of nested
     # directories for downloaded files.
     DIRECTORY_NAME_LENGTHS = [2, 4]
-    threads = multiprocessing.cpu_count() * 5
+    threads = DEFAULT_THREAD_COUNT
 
     def __init__(self, *args, **kwargs):
         super(DSSClient, self).__init__(*args, **kwargs)

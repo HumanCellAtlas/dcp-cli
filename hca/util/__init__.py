@@ -84,6 +84,7 @@ client. Subclasses can add more commands by adding them to the
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import os
+import multiprocessing
 import types
 import collections
 import typing
@@ -101,7 +102,7 @@ except ImportError:
 
 import requests
 
-from requests.adapters import HTTPAdapter
+from requests.adapters import HTTPAdapter, DEFAULT_POOLSIZE
 from requests_oauthlib import OAuth2Session
 from urllib3.util import retry, timeout
 from jsonpointer import resolve_pointer
@@ -112,6 +113,10 @@ from .compat import USING_PYTHON2
 from .exceptions import SwaggerAPIException, SwaggerClientInternalError
 from ._docs import _pagination_docstring, _streaming_docstring, _md2rst, _parse_docstring
 from .fs_helper import FSHelper as fs
+
+"""Based on https://askubuntu.com/questions/668538/cores-vs-threads-how-many-threads-should-i-run-on-this-machine
+        and https://github.com/bloomreach/s4cmd/blob/master/s4cmd.py#L121."""
+DEFAULT_THREAD_COUNT = multiprocessing.cpu_count() * 2
 
 
 class RetryPolicy(retry.Retry):
@@ -462,7 +467,7 @@ class SwaggerClient(object):
         return self._authenticated_session
 
     def _set_retry_policy(self, session):
-        adapter = HTTPAdapter(max_retries=self.retry_policy)
+        adapter = HTTPAdapter(max_retries=self.retry_policy, pool_maxsize=max(DEFAULT_THREAD_COUNT, DEFAULT_POOLSIZE))
         session.mount('http://', adapter)
         session.mount('https://', adapter)
 
