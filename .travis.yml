@@ -16,7 +16,7 @@ install:
 - make install
 script:
 - wget -O regex.json https://raw.githubusercontent.com/HumanCellAtlas/dcplib/master/components/trufflehog_regex_patterns.json
-- trufflehog --regex --rules regex.json --entropy=False https://github.com/HumanCellAtlas/dcp-cli.git
+- trufflehog --regex --rules regex.json --entropy=False $(git remote get-url origin)
 - rm regex.json
 - make test
 after_success:
