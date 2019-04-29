@@ -12,11 +12,12 @@ before_install:
 - sed -i -e s/dss.data.humancellatlas.org/dss.$DSS_TEST_STAGE.data.humancellatlas.org/ hca/default_config.json
 install:
 - pip install -r requirements-dev.txt
-- wget -O regex.json https://raw.githubusercontent.com/HumanCellAtlas/dcplib/master/components/trufflehog_regex_patterns.json
-- trufflehog --regex --rules regex.json --entropy=False https://github.com/HumanCellAtlas/data-store.git
-- rm regex.json
+- pip install trufflehog
 - make install
 script:
+- wget -O regex.json https://raw.githubusercontent.com/HumanCellAtlas/dcplib/master/components/trufflehog_regex_patterns.json
+- trufflehog --regex --rules regex.json --entropy=False https://github.com/HumanCellAtlas/dcp-cli.git
+- rm regex.json
 - make test
 after_success:
 - bash <(curl -s https://codecov.io/bash)

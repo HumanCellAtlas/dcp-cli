@@ -7,7 +7,6 @@ pyyaml
 responses
 Sphinx
 sphinx-argparse
-truffleHog==2.0.98
 twine
 unittest2
 -r requirements.txt
