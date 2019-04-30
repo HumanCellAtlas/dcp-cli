@@ -1,3 +1,14 @@
+Changes for v5.2.0 (2019-04-30)
+===============================
+
+-  Remove crcmod from direct dependencies (#323)
+
+-  Connection pool size set to DEFAULT_THREAD_COUNT (#320)
+
+-  Trufflehog fix. (#322)
+
+-  SwaggerClient: set max redirects to a high number (#318)
+
 Changes for v5.1.0 (2019-04-25)
 ===============================
 
