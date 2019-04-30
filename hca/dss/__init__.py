@@ -7,6 +7,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import errno
 import functools
+import itertools
 from collections import defaultdict, namedtuple
 import csv
 import concurrent.futures
@@ -218,14 +219,14 @@ class DSSClient(SwaggerClient):
 
         with concurrent.futures.ThreadPoolExecutor(self.threads) as executor:
             futures_to_dss_file = {executor.submit(task): dss_file
-                                   for dss_file, task in self._download_tasks(bundle_uuid,
-                                                                              replica,
-                                                                              version,
-                                                                              download_dir,
-                                                                              metadata_files,
-                                                                              data_files,
-                                                                              num_retries,
-                                                                              min_delay_seconds)}
+                                   for dss_file, task in self._bundle_download_tasks(bundle_uuid,
+                                                                                     replica,
+                                                                                     version,
+                                                                                     download_dir,
+                                                                                     metadata_files,
+                                                                                     data_files,
+                                                                                     num_retries,
+                                                                                     min_delay_seconds)}
             for future in concurrent.futures.as_completed(futures_to_dss_file):
                 dss_file = futures_to_dss_file[future]
                 try:
@@ -335,17 +336,28 @@ class DSSClient(SwaggerClient):
                                   num_retries,
                                   min_delay_seconds,
                                   download_dir):
+        bundle_errors = 0
         file_errors = 0
-        file_task, bundle_errors = self._download_manifest_tasks(manifest,
-                                                                 replica,
-                                                                 num_retries,
-                                                                 min_delay_seconds,
-                                                                 download_dir)
         with concurrent.futures.ThreadPoolExecutor(self.threads) as executor:
-            futures_to_dss_file = {executor.submit(task): dss_file
-                                   for dss_file, task in file_task}
-            for future in concurrent.futures.as_completed(futures_to_dss_file):
-                dss_file = futures_to_dss_file[future]
+            bundle_futures_to_uuid = {executor.submit(bundle_download_task): bundle_uuid
+                                      for bundle_uuid, bundle_download_task in
+                                      self._download_manifest_tasks(manifest,
+                                                                    replica,
+                                                                    num_retries,
+                                                                    min_delay_seconds,
+                                                                    download_dir)}
+            file_futures_to_dss_file = {}
+            for future in concurrent.futures.as_completed(bundle_futures_to_uuid):
+                bundle_uuid = bundle_futures_to_uuid[future]
+                try:
+                    for dss_file, file_download_task in future.result():
+                        file_futures_to_dss_file[executor.submit(file_download_task)] = dss_file
+                except Exception as e:
+                    bundle_errors += 1
+                    logger.warning('Failed to download bundle %s from replica %s',
+                                   bundle_uuid, replica, exc_info=e)
+            for future in file_futures_to_dss_file:
+                dss_file = file_futures_to_dss_file[future]
                 try:
                     future.result()
                 except Exception as e:
@@ -361,31 +373,39 @@ class DSSClient(SwaggerClient):
             logger.info('Primary copies of the files have been downloaded to `.hca` and linked '
                         'into per-bundle subdirectories of the current directory.')
 
-    def _download_tasks(self,
-                        bundle_uuid,
-                        replica,
-                        version="",
-                        download_dir="",
-                        metadata_files=('*',),
-                        data_files=('*',),
-                        num_retries=10,
-                        min_delay_seconds=0.25):
-        bundle = self.get_bundle(uuid=bundle_uuid, replica=replica, version=version if version else None)["bundle"]
-        bundle_fqid = bundle_uuid + '.' + bundle['version']
+    def _bundle_download_tasks(self,
+                               bundle_uuid,
+                               replica,
+                               version="",
+                               download_dir="",
+                               metadata_files=('*',),
+                               data_files=('*',),
+                               num_retries=10,
+                               min_delay_seconds=0.25):
+        """
+        Returns an iterator of tasks that each download one of the files in a bundle.
+        """
+        logger.info('Downloading bundle %s version %s ...', bundle_uuid, version)
+        pages = self.get_bundle.paginate(uuid=bundle_uuid, replica=replica, version=version if version else None)
 
         files = {}
-        for file_ in bundle["files"]:
-            # The file name collision check is case-insensitive even if the local file system we're running on is
-            # case-sensitive. We do this in order to get consistent download behavior on all operating systems and
-            # file systems. The case of file names downloaded to a case-sensitive system will still match exactly
-            # what's specified in the bundle manifest. We just don't want a bundle with files 'Foo' and 'foo' to
-            # create two files on one system and one file on the other. Allowing this to happen would, in the best
-            # case, overwrite Foo with foo locally. A resumed download could produce a local file called foo that
-            # contains a mix of data from Foo and foo.
-            filename = file_.get("name", file_["uuid"]).lower()
-            if files.setdefault(filename, file_) is not file_:
-                raise ValueError("Bundle {bundle_uuid} version {bundle_version} contains multiple files named "
-                                 "'{filename}' or a case derivation thereof".format(filename=filename, **bundle))
+        for page in pages:
+            for file_ in page['bundle']['files']:
+                # The file name collision check is case-insensitive even if the local file system we're running on is
+                # case-sensitive. We do this in order to get consistent download behavior on all operating systems and
+                # file systems. The case of file names downloaded to a case-sensitive system will still match exactly
+                # what's specified in the bundle manifest. We just don't want a bundle with files 'Foo' and 'foo' to
+                # create two files on one system and one file on the other. Allowing this to happen would, in the best
+                # case, overwrite Foo with foo locally. A resumed download could produce a local file called foo that
+                # contains a mix of data from Foo and foo.
+                filename = file_.get("name", file_["uuid"]).lower()
+                if files.setdefault(filename, file_) is not file_:
+                    raise ValueError("Bundle {bundle_uuid} version {version} contains multiple files named "
+                                     "'{filename}' or a case derivation thereof"
+                                     .format(filename=filename, bundle_uuid=bundle_uuid, version=version))
+        # there will always be one page (or else we would have gotten a 404)
+        # noinspection PyUnboundLocalVariable
+        bundle_fqid = bundle_uuid + '.' + page['bundle']['version']
 
         for file_ in files.values():
             dss_file = DSSFile.from_dss_bundle_response(file_, replica)
@@ -412,6 +432,10 @@ class DSSClient(SwaggerClient):
                                               min_delay_seconds=min_delay_seconds)
 
     def _download_manifest_tasks(self, manifest, replica, num_retries, min_delay_seconds, download_dir):
+        """
+        Returns an iterator of tasks for downloading all of the files in a bundle. Note that these tasks all
+        return iterators to further tasks.
+        """
         with open(manifest) as f:
             bundles = defaultdict(set)
             # unicode_literals is on so all strings are unicode. CSV wants a str so we need to jump through a hoop.
@@ -419,24 +443,15 @@ class DSSClient(SwaggerClient):
             reader = csv.DictReader(f, delimiter=delimiter, quoting=csv.QUOTE_NONE)
             for row in reader:
                 bundles[(row['bundle_uuid'], row['bundle_version'])].add(row['file_name'])
-        tasks = []
-        errors = 0
         for (bundle_uuid, bundle_version), data_files in bundles.items():
             data_globs = tuple(glob_escape(file_name) for file_name in data_files if file_name)
-            logger.info('Downloading bundle %s version %s ...', bundle_uuid, bundle_version)
-            try:
-                for task in self._download_tasks(bundle_uuid,
+            yield bundle_uuid, functools.partial(self._bundle_download_tasks, bundle_uuid,
                                                  replica,
                                                  version=bundle_version,
                                                  download_dir=download_dir,
                                                  data_files=data_globs,
                                                  num_retries=num_retries,
-                                                 min_delay_seconds=min_delay_seconds):
-                    tasks.append(task)
-            except Exception as e:
-                errors += 1
-                logger.warning('Bundle %s failed to download', bundle_uuid, exc_info=e)
-        return tasks, errors
+                                                 min_delay_seconds=min_delay_seconds)
 
     def _download_to_filestore(self, download_dir, dss_file, num_retries=10, min_delay_seconds=0.25):
         """
