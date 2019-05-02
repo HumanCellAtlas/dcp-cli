@@ -120,7 +120,7 @@ DEFAULT_THREAD_COUNT = multiprocessing.cpu_count() * 2
 
 
 class RetryPolicy(retry.Retry):
-    def __init__(self, retry_after_status_codes={301}, *args, **kwargs):
+    def __init__(self, retry_after_status_codes={301, 500, 502, 503, 504}, *args, **kwargs):
         super(RetryPolicy, self).__init__(*args, **kwargs)
         self.RETRY_AFTER_STATUS_CODES = frozenset(retry_after_status_codes | retry.Retry.RETRY_AFTER_STATUS_CODES)
 
