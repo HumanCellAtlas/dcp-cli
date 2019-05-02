@@ -56,6 +56,24 @@ class TestDssCLI(unittest.TestCase):
             finally:
                 shutil.rmtree(dest_dir)
 
+    @unittest.skipIf(True, "Manual Test")
+    @reset_tweak_changes
+    def test_remote_login(self):
+        """Test that remote logins work for non-interactive systems
+            0. Change the skipIf from True to False to allow invocation of test
+            1. Follow the link provided by the test
+            2. Paste the code value into the test env
+            3. Confirm Results
+        """
+        args = ["dss", "login", "--remote"]
+        hca.cli.main(args)
+        self.assertTrue(hca.get_config().oauth2_token.access_token)
+        args = ['dss', 'get-subscriptions', '--replica', 'aws']
+        with CapturingIO('stdout') as stdout:
+            hca.cli.main(args)
+        results = json.loads(stdout.captured())
+        self.assertIn("subscriptions", results)
+
     @reset_tweak_changes
     def test_cli_login(self):
         """Test that the login command works with a dummy token"""

@@ -108,8 +108,9 @@ from urllib3.util import retry, timeout
 from jsonpointer import resolve_pointer
 from threading import Lock
 
+
 from .. import get_config, logger
-from .compat import USING_PYTHON2
+from .compat import USING_PYTHON2, urljoin
 from .exceptions import SwaggerAPIException, SwaggerClientInternalError
 from ._docs import _pagination_docstring, _streaming_docstring, _md2rst, _parse_docstring
 from .fs_helper import FSHelper as fs
@@ -367,22 +368,37 @@ class SwaggerClient(object):
         except KeyError:
             pass
 
-    def login(self, access_token=""):
+    def login(self, access_token="", remote=False):
         """
         Configure and save {prog} authentication credentials.
 
         This command may open a browser window to ask for your
         consent to use web service authentication credentials.
+
+        Use --remote if using the CLI in a remote environment
         """
         if access_token:
             credentials = argparse.Namespace(token=access_token, refresh_token=None, id_token=None)
         else:
             scopes = ["openid", "email", "offline_access"]
+            if remote:
+                import google_auth_oauthlib.flow
+                application_secrets = self.application_secrets
+                redirect_uri = urljoin(application_secrets['installed']['auth_uri'], "/echo")
+                flow = google_auth_oauthlib.flow.Flow.from_client_config(self.application_secrets, scopes=scopes,
+                                                                         redirect_uri=redirect_uri)
 
-            from google_auth_oauthlib.flow import InstalledAppFlow
-            flow = InstalledAppFlow.from_client_config(self.application_secrets, scopes=scopes)
-            msg = "Authentication successful. Please close this tab and run HCA CLI commands in the terminal."
-            credentials = flow.run_local_server(success_message=msg, audience=self._audience)
+                authorization_url, _ = flow.authorization_url()
+                print("please authenticate at the url: {}".format(authorization_url))
+                code = input("pass 'code' value from within query_params: ")
+                flow.fetch_token(code=code)
+                credentials = flow.credentials
+
+            else:
+                from google_auth_oauthlib.flow import InstalledAppFlow
+                flow = InstalledAppFlow.from_client_config(self.application_secrets, scopes=scopes)
+                msg = "Authentication successful. Please close this tab and run HCA CLI commands in the terminal."
+                credentials = flow.run_local_server(success_message=msg, audience=self._audience)
 
         # TODO: (akislyuk) test token autorefresh on expiration
         self.config.oauth2_token = dict(access_token=credentials.token,
