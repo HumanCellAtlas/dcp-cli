@@ -87,6 +87,8 @@ class TestDssApi(unittest.TestCase):
                                  replica="aws",
                                  staging_bucket=self.staging_bucket)
         manifest_files = manifest['files']
+        bundle_fqid = '{bundle_uuid}.{bundle_version}'.format(bundle_uuid=manifest['bundle_uuid'],
+                                                              bundle_version=manifest['version'])
         self.assertEqual({file['name'] for file in manifest_files}, uploaded_files)
 
         # Work around https://github.com/HumanCellAtlas/data-store/issues/1331
@@ -124,7 +126,7 @@ class TestDssApi(unittest.TestCase):
                                         metadata_files=metadata_globs)
                         # Check that contents are the same
                         try:
-                            downloaded_files = set(os.listdir(os.path.join(dest_dir, bundle_uuid)))
+                            downloaded_files = set(os.listdir(os.path.join(dest_dir, bundle_fqid)))
                         except OSError as e:
                             if e.errno != errno.ENOENT:
                                 raise
@@ -140,7 +142,7 @@ class TestDssApi(unittest.TestCase):
                             globs = metadata_globs if manifest_entry['indexed'] else data_globs
                             self.assertTrue(any(fnmatchcase(file, glob) for glob in globs))
                             uploaded_file = os.path.join(bundle_path, file)
-                            downloaded_file = os.path.join(dest_dir, bundle_uuid, file)
+                            downloaded_file = os.path.join(dest_dir, bundle_fqid, file)
                             self.assertTrue(filecmp.cmp(uploaded_file, downloaded_file, False))
 
     def test_python_manifest_download(self):
@@ -161,6 +163,7 @@ class TestDssApi(unittest.TestCase):
 
         bundle_uuid = manifest['bundle_uuid']
         bundle_version = manifest['version']
+        bundle_fqid = '{bundle_uuid}.{bundle_version}'.format(bundle_uuid=bundle_uuid, bundle_version=bundle_version)
         data_files = tuple(file['name'] for file in manifest_files if not file['indexed'])
 
         for bad_bundle in False, True:
@@ -190,7 +193,7 @@ class TestDssApi(unittest.TestCase):
                                                   file_sha256=
                                                   '9b4c0dde8683f924975d0867903dc7a967f46bee5c0a025c451b9ba73e43f120'))
 
-                        dest_dir = os.path.join(work_dir, bundle_uuid)
+                        dest_dir = os.path.join(work_dir, bundle_fqid)
                         try:
                             client.download_manifest('manifest.tsv', replica="aws", layout='bundle')
                         except RuntimeError as e:
@@ -220,7 +223,9 @@ class TestDssApi(unittest.TestCase):
 
                 client.download(bundle_output['bundle_uuid'], replica="aws", download_dir=dest_dir)
 
-                downloaded_file = os.path.join(dest_dir, bundle_output['bundle_uuid'], os.path.basename(fh.name))
+                bundle_fqid = '{bundle_uuid}.{bundle_version}'.format(bundle_uuid=bundle_output['bundle_uuid'],
+                                                                      bundle_version=bundle_output['version'])
+                downloaded_file = os.path.join(dest_dir, bundle_fqid, os.path.basename(fh.name))
                 self.assertTrue(filecmp.cmp(fh.name, downloaded_file, False))
 
     def test_python_bindings(self):
