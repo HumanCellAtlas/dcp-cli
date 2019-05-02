@@ -107,7 +107,7 @@ class UploadArea:
                                                          content_type=content_type)
 
     def upload_files(self, file_paths, file_size_sum=0, dcp_type="data", target_filename=None,
-                     use_transfer_acceleration=True, report_progress=False):
+                     use_transfer_acceleration=True, report_progress=False, sync=True):
         """
         A function that takes in a list of file paths and other optional args for parallel file upload
         """
@@ -121,7 +121,8 @@ class UploadArea:
             pool.add_task(self._upload_file, file_path,
                           target_filename=target_filename,
                           use_transfer_acceleration=use_transfer_acceleration,
-                          report_progress=report_progress)
+                          report_progress=report_progress,
+                          sync=sync)
         pool.wait_for_completion()
         if report_progress:
             number_of_errors = len(self.s3agent.failed_uploads)
@@ -215,7 +216,7 @@ class UploadArea:
         return content_type
 
     def _upload_file(self, file_path=None, dcp_type="data", target_filename=None, use_transfer_acceleration=True,
-                     report_progress=False):
+                     report_progress=False, sync=True):
         try:
             target_bucket = self.uri.bucket_name
             if file_path.startswith("s3://"):
@@ -231,10 +232,12 @@ class UploadArea:
                 checksum_handler.compute_checksum()
                 checksums = checksum_handler.get_checksum_metadata_tag()
                 self.s3agent.upload_local_file(file_path, target_bucket, target_key, content_type, checksums,
-                                               report_progress=report_progress)
+                                               report_progress=report_progress, sync=sync)
             self.s3agent.file_upload_completed_count += 1
             self.upload_service.api_client.file_upload_notification(self.uuid,
                                                                     target_filename or os.path.basename(file_path))
             print("Upload complete of %s to upload area %s" % (file_path, self.uri))
         except Exception as e:
+            print("\nWhile uploading {file} encountered exception {klass}{args}: {e}".format(
+                file=file_path, klass=type(e), args=e.args, e=str(e)))
             self.s3agent.failed_uploads[file_path] = e

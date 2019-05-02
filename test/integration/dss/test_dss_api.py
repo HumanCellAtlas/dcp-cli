@@ -192,7 +192,7 @@ class TestDssApi(unittest.TestCase):
 
                         dest_dir = os.path.join(work_dir, bundle_uuid)
                         try:
-                            client.download_manifest('manifest.tsv', replica="aws")
+                            client.download_manifest('manifest.tsv', replica="aws", layout='bundle')
                         except RuntimeError as e:
                             self.assertTrue(bad_bundle, "Should only raise with a bad bundle in the manifest")
                             self.assertEqual("1 bundle(s) failed to download", e.args[0])
