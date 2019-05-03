@@ -33,6 +33,7 @@ def _fake_download_file(*args, **kwargs):
 
 def _fake_get_bundle(*args, **kwargs):
     bundle_dict = {
+        'version': '1_version',
         'files': [
             {
                 'uuid': 'a_uuid',

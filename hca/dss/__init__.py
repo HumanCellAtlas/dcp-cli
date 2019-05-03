@@ -371,8 +371,7 @@ class DSSClient(SwaggerClient):
                         num_retries=10,
                         min_delay_seconds=0.25):
         bundle = self.get_bundle(uuid=bundle_uuid, replica=replica, version=version if version else None)["bundle"]
-        bundle_version = bundle.get('version', version)
-        bundle_fqid = '{bundle_uuid}.{bundle_version}'.format(bundle_uuid=bundle_uuid, bundle_version=bundle_version)
+        bundle_fqid = '{bundle_uuid}.{bundle_version}'.format(bundle_uuid=bundle_uuid, bundle_version=bundle['version'])
 
         files = {}
         for file_ in bundle["files"]:
