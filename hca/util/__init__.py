@@ -228,12 +228,15 @@ class _PaginatingClientMethodFactory(_ClientMethodFactory):
         page = None
         while page is None or page.links.get("next", {}).get("url"):
             page = self._request(kwargs, url=page.links["next"]["url"] if page else None)
-            try:
-                for result in page.json()["results"]:
+            if page.json().get('results'):
+                for result in page.json()['results']:
                     yield result
-            except KeyError:
-                for file in page.json()["bundle"]["files"]:
+            elif page.json().get('bundle'):
+                for file in page.json()['bundle']['files']:
                     yield file
+            else:
+                for collection in page.json().get('collections'):
+                    yield collection
 
 
 class SwaggerClient(object):
