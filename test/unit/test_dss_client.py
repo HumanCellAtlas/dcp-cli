@@ -345,8 +345,7 @@ class TestManifestDownloadBundle(AbstractTestDSSClient):
         Ensure error is raised if a user created file has the same name as the one
         we're trying to download.
         """
-        manifest_directory = '{bundle_uuid}.{bundle_version}'.format(bundle_uuid=self.manifest[1][0],
-                                                                     bundle_version=self.manifest[1][1])
+        manifest_directory = self.manifest[1][0] + '.' + self.manifest[1][1]
         _touch_file(os.path.join(manifest_directory, self.manifest[1][3]))
         self.assertRaises(RuntimeError, self.dss.download_manifest, self.manifest_file, 'aws', layout='bundle')
 

@@ -87,8 +87,7 @@ class TestDssApi(unittest.TestCase):
                                  replica="aws",
                                  staging_bucket=self.staging_bucket)
         manifest_files = manifest['files']
-        bundle_fqid = '{bundle_uuid}.{bundle_version}'.format(bundle_uuid=manifest['bundle_uuid'],
-                                                              bundle_version=manifest['version'])
+        bundle_fqid = manifest['bundle_uuid'] + '.' + manifest['version']
         self.assertEqual({file['name'] for file in manifest_files}, uploaded_files)
 
         # Work around https://github.com/HumanCellAtlas/data-store/issues/1331
@@ -163,7 +162,7 @@ class TestDssApi(unittest.TestCase):
 
         bundle_uuid = manifest['bundle_uuid']
         bundle_version = manifest['version']
-        bundle_fqid = '{bundle_uuid}.{bundle_version}'.format(bundle_uuid=bundle_uuid, bundle_version=bundle_version)
+        bundle_fqid = bundle_uuid + '.' + bundle_version
         data_files = tuple(file['name'] for file in manifest_files if not file['indexed'])
 
         for bad_bundle in False, True:
@@ -223,8 +222,7 @@ class TestDssApi(unittest.TestCase):
 
                 client.download(bundle_output['bundle_uuid'], replica="aws", download_dir=dest_dir)
 
-                bundle_fqid = '{bundle_uuid}.{bundle_version}'.format(bundle_uuid=bundle_output['bundle_uuid'],
-                                                                      bundle_version=bundle_output['version'])
+                bundle_fqid = bundle_output['bundle_uuid'] + '.' + bundle_output['version']
                 downloaded_file = os.path.join(dest_dir, bundle_fqid, os.path.basename(fh.name))
                 self.assertTrue(filecmp.cmp(fh.name, downloaded_file, False))
 
