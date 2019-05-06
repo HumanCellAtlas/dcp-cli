@@ -47,8 +47,8 @@ class TestDssCLI(unittest.TestCase):
                                  '--replica', replica, '--download-dir', dest_dir]
                 with CapturingIO('stdout'):
                     hca.cli.main(args=download_args)
-
-                with open(os.path.join(dest_dir, upload_res['bundle_uuid'], filename), 'rb') as download_data:
+                bundle_fqid = upload_res['bundle_uuid'] + '.' + upload_res['version']
+                with open(os.path.join(dest_dir, bundle_fqid, filename), 'rb') as download_data:
                     download_content = download_data.read()
                 with open(file_path, "rb") as bytes_fh:
                     file_content = bytes_fh.read()

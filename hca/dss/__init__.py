@@ -371,6 +371,7 @@ class DSSClient(SwaggerClient):
                         num_retries=10,
                         min_delay_seconds=0.25):
         bundle = self.get_bundle(uuid=bundle_uuid, replica=replica, version=version if version else None)["bundle"]
+        bundle_fqid = bundle_uuid + '.' + bundle['version']
 
         files = {}
         for file_ in bundle["files"]:
@@ -389,7 +390,7 @@ class DSSClient(SwaggerClient):
         for file_ in files.values():
             dss_file = DSSFile.from_dss_bundle_response(file_, replica)
             filename = file_.get("name", dss_file.uuid)
-            walking_dir = os.path.join(download_dir, bundle_uuid)
+            walking_dir = os.path.join(download_dir, bundle_fqid)
 
             globs = metadata_files if file_['indexed'] else data_files
             if not any(fnmatchcase(filename, glob) for glob in globs):

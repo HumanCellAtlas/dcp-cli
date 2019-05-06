@@ -33,6 +33,7 @@ def _fake_download_file(*args, **kwargs):
 
 def _fake_get_bundle(*args, **kwargs):
     bundle_dict = {
+        'version': '1_version',
         'files': [
             {
                 'uuid': 'a_uuid',
@@ -276,17 +277,17 @@ class TestManifestDownloadBundle(AbstractTestDSSClient):
 
     def data_files(self, prefix='.'):
         return {
-            os.path.join(prefix, 'a_uuid', 'a_file_name'),
-            os.path.join(prefix, 'b_uuid', 'b_file_name'),
-            os.path.join(prefix, 'c_uuid', 'c_file_name'),
+            os.path.join(prefix, 'a_uuid.1_version', 'a_file_name'),
+            os.path.join(prefix, 'b_uuid.1_version', 'b_file_name'),
+            os.path.join(prefix, 'c_uuid.1_version', 'c_file_name'),
         }
 
     def metadata_files(self, prefix='.'):
         return {
             os.path.join(prefix, self.version_dir, '8f', 'fe48', '8ffe4838ac08672041f73f82e5f8361860627271ec31aa479fbb65f2ccc46d05'),
-            os.path.join(prefix, 'a_uuid', 'metadata_file.pdf'),
-            os.path.join(prefix, 'b_uuid', 'metadata_file.pdf'),
-            os.path.join(prefix, 'c_uuid', 'metadata_file.pdf'),
+            os.path.join(prefix, 'a_uuid.1_version', 'metadata_file.pdf'),
+            os.path.join(prefix, 'b_uuid.1_version', 'metadata_file.pdf'),
+            os.path.join(prefix, 'c_uuid.1_version', 'metadata_file.pdf'),
         }
 
     def _assert_links(self, prefix):
@@ -344,7 +345,8 @@ class TestManifestDownloadBundle(AbstractTestDSSClient):
         Ensure error is raised if a user created file has the same name as the one
         we're trying to download.
         """
-        _touch_file(os.path.join(self.manifest[1][0], self.manifest[1][3]))
+        manifest_directory = self.manifest[1][0] + '.' + self.manifest[1][1]
+        _touch_file(os.path.join(manifest_directory, self.manifest[1][3]))
         self.assertRaises(RuntimeError, self.dss.download_manifest, self.manifest_file, 'aws', layout='bundle')
 
     @unittest.skipIf(sys.version_info < (3,) and platform.system() == 'Windows',
