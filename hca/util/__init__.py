@@ -237,7 +237,7 @@ class _PaginatingClientMethodFactory(_ClientMethodFactory):
         For example, GET /bundles/{id} and GET /collections/{id} yield the
         items contained within; POST /search yields search result items.
         """
-        for page in _get_raw_pages(**kwargs):
+        for page in self._get_raw_pages(**kwargs):
             if page.json().get('results'):
                 for result in page.json()['results']:
                     yield result
@@ -250,7 +250,7 @@ class _PaginatingClientMethodFactory(_ClientMethodFactory):
 
     def paginate(self, **kwargs):
         """Yield paginated responses one response body at a time."""
-        for page in _get_raw_pages(**kwargs):
+        for page in self._get_raw_pages(**kwargs):
             yield page.json()
 
 
