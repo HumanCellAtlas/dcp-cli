@@ -224,12 +224,12 @@ class _ClientMethodFactory(object):
 
 
 class _PaginatingClientMethodFactory(_ClientMethodFactory):
-    def _get_raw_pages(self):
+    def _get_raw_pages(self, **kwargs):
         page = None
         while page is None or page.links.get("next", {}).get("url"):
             page = self._request(kwargs, url=page.links["next"]["url"] if page else None)
             yield page
-        
+
     def iterate(self, **kwargs):
         """
         Yield specific items from each response depending on its contents.
