@@ -224,19 +224,33 @@ class _ClientMethodFactory(object):
 
 
 class _PaginatingClientMethodFactory(_ClientMethodFactory):
-    def iterate(self, **kwargs):
-        page = None
-        while page is None or page.links.get("next", {}).get("url"):
-            page = self._request(kwargs, url=page.links["next"]["url"] if page else None)
-            if page.json().get('results'):
-                for result in page.json()['results']:
+    page = None
+    kwargs = None
+
+    def __iter__(self):
+        while self.page:
+            if self.page.json().get('results'):
+                for result in self.page.json()['results']:
                     yield result
-            elif page.json().get('bundle'):
-                for file in page.json()['bundle']['files']:
+            elif self.page.json().get('bundle'):
+                for file in self.page.json()['bundle']['files']:
                     yield file
             else:
-                for collection in page.json().get('collections'):
+                for collection in self.page.json().get('collections'):
                     yield collection
+
+            if self.page.links.get("next", {}).get("url"):
+                self.page = self._request(self.kwargs, url=self.page.links["next"]["url"])
+            else:
+                self.page = None
+
+    def json(self):
+        return self.page.json()
+
+    def iterate(self, **kwargs):
+        self.kwargs = kwargs
+        self.page = self._request(self.kwargs)
+        return self
 
 
 class SwaggerClient(object):
