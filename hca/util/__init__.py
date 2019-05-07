@@ -224,10 +224,20 @@ class _ClientMethodFactory(object):
 
 
 class _PaginatingClientMethodFactory(_ClientMethodFactory):
-    def iterate(self, **kwargs):
+    def _get_raw_pages(self, **kwargs):
         page = None
         while page is None or page.links.get("next", {}).get("url"):
             page = self._request(kwargs, url=page.links["next"]["url"] if page else None)
+            yield page
+
+    def iterate(self, **kwargs):
+        """
+        Yield specific items from each response depending on its contents.
+
+        For example, GET /bundles/{id} and GET /collections/{id} yield the
+        items contained within; POST /search yields search result items.
+        """
+        for page in self._get_raw_pages(**kwargs):
             if page.json().get('results'):
                 for result in page.json()['results']:
                     yield result
@@ -237,6 +247,11 @@ class _PaginatingClientMethodFactory(_ClientMethodFactory):
             else:
                 for collection in page.json().get('collections'):
                     yield collection
+
+    def paginate(self, **kwargs):
+        """Yield paginated responses one response body at a time."""
+        for page in self._get_raw_pages(**kwargs):
+            yield page.json()
 
 
 class SwaggerClient(object):
