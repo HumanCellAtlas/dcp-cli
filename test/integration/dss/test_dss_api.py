@@ -35,6 +35,10 @@ else:
 class TestDssApi(unittest.TestCase):
     staging_bucket = "org-humancellatlas-dss-cli-test"
 
+    @classmethod
+    def setUpClass(cls):
+        cls.client = hca.dss.DSSClient()
+
     def test_set_host(self):
         with TemporaryDirectory() as home:
             with mock.patch.dict(os.environ, HOME=home):
@@ -78,14 +82,12 @@ class TestDssApi(unittest.TestCase):
                 self.assertEqual(uploaded_files.sort(), downloaded_file_paths.sort())
 
     def test_python_upload_download(self):
-
         bundle_path = os.path.join(TEST_DIR, "res", "bundle")
         uploaded_files = set(os.listdir(bundle_path))
-        client = hca.dss.DSSClient()
 
-        manifest = client.upload(src_dir=bundle_path,
-                                 replica="aws",
-                                 staging_bucket=self.staging_bucket)
+        manifest = self.client.upload(src_dir=bundle_path,
+                                      replica="aws",
+                                      staging_bucket=self.staging_bucket)
         manifest_files = manifest['files']
         bundle_fqid = manifest['bundle_uuid'] + '.' + manifest['version']
         self.assertEqual({file['name'] for file in manifest_files}, uploaded_files)
@@ -111,18 +113,18 @@ class TestDssApi(unittest.TestCase):
                         file1, file2 = itertools.islice((f for f in manifest_files if f['name'].endswith('.json')), 2)
                         file_version = datetime.datetime.utcnow().strftime("%Y-%m-%dT%H%M%S.%fZ")
                         source_url = "s3://{}/{}/{}".format(self.staging_bucket, file2['uuid'], file2['name'])
-                        client.put_file(uuid=file1['uuid'],
-                                        version=file_version,
-                                        creator_uid=1,
-                                        bundle_uuid=bundle_uuid,
-                                        source_url=source_url)
+                        self.client.put_file(uuid=file1['uuid'],
+                                             version=file_version,
+                                             creator_uid=1,
+                                             bundle_uuid=bundle_uuid,
+                                             source_url=source_url)
 
                     with TemporaryDirectory() as dest_dir:
-                        client.download(bundle_uuid=bundle_uuid,
-                                        download_dir=dest_dir,
-                                        replica="aws",
-                                        data_files=data_globs,
-                                        metadata_files=metadata_globs)
+                        self.client.download(bundle_uuid=bundle_uuid,
+                                             download_dir=dest_dir,
+                                             replica="aws",
+                                             data_files=data_globs,
+                                             metadata_files=metadata_globs)
                         # Check that contents are the same
                         try:
                             downloaded_files = set(os.listdir(os.path.join(dest_dir, bundle_fqid)))
@@ -145,14 +147,12 @@ class TestDssApi(unittest.TestCase):
                             self.assertTrue(filecmp.cmp(uploaded_file, downloaded_file, False))
 
     def test_python_manifest_download(self):
-
         bundle_path = os.path.join(TEST_DIR, "res", "bundle")
         uploaded_files = set(os.listdir(bundle_path))
-        client = hca.dss.DSSClient()
 
-        manifest = client.upload(src_dir=bundle_path,
-                                 replica="aws",
-                                 staging_bucket=self.staging_bucket)
+        manifest = self.client.upload(src_dir=bundle_path,
+                                      replica="aws",
+                                      staging_bucket=self.staging_bucket)
         manifest_files = manifest['files']
         self.assertEqual({file['name'] for file in manifest_files}, uploaded_files)
 
@@ -194,7 +194,7 @@ class TestDssApi(unittest.TestCase):
 
                         dest_dir = os.path.join(work_dir, bundle_fqid)
                         try:
-                            client.download_manifest('manifest.tsv', replica="aws", layout='bundle')
+                            self.client.download_manifest('manifest.tsv', replica="aws", layout='bundle')
                         except RuntimeError as e:
                             self.assertTrue(bad_bundle, "Should only raise with a bad bundle in the manifest")
                             self.assertEqual("1 bundle(s) failed to download", e.args[0])
@@ -228,25 +228,23 @@ class TestDssApi(unittest.TestCase):
 
     def test_python_bindings(self):
         bundle_path = os.path.join(TEST_DIR, "res", "bundle")
-
-        client = hca.dss.DSSClient()
-        bundle_output = client.upload(src_dir=bundle_path, replica="aws", staging_bucket=self.staging_bucket)
+        bundle_output = self.client.upload(src_dir=bundle_path, replica="aws", staging_bucket=self.staging_bucket)
         bundle_uuid = bundle_output['bundle_uuid']
 
         with TemporaryDirectory() as dest_dir:
-            client.download(bundle_uuid=bundle_output['bundle_uuid'], replica="aws", download_dir=dest_dir)
+            self.client.download(bundle_uuid=bundle_output['bundle_uuid'], replica="aws", download_dir=dest_dir)
 
         # Test get-files and head-files
         file_ = bundle_output['files'][0]
-        with client.get_file.stream(uuid=file_['uuid'], replica="aws") as fh:
+        with self.client.get_file.stream(uuid=file_['uuid'], replica="aws") as fh:
             while True:
                 chunk = fh.raw.read(1024)
                 if chunk == b"":
                     break
-        self.assertTrue(client.head_file(uuid=file_['uuid'], replica="aws").ok)
+        self.assertTrue(self.client.head_file(uuid=file_['uuid'], replica="aws").ok)
 
         # Test get-bundles
-        res = client.get_bundle(uuid=bundle_uuid, replica="aws")
+        res = self.client.get_bundle(uuid=bundle_uuid, replica="aws")
         self.assertEqual(res["bundle"]["uuid"], bundle_uuid)
 
         # Test put-files
@@ -254,79 +252,123 @@ class TestDssApi(unittest.TestCase):
         file_version = datetime.datetime.utcnow().strftime("%Y-%m-%dT%H%M%S.%fZ")
         bundle_uuid = str(uuid.uuid4())
         source_url = "s3://{}/{}/{}".format(self.staging_bucket, file_['uuid'], file_['name'])
-        res = client.put_file(uuid=file_uuid, creator_uid=1, bundle_uuid=bundle_uuid,
-                              version=file_version, source_url=source_url)
+        res = self.client.put_file(uuid=file_uuid, creator_uid=1, bundle_uuid=bundle_uuid,
+                                   version=file_version, source_url=source_url)
 
         # Test put-bundles
         files = [{'indexed': True,
                   'name': file_['name'],
                   'uuid': file_uuid,
                   'version': res['version']}]
-        res = client.put_bundle(uuid=bundle_uuid, files=files, version=file_version, creator_uid=1, replica="aws")
+        res = self.client.put_bundle(uuid=bundle_uuid, files=files, version=file_version, creator_uid=1, replica="aws")
         self.assertEqual(res["version"], file_version)
 
         with self.assertRaisesRegexp(Exception, "Missing query parameter 'replica'"):
-            res = client.put_bundle(uuid=bundle_uuid, files=[], version=file_version, creator_uid=1)
+            res = self.client.put_bundle(uuid=bundle_uuid, files=[], version=file_version, creator_uid=1)
 
     def test_python_subscriptions(self):
-        client = hca.dss.DSSClient()
-
         query = {'bool': {}}
-        resp = client.put_subscription(es_query=query, callback_url="https://www.example.com", replica="aws")
+        resp = self.client.put_subscription(es_query=query, callback_url="https://www.example.com", replica="aws")
         subscription_uuid = resp['uuid']
 
-        resp = client.get_subscriptions(replica="aws", subscription_type='elasticsearch')
+        resp = self.client.get_subscriptions(replica="aws", subscription_type='elasticsearch')
         self.assertTrue(subscription_uuid in [s['uuid'] for s in resp['subscriptions']],
                         str(subscription_uuid) + ' not found in:\n' + str(resp))
 
         # GET /subscriptions does not support pagination
         with self.assertRaises(AttributeError):
-            client.get_subscriptions.iterate(replica="aws", subscription_type='elasticsearch')
+            self.client.get_subscriptions.iterate(replica="aws", subscription_type='elasticsearch')
 
-        resp = client.get_subscription(replica="aws", uuid=subscription_uuid, subscription_type='elasticsearch')
+        resp = self.client.get_subscription(replica="aws", uuid=subscription_uuid, subscription_type='elasticsearch')
         self.assertEqual(subscription_uuid, resp['uuid'])
 
-        resp = client.delete_subscription(uuid=subscription_uuid, replica="aws", subscription_type='elasticsearch')
+        resp = self.client.delete_subscription(uuid=subscription_uuid, replica="aws", subscription_type='elasticsearch')
         self.assertIn('timeDeleted', resp)
 
         with self.assertRaisesRegexp(Exception, "Cannot find subscription!"):
-            resp = client.get_subscription(replica="aws", uuid=subscription_uuid, subscription_type='elasticsearch')
+            resp = self.client.get_subscription(replica="aws", uuid=subscription_uuid, subscription_type='elasticsearch')
 
         # Test subscriptions version 2 (jmespath subscriptions)
-        resp = client.put_subscription(callback_url="https://www.example.com", replica="aws")
+        resp = self.client.put_subscription(callback_url="https://www.example.com", replica="aws")
         subscription_uuid = resp['uuid']
 
-        resp = client.get_subscriptions(replica="aws", subscription_type="jmespath")
+        resp = self.client.get_subscriptions(replica="aws", subscription_type="jmespath")
         self.assertTrue(subscription_uuid in [s['uuid'] for s in resp['subscriptions']])
 
         # GET /subscriptions does not support pagination
         with self.assertRaises(AttributeError):
-            client.get_subscriptions.iterate(replica="aws", subscription_type="jmespath")
+            self.client.get_subscriptions.iterate(replica="aws", subscription_type="jmespath")
 
-        resp = client.get_subscription(replica="aws", subscription_type="jmespath", uuid=subscription_uuid)
+        resp = self.client.get_subscription(replica="aws", subscription_type="jmespath", uuid=subscription_uuid)
         self.assertEqual(subscription_uuid, resp['uuid'])
 
-        resp = client.delete_subscription(uuid=subscription_uuid, subscription_type="jmespath", replica="aws")
+        resp = self.client.delete_subscription(uuid=subscription_uuid, subscription_type="jmespath", replica="aws")
         self.assertIn('timeDeleted', resp)
 
         with self.assertRaisesRegexp(Exception, "Cannot find subscription!"):
-            resp = client.get_subscription(replica="aws", subscription_type="jmespath", uuid=subscription_uuid)
+            resp = self.client.get_subscription(replica="aws", subscription_type="jmespath", uuid=subscription_uuid)
 
-    def test_search(self, limit=128):
-        client = hca.dss.DSSClient()
-
+    def test_search_iteration_pagination(self, limit=128):
         query = {}
 
-        for ix, result in enumerate(client.post_search.iterate(es_query=query, replica="aws")):
-            self.assertIn("bundle_fqid", result)
-            if ix > limit:
-                break
+        with self.subTest('Test POST search iteration() method.'):
+            for ix, result in enumerate(self.client.post_search.iterate(es_query=query, replica="aws")):
+                self.assertIn("bundle_fqid", result)
+                if ix > limit:
+                    break
+
+        with self.subTest('Test POST search pagination() method.'):
+            for ix, result in enumerate(self.client.post_search.paginate(es_query=query, replica="aws")):
+                self.assertIn("es_query", result)
+                self.assertIn("results", result)
+                self.assertIn("total_hits", result)
+                if ix > limit:
+                    break
+
+    def test_collections_iteration_pagination(self, limit=128):
+        with self.subTest('Test GET collections iteration() method.'):
+            for ix, result in enumerate(self.client.get_collections.iterate()):
+                self.assertIn("uuid", result)
+                self.assertIn("version", result)
+                if ix > limit:
+                    break
+
+        with self.subTest('Test GET collections pagination() method.'):
+            for ix, result in enumerate(self.client.get_collections.paginate()):
+                self.assertIn("collections", result)
+                if ix > limit:
+                    break
+
+    def test_get_bundle_iteration_pagination(self, limit=128):
+        bundle_path = os.path.join(TEST_DIR, "res", "bundle")
+        bundle_output = self.client.upload(src_dir=bundle_path, replica="aws", staging_bucket=self.staging_bucket)
+        bundle_uuid = bundle_output['bundle_uuid']
+
+        with self.subTest('Test GET bundle iterate() method.'):
+            for ix, result in enumerate(self.client.get_bundle.iterate(uuid=bundle_uuid, replica="aws")):
+                self.assertIn("name", result)
+                self.assertIn("content-type", result)
+                self.assertIn("indexed", result)
+                self.assertIn("uuid", result)
+                self.assertIn("version", result)
+                self.assertIn("size", result)
+                self.assertIn("crc32c", result)
+                self.assertIn("s3_etag", result)
+                self.assertIn("sha1", result)
+                self.assertIn("sha256", result)
+                if ix > limit:
+                    break
+
+        with self.subTest('Test GET bundle paginate() method.'):
+            for ix, result in enumerate(self.client.get_bundle.paginate(uuid=bundle_uuid, replica="aws")):
+                self.assertIn("bundle", result)
+                if ix > limit:
+                    break
 
     def test_refresh_swagger(self):
         """Testing refresh_swagger by comparing the creation date of the old swagger with the refreshed swagger that
         replaces it"""
         client = hca.dss.DSSClient()
-
         swagger_filename = client._get_swagger_filename(client.swagger_url)
         self.assertTrue(os.path.isfile(swagger_filename), "Pass if file exists initially")
         old_swagger = datetime.datetime.fromtimestamp(os.path.getmtime(swagger_filename))
@@ -337,38 +379,36 @@ class TestDssApi(unittest.TestCase):
 
     @reset_tweak_changes
     def test_python_login_logout_service_account(self):
-        client = hca.dss.DSSClient()
         query = {'bool': {}}
-        resp = client.put_subscription(es_query=query, callback_url="https://www.example.com", replica="aws")
+        resp = self.client.put_subscription(es_query=query, callback_url="https://www.example.com", replica="aws")
         self.assertIn("uuid", resp)
 
         access_token = "test_access_token"
 
-        client.login(access_token=access_token)
+        self.client.login(access_token=access_token)
         config = hca.get_config()
 
         self.assertEqual(config.oauth2_token.access_token, access_token)
-        client.logout()
+        self.client.logout()
         self.assertNotIn("oauth2_token", config)
 
     @unittest.skipIf(True, "Manual Test")
     @reset_tweak_changes
     def test_python_login_logout_user_account(self):
-        client = hca.dss.DSSClient()
         config = hca.get_config()
 
-        client.logout()
+        self.client.logout()
         self.assertNotIn("oauth2_token", config)
 
-        client.login()
+        self.client.login()
         self.assertIn("oauth2_token", config)
 
         query = {'bool': {}}
-        resp = client.put_subscription(es_query=query, callback_url="https://www.example.com", replica="aws")
+        resp = self.client.put_subscription(es_query=query, callback_url="https://www.example.com", replica="aws")
         self.assertIn("uuid", resp)
-        client.delete_subscription(uuid=resp["uuid"], replica="aws", subscription_type='elasticsearch')
+        self.client.delete_subscription(uuid=resp["uuid"], replica="aws", subscription_type='elasticsearch')
 
-        client.logout()
+        self.client.logout()
         self.assertNotIn("oauth2_token", config)
 
 
