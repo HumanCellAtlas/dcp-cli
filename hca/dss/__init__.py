@@ -44,7 +44,7 @@ class DSSFile(namedtuple('DSSFile', ['name', 'uuid', 'version', 'sha256', 'size'
                    version=row['file_version'],
                    sha256=row['file_sha256'],
                    size=row['file_size'],
-                   indexed=row['file_indexed'],
+                   indexed=False,
                    replica=replica)
 
     @classmethod
