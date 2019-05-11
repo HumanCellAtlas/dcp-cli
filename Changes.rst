@@ -1,3 +1,8 @@
+Changes for v6.0.1 (2019-05-10)
+===============================
+
+Fix: KeyError with manifests from production
+
 Changes for v6.0.0 (2019-05-10)
 ===============================
 
