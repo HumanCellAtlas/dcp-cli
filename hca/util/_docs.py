@@ -1,4 +1,4 @@
-import CommonMark
+import commonmark
 
 from docutils import utils
 from docutils.frontend import OptionParser
@@ -42,9 +42,9 @@ _streaming_docstring = """
 """
 
 def _md2rst(docstring):
-    parser = CommonMark.Parser()
+    parser = commonmark.Parser()
     ast = parser.parse(docstring)
-    renderer = CommonMark.ReStructuredTextRenderer()
+    renderer = commonmark.ReStructuredTextRenderer()
     return renderer.render(ast)
 
 
