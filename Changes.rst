@@ -1,3 +1,22 @@
+Changes for v6.0.2 (2019-05-14)
+===============================
+
+-  Bump commonmark dependency (#340)
+
+Changes for v6.0.1 (2019-05-10)
+===============================
+
+Fix: KeyError with manifests from production
+
+Changes for v6.0.0 (2019-05-10)
+===============================
+
+Improve download parallelism (#296) Add paginate method. (#335) Include
+version for naming downloaded bundle directory (#239) Enumerate
+collections. (#330) Remote Login (#328) Add –layout option to manifest
+download (#297) Reorganize dss client methods for clarity Bump dcplib
+requirement version range Add Python 3.7 to Travis CI test matrix (#324)
+
 Changes for v5.2.0 (2019-04-30)
 ===============================
 
