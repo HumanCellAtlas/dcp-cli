@@ -120,20 +120,17 @@ from .fs_helper import FSHelper as fs
 DEFAULT_THREAD_COUNT = multiprocessing.cpu_count() * 2
 
 
-class RetryPolicy(retry.Retry):
-    def __init__(self, retry_after_status_codes={301}, *args, **kwargs):
-        super(RetryPolicy, self).__init__(*args, **kwargs)
-        self.RETRY_AFTER_STATUS_CODES = frozenset(retry_after_status_codes | retry.Retry.RETRY_AFTER_STATUS_CODES)
+class Session(requests.Session):
+    def resolve_redirects(self, resp, req, **kwargs):
+        if self.get_redirect_target(resp) and "Retry-After" in resp.headers:
+            logger.warning("Waiting %ss before redirect per Retry-After header", resp.headers["Retry-After"])
+            resp.connection.max_retries.sleep_for_retry(resp.raw)
+        for rv in super(Session, self).resolve_redirects(resp, req, **kwargs):
+            yield rv
 
-    def increment(self, *args, **kwargs):
-        _retry = super(RetryPolicy, self).increment(*args, **kwargs)
-        last_resp = _retry.history[-1]
-        if last_resp.status == 301:
-            log_lvl = logger.info
-        else:
-            log_lvl = logger.warning
-        log_lvl("Retrying: {}".format(last_resp))
-        return _retry
+
+class RetryPolicy(retry.Retry):
+    pass
 
 
 class _ClientMethodFactory(object):
@@ -371,7 +368,7 @@ class SwaggerClient(object):
 
     def get_session(self):
         if self._session is None:
-            self._session = requests.Session(**self._session_kwargs)
+            self._session = Session(**self._session_kwargs)
             self._session.max_redirects = self.max_redirects
             self._session.headers.update({"User-Agent": self.__class__.__name__})
             self._set_retry_policy(self._session)
