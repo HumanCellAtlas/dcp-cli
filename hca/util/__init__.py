@@ -381,7 +381,7 @@ class SwaggerClient(object):
         """
         Clear {prog} authentication credentials previously configured with ``{prog} login``.
         """
-        for keys in ["application_secrets","oauth2_token"]:
+        for keys in ["application_secrets", "oauth2_token"]:
             try:
                 del self.config[keys]
             except KeyError:
