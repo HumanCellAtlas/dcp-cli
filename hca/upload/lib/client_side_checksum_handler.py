@@ -50,6 +50,6 @@ class ClientSideChecksumHandler:
             with ChecksummingSink(_multipart_chunksize, hash_functions=self._checksums) as sink:
                 with open(self._filename, 'rb') as _file_object:
                     sink.write(_file_object.read(self.READ_BLOCKSIZE))
-                    checksums = sink.get_checksums()
-                    print("Checksumming took %.2f milliseconds to compute" % ((time.time() - start_time) * 1000))
+                checksums = sink.get_checksums()
+                print("Checksumming took %.2f milliseconds to compute" % ((time.time() - start_time) * 1000))
             return checksums
