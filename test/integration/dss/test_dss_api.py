@@ -399,9 +399,11 @@ class TestDssApi(unittest.TestCase):
 
         self.client.logout()
         self.assertNotIn("oauth2_token", config)
+        self.assertNotIn("application_secrets", config)
 
         self.client.login()
         self.assertIn("oauth2_token", config)
+        self.assertIn("application_secrets", config)
 
         query = {'bool': {}}
         resp = self.client.put_subscription(es_query=query, callback_url="https://www.example.com", replica="aws")

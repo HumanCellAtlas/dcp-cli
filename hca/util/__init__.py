@@ -381,10 +381,11 @@ class SwaggerClient(object):
         """
         Clear {prog} authentication credentials previously configured with ``{prog} login``.
         """
-        try:
-            del self.config["oauth2_token"]
-        except KeyError:
-            pass
+        for keys in ["application_secrets", "oauth2_token"]:
+            try:
+                del self.config[keys]
+            except KeyError:
+                pass
 
     def login(self, access_token="", remote=False):
         """
