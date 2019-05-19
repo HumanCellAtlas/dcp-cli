@@ -108,6 +108,7 @@ from urllib3.util import retry, timeout
 from jsonpointer import resolve_pointer
 from threading import Lock
 
+from dcplib.networking import Session
 
 from .. import get_config, logger
 from .compat import USING_PYTHON2, urljoin
@@ -118,15 +119,6 @@ from .fs_helper import FSHelper as fs
 """Based on https://askubuntu.com/questions/668538/cores-vs-threads-how-many-threads-should-i-run-on-this-machine
         and https://github.com/bloomreach/s4cmd/blob/master/s4cmd.py#L121."""
 DEFAULT_THREAD_COUNT = multiprocessing.cpu_count() * 2
-
-
-class Session(requests.Session):
-    def resolve_redirects(self, resp, req, **kwargs):
-        if self.get_redirect_target(resp) and "Retry-After" in resp.headers:
-            logger.warning("Waiting %ss before redirect per Retry-After header", resp.headers["Retry-After"])
-            resp.connection.max_retries.sleep_for_retry(resp.raw)
-        for rv in super(Session, self).resolve_redirects(resp, req, **kwargs):
-            yield rv
 
 
 class RetryPolicy(retry.Retry):
