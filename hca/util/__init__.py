@@ -108,6 +108,7 @@ from urllib3.util import retry, timeout
 from jsonpointer import resolve_pointer
 from threading import Lock
 
+from dcplib.networking import Session
 
 from .. import get_config, logger
 from .compat import USING_PYTHON2, urljoin
@@ -121,19 +122,7 @@ DEFAULT_THREAD_COUNT = multiprocessing.cpu_count() * 2
 
 
 class RetryPolicy(retry.Retry):
-    def __init__(self, retry_after_status_codes={301}, *args, **kwargs):
-        super(RetryPolicy, self).__init__(*args, **kwargs)
-        self.RETRY_AFTER_STATUS_CODES = frozenset(retry_after_status_codes | retry.Retry.RETRY_AFTER_STATUS_CODES)
-
-    def increment(self, *args, **kwargs):
-        _retry = super(RetryPolicy, self).increment(*args, **kwargs)
-        last_resp = _retry.history[-1]
-        if last_resp.status == 301:
-            log_lvl = logger.info
-        else:
-            log_lvl = logger.warning
-        log_lvl("Retrying: {}".format(last_resp))
-        return _retry
+    pass
 
 
 class _ClientMethodFactory(object):
@@ -371,7 +360,7 @@ class SwaggerClient(object):
 
     def get_session(self):
         if self._session is None:
-            self._session = requests.Session(**self._session_kwargs)
+            self._session = Session(**self._session_kwargs)
             self._session.max_redirects = self.max_redirects
             self._session.headers.update({"User-Agent": self.__class__.__name__})
             self._set_retry_policy(self._session)
