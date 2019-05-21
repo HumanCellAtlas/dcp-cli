@@ -8,12 +8,17 @@ import sys
 import tempfile
 import threading
 import unittest
+import uuid
 
 import six
 from mock import patch
 
-from hca.util.compat import walk
+from hca.util.compat import USING_PYTHON2, walk
 from hca.dss import DSSClient
+
+if USING_PYTHON2:
+    import backports.tempfile
+    tempfile = backports.tempfile
 
 logging.basicConfig()
 
@@ -491,6 +496,97 @@ class TestDownload(AbstractTestDSSClient):
         with open(bundle_json_path, 'rb') as f:
             actual_hash = hashlib.sha256(f.read()).hexdigest()
         self.assertEqual(actual_hash, expected_hash)
+
+    @staticmethod
+    def _fake_get_collection(collections):
+        """Used for mocking :meth:`hca.dss.DSSClient.get_collection`"""
+        def func(*args, **kwargs):
+            for collection in collections:
+                if collection['uuid'] == kwargs['uuid']:
+                    return collection
+        return func
+
+    @staticmethod
+    def _generate_col_hierarchy(depth, child_uuid=None):
+        """
+        Generate a list of psuedo-collections such that each
+        collection (except for the first) is a child of its
+        predecessor.
+        """
+        # If 'child_uuid' is not provided, then it's the first call,
+        # which means that we generate the parent ID and the child ID
+        # If 'child_uuid' is provided, then it's not the first call,
+        # which means that parent_uuid = child_uuid, and we provide a
+        skel = {'uuid': child_uuid if child_uuid else str(uuid.uuid4()),
+                'version': '2018-09-17T161441.564206Z',  # arbitrary
+                'description': 'foo',
+                'details': {},
+                'name': 'bar',
+                'contents': [{
+                    'type': 'collection',
+                    'uuid': str(uuid.uuid4()),  # overwrite if necessary
+                    'version': '2018-09-17T161441.564206Z'}]}  # arbitrary
+        if depth == 1:
+            # Base case: we don't care about the new child uuid, leave
+            # generated uuid in place
+            return [skel]
+        child_uuid = str(uuid.uuid4())
+        skel['contents'][0]['uuid'] = child_uuid
+        return [skel] + TestDownload._generate_col_hierarchy(depth - 1, child_uuid)
+
+    def test_collection_download_nested(self):
+        """
+        If a collection contains too many levels (>5), download
+        should fail.
+        """
+        test_cols = self._generate_col_hierarchy(10)
+        mock_get_col = self._fake_get_collection(test_cols)
+        with tempfile.TemporaryDirectory() as t:
+            with self.assertRaises(RuntimeError) as e:
+                with patch('hca.dss.DSSClient.get_collection', new=mock_get_col):
+                    self.dss.download_collection(uuid=test_cols[0]['uuid'],
+                                                 replica='aws', download_dir=t)
+        self.assertIn('Maximum depth', e.exception.args[0])
+
+    def test_collection_download_self_nested(self):
+        """
+        If a collection contains itself, download should ignore
+        "extra" requests to download that collection. If this isn't
+        working, execution will either (1) never terminate or (2)
+        result in a :exc:`RuntimeError` (see
+        :meth:`test_collection_download_nested`).
+        """
+        test_col = self._generate_col_hierarchy(1)[0]
+        test_col['contents'][0]['uuid'] = test_col['uuid']
+        test_col['contents'][0]['version'] = test_col['version']
+        mock_get_col = self._fake_get_collection([test_col])
+        with tempfile.TemporaryDirectory() as t:
+            with patch('hca.dss.DSSClient.get_collection', new=mock_get_col):
+                self.dss.download_collection(uuid=test_col['uuid'],
+                                             replica='aws', download_dir=t)
+
+    def test_collection_download_deep(self):
+        """Test that we can download nested collections"""
+        test_cols = self._generate_col_hierarchy(4)
+        test_cols[-1]['contents'][0] = {
+            'type': 'file',
+            'uuid': 'foo',
+            'version': 'bar'
+        }
+        mock_get_col = self._fake_get_collection(test_cols)
+        with tempfile.TemporaryDirectory() as t:
+            # Currently, we can't download files not associated with a bundle.
+            # When that functionality is implemented, we don't need to catch
+            # this RuntimeError, which is nice. (Implementing this test
+            # with a simulated bundle download is too much work, and tests
+            # the same thing - that we can parse nested collections from the
+            # head and reach the tail.)
+            with self.assertRaises(RuntimeError) as e:
+                with patch('hca.dss.DSSClient.get_collection', new=mock_get_col):
+                    self.dss.download_collection(uuid=test_cols[0]['uuid'],
+                                                 replica='aws', download_dir=t)
+            self.assertIn("download failure", e.exception.args[0])
+
 
 if __name__ == "__main__":
     unittest.main()

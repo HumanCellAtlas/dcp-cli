@@ -16,6 +16,7 @@ from fnmatch import fnmatchcase
 import hashlib
 import os
 import re
+import tempfile
 import time
 import uuid
 from io import open
@@ -80,7 +81,7 @@ class DSSClient(SwaggerClient):
 
     def __init__(self, *args, **kwargs):
         super(DSSClient, self).__init__(*args, **kwargs)
-        self.commands += [self.upload, self.download, self.download_manifest, self.create_version]
+        self.commands += [self.upload, self.download, self.download_manifest, self.create_version, self.download_collection]
 
     def create_version(self):
         """
@@ -655,3 +656,104 @@ class DSSClient(SwaggerClient):
             delimiter = b'\t' if USING_PYTHON2 else '\t'
             reader = csv.DictReader(f, delimiter=delimiter, quoting=csv.QUOTE_NONE)
             return reader.fieldnames, list(reader)
+
+    def _serialize_col_to_manifest(self, uuid, replica, version, _max_depth=5,
+                                   _ignore=[]):
+        """
+        Given a collection UUID, uses GET `/collection/{uuid}` to
+        serialize the collection into a set of dicts that that can be
+        used to generate a manifest file.
+
+        Most of the heavy lifting is handled by
+        :meth:`DSSClient.download_manifest`.
+
+        :param uuid: uuid of the collection to serialize
+        :param replica: replica to query against
+        :param version: version of the specified collection
+        :param int _max_depth: maximum depth to serialize - used to limit
+            levels of nesting recognized when downloading a collection with
+            other collections nested within
+        :param list _ignore: list of collection (uuid, version) to ignore,
+            used to recognize collections that eventually include themselves
+        """
+        if _max_depth < 1:
+            raise RuntimeError("Maximum depth reached")
+        errors = 0
+        rows = []
+        for obj in self.get_collection(uuid=uuid, replica=replica, version=version)['contents']:
+            if obj['type'] == 'file':
+                # Currently cannot download files not associated with a
+                # bundle. This is a limitation of :meth:`download_manifest`
+                errors += 1
+                logger.warning("Failed to download file %s version %s",
+                               obj['uuid'], obj['version'])
+            elif obj['type'] == 'collection':
+                # If we've already seen this collection, carry on silently
+                if (obj['uuid'], obj['version']) in _ignore:
+                    continue
+                _ignore.append((obj['uuid'], obj['version']))
+                r = self._serialize_col_to_manifest(uuid=obj['uuid'],
+                                                    replica=replica,
+                                                    version=obj['version'],
+                                                    _max_depth=_max_depth - 1,
+                                                    _ignore=_ignore)
+                rows.extend(r)
+            elif obj['type'] == 'bundle':
+                bundle = self._bundle_download_tasks(bundle_uuid=obj['uuid'],
+                                                     replica=replica,
+                                                     version=obj.get('version', ''))
+                rows.extend(({
+                    'bundle_uuid': obj['uuid'],
+                    'bundle_version': obj.get('version', None),
+                    'file_name': f.name,
+                    'file_sha256': f.sha256,
+                    'file_uuid': f.uuid,
+                    'file_size': f.size,
+                    'file_version': f.version} for f, _ in bundle))
+            else:
+                errors += 1
+                logger.warning("Failed to download file %s version %s",
+                               obj['uuid'], obj['version'])
+        if errors:
+            raise RuntimeError("%d download failure(s)..." % errors)
+        return rows
+
+    def download_collection(self, uuid, replica, version=None, download_dir='',
+                            max_depth=4):
+        """
+        Download a bundle and save it to the local filesystem as a directory.
+
+        :param str uuid: The uuid of the collection to download
+        :param str replica: the replica to download from. The supported
+            replicas are: `aws` for Amazon Web Services, and `gcp` for
+            Google Cloud Platform. [aws, gcp]
+        :param str version: The version to download, else if not specified,
+            download the latest. The version is a timestamp of bundle creation
+            in RFC3339
+        :param str download_dir: The directory into which to download
+        :param int max_depth: The amount of "levels" of the collection to
+            tolerate before raising an error
+
+        Download a bundle and save it to the local filesystem as a directory.
+        """
+        collection = self._serialize_col_to_manifest(uuid, replica, version,
+                                                     _max_depth=max_depth)
+        # Explicitly declare mode `w` (default `w+b`) for Python 3 string compat
+        # We specify delete=False because :meth:`download_manifest` wants
+        # it's file all nice. We'll delete it later.
+        with tempfile.NamedTemporaryFile(mode='w', delete=False) as manifest:
+            tsv = csv.DictWriter(manifest,
+                                 fieldnames=('bundle_uuid',
+                                             'bundle_version',
+                                             'file_name',
+                                             'file_sha256',
+                                             'file_uuid',
+                                             'file_version',
+                                             'file_size'),
+                                 delimiter=str('\t'),  # cast for py2.7 compat
+                                 quoting=csv.QUOTE_NONE)
+            tsv.writeheader()
+            tsv.writerows(collection)
+        self.download_manifest(manifest=manifest.name, replica=replica,
+                               download_dir=download_dir, layout='bundle')
+        os.remove(manifest.name)

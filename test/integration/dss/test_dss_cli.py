@@ -3,10 +3,12 @@
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
+import filecmp
 import json
 import os
 import sys
 import unittest
+import uuid
 import tempfile
 import shutil
 
@@ -16,7 +18,12 @@ sys.path.insert(0, pkg_root)  # noqa
 import hca
 import hca.cli
 import hca.dss
+from hca.util.compat import USING_PYTHON2
 from test import CapturingIO, reset_tweak_changes, TEST_DIR
+
+if USING_PYTHON2:
+    import backports.tempfile
+    tempfile = backports.tempfile
 
 
 class TestDssCLI(unittest.TestCase):
@@ -101,6 +108,53 @@ class TestDssCLI(unittest.TestCase):
             hca.cli.main(args=args)
         print(stdout.captured())
         self.assertTrue(stdout.captured())
+
+    def test_collection_download(self):
+        """
+        Upload a bundle, add it to a collection, and try downloading
+        that collection.
+
+        If we download the lone bundle in the collection that we create,
+        the same data should be downloaded.
+        """
+        dirpath = os.path.join(TEST_DIR, "res", "bundle")
+        upload_args = ['dss', 'upload', '--src-dir', dirpath, '--replica', 'aws',
+                       '--staging-bucket', 'org-humancellatlas-dss-cli-test']
+        with CapturingIO('stdout') as stdout_upload:
+            hca.cli.main(args=upload_args)
+        bdl_res =  json.loads(stdout_upload.captured())
+        col_contents = {
+            'type': 'bundle',
+            'uuid': bdl_res['bundle_uuid'],
+            'version': bdl_res['version']
+        }
+        put_col_args = ['dss', 'put-collection', '--replica', 'aws', '--uuid',
+                        str(uuid.uuid4()), '--description', '"test collection"',
+                        '--details', '{}', '--version', bdl_res['version'],
+                        '--contents', json.dumps(col_contents), '--name',
+                        'collection_test:%s' % bdl_res['bundle_uuid']]
+        with CapturingIO('stdout') as stdout:
+            hca.cli.main(args=put_col_args)
+        col_res = json.loads(stdout.captured())
+        with tempfile.TemporaryDirectory() as t1:
+            dl_col_args = ['dss', 'download-collection', '--uuid', col_res['uuid'],
+                           '--replica', 'aws', '--download-dir', t1]
+            hca.cli.main(args=dl_col_args)
+            with tempfile.TemporaryDirectory() as t2:
+                dl_bdl_args = ['dss', 'download', '--bundle-uuid',
+                               bdl_res['bundle_uuid'], '--replica', 'aws',
+                               '--download-dir', t2]
+                hca.cli.main(args=dl_bdl_args)
+                # Bundle download and collection download share the same backend,
+                # so shallow check is sufficient.
+                diff = filecmp.dircmp(t1, t2)
+                # It would be more concise to say `self.assertFalse(diff.right_only
+                # or diff.left_only or ...)` but writing it out the long way will
+                # make troubleshooting a failure easier.
+                self.assertFalse(diff.right_only)
+                self.assertFalse(diff.left_only)
+                self.assertFalse(diff.funny_files)
+                self.assertFalse(diff.diff_files)
 
 
 if __name__ == "__main__":
