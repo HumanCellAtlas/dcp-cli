@@ -63,7 +63,7 @@ install-win: clean-win build-win
 	for %%f in (dist\*.whl) do pip install --upgrade %%f
 
 
-test-win: lint install-win integrationtests unittests
+test-win: lint install-win unittests integrationtests
 	coverage combine
 	for %%f in (.coverage.*) do del %%f 2>nul exit 0
 
