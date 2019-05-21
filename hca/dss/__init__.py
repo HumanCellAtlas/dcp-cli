@@ -70,10 +70,10 @@ class DSSClient(SwaggerClient):
         decreases each time we successfully read a block.  We set a quota for the number of failures that goes up with
         every successful block read and down with each failure.
         """
-        if not dest_name:
-            dest_name = bundle_uuid
-
         bundle = self.get_bundle(uuid=bundle_uuid, replica=replica, version=version if version else None)["bundle"]
+
+        if not dest_name:
+            dest_name = bundle_uuid + '.' + bundle['version']
 
         files = {}
         for file_ in bundle["files"]:
