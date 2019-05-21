@@ -290,9 +290,6 @@ class DSSClient(SwaggerClient):
         This download format will serve as the main storage format for downloaded files. If a user specifies a different
         format for download (coming in the future) the files will first be downloaded in this format, then hard-linked
         to the user's preferred format.
-
-        The TSV may have additional columns. Those columns will be ignored. The ordering of the columns is
-        insignificant because the TSV is required to have a header row.
         """
         if layout == 'none':
             self._download_manifest_filestore(manifest, replica, num_retries, min_delay_seconds, download_dir)
