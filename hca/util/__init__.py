@@ -84,6 +84,7 @@ client. Subclasses can add more commands by adding them to the
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import os
+import multiprocessing
 import types
 import collections
 import typing
@@ -101,33 +102,27 @@ except ImportError:
 
 import requests
 
-from requests.adapters import HTTPAdapter
+from requests.adapters import HTTPAdapter, DEFAULT_POOLSIZE
 from requests_oauthlib import OAuth2Session
 from urllib3.util import retry, timeout
 from jsonpointer import resolve_pointer
 from threading import Lock
 
+from dcplib.networking import Session
+
 from .. import get_config, logger
-from .compat import USING_PYTHON2
+from .compat import USING_PYTHON2, urljoin
 from .exceptions import SwaggerAPIException, SwaggerClientInternalError
 from ._docs import _pagination_docstring, _streaming_docstring, _md2rst, _parse_docstring
 from .fs_helper import FSHelper as fs
 
+"""Based on https://askubuntu.com/questions/668538/cores-vs-threads-how-many-threads-should-i-run-on-this-machine
+        and https://github.com/bloomreach/s4cmd/blob/master/s4cmd.py#L121."""
+DEFAULT_THREAD_COUNT = multiprocessing.cpu_count() * 2
+
 
 class RetryPolicy(retry.Retry):
-    def __init__(self, retry_after_status_codes={301}, *args, **kwargs):
-        super(RetryPolicy, self).__init__(*args, **kwargs)
-        self.RETRY_AFTER_STATUS_CODES = frozenset(retry_after_status_codes | retry.Retry.RETRY_AFTER_STATUS_CODES)
-
-    def increment(self, *args, **kwargs):
-        _retry = super(RetryPolicy, self).increment(*args, **kwargs)
-        last_resp = _retry.history[-1]
-        if last_resp.status == 301:
-            log_lvl = logger.info
-        else:
-            log_lvl = logger.warning
-        log_lvl("Retrying: {}".format(last_resp))
-        return _retry
+    pass
 
 
 class _ClientMethodFactory(object):
@@ -218,16 +213,34 @@ class _ClientMethodFactory(object):
 
 
 class _PaginatingClientMethodFactory(_ClientMethodFactory):
-    def iterate(self, **kwargs):
+    def _get_raw_pages(self, **kwargs):
         page = None
         while page is None or page.links.get("next", {}).get("url"):
             page = self._request(kwargs, url=page.links["next"]["url"] if page else None)
-            try:
-                for result in page.json()["results"]:
+            yield page
+
+    def iterate(self, **kwargs):
+        """
+        Yield specific items from each response depending on its contents.
+
+        For example, GET /bundles/{id} and GET /collections/{id} yield the
+        items contained within; POST /search yields search result items.
+        """
+        for page in self._get_raw_pages(**kwargs):
+            if page.json().get('results'):
+                for result in page.json()['results']:
                     yield result
-            except KeyError:
-                for file in page.json()["bundle"]["files"]:
+            elif page.json().get('bundle'):
+                for file in page.json()['bundle']['files']:
                     yield file
+            else:
+                for collection in page.json().get('collections'):
+                    yield collection
+
+    def paginate(self, **kwargs):
+        """Yield paginated responses one response body at a time."""
+        for page in self._get_raw_pages(**kwargs):
+            yield page.json()
 
 
 class SwaggerClient(object):
@@ -255,6 +268,7 @@ class SwaggerClient(object):
     # client or sometimes one and sometimes the other.
     #
     timeout_policy = timeout.Timeout(connect=20, read=40)
+    max_redirects = 1024
 
     def __init__(self, config=None, swagger_url=None, **session_kwargs):
         self.config = config or get_config()
@@ -346,7 +360,8 @@ class SwaggerClient(object):
 
     def get_session(self):
         if self._session is None:
-            self._session = requests.Session(**self._session_kwargs)
+            self._session = Session(**self._session_kwargs)
+            self._session.max_redirects = self.max_redirects
             self._session.headers.update({"User-Agent": self.__class__.__name__})
             self._set_retry_policy(self._session)
         return self._session
@@ -355,10 +370,11 @@ class SwaggerClient(object):
         """
         Clear {prog} authentication credentials previously configured with ``{prog} login``.
         """
-        try:
-            del self.config["oauth2_token"]
-        except KeyError:
-            pass
+        for keys in ["application_secrets", "oauth2_token"]:
+            try:
+                del self.config[keys]
+            except KeyError:
+                pass
 
     def login(self, access_token="", remote=False):
         """
@@ -366,6 +382,8 @@ class SwaggerClient(object):
 
         This command may open a browser window to ask for your
         consent to use web service authentication credentials.
+
+        Use --remote if using the CLI in a remote environment
         """
         if access_token:
             credentials = argparse.Namespace(token=access_token, refresh_token=None, id_token=None)
@@ -373,13 +391,8 @@ class SwaggerClient(object):
             scopes = ["openid", "email", "offline_access"]
             if remote:
                 import google_auth_oauthlib.flow
-                if USING_PYTHON2:
-                    from backports import urllib
-                else:
-                    import urllib
                 application_secrets = self.application_secrets
-                print(application_secrets)
-                redirect_uri = urllib.parse.urljoin(application_secrets['installed']['auth_uri'], "/echo")
+                redirect_uri = urljoin(application_secrets['installed']['auth_uri'], "/echo")
                 flow = google_auth_oauthlib.flow.Flow.from_client_config(self.application_secrets, scopes=scopes,
                                                                          redirect_uri=redirect_uri)
 
@@ -478,7 +491,7 @@ class SwaggerClient(object):
         return self._authenticated_session
 
     def _set_retry_policy(self, session):
-        adapter = HTTPAdapter(max_retries=self.retry_policy)
+        adapter = HTTPAdapter(max_retries=self.retry_policy, pool_maxsize=max(DEFAULT_THREAD_COUNT, DEFAULT_POOLSIZE))
         session.mount('http://', adapter)
         session.mount('https://', adapter)
 

@@ -36,6 +36,8 @@ class ClientSideChecksumHandler:
         """ The ChecksumCalculator encapsulates calling various library functions based on the required checksum to
         be calculated on a file."""
 
+        READ_BLOCKSIZE = 10 * 1024 * 1024  # Do I/O in 10MiB chunks.
+
         def __init__(self, filename, checksums=CHECKSUM_NAMES):
             self._filename = filename
             self._checksums = checksums
@@ -47,7 +49,7 @@ class ClientSideChecksumHandler:
             _multipart_chunksize = get_s3_multipart_chunk_size(_file_size)
             with ChecksummingSink(_multipart_chunksize, hash_functions=self._checksums) as sink:
                 with open(self._filename, 'rb') as _file_object:
-                    sink.write(_file_object.read())
-                    checksums = sink.get_checksums()
-                    print("Checksumming took %.2f milliseconds to compute" % ((time.time() - start_time) * 1000))
+                    sink.write(_file_object.read(self.READ_BLOCKSIZE))
+                checksums = sink.get_checksums()
+                print("Checksumming took %.2f milliseconds to compute" % ((time.time() - start_time) * 1000))
             return checksums
