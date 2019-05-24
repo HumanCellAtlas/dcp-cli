@@ -190,6 +190,7 @@ class TestManifestDownloadFilestore(AbstractTestDSSClient):
         self._assert_all_files_downloaded()
         self._assert_manifest_updated_with_paths('')
 
+    @unittest.skipIf(os.name is 'nt', 'Unable to test on Windows')  # TODO (amar) windows testing refactoring
     def _test_download_dir(self, download_dir):
         with patch('hca.dss.DSSClient._download_file', side_effect=_fake_download_file) as download_func:
             self.dss.download_manifest(self.manifest_file, 'aws', layout='none', download_dir=download_dir)
@@ -314,6 +315,7 @@ class TestManifestDownloadBundle(AbstractTestDSSClient):
         more_files = bundle_files.union(more_files) if more_files else bundle_files
         super(TestManifestDownloadBundle, self)._assert_all_files_downloaded(more_files=more_files, prefix=prefix)
 
+    @unittest.skipIf(os.name is 'nt', 'Unable to test on Windows')  # TODO (amar) windows testing refactoring
     @patch('hca.dss.DSSClient.get_bundle')
     @patch('hca.dss.DSSClient._download_file', side_effect=_fake_download_file)
     def test_manifest_download_bundle(self, _, mock_get_bundle):
@@ -336,15 +338,19 @@ class TestManifestDownloadBundle(AbstractTestDSSClient):
             self._assert_manifest_updated_with_paths(download_dir)
             self._assert_links(download_dir)
 
+    @unittest.skipIf(os.name is 'nt', 'Unable to test on Windows')  # TODO (amar) windows testing refactoring
     def test_download_dir_empty(self):
         self._test_download_dir('')
 
+    @unittest.skipIf(os.name is 'nt', 'Unable to test on Windows')  # TODO (amar) windows testing refactoring
     def test_download_dir_dot(self):
         self._test_download_dir('.')
 
+    @unittest.skipIf(os.name is 'nt', 'Unable to test on Windows')  # TODO (amar) windows testing refactoring
     def test_download_dir(self):
         self._test_download_dir('a_nested_dir')
 
+    @unittest.skipIf(os.name is 'nt', 'Unable to test on Windows')  # TODO (amar) windows testing refactoring
     def test_download_dir_dot_dir(self):
         self._test_download_dir(os.path.join('.', 'a_nested_dir'))
 
