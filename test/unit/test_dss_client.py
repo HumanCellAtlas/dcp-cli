@@ -176,6 +176,7 @@ class TestManifestDownloadFilestore(AbstractTestDSSClient):
         parts = self.dss._file_path('abcdefghij', 'nested_filestore').split(os.sep)
         self.assertEqual(parts, ['nested_filestore', '.hca', 'v2', 'files_1_3_2', 'a', 'bcd', 'ef', 'abcdefghij'])
 
+    @unittest.skipIf(os.name is 'nt', 'Unable to test on Windows')  # TODO windows testing refactor
     @patch('logging.Logger.warning')
     @patch('hca.dss.DSSClient._download_file', side_effect=_fake_download_file)
     def test_manifest_download(self, download_func, warning_log):
@@ -189,6 +190,7 @@ class TestManifestDownloadFilestore(AbstractTestDSSClient):
         self._assert_all_files_downloaded()
         self._assert_manifest_updated_with_paths('')
 
+    @unittest.skipIf(os.name is 'nt', 'Unable to test on Windows')  # TODO windows testing refactor
     def _test_download_dir(self, download_dir):
         with patch('hca.dss.DSSClient._download_file', side_effect=_fake_download_file) as download_func:
             self.dss.download_manifest(self.manifest_file, 'aws', layout='none', download_dir=download_dir)
@@ -199,18 +201,23 @@ class TestManifestDownloadFilestore(AbstractTestDSSClient):
             self._assert_all_files_downloaded(prefix=download_dir)
             self._assert_manifest_updated_with_paths(download_dir)
 
+    @unittest.skipIf(os.name is 'nt', 'Unable to test on Windows')  # TODO windows testing refactor
     def test_download_dir_empty(self):
         self._test_download_dir('')
 
+    @unittest.skipIf(os.name is 'nt', 'Unable to test on Windows')  # TODO windows testing refactor
     def test_download_dir_dot(self):
         self._test_download_dir('.')
 
+    @unittest.skipIf(os.name is 'nt', 'Unable to test on Windows')  # TODO windows testing refactor
     def test_download_dir(self):
         self._test_download_dir('a_nested_dir')
 
+    @unittest.skipIf(os.name is 'nt', 'Unable to test on Windows')  # TODO windows testing refactor
     def test_download_dir_dot_dir(self):
         self._test_download_dir(os.path.join('.', 'a_nested_dir'))
 
+    @unittest.skipIf(os.name is 'nt', 'Unable to test on Windows')  # TODO windows testing refactor
     @patch('logging.Logger.warning')
     @patch('hca.dss.DSSClient._download_file', side_effect=_fake_download_file)
     def test_manifest_download_different_path(self, download_func, warning_log):
@@ -231,6 +238,7 @@ class TestManifestDownloadFilestore(AbstractTestDSSClient):
         self._assert_all_files_downloaded()
         self._assert_manifest_updated_with_paths('')
 
+    @unittest.skipIf(os.name is 'nt', 'Unable to test on Windows')  # TODO windows testing refactor
     @patch('logging.Logger.warning')
     @patch('hca.dss.DSSClient._download_file', side_effect=_fake_download_file)
     def test_manifest_download_partial(self, _, warning_log):
@@ -248,6 +256,7 @@ class TestManifestDownloadFilestore(AbstractTestDSSClient):
         self.assertEqual(warning_log.call_count, 2)
         self._assert_manifest_not_updated()
 
+    @unittest.skipIf(os.name is 'nt', 'Unable to test on Windows')  # TODO windows testing refactor
     @unittest.skipIf(sys.version_info < (3,), 'Threading.Barrier is not available in Python 2')
     def test_manifest_download_parallel(self):
         """
@@ -306,6 +315,7 @@ class TestManifestDownloadBundle(AbstractTestDSSClient):
         more_files = bundle_files.union(more_files) if more_files else bundle_files
         super(TestManifestDownloadBundle, self)._assert_all_files_downloaded(more_files=more_files, prefix=prefix)
 
+    @unittest.skipIf(os.name is 'nt', 'Unable to test on Windows')  # TODO windows testing refactor
     @patch('hca.dss.DSSClient.get_bundle')
     @patch('hca.dss.DSSClient._download_file', side_effect=_fake_download_file)
     def test_manifest_download_bundle(self, _, mock_get_bundle):
@@ -328,15 +338,19 @@ class TestManifestDownloadBundle(AbstractTestDSSClient):
             self._assert_manifest_updated_with_paths(download_dir)
             self._assert_links(download_dir)
 
+    @unittest.skipIf(os.name is 'nt', 'Unable to test on Windows')  # TODO windows testing refactor
     def test_download_dir_empty(self):
         self._test_download_dir('')
 
+    @unittest.skipIf(os.name is 'nt', 'Unable to test on Windows')  # TODO windows testing refactor
     def test_download_dir_dot(self):
         self._test_download_dir('.')
 
+    @unittest.skipIf(os.name is 'nt', 'Unable to test on Windows')  # TODO windows testing refactor
     def test_download_dir(self):
         self._test_download_dir('a_nested_dir')
 
+    @unittest.skipIf(os.name is 'nt', 'Unable to test on Windows')  # TODO windows testing refactor
     def test_download_dir_dot_dir(self):
         self._test_download_dir(os.path.join('.', 'a_nested_dir'))
 

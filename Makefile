@@ -1,8 +1,13 @@
-SHELL=/bin/bash
+ifeq ($(OS),Windows_NT)
+	SHELL=cmd.exe
+else
+	SHELL=/bin/bash
+endif
 
 test: lint install integrationtests unittests
 	coverage combine
 	rm -f .coverage.*
+
 
 unittests:
 	coverage run -p --source=hca -m unittest discover -v -t . -s test/unit
@@ -21,7 +26,7 @@ integration: lint install integrationtests
 	rm -f .coverage.*
 
 lint:
-	./setup.py flake8
+	python ./setup.py flake8
 
 version: hca/version.py
 
@@ -45,6 +50,24 @@ clean:
 	-rm -rf build dist
 	-rm -rf *.egg-info
 
+build-win:
+	rmdir /s /q dist 2>nul & exit 0
+	python .\setup.py bdist_wheel
+
+clean-win:
+	rmdir /s /q build 2>nul & exit 0
+	rmdir /s /q dist 2>nul & exit 0
+	for %%f in (*.egg-info) do rmdir /s /q %%f 2>nul & exit 0
+
+install-win: clean-win build-win
+	for %%f in (dist\*.whl) do pip install --upgrade %%f
+
+
+test-win: lint install-win unittests integrationtests
+	coverage combine
+	for %%f in (.coverage.*) do del %%f 2>nul exit 0
+
 .PHONY: test unit integration lint install release docs clean
 
 include common.mk
+

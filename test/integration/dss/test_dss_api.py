@@ -62,6 +62,7 @@ class TestDssApi(unittest.TestCase):
                         with ThreadPoolExecutor(num_threads) as tpe:
                             self.assertTrue(all(x is None for x in tpe.map(f, range(num_threads))))
 
+    @unittest.skipIf(os.name is 'nt', 'Unable to test on Windows')  # TODO windows testing refactor
     def test_python_nested_bundle_upload_download(self):
         bundle_path = os.path.join(TEST_DIR, "upload", "data")
         uploaded_paths = [x.path for x in iter_paths(str(bundle_path))]
@@ -211,6 +212,7 @@ class TestDssApi(unittest.TestCase):
                     finally:
                         os.chdir(cwd)
 
+    @unittest.skipIf(os.name is 'nt', 'Unable to test on Windows')  # TODO windows testing refactor
     def test_python_upload_lg_file(self):
         with TemporaryDirectory() as src_dir, TemporaryDirectory() as dest_dir:
             with tempfile.NamedTemporaryFile(dir=src_dir, suffix=".bin") as fh:

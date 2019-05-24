@@ -28,12 +28,26 @@ stages:
     - scripts/fetch_secret.sh gcp-credentials.json > gcp-credentials.json
     - export GOOGLE_APPLICATION_CREDENTIALS=$(pwd -P)/gcp-credentials.json
     - sed -i -e s/dss.data.humancellatlas.org/dss.$DSS_TEST_STAGE.data.humancellatlas.org/ hca/default_config.json
-    - make install
   script:
     - make test
   except:
     - tags
 
+.windows-test-base:
+  stage: test
+  before_script:
+    #currently 3.6.8 is offered by the windows-runner
+    - python --version
+    - $env:WINDOWS_PYTHON = python -c 'import sys  ; print(sys.version[0:3])'
+    - if (-NOT $env:WINDOWS_PYTHON -eq ${PYTHON_VERSION}) { echo "python missmatch"; exit(1) }
+    - virtualenv venv3
+    - venv3\Scripts\activate
+    - pip install -r requirements-dev.txt
+    - python .\scripts\fetch_secret.py --secret-name gcp-credentials.json --write
+    - $env:GOOGLE_APPLICATION_CREDENTIALS = (Convert-Path .\gcp-credentials.json)
+    - (Get-Content .\hca\default_config.json).replace('dss.data.humancellatlas.org',"dss.${DSS_TEST_STAGE}.data.humancellatlas.org")| Set-Content  .\hca\default_config.json
+  script:
+    - make test-win
 test-2.7:
   extends: .linux-test-base
   variables:
@@ -53,3 +67,10 @@ test-3.6:
   extends: .linux-test-base
   variables:
     PYTHON_VERSION: "3.6"
+
+test-3.6-win:
+  extends: .windows-test-base
+  variables:
+    PYTHON_VERSIO: "3.6"
+  tags:
+    - windows
