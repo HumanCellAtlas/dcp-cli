@@ -194,7 +194,7 @@ class DSSClient(SwaggerClient):
             `gcp` for Google Cloud Platform. [aws, gcp]
         :param str version: The version to download, else if not specified, download the latest. The version is a
             timestamp of bundle creation in RFC3339
-        :param str dest_name: The destination file path for the download
+        :param str download_dir: The directory into which to download
         :param iterable metadata_files: one or more shell patterns against which all metadata files in the bundle will be
             matched case-sensitively. A file is considered a metadata file if the `indexed` property in the manifest is
             set. If and only if a metadata file matches any of the patterns in `metadata_files` will it be downloaded.
@@ -290,9 +290,6 @@ class DSSClient(SwaggerClient):
         This download format will serve as the main storage format for downloaded files. If a user specifies a different
         format for download (coming in the future) the files will first be downloaded in this format, then hard-linked
         to the user's preferred format.
-
-        The TSV may have additional columns. Those columns will be ignored. The ordering of the columns is
-        insignificant because the TSV is required to have a header row.
         """
         if layout == 'none':
             self._download_manifest_filestore(manifest, replica, num_retries, min_delay_seconds, download_dir)
