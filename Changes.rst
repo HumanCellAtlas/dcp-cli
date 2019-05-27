@@ -1,3 +1,14 @@
+Changes for v6.1.0 (2019-05-27)
+===============================
+
+-  Fix redirect logic when Retry-After is given with a 301 redirect
+   (#341)
+
+-  Logout application_secret flush (#342)
+
+-  hca upload: Make sure checksum is computed after whole file is read
+   not only the first/last bit. (#343)
+
 Changes for v6.0.2 (2019-05-14)
 ===============================
 
