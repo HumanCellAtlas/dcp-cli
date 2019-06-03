@@ -94,6 +94,8 @@ import base64
 import argparse
 import time
 import jwt
+import contextlib
+import socket
 
 try:
     from inspect import signature, Signature, Parameter
@@ -123,6 +125,12 @@ DEFAULT_THREAD_COUNT = multiprocessing.cpu_count() * 2
 
 class RetryPolicy(retry.Retry):
     pass
+
+
+def unused_tcp_port():
+    with contextlib.closing(socket.socket()) as sock:
+        sock.bind(('127.0.0.1', 0))
+    return sock.getsockname()[1]
 
 
 class _ClientMethodFactory(object):
@@ -406,7 +414,7 @@ class SwaggerClient(object):
                 from google_auth_oauthlib.flow import InstalledAppFlow
                 flow = InstalledAppFlow.from_client_config(self.application_secrets, scopes=scopes)
                 msg = "Authentication successful. Please close this tab and run HCA CLI commands in the terminal."
-                credentials = flow.run_local_server(success_message=msg, audience=self._audience)
+                credentials = flow.run_local_server(success_message=msg, audience=self._audience, port=unused_tcp_port)
 
         # TODO: (akislyuk) test token autorefresh on expiration
         self.config.oauth2_token = dict(access_token=credentials.token,
