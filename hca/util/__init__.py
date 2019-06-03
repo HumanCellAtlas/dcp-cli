@@ -414,7 +414,7 @@ class SwaggerClient(object):
                 from google_auth_oauthlib.flow import InstalledAppFlow
                 flow = InstalledAppFlow.from_client_config(self.application_secrets, scopes=scopes)
                 msg = "Authentication successful. Please close this tab and run HCA CLI commands in the terminal."
-                credentials = flow.run_local_server(success_message=msg, audience=self._audience, port=unused_tcp_port)
+                credentials = flow.run_local_server(success_message=msg, audience=self._audience, port=unused_tcp_port())
 
         # TODO: (akislyuk) test token autorefresh on expiration
         self.config.oauth2_token = dict(access_token=credentials.token,
