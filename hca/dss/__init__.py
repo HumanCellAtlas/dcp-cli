@@ -285,9 +285,9 @@ class DSSClient(SwaggerClient):
         * `file_name` - the name of the file as specified in the bundle.
 
         * `file_uuid` - the UUID of the file in the DSS.
-        
+
         * `file_sha256` - the SHA-256 hash of the file.
-        
+
         * `file_size` - the size of the file.
 
         The TSV may have additional columns. Those columns will be ignored. The ordering of the columns is
