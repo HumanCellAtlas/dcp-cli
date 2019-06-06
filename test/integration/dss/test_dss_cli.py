@@ -3,6 +3,7 @@
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
+import contextlib
 import filecmp
 import json
 import os
@@ -18,6 +19,7 @@ sys.path.insert(0, pkg_root)  # noqa
 import hca
 import hca.cli
 import hca.dss
+import hca.util.exceptions
 from hca.util.compat import USING_PYTHON2
 from test import CapturingIO, reset_tweak_changes, TEST_DIR
 
@@ -109,6 +111,60 @@ class TestDssCLI(unittest.TestCase):
         print(stdout.captured())
         self.assertTrue(stdout.captured())
 
+    @staticmethod
+    @contextlib.contextmanager
+    def _put_test_col(args, uuid=str(uuid.uuid4()), replica='aws'):
+        """
+        Implements a context manager that PUTs a collection to the
+        data store using `hca dss put-collection` then deletes it
+        when done.
+
+        :param list args: arguments to pass to `hca dss put-collection`
+        :param str uuid: uuid of the collection
+        :param str replica: replica to use
+        :rtype: dict
+        :returns: put-collection response object
+        """
+        base_args = ['dss', 'put-collection', '--replica', replica,
+                     '--uuid', uuid]
+        with CapturingIO('stdout') as stdout:
+            hca.cli.main(args=base_args + args)
+        yield json.loads(stdout.captured())
+        base_args[1] = 'delete-collection'
+        with CapturingIO('stdout'):
+            hca.cli.main(args=base_args)
+
+    @staticmethod
+    @contextlib.contextmanager
+    def _put_test_bdl(dirpath=os.path.join(TEST_DIR, 'res', 'bundle'),
+                      replica='aws',
+                      staging_bucket='org-humancellatlas-dss-cli-test'):
+        """
+        Implements a context manager that uploads a bundle to the data
+        store using `hca dss upload` then deletes it when done, if the
+        user has the requisite permissions.
+
+        :param str dirpath: path of the directory to upload (`--src-dir`)
+        :param str replica: replica to use (`--replica`)
+        :param str staging_bucket`: passed to `--staging-bucket`
+        :rtype: dict
+        :returns: upload response object
+        """
+        put_args  = ['dss', 'upload', '--src-dir', dirpath, '--replica',
+                     replica, '--staging-bucket', staging_bucket]
+        with CapturingIO('stdout') as stdout:
+            hca.cli.main(args=put_args)
+        rv = json.loads(stdout.captured())
+        yield rv
+        del_args = ['dss', 'delete-bundle', '--uuid', rv['bundle_uuid'],
+                    '--replica', replica, '--reason', 'tear down test bundle']
+        try:
+            with CapturingIO('stdout'):
+                hca.cli.main(args=del_args)
+        except hca.util.exceptions.SwaggerAPIException as e:
+            # Deleting bundles is a privilege, not a right
+            assert e.code == 403
+
     def test_collection_download(self):
         """
         Upload a bundle, add it to a collection, and try downloading
@@ -117,32 +173,27 @@ class TestDssCLI(unittest.TestCase):
         If we download the lone bundle in the collection that we create,
         the same data should be downloaded.
         """
-        dirpath = os.path.join(TEST_DIR, "res", "bundle")
-        upload_args = ['dss', 'upload', '--src-dir', dirpath, '--replica', 'aws',
-                       '--staging-bucket', 'org-humancellatlas-dss-cli-test']
-        with CapturingIO('stdout') as stdout_upload:
-            hca.cli.main(args=upload_args)
-        bdl_res =  json.loads(stdout_upload.captured())
-        col_contents = {
-            'type': 'bundle',
-            'uuid': bdl_res['bundle_uuid'],
-            'version': bdl_res['version']
-        }
-        put_col_args = ['dss', 'put-collection', '--replica', 'aws', '--uuid',
-                        str(uuid.uuid4()), '--description', '"test collection"',
-                        '--details', '{}', '--version', bdl_res['version'],
-                        '--contents', json.dumps(col_contents), '--name',
-                        'collection_test:%s' % bdl_res['bundle_uuid']]
-        with CapturingIO('stdout') as stdout:
-            hca.cli.main(args=put_col_args)
-        col_res = json.loads(stdout.captured())
-        with tempfile.TemporaryDirectory() as t1:
-            dl_col_args = ['dss', 'download-collection', '--uuid', col_res['uuid'],
-                           '--replica', 'aws', '--download-dir', t1]
-            hca.cli.main(args=dl_col_args)
-            with tempfile.TemporaryDirectory() as t2:
+        with self._put_test_bdl() as bdl:
+            col_contents = {
+                'type': 'bundle',
+                'uuid': bdl['bundle_uuid'],
+                'version': bdl['version']
+            }
+            put_col_args = [
+                '--description', '"test collection"',
+                '--details', '{}',
+                '--version', bdl['version'],
+                '--contents', json.dumps(col_contents),
+                '--name', 'collection_test:%s' % bdl['bundle_uuid']
+            ]
+            with self._put_test_col(put_col_args) as col, \
+                 tempfile.TemporaryDirectory() as t1, \
+                 tempfile.TemporaryDirectory() as t2:
+                dl_col_args = ['dss', 'download-collection', '--uuid', col['uuid'],
+                               '--replica', 'aws', '--download-dir', t1]
+                hca.cli.main(args=dl_col_args)
                 dl_bdl_args = ['dss', 'download', '--bundle-uuid',
-                               bdl_res['bundle_uuid'], '--replica', 'aws',
+                               bdl['bundle_uuid'], '--replica', 'aws',
                                '--download-dir', t2]
                 hca.cli.main(args=dl_bdl_args)
                 # Bundle download and collection download share the same backend,
