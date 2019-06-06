@@ -688,9 +688,9 @@ class DSSClient(SwaggerClient):
                 logger.warning("Failed to download file %s version %s",
                                obj['uuid'], obj['version'])
             elif obj['type'] == 'collection':
-                # If we've already seen this collection, carry on silently
                 if (obj['uuid'], obj['version']) in _ignore:
-                    continue
+                    logger.info("Ignoring already-seen collection %s version %s",
+                                obj['uuid'], obj['version'])
                 _ignore.append((obj['uuid'], obj['version']))
                 r = self._serialize_col_to_manifest(uuid=obj['uuid'],
                                                     replica=replica,
