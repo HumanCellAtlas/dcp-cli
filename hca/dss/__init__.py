@@ -739,9 +739,7 @@ class DSSClient(SwaggerClient):
         collection = self._serialize_col_to_manifest(uuid, replica, version,
                                                      _max_depth=max_depth)
         # Explicitly declare mode `w` (default `w+b`) for Python 3 string compat
-        # We specify delete=False because :meth:`download_manifest` wants
-        # it's file all nice. We'll delete it later.
-        with tempfile.NamedTemporaryFile(mode='w', delete=False) as manifest:
+        with tempfile.NamedTemporaryFile(mode='w') as manifest:
             tsv = csv.DictWriter(manifest,
                                  fieldnames=('bundle_uuid',
                                              'bundle_version',
@@ -754,6 +752,10 @@ class DSSClient(SwaggerClient):
                                  quoting=csv.QUOTE_NONE)
             tsv.writeheader()
             tsv.writerows(collection)
-        self.download_manifest(manifest=manifest.name, replica=replica,
-                               download_dir=download_dir, layout='bundle')
-        os.remove(manifest.name)
+            # Flushing the I/O buffer here is preferable to closing the file
+            # handle and deleting the temporary file later because within the
+            # context manager there is a guarantee that the temporary file
+            # will be deleted when we are done
+            manifest.flush()
+            self.download_manifest(manifest=manifest.name, replica=replica,
+                                   download_dir=download_dir, layout='bundle')
