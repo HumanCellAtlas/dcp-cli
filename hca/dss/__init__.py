@@ -691,6 +691,7 @@ class DSSClient(SwaggerClient):
                 if (obj['uuid'], obj['version']) in _ignore:
                     logger.info("Ignoring already-seen collection %s version %s",
                                 obj['uuid'], obj['version'])
+                    continue
                 _ignore.append((obj['uuid'], obj['version']))
                 r = self._serialize_col_to_manifest(uuid=obj['uuid'],
                                                     replica=replica,
