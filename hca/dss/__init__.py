@@ -11,6 +11,7 @@ import csv
 from datetime import datetime
 from fnmatch import fnmatchcase
 import hashlib
+import json
 import os
 import re
 import time
@@ -70,7 +71,8 @@ class DSSClient(SwaggerClient):
         decreases each time we successfully read a block.  We set a quota for the number of failures that goes up with
         every successful block read and down with each failure.
         """
-        bundle = self.get_bundle(uuid=bundle_uuid, replica=replica, version=version if version else None)["bundle"]
+        manifest = self.get_bundle(uuid=bundle_uuid, replica=replica, version=version if version else None)
+        bundle = manifest['bundle']
 
         if not dest_name:
             dest_name = bundle_uuid + '.' + bundle['version']
@@ -185,6 +187,9 @@ class DSSClient(SwaggerClient):
             else:
                 logger.info("%s", "File {}: GET SUCCEEDED. Stored at {}.".format(filename, file_path))
 
+        with open(os.path.join(dest_name, 'bundle.json'), 'w+') as manifest_file:
+            json.dump(manifest, manifest_file, indent=4)
+
     def download_manifest(self,
                           manifest,
                           replica,
@@ -222,6 +227,7 @@ class DSSClient(SwaggerClient):
         insignificant because the TSV is required to have a header row.
 
         """
+
         with open(manifest) as f:
             bundles = defaultdict(set)
             # unicode_literals is on so all strings are unicode. CSV wants a str so we need to jump through a hoop.
@@ -250,7 +256,7 @@ class DSSClient(SwaggerClient):
             else:
                 return 0
 
-        with ThreadPoolExecutor() as tpe:
+        with ThreadPoolExecutor(max_workers=1000) as tpe:
             errors = sum(tpe.map(download_bundle, bundles.items()))
 
         if errors:
