@@ -17,8 +17,7 @@ from hca.util.compat import USING_PYTHON2, walk
 from hca.dss import DSSClient
 
 if USING_PYTHON2:
-    import backports.tempfile
-    tempfile = backports.tempfile
+    import backports.tempfile as tempfile
 
 logging.basicConfig()
 
