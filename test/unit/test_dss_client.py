@@ -555,6 +555,11 @@ class TestDownload(AbstractTestDSSClient):
         result in a :exc:`RuntimeError` (see
         :meth:`test_collection_download_nested`).
         """
+        # For what it's worth, I can't find a way to create this in the
+        # DSS, since I can't create a collection that contains another
+        # collection that doesn't yet exist. (And there is no way to
+        # update collections after creation.) That said, this purely
+        # hypothetical case is handled as it is specified in #339.
         test_col = self._generate_col_hierarchy(1)[0]
         test_col['contents'][0]['uuid'] = test_col['uuid']
         test_col['contents'][0]['version'] = test_col['version']
