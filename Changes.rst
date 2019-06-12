@@ -1,3 +1,9 @@
+Changes for v6.1.1 (2019-06-12)
+===============================
+
+CLI is using a blocksize that is different than upload. Changing to
+match. Update manifest structure docs (#354)
+
 Changes for v6.1.0 (2019-05-27)
 ===============================
 
