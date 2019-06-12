@@ -1,3 +1,8 @@
+Changes for v6.2.0 (2019-06-12)
+===============================
+
+Read whole file for checksumming instead of part of file.
+
 Changes for v6.1.2 (2019-06-12)
 ===============================
 
