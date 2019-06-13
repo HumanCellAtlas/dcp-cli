@@ -283,9 +283,14 @@ class SwaggerClient(object):
         self.methods = {}
         self.commands = [self.login, self.logout, self.refresh_swagger]
         self.http_paths = collections.defaultdict(dict)
-        self.host = "{scheme}://{host}{base}".format(scheme=self.scheme,
-                                                     host=self.swagger_spec["host"],
-                                                     base=self.swagger_spec["basePath"])
+        if "openapi" in self.swagger_spec:
+            server = self.swagger_spec["servers"][0]
+            variables = {k: v["default"] for k, v in server.get("variables", {}).items()}
+            self.host = server["url"].format(**variables)
+        else:
+            self.host = "{scheme}://{host}{base}".format(scheme=self.scheme,
+                                                         host=self.swagger_spec["host"],
+                                                         base=self.swagger_spec["basePath"])
         for http_path, path_data in self.swagger_spec["paths"].items():
             for http_method, method_data in path_data.items():
                 self._build_client_method(http_method, http_path, method_data)
@@ -329,7 +334,8 @@ class SwaggerClient(object):
                             raise
                     res = self.get_session().get(self.swagger_url)
                     res.raise_for_status()
-                    assert "swagger" in res.json()
+                    res_json = res.json()
+                    assert "swagger" in res_json or "openapi" in res_json
                     fs.atomic_write(swagger_filename, res.content)
                 with open(swagger_filename) as fh:
                     self._swagger_spec = self.load_swagger_json(fh)
@@ -498,30 +504,28 @@ class SwaggerClient(object):
     def _save_auth_token_refresh_result(self, result):
         self.config.oauth2_token = result
 
-    def _process_method_args(self, parameters):
+    def _process_method_args(self, parameters, body_json_schema):
         body_props = {}
         method_args = collections.OrderedDict()
+        for prop_name, prop_data in body_json_schema["properties"].items():
+            enum_values = prop_data.get("enum")
+            type_ = prop_data.get("type") if enum_values is None else 'string'
+            anno = self._type_map[type_]
+            if prop_name not in body_json_schema.get("required", []):
+                anno = typing.Optional[anno]
+            param = Parameter(prop_name, Parameter.POSITIONAL_OR_KEYWORD, default=prop_data.get("default"),
+                              annotation=anno)
+            method_args[prop_name] = dict(param=param, doc=prop_data.get("description"),
+                                          choices=enum_values,
+                                          required=prop_name in body_json_schema.get("required", []))
+            body_props[prop_name] = body_json_schema
+
         for parameter in parameters.values():
-            if parameter["in"] == "body":
-                schema = parameter["schema"]
-                for prop_name, prop_data in schema["properties"].items():
-                    enum_values = prop_data.get("enum")
-                    type_ = prop_data.get("type") if enum_values is None else 'string'
-                    anno = self._type_map[type_]
-                    if prop_name not in schema.get("required", []):
-                        anno = typing.Optional[anno]
-                    param = Parameter(prop_name, Parameter.POSITIONAL_OR_KEYWORD, default=prop_data.get("default"),
-                                      annotation=anno)
-                    method_args[prop_name] = dict(param=param, doc=prop_data.get("description"),
-                                                  choices=enum_values,
-                                                  required=prop_name in schema.get("required", []))
-                    body_props[prop_name] = schema
-            else:
-                annotation = str if parameter.get("required") else typing.Optional[str]
-                param = Parameter(parameter["name"], Parameter.POSITIONAL_OR_KEYWORD, default=parameter.get("default"),
-                                  annotation=annotation)
-                method_args[parameter["name"]] = dict(param=param, doc=parameter.get("description"),
-                                                      choices=parameter.get("enum"), required=parameter.get("required"))
+            annotation = str if parameter.get("required") else typing.Optional[str]
+            param = Parameter(parameter["name"], Parameter.POSITIONAL_OR_KEYWORD, default=parameter.get("default"),
+                              annotation=annotation)
+            method_args[parameter["name"]] = dict(param=param, doc=parameter.get("description"),
+                                                  choices=parameter.get("enum"), required=parameter.get("required"))
         return body_props, method_args
 
     def _build_client_method(self, http_method, http_path, method_data):
@@ -530,12 +534,20 @@ class SwaggerClient(object):
         if method_name.endswith("s") and (http_method.upper() in {"POST", "PUT"} or http_path.endswith("/{uuid}")):
             method_name = method_name[:-1]
 
-        parameters = {p["name"]: p for p in method_data["parameters"]}
+        parameters = {p["name"]: p for p in method_data.get("parameters", [])}
+        body_json_schema = {"properties": {}}
+        if "requestBody" in method_data:
+            body_json_schema = method_data["requestBody"]["content"]["application/json"]["schema"]
+        else:
+            for p in parameters:
+                if parameters[p]["in"] == "body":
+                    body_json_schema = parameters.pop(p)["schema"]
+                    break
 
         path_parameters = [p_name for p_name, p_data in parameters.items() if p_data["in"] == "path"]
         self.http_paths[method_name][frozenset(path_parameters)] = http_path
 
-        body_props, method_args = self._process_method_args(parameters)
+        body_props, method_args = self._process_method_args(parameters=parameters, body_json_schema=body_json_schema)
 
         method_supports_pagination = True if str(requests.codes.partial) in method_data["responses"] else False
         highlight_streaming_support = True if str(requests.codes.found) in method_data["responses"] else False
