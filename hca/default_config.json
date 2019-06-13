@@ -3,5 +3,8 @@
   "client_id": "foo",
   "DSSClient": {
     "swagger_url": "https://dss.data.humancellatlas.org/v1/swagger.json"
+  },
+  "DCPQueryClient": {
+    "swagger_url": "https://query.data.humancellatlas.org/v1/openapi.json"
   }
 }
