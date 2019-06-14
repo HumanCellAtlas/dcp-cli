@@ -197,8 +197,10 @@ class DSSClient(SwaggerClient):
                  replica,
                  version="",
                  download_dir="",
-                 metadata_files=('*',),
-                 data_files=('*',),
+                 metadata_filter=('*',),
+                 data_filter=('*',),
+                 no_metadata=False,
+                 no_data=False,
                  num_retries=10,
                  min_delay_seconds=0.25):
         """
@@ -210,14 +212,16 @@ class DSSClient(SwaggerClient):
         :param str version: The version to download, else if not specified, download the latest. The version is a
                             timestamp of bundle creation in RFC3339
         :param str download_dir: The directory into which to download
-        :param iterable metadata_files: One or more shell patterns against which all metadata files in the bundle will
+        :param iterable metadata_filter: One or more shell patterns against which all metadata files in the bundle will
                                         be matched case-sensitively. A file is considered a metadata file if the
                                         `indexed` property in the manifest is set. If and only if a metadata file
                                         matches any of the patterns in `metadata_files` will it be downloaded.
-        :param iterable data_files: One or more shell patterns against which all data files in the bundle will be
+        :param iterable data_filter: One or more shell patterns against which all data files in the bundle will be
                                     matched case-sensitively. A file is considered a data file if the `indexed` property
                                     in the manifest is not set. The file will be downloaded only if a data file matches
                                     any of the patterns in `data_files` will it be downloaded.
+        :param no_metadata: Exclude metadata files. Cannot be set when --metadata-filter is also set.
+        :param no_data: Exclude data files. Cannot be set when --data-filter is also set.
         :param int num_retries: The initial quota of download failures to accept before exiting due to failures.
                                 The number of retries increase and decrease as file chucks succeed and fail.
         :param float min_delay_seconds: The minimum number of seconds to wait in between retries.
@@ -231,16 +235,24 @@ class DSSClient(SwaggerClient):
         decreases each time we successfully read a block.  We set a quota for the number of failures that goes up with
         every successful block read and down with each failure.
         """
-        errors = 0
+        if no_metadata:
+            if metadata_filter != ('*',):
+                raise ValueError('--metadata-filter and --no-metadata are mutually exclusive options.')
+            metadata_filter = ('',)
+        if no_data:
+            if data_filter != ('*',):
+                raise ValueError('--data-filter and --no-data are mutually exclusive options.')
+            data_filter = ('',)
 
+        errors = 0
         with concurrent.futures.ThreadPoolExecutor(self.threads) as executor:
             futures_to_dss_file = {executor.submit(task): dss_file
                                    for dss_file, task in self._bundle_download_tasks(bundle_uuid,
                                                                                      replica,
                                                                                      version,
                                                                                      download_dir,
-                                                                                     metadata_files,
-                                                                                     data_files,
+                                                                                     metadata_filter,
+                                                                                     data_filter,
                                                                                      num_retries,
                                                                                      min_delay_seconds)}
             for future in concurrent.futures.as_completed(futures_to_dss_file):
@@ -390,13 +402,14 @@ class DSSClient(SwaggerClient):
                                replica,
                                version="",
                                download_dir="",
-                               metadata_files=('*',),
-                               data_files=('*',),
+                               metadata_filter=('*',),
+                               data_filter=('*',),
                                num_retries=10,
                                min_delay_seconds=0.25):
         """
         Returns an iterator of tasks that each download one of the files in a bundle.
         """
+
         logger.info('Downloading bundle %s version %s ...', bundle_uuid, version)
         manifest = self._get_full_bundle_manifest(bundle_uuid, replica, version)
         bundle_version = manifest['bundle']['version']
@@ -418,7 +431,7 @@ class DSSClient(SwaggerClient):
             filename = file_.get("name", dss_file.uuid)
             walking_dir = bundle_dir
 
-            globs = metadata_files if file_['indexed'] else data_files
+            globs = metadata_filter if file_['indexed'] else data_filter
             if not any(fnmatchcase(filename, glob) for glob in globs):
                 continue
 
@@ -493,7 +506,7 @@ class DSSClient(SwaggerClient):
                                                  replica,
                                                  version=bundle_version,
                                                  download_dir=download_dir,
-                                                 data_files=data_globs,
+                                                 data_filter=data_globs,
                                                  num_retries=num_retries,
                                                  min_delay_seconds=min_delay_seconds)
 

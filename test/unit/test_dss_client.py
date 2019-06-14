@@ -440,6 +440,48 @@ class TestDownload(AbstractTestDSSClient):
                                     '8ffe4838ac08672041f73f82e5f8361860627271ec31aa479fbb65f2ccc46d05'))
         self._assert_all_files_downloaded(more_files=more_files)
 
+    def test_no_data(self):
+        self._test_download_filters(no_data=True, no_metadata=False)
+
+    def test_no_metadata(self):
+        self._test_download_filters(no_data=False, no_metadata=True)
+
+    def test_neither_data_nor_metadata(self):
+        self._test_download_filters(no_data=True, no_metadata=True)
+
+    def test_both_data_and_metadata(self):
+        self._test_download_filters(no_data=False, no_metadata=False)
+
+    def _test_download_filters(self, no_metadata, no_data):
+        data_files = {
+            os.path.join('.', 'any_bundle_uuid.1_version', 'a_file_name'),
+            os.path.join('.', 'any_bundle_uuid.1_version', 'b_file_name'),
+            os.path.join('.', 'any_bundle_uuid.1_version', 'c_file_name')
+        }
+        metadata_files = {os.path.join('.', 'any_bundle_uuid.1_version', 'metadata_file.pdf')}
+        all_files = metadata_files.union(data_files)
+        with patch('hca.dss.DSSClient.get_bundle') as mock_get_bundle, \
+                patch('hca.dss.DSSClient._download_file', side_effect=_fake_download_file):
+            mock_get_bundle.paginate = _fake_get_bundle_paginate
+            self.dss.download('any_bundle_uuid', 'aws', no_metadata=no_metadata, no_data=no_data)
+            expected_files = all_files
+            if no_data:
+                expected_files.difference_update(data_files)
+            if no_metadata:
+                expected_files.difference_update(metadata_files)
+            actual_files = self._files_present()
+            for f in expected_files:
+                self.assertIn(f, actual_files)
+            unexpected_files = all_files.difference(expected_files)
+            for f in unexpected_files:
+                self.assertNotIn(f, actual_files)
+
+    def test_download_filters_conflict(self):
+        with self.assertRaises(ValueError):
+            self.dss.download('any_bundle_uuid', 'aws', no_data=True, data_filter=('a_file',))
+        with self.assertRaises(ValueError):
+            self.dss.download('any_bundle_uuid', 'aws', no_metadata=True, metadata_filter=('a_file',))
+
     @patch('hca.dss.DSSClient.get_bundle')
     @patch('logging.Logger.warning')
     @patch('hca.dss.DSSClient._download_file', side_effect=[None, ValueError(), KeyError()])
