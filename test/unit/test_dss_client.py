@@ -533,20 +533,6 @@ class TestDownload(AbstractTestDSSClient):
         skel['contents'][0]['uuid'] = child_uuid
         return [skel] + TestDownload._generate_col_hierarchy(depth - 1, child_uuid)
 
-    def test_collection_download_nested(self):
-        """
-        If a collection contains too many levels (>5), download
-        should fail.
-        """
-        test_cols = self._generate_col_hierarchy(10)
-        mock_get_col = self._fake_get_collection(test_cols)
-        with tempfile.TemporaryDirectory() as t:
-            with self.assertRaises(RuntimeError) as e:
-                with patch('hca.dss.DSSClient.get_collection', new=mock_get_col):
-                    self.dss.download_collection(uuid=test_cols[0]['uuid'],
-                                                 replica='aws', download_dir=t)
-        self.assertIn('Maximum depth', e.exception.args[0])
-
     def test_collection_download_self_nested(self):
         """
         If a collection contains itself, download should ignore

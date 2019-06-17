@@ -657,8 +657,7 @@ class DSSClient(SwaggerClient):
             reader = csv.DictReader(f, delimiter=delimiter, quoting=csv.QUOTE_NONE)
             return reader.fieldnames, list(reader)
 
-    def _serialize_col_to_manifest(self, uuid, replica, version, _max_depth=5,
-                                   _ignore=[]):
+    def _serialize_col_to_manifest(self, uuid, replica, version):
         """
         Given a collection UUID, uses GET `/collection/{uuid}` to
         serialize the collection into a set of dicts that that can be
@@ -670,17 +669,13 @@ class DSSClient(SwaggerClient):
         :param uuid: uuid of the collection to serialize
         :param replica: replica to query against
         :param version: version of the specified collection
-        :param int _max_depth: maximum depth to serialize - used to limit
-            levels of nesting recognized when downloading a collection with
-            other collections nested within
-        :param list _ignore: list of collection (uuid, version) to ignore,
-            used to recognize collections that eventually include themselves
         """
-        if _max_depth < 1:
-            raise RuntimeError("Maximum depth reached")
         errors = 0
         rows = []
-        for obj in self.get_collection(uuid=uuid, replica=replica, version=version)['contents']:
+        seen = []
+        col = self.get_collection(uuid=uuid, replica=replica, version=version)['contents']
+        while col:
+            obj = col.pop()
             if obj['type'] == 'file':
                 # Currently cannot download files not associated with a
                 # bundle. This is a limitation of :meth:`download_manifest`
@@ -688,17 +683,13 @@ class DSSClient(SwaggerClient):
                 logger.warning("Failed to download file %s version %s",
                                obj['uuid'], obj['version'])
             elif obj['type'] == 'collection':
-                if (obj['uuid'], obj['version']) in _ignore:
+                if (obj['uuid'], obj['version']) in seen:
                     logger.info("Ignoring already-seen collection %s version %s",
                                 obj['uuid'], obj['version'])
                     continue
-                _ignore.append((obj['uuid'], obj['version']))
-                r = self._serialize_col_to_manifest(uuid=obj['uuid'],
-                                                    replica=replica,
-                                                    version=obj['version'],
-                                                    _max_depth=_max_depth - 1,
-                                                    _ignore=_ignore)
-                rows.extend(r)
+                seen.append((obj['uuid'], obj['version']))
+                col.extend(self.get_collection(uuid=obj['uuid'], replica=replica,
+                                               version=obj.get('version', ''))['contents'])
             elif obj['type'] == 'bundle':
                 bundle = self._bundle_download_tasks(bundle_uuid=obj['uuid'],
                                                      replica=replica,
@@ -719,8 +710,7 @@ class DSSClient(SwaggerClient):
             raise RuntimeError("%d download failure(s)..." % errors)
         return rows
 
-    def download_collection(self, uuid, replica, version=None, download_dir='',
-                            max_depth=4):
+    def download_collection(self, uuid, replica, version=None, download_dir=''):
         """
         Download a bundle and save it to the local filesystem as a directory.
 
@@ -737,8 +727,7 @@ class DSSClient(SwaggerClient):
 
         Download a bundle and save it to the local filesystem as a directory.
         """
-        collection = self._serialize_col_to_manifest(uuid, replica, version,
-                                                     _max_depth=max_depth)
+        collection = self._serialize_col_to_manifest(uuid, replica, version)
         # Explicitly declare mode `w` (default `w+b`) for Python 3 string compat
         with tempfile.NamedTemporaryFile(mode='w') as manifest:
             tsv = csv.DictWriter(manifest,
