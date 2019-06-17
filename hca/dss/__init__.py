@@ -722,8 +722,6 @@ class DSSClient(SwaggerClient):
             download the latest. The version is a timestamp of bundle creation
             in RFC3339
         :param str download_dir: The directory into which to download
-        :param int max_depth: The amount of "levels" of the collection to
-            tolerate before raising an error
 
         Download a bundle and save it to the local filesystem as a directory.
         """
