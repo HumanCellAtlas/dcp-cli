@@ -1,4 +1,5 @@
 import errno
+import hashlib
 import logging
 import os
 import platform
@@ -66,6 +67,9 @@ def _fake_get_bundle_paginate(*args, **kwargs):
             }
         ]
     }
+    # This ensures that each bundle.json is distinct
+    for f in bundle_dict['files']:
+        f['bundle_uuid'] = kwargs['uuid']
     yield {'bundle': bundle_dict}
 
 
@@ -289,6 +293,7 @@ class TestManifestDownloadBundle(AbstractTestDSSClient):
             os.path.join(prefix, 'a_uuid.1_version', 'a_file_name'),
             os.path.join(prefix, 'b_uuid.1_version', 'b_file_name'),
             os.path.join(prefix, 'c_uuid.1_version', 'c_file_name'),
+            os.path.join(prefix, 'c_uuid.1_version', 'bundle.json'),
         }
 
     def metadata_files(self, prefix='.'):
@@ -393,6 +398,30 @@ class TestManifestDownloadBundle(AbstractTestDSSClient):
                 patch('hca.dss.DSSClient._download_file', side_effect=_fake_download_file):
             self.assertRaises(RuntimeError, self.dss.download_manifest, self.manifest_file, 'aws', layout='bundle')
 
+    @patch('hca.dss.DSSClient.get_bundle')
+    @patch('hca.dss.DSSClient._download_file')
+    def test_bundle_json(self, mock_download_file, mock_get_bundle):
+        """
+        Assert that the correct content is written to bundle.json and the hashes match
+        """
+        mock_get_bundle.paginate = _fake_get_bundle_paginate
+        jobs = list(self.dss._bundle_download_tasks('a_uuid', 'aws'))
+        dss_file, task = jobs[0]
+        self.assertEqual(dss_file.name, 'bundle.json')
+        task()
+        actual_files = self._files_present()
+        expected_hash = '5eea2e2bf59b04758dd8265d8acaaef4d382a9cc899a0a01f7ed42d7b0591b94'
+        bundle_json_path = os.path.join('.', 'a_uuid.1_version', 'bundle.json')
+        expected_files = {
+            bundle_json_path,
+            os.path.join('.', 'manifest.tsv'),
+            os.path.join('.', self.version_dir, '5e', 'ea2e', expected_hash)
+        }
+        self.assertEqual(expected_files, actual_files)
+        with open(bundle_json_path, 'rb') as f:
+            actual_hash = hashlib.sha256(f.read()).hexdigest()
+        self.assertEqual(actual_hash, expected_hash)
+
 
 class TestDownload(AbstractTestDSSClient):
 
@@ -438,6 +467,30 @@ class TestDownload(AbstractTestDSSClient):
 
     def test_download_dir_dot_dir(self):
         self._test_download_dir(os.path.join('.', 'a_nested_dir'))
+
+    @patch('hca.dss.DSSClient.get_bundle')
+    @patch('hca.dss.DSSClient._download_file')
+    def test_bundle_json(self, mock_download_file, mock_get_bundle):
+        """
+        Assert that the correct content is written to bundle.json and the hashes match
+        """
+        mock_get_bundle.paginate = _fake_get_bundle_paginate
+        jobs = list(self.dss._bundle_download_tasks('a_uuid', 'aws'))
+        dss_file, task = jobs[0]
+        self.assertEqual(dss_file.name, 'bundle.json')
+        task()
+        actual_files = self._files_present()
+        expected_hash = '5eea2e2bf59b04758dd8265d8acaaef4d382a9cc899a0a01f7ed42d7b0591b94'
+        bundle_json_path = os.path.join('.', 'a_uuid.1_version', 'bundle.json')
+        expected_files = {
+            bundle_json_path,
+            os.path.join('.', 'manifest.tsv'),
+            os.path.join('.', self.version_dir, '5e', 'ea2e', expected_hash)
+        }
+        self.assertEqual(expected_files, actual_files)
+        with open(bundle_json_path, 'rb') as f:
+            actual_hash = hashlib.sha256(f.read()).hexdigest()
+        self.assertEqual(actual_hash, expected_hash)
 
 if __name__ == "__main__":
     unittest.main()

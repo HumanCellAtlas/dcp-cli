@@ -138,6 +138,7 @@ class TestDssApi(unittest.TestCase):
                             # but only if globs are non-empty
                             assert not all(glob in [(), ('',)] for glob in [metadata_globs, data_globs])
                             downloaded_files.remove('.hca')
+                        downloaded_files.remove('bundle.json')
                         self.assertEqual(expect_downloaded_files, downloaded_files)
                         for file in downloaded_files:
                             manifest_entry = next(entry for entry in manifest['files'] if entry['name'] == file)
