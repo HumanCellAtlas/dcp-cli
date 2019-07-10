@@ -7,7 +7,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import errno
 import functools
-import itertools
+import json
 from collections import defaultdict, namedtuple
 import csv
 import concurrent.futures
@@ -55,6 +55,16 @@ class DSSFile(namedtuple('DSSFile', ['name', 'uuid', 'version', 'sha256', 'size'
                    sha256=file_dict['sha256'],
                    size=file_dict['size'],
                    indexed=file_dict['indexed'],
+                   replica=replica)
+
+    @classmethod
+    def from_bundle_json(cls, metadata_bytes, bundle_uuid, replica):
+        return cls(name='bundle.json',
+                   uuid=bundle_uuid,
+                   version=datetime.utcnow().strftime("%Y-%m-%dT%H%M%S.%fZ"),
+                   sha256=hashlib.sha256(metadata_bytes).hexdigest(),
+                   size=len(metadata_bytes),
+                   indexed=False,
                    replica=replica)
 
 
@@ -389,8 +399,55 @@ class DSSClient(SwaggerClient):
         Returns an iterator of tasks that each download one of the files in a bundle.
         """
         logger.info('Downloading bundle %s version %s ...', bundle_uuid, version)
-        pages = self.get_bundle.paginate(uuid=bundle_uuid, replica=replica, version=version if version else None)
+        metadata = self._get_full_bundle_metadata(bundle_uuid, replica, version)
+        bundle_fqid = bundle_uuid + '.' + metadata['bundle']['version']
+        bundle_dir = os.path.join(download_dir, bundle_fqid)
 
+        # Download bundle.json (metadata for bundle as a file)
+        metadata_bytes = json.dumps(metadata, sort_keys=True).encode()
+        metadata_dss_file = DSSFile.from_bundle_json(metadata_bytes, bundle_uuid, replica)
+        yield (metadata_dss_file,
+               functools.partial(self._download_metadata, metadata_bytes, download_dir, bundle_dir, metadata_dss_file))
+
+        for file_ in metadata['bundle']['files'].values():
+            dss_file = DSSFile.from_dss_bundle_response(file_, replica)
+            filename = file_.get("name", dss_file.uuid)
+            walking_dir = bundle_dir
+
+            globs = metadata_files if file_['indexed'] else data_files
+            if not any(fnmatchcase(filename, glob) for glob in globs):
+                continue
+
+            intermediate_path, filename_base = os.path.split(filename)
+            if intermediate_path:
+                walking_dir = os.path.join(walking_dir, intermediate_path)
+
+            logger.info("File %s: Retrieving...", filename)
+            file_path = os.path.join(walking_dir, filename_base)
+            yield dss_file, functools.partial(self._download_and_link_to_filestore,
+                                              download_dir,
+                                              dss_file,
+                                              file_path,
+                                              num_retries=num_retries,
+                                              min_delay_seconds=min_delay_seconds)
+
+    def _download_metadata(self, metadata, download_dir, bundle_dir, dss_file):
+        dest_path = self._file_path(dss_file.sha256, download_dir)
+        if os.path.exists(dest_path):
+            logger.info("Skipping download of '%s' because it already exists at '%s'.", dss_file.name, dest_path)
+        else:
+            self._make_path_if_necessary(dest_path)
+            with atomic_write(dest_path, mode="wb", overwrite=True) as fh:
+                fh.write(metadata)
+        file_path = os.path.join(bundle_dir, dss_file.name)
+        self._make_path_if_necessary(file_path)
+        hardlink(dest_path, file_path)
+
+    def _get_full_bundle_metadata(self, bundle_uuid, replica, version):
+        """
+        Takes care of paging through the bundle and checks for name collisions
+        """
+        pages = self.get_bundle.paginate(uuid=bundle_uuid, replica=replica, version=version if version else None)
         files = {}
         for page in pages:
             for file_ in page['bundle']['files']:
@@ -406,33 +463,11 @@ class DSSClient(SwaggerClient):
                     raise ValueError("Bundle {bundle_uuid} version {version} contains multiple files named "
                                      "'{filename}' or a case derivation thereof"
                                      .format(filename=filename, bundle_uuid=bundle_uuid, version=version))
+            metadata = page
         # there will always be one page (or else we would have gotten a 404)
         # noinspection PyUnboundLocalVariable
-        bundle_fqid = bundle_uuid + '.' + page['bundle']['version']
-
-        for file_ in files.values():
-            dss_file = DSSFile.from_dss_bundle_response(file_, replica)
-            filename = file_.get("name", dss_file.uuid)
-            walking_dir = os.path.join(download_dir, bundle_fqid)
-
-            globs = metadata_files if file_['indexed'] else data_files
-            if not any(fnmatchcase(filename, glob) for glob in globs):
-                continue
-
-            intermediate_path, filename_base = os.path.split(filename)
-            if intermediate_path:
-                walking_dir = os.path.join(walking_dir, intermediate_path)
-            if not os.path.isdir(walking_dir):
-                os.makedirs(walking_dir)
-
-            logger.info("File %s: Retrieving...", filename)
-            file_path = os.path.join(walking_dir, filename_base)
-            yield dss_file, functools.partial(self._download_and_link_to_filestore,
-                                              download_dir,
-                                              dss_file,
-                                              file_path,
-                                              num_retries=num_retries,
-                                              min_delay_seconds=min_delay_seconds)
+        metadata['bundle']['files'] = files
+        return metadata
 
     def _download_manifest_tasks(self, manifest, replica, num_retries, min_delay_seconds, download_dir):
         """
@@ -474,6 +509,7 @@ class DSSClient(SwaggerClient):
                                                       dss_file,
                                                       num_retries=num_retries,
                                                       min_delay_seconds=min_delay_seconds)
+        self._make_path_if_necessary(file_path)
         hardlink(file_store_path, file_path)
 
     def _download_file(self, dss_file, dest_path, num_retries=10, min_delay_seconds=0.25):
@@ -485,13 +521,7 @@ class DSSClient(SwaggerClient):
         If we can, we will attempt HTTP resume.  However, we verify that the server supports HTTP resume.  If the
         ranged get doesn't yield the correct header, then we start over.
         """
-        directory, _ = os.path.split(dest_path)
-        if directory:
-            try:
-                os.makedirs(directory)
-            except OSError as e:
-                if e.errno != errno.EEXIST:
-                    raise
+        self._make_path_if_necessary(dest_path)
         with atomic_write(dest_path, mode="wb", overwrite=True) as fh:
             if dss_file.size == 0:
                 return
@@ -503,6 +533,15 @@ class DSSClient(SwaggerClient):
                 logger.error("%s", "File {}: GET FAILED. Checksum mismatch.".format(dss_file.uuid))
                 raise ValueError("Expected sha256 {} Received sha256 {}".format(
                     dss_file.sha256.lower(), download_hash.lower()))
+
+    def _make_path_if_necessary(self, dest_path):
+        directory, _ = os.path.split(dest_path)
+        if directory:
+            try:
+                os.makedirs(directory)
+            except OSError as e:
+                if e.errno != errno.EEXIST:
+                    raise
 
     def _do_download_file(self, dss_file, fh, num_retries, min_delay_seconds):
         """
