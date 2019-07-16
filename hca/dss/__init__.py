@@ -16,6 +16,7 @@ from fnmatch import fnmatchcase
 import hashlib
 import os
 import re
+import tempfile
 import time
 import uuid
 from io import open
@@ -80,7 +81,7 @@ class DSSClient(SwaggerClient):
 
     def __init__(self, *args, **kwargs):
         super(DSSClient, self).__init__(*args, **kwargs)
-        self.commands += [self.upload, self.download, self.download_manifest, self.create_version]
+        self.commands += [self.upload, self.download, self.download_manifest, self.create_version, self.download_collection]
 
     def create_version(self):
         """
@@ -655,3 +656,94 @@ class DSSClient(SwaggerClient):
             delimiter = b'\t' if USING_PYTHON2 else '\t'
             reader = csv.DictReader(f, delimiter=delimiter, quoting=csv.QUOTE_NONE)
             return reader.fieldnames, list(reader)
+
+    def _serialize_col_to_manifest(self, uuid, replica, version):
+        """
+        Given a collection UUID, uses GET `/collection/{uuid}` to
+        serialize the collection into a set of dicts that that can be
+        used to generate a manifest file.
+
+        Most of the heavy lifting is handled by
+        :meth:`DSSClient.download_manifest`.
+
+        :param uuid: uuid of the collection to serialize
+        :param replica: replica to query against
+        :param version: version of the specified collection
+        """
+        errors = 0
+        rows = []
+        seen = []
+        col = self.get_collection(uuid=uuid, replica=replica, version=version)['contents']
+        while col:
+            obj = col.pop()
+            if obj['type'] == 'file':
+                # Currently cannot download files not associated with a
+                # bundle. This is a limitation of :meth:`download_manifest`
+                errors += 1
+                logger.warning("Failed to download file %s version %s",
+                               obj['uuid'], obj['version'])
+            elif obj['type'] == 'collection':
+                if (obj['uuid'], obj['version']) in seen:
+                    logger.info("Ignoring already-seen collection %s version %s",
+                                obj['uuid'], obj['version'])
+                    continue
+                seen.append((obj['uuid'], obj['version']))
+                col.extend(self.get_collection(uuid=obj['uuid'], replica=replica,
+                                               version=obj.get('version', ''))['contents'])
+            elif obj['type'] == 'bundle':
+                bundle = self._bundle_download_tasks(bundle_uuid=obj['uuid'],
+                                                     replica=replica,
+                                                     version=obj.get('version', ''))
+                rows.extend(({
+                    'bundle_uuid': obj['uuid'],
+                    'bundle_version': obj.get('version', None),
+                    'file_name': f.name,
+                    'file_sha256': f.sha256,
+                    'file_uuid': f.uuid,
+                    'file_size': f.size,
+                    'file_version': f.version} for f, _ in bundle))
+            else:
+                errors += 1
+                logger.warning("Failed to download file %s version %s",
+                               obj['uuid'], obj['version'])
+        if errors:
+            raise RuntimeError("%d download failure(s)..." % errors)
+        return rows
+
+    def download_collection(self, uuid, replica, version=None, download_dir=''):
+        """
+        Download a bundle and save it to the local filesystem as a directory.
+
+        :param str uuid: The uuid of the collection to download
+        :param str replica: the replica to download from. The supported
+            replicas are: `aws` for Amazon Web Services, and `gcp` for
+            Google Cloud Platform. [aws, gcp]
+        :param str version: The version to download, else if not specified,
+            download the latest. The version is a timestamp of bundle creation
+            in RFC3339
+        :param str download_dir: The directory into which to download
+
+        Download a bundle and save it to the local filesystem as a directory.
+        """
+        collection = self._serialize_col_to_manifest(uuid, replica, version)
+        # Explicitly declare mode `w` (default `w+b`) for Python 3 string compat
+        with tempfile.NamedTemporaryFile(mode='w') as manifest:
+            tsv = csv.DictWriter(manifest,
+                                 fieldnames=('bundle_uuid',
+                                             'bundle_version',
+                                             'file_name',
+                                             'file_sha256',
+                                             'file_uuid',
+                                             'file_version',
+                                             'file_size'),
+                                 delimiter=str('\t'),  # cast for py2.7 compat
+                                 quoting=csv.QUOTE_NONE)
+            tsv.writeheader()
+            tsv.writerows(collection)
+            # Flushing the I/O buffer here is preferable to closing the file
+            # handle and deleting the temporary file later because within the
+            # context manager there is a guarantee that the temporary file
+            # will be deleted when we are done
+            manifest.flush()
+            self.download_manifest(manifest=manifest.name, replica=replica,
+                                   download_dir=download_dir, layout='bundle')
