@@ -26,7 +26,7 @@ from atomicwrites import atomic_write
 from requests.exceptions import ChunkedEncodingError, ConnectionError, ReadTimeout
 
 from hca.dss.util import iter_paths, object_name_builder, hardlink
-from hca.util import USING_PYTHON2
+from hca.util import USING_PYTHON2, create_version
 from hca.util.compat import glob_escape
 from ..util import SwaggerClient, DEFAULT_THREAD_COUNT
 from ..util.exceptions import SwaggerAPIException
@@ -62,7 +62,7 @@ class DSSFile(namedtuple('DSSFile', ['name', 'uuid', 'version', 'sha256', 'size'
     def from_bundle_json(cls, metadata_bytes, bundle_uuid, replica):
         return cls(name='bundle.json',
                    uuid=bundle_uuid,
-                   version=datetime.utcnow().strftime("%Y-%m-%dT%H%M%S.%fZ"),
+                   version=create_version(),
                    sha256=hashlib.sha256(metadata_bytes).hexdigest(),
                    size=len(metadata_bytes),
                    indexed=False,
@@ -83,14 +83,10 @@ class DSSClient(SwaggerClient):
         super(DSSClient, self).__init__(*args, **kwargs)
         self.commands += [self.upload, self.download, self.download_manifest, self.create_version, self.download_collection]
 
-    def create_version(self):
-        """
-        Prints a timestamp that can be used for versioning
-        """
-        print(self._create_version())
-
-    def _create_version(self):
-        return datetime.utcnow().strftime("%Y-%m-%dT%H%M%S.%fZ")
+    @staticmethod
+    def create_version():
+        """Print a timestamp that can be used for versioning."""
+        print(create_version())
 
     def upload(self, src_dir, replica, staging_bucket, timeout_seconds=1200):
         """
@@ -106,7 +102,7 @@ class DSSClient(SwaggerClient):
         This method requires the use of a client-controlled object storage bucket to stage the data for upload.
         """
         bundle_uuid = str(uuid.uuid4())
-        version = datetime.utcnow().strftime("%Y-%m-%dT%H%M%S.%fZ")
+        version = create_version()
 
         files_to_upload, files_uploaded = [], []
         for filename in iter_paths(src_dir):
@@ -603,6 +599,10 @@ class DSSClient(SwaggerClient):
                     continue
                 raise
         return hasher.hexdigest()
+
+    @classmethod
+    def _dir_path(cls, download_dir):
+        return os.path.join(download_dir, '.hca', 'v2')
 
     @classmethod
     def _file_path(cls, checksum, download_dir):

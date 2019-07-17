@@ -94,13 +94,13 @@ import base64
 import argparse
 import time
 import jwt
+import requests
+import datetime
 
 try:
     from inspect import signature, Signature, Parameter
 except ImportError:
     from funcsigs import signature, Signature, Parameter
-
-import requests
 
 from requests.adapters import HTTPAdapter, DEFAULT_POOLSIZE
 from requests_oauthlib import OAuth2Session
@@ -123,6 +123,11 @@ DEFAULT_THREAD_COUNT = multiprocessing.cpu_count() * 2
 
 class RetryPolicy(retry.Retry):
     pass
+
+
+def create_version():
+    """Returns a timestamp that can be used for versioning."""
+    return datetime.utcnow().strftime("%Y-%m-%dT%H%M%S.%fZ")
 
 
 class _ClientMethodFactory(object):
