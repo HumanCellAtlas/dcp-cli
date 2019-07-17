@@ -14,6 +14,7 @@ import concurrent.futures
 from datetime import datetime
 from fnmatch import fnmatchcase
 import hashlib
+import shutil
 import os
 import re
 import tempfile
@@ -196,7 +197,8 @@ class DSSClient(SwaggerClient):
                  metadata_files=('*',),
                  data_files=('*',),
                  num_retries=10,
-                 min_delay_seconds=0.25):
+                 min_delay_seconds=0.25,
+                 delete_cache=False):
         """
         Download a bundle and save it to the local filesystem as a directory.
 
@@ -216,6 +218,9 @@ class DSSClient(SwaggerClient):
         :param int num_retries: The initial quota of download failures to accept before exiting due to
             failures. The number of retries increase and decrease as file chucks succeed and fail.
         :param float min_delay_seconds: The minimum number of seconds to wait in between retries.
+        :param bool delete_cache: When downloading files, the folder '.hca' contains duplicate hardlinks that serve as
+                                  a cache when downloading.  Specifying this option will delete that cache after the
+                                  files are downloaded.
 
         Download a bundle and save it to the local filesystem as a directory.
         By default, all data and metadata files are downloaded. To disable the downloading of data files,
@@ -249,6 +254,9 @@ class DSSClient(SwaggerClient):
         if errors:
             raise RuntimeError('{} file(s) failed to download'.format(errors))
 
+        if delete_cache:
+            shutil.rmtree(self._dir_path(download_dir))
+
     # FIXME: Formatting of help messages is broken
     def download_manifest(self,
                           manifest,
@@ -256,7 +264,8 @@ class DSSClient(SwaggerClient):
                           layout='none',
                           num_retries=10,
                           min_delay_seconds=0.25,
-                          download_dir=''):
+                          download_dir='',
+                          delete_cache=False):
         """
         Process the given manifest file in TSV (tab-separated values) format and download the files referenced by it.
 
@@ -272,6 +281,9 @@ class DSSClient(SwaggerClient):
         :param float min_delay_seconds: The minimum number of seconds to wait in between retries for downloading any
             file
         :param str download_dir: The directory into which to download
+        :param bool delete_cache: When downloading files, the folder '.hca' contains duplicate hardlinks that serve as
+                                  a cache when downloading.  Specifying this option will delete that cache after the
+                                  files are downloaded.
 
         Files are always downloaded to a cache / filestore directory called '.hca'. This directory is created in the
         current directory where download is initiated. A copy of the manifest used is also written to the current
@@ -314,6 +326,9 @@ class DSSClient(SwaggerClient):
             self._download_manifest_bundle(manifest, replica, num_retries, min_delay_seconds, download_dir)
         else:
             raise ValueError('Invalid layout {} not one of [none, bundle]'.format(layout))
+
+        if delete_cache:
+            shutil.rmtree(self._dir_path(download_dir))
 
     def _download_manifest_filestore(self,
                                      manifest,
@@ -611,6 +626,10 @@ class DSSClient(SwaggerClient):
         return hasher.hexdigest()
 
     @classmethod
+    def _dir_path(cls, download_dir):
+        return os.path.join(download_dir, '.hca', 'v2')
+
+    @classmethod
     def _file_path(cls, checksum, download_dir):
         """
         returns a file's relative local path based on the nesting parameters and the files hash
@@ -620,7 +639,7 @@ class DSSClient(SwaggerClient):
         """
         checksum = checksum.lower()
         file_prefix = '_'.join(['files'] + list(map(str, cls.DIRECTORY_NAME_LENGTHS)))
-        path_pieces = [download_dir, '.hca', 'v2', file_prefix]
+        path_pieces = [cls._dir_path(download_dir), file_prefix]
         checksum_index = 0
         assert(sum(cls.DIRECTORY_NAME_LENGTHS) <= len(checksum))
         for prefix_length in cls.DIRECTORY_NAME_LENGTHS:
