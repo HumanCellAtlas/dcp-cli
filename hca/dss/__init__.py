@@ -19,7 +19,6 @@ import re
 import tempfile
 import time
 import uuid
-import shutil
 from io import open
 
 import requests
@@ -606,10 +605,6 @@ class DSSClient(SwaggerClient):
         return hasher.hexdigest()
 
     @classmethod
-    def _dir_path(cls, download_dir):
-        return os.path.join(download_dir, '.hca', 'v2')
-
-    @classmethod
     def _file_path(cls, checksum, download_dir):
         """
         returns a file's relative local path based on the nesting parameters and the files hash
@@ -619,7 +614,7 @@ class DSSClient(SwaggerClient):
         """
         checksum = checksum.lower()
         file_prefix = '_'.join(['files'] + list(map(str, cls.DIRECTORY_NAME_LENGTHS)))
-        path_pieces = [cls._dir_path(download_dir), file_prefix]
+        path_pieces = [download_dir, '.hca', 'v2', file_prefix]
         checksum_index = 0
         assert(sum(cls.DIRECTORY_NAME_LENGTHS) <= len(checksum))
         for prefix_length in cls.DIRECTORY_NAME_LENGTHS:
