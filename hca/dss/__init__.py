@@ -204,19 +204,20 @@ class DSSClient(SwaggerClient):
 
         :param str bundle_uuid: The uuid of the bundle to download
         :param str replica: the replica to download from. The supported replicas are: `aws` for Amazon Web Services, and
-            `gcp` for Google Cloud Platform. [aws, gcp]
+                            `gcp` for Google Cloud Platform. [aws, gcp]
         :param str version: The version to download, else if not specified, download the latest. The version is a
-            timestamp of bundle creation in RFC3339
+                            timestamp of bundle creation in RFC3339
         :param str download_dir: The directory into which to download
-        :param iterable metadata_files: one or more shell patterns against which all metadata files in the bundle will be
-            matched case-sensitively. A file is considered a metadata file if the `indexed` property in the manifest is
-            set. If and only if a metadata file matches any of the patterns in `metadata_files` will it be downloaded.
-        :param iterable data_files: one or more shell patterns against which all data files in the bundle will be matched
-            case-sensitively. A file is considered a data file if the `indexed` property in the manifest is not set. The
-            file will be downloaded only if a data file matches any of the patterns in `data_files` will it be
-            downloaded.
-        :param int num_retries: The initial quota of download failures to accept before exiting due to
-            failures. The number of retries increase and decrease as file chucks succeed and fail.
+        :param iterable metadata_files: One or more shell patterns against which all metadata files in the bundle will
+                                        be matched case-sensitively. A file is considered a metadata file if the
+                                        `indexed` property in the manifest is set. If and only if a metadata file
+                                        matches any of the patterns in `metadata_files` will it be downloaded.
+        :param iterable data_files: One or more shell patterns against which all data files in the bundle will be
+                                    matched case-sensitively. A file is considered a data file if the `indexed` property
+                                    in the manifest is not set. The file will be downloaded only if a data file matches
+                                    any of the patterns in `data_files` will it be downloaded.
+        :param int num_retries: The initial quota of download failures to accept before exiting due to failures.
+                                The number of retries increase and decrease as file chucks succeed and fail.
         :param float min_delay_seconds: The minimum number of seconds to wait in between retries.
         :param bool delete_cache: When downloading files, the folder '.hca' contains duplicate hardlinks that serve as
                                   a cache when downloading.  Specifying this option will delete that cache after the
@@ -288,34 +289,28 @@ class DSSClient(SwaggerClient):
         Files are always downloaded to a cache / filestore directory called '.hca'. This directory is created in the
         current directory where download is initiated. A copy of the manifest used is also written to the current
         directory. This manifest has an added column that lists the paths of the files within the '.hca' filestore.
-
+        .
         The default layout is **none**. In this layout all of the files are downloaded to the filestore and the
         recommended way of accessing the files in by parsing the manifest copy that's written to the download
         directory.
-
+        .
         The bundle layout still downloads all of files to the filestore. For each bundle mentioned in the
         manifest a directory is created. All relevant metadata files for each bundle are linked into these
         directories in addition to relevant data files mentioned in the manifest.
-
-
+        .
         Each row in the manifest represents one file in DSS. The manifest must have a header row. The header row
-        must declare the following columns:
-
-        * `bundle_uuid` - the UUID of the bundle containing the file in DSS.
-
-        * `bundle_version` - the version of the bundle containing the file in DSS.
-
-        * `file_name` - the name of the file as specified in the bundle.
-
-        * `file_uuid` - the UUID of the file in the DSS.
-
-        * `file_sha256` - the SHA-256 hash of the file.
-
-        * `file_size` - the size of the file.
-
+        must declare the following columns.
+        .
+        `bundle_uuid` - the UUID of the bundle containing the file in DSS.
+        `bundle_version` - the version of the bundle containing the file in DSS.
+        `file_name` - the name of the file as specified in the bundle.
+        `file_uuid` - the UUID of the file in the DSS.
+        `file_sha256` - the SHA-256 hash of the file.
+        `file_size` - the size of the file.
+        .
         The TSV may have additional columns. Those columns will be ignored. The ordering of the columns is
         insignificant because the TSV is required to have a header row.
-
+        .
         This download format will serve as the main storage format for downloaded files. If a user specifies a different
         format for download (coming in the future) the files will first be downloaded in this format, then hard-linked
         to the user's preferred format.
