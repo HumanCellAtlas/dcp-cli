@@ -165,6 +165,7 @@ class TestDssCLI(unittest.TestCase):
             # Deleting bundles is a privilege, not a right
             assert e.code == 403
 
+    @unittest.skipIf(os.name is 'nt', 'Unable to test on Windows')  # TODO windows testing refactor
     def test_collection_download(self):
         """
         Upload a bundle, add it to a collection, and try downloading

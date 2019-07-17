@@ -533,6 +533,7 @@ class TestDownload(AbstractTestDSSClient):
         skel['contents'][0]['uuid'] = child_uuid
         return [skel] + TestDownload._generate_col_hierarchy(depth - 1, child_uuid)
 
+    @unittest.skipIf(os.name is 'nt', 'Unable to test on Windows')  # TODO windows testing refactor
     def test_collection_download_self_nested(self):
         """
         If a collection contains itself, download should ignore
@@ -555,6 +556,7 @@ class TestDownload(AbstractTestDSSClient):
                 self.dss.download_collection(uuid=test_col['uuid'],
                                              replica='aws', download_dir=t)
 
+    @unittest.skipIf(os.name is 'nt', 'Unable to test on Windows')  # TODO windows testing refactor
     def test_collection_download_deep(self):
         """Test that we can download nested collections"""
         test_cols = self._generate_col_hierarchy(4)
