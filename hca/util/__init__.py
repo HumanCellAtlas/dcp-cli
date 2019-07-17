@@ -107,7 +107,7 @@ from requests_oauthlib import OAuth2Session
 from urllib3.util import retry, timeout
 from jsonpointer import resolve_pointer
 from threading import Lock
-
+from argparse import RawTextHelpFormatter
 from dcplib.networking import Session
 
 from .. import get_config, logger
@@ -611,7 +611,8 @@ class SwaggerClient(object):
             subcommand_name = method_name.replace("_", "-")
             subparser = subparsers.add_parser(subcommand_name,
                                               help=method_data.get("summary"),
-                                              description=method_data.get("description"))
+                                              description=method_data.get("description"),
+                                              formatter_class=RawTextHelpFormatter)
             if help_menu:
                 required_group_parser = subparser.add_argument_group('Required Arguments')
             for param_name, param in method_data["signature"].parameters.items():
@@ -638,7 +639,8 @@ class SwaggerClient(object):
             method_args = _parse_docstring(docstring)
             command_subparser = subparsers.add_parser(command.__name__.replace("_", "-"),
                                                       help=method_args['summary'],
-                                                      description=method_args['description'])
+                                                      description=method_args['description'],
+                                                      formatter_class=RawTextHelpFormatter)
             if help_menu:
                 required_group_parser = command_subparser.add_argument_group('Required Arguments')
             for param_name, param_data in sig.parameters.items():
