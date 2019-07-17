@@ -258,7 +258,6 @@ class DSSClient(SwaggerClient):
         if delete_cache:
             shutil.rmtree(self._dir_path(download_dir))
 
-    # FIXME: Formatting of help messages is broken
     def download_manifest(self,
                           manifest,
                           replica,
