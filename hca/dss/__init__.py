@@ -419,7 +419,6 @@ class DSSClient(SwaggerClient):
             if intermediate_path:
                 walking_dir = os.path.join(walking_dir, intermediate_path)
 
-            logger.info("File %s: Retrieving...", filename)
             file_path = os.path.join(walking_dir, filename_base)
             yield dss_file, functools.partial(self._try_file_checkout,
                                               executor,
@@ -430,16 +429,20 @@ class DSSClient(SwaggerClient):
                                               min_delay_seconds=min_delay_seconds)
 
     def _try_file_checkout(self, executor, download_dir, dss_file, file_path, num_retries, min_delay_seconds):
+        logger.info('Getting checkout status for file: %s', dss_file.name)
         response = self.get_file._request(
             dict(uuid=dss_file.uuid, version=dss_file.version, replica=dss_file.replica),
             retries=False)
+        logger.info('status_code %s', response.status_code)
         if response.status_code == 301:
+            logger.info('file: %s still checking out...', dss_file.name)
             executor.submit(self._try_file_checkout, executor, download_dir, dss_file, file_path, num_retries,
                             min_delay_seconds)
-        elif response.status_code == 302:
+        elif response.status_code is 302 or 200:
+            logger.info('file: %s ready to download', dss_file.name)
             executor.submit(self._download_and_link_to_filestore, download_dir, dss_file, file_path,
                             num_retries=num_retries, min_delay_seconds=min_delay_seconds)
-
+        #  TODO error handling here
     def _download_metadata(self, metadata, download_dir, bundle_dir, dss_file):
         dest_path = self._file_path(dss_file.sha256, download_dir)
         if os.path.exists(dest_path):
@@ -561,7 +564,6 @@ class DSSClient(SwaggerClient):
         retries_left = num_retries
         while True:
             try:
-                # TODO Dont allow redirects in v3
                 response = self.get_file._request(
                     dict(uuid=dss_file.uuid, version=dss_file.version, replica=dss_file.replica),
                     stream=True,
