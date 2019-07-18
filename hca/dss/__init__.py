@@ -231,7 +231,8 @@ class DSSClient(SwaggerClient):
 
         with concurrent.futures.ThreadPoolExecutor(self.threads) as executor:
             futures_to_dss_file = {executor.submit(task): dss_file
-                                   for dss_file, task in self._bundle_download_tasks(bundle_uuid,
+                                   for dss_file, task in self._bundle_download_tasks(executor,
+                                                                                     bundle_uuid,
                                                                                      replica,
                                                                                      version,
                                                                                      download_dir,
@@ -382,6 +383,7 @@ class DSSClient(SwaggerClient):
                         'into per-bundle subdirectories of the current directory.')
 
     def _bundle_download_tasks(self,
+                               executor,
                                bundle_uuid,
                                replica,
                                version="",
@@ -419,12 +421,24 @@ class DSSClient(SwaggerClient):
 
             logger.info("File %s: Retrieving...", filename)
             file_path = os.path.join(walking_dir, filename_base)
-            yield dss_file, functools.partial(self._download_and_link_to_filestore,
+            yield dss_file, functools.partial(self._try_file_checkout,
+                                              executor,
                                               download_dir,
                                               dss_file,
                                               file_path,
                                               num_retries=num_retries,
                                               min_delay_seconds=min_delay_seconds)
+
+    def _try_file_checkout(self, executor, download_dir, dss_file, file_path, num_retries, min_delay_seconds):
+        response = self.get_file._request(
+            dict(uuid=dss_file.uuid, version=dss_file.version, replica=dss_file.replica),
+            retries=False)
+        if response.status_code == 301:
+            executor.submit(self._try_file_checkout, executor, download_dir, dss_file, file_path, num_retries,
+                            min_delay_seconds)
+        elif response.status_code == 302:
+            executor.submit(self._download_and_link_to_filestore, download_dir, dss_file, file_path,
+                            num_retries=num_retries, min_delay_seconds=min_delay_seconds)
 
     def _download_metadata(self, metadata, download_dir, bundle_dir, dss_file):
         dest_path = self._file_path(dss_file.sha256, download_dir)
@@ -547,6 +561,7 @@ class DSSClient(SwaggerClient):
         retries_left = num_retries
         while True:
             try:
+                # TODO Dont allow redirects in v3
                 response = self.get_file._request(
                     dict(uuid=dss_file.uuid, version=dss_file.version, replica=dss_file.replica),
                     stream=True,
