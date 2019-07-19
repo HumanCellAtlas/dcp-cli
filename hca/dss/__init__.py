@@ -270,6 +270,8 @@ class DSSClient(SwaggerClient):
                           manifest,
                           replica,
                           layout='none',
+                          no_metadata=False,
+                          no_data=False,
                           num_retries=10,
                           min_delay_seconds=0.25,
                           download_dir=''):
@@ -319,9 +321,17 @@ class DSSClient(SwaggerClient):
         to the user's preferred format.
         """
         if layout == 'none':
+            if no_metadata or no_data:
+                raise ValueError("--no-metadata and --no-data are only compatible with the 'bundle' layout")
             self._download_manifest_filestore(manifest, replica, num_retries, min_delay_seconds, download_dir)
         elif layout == 'bundle':
-            self._download_manifest_bundle(manifest, replica, num_retries, min_delay_seconds, download_dir)
+            self._download_manifest_bundle(manifest,
+                                           replica,
+                                           num_retries,
+                                           no_data,
+                                           no_metadata,
+                                           min_delay_seconds,
+                                           download_dir)
         else:
             raise ValueError('Invalid layout {} not one of [none, bundle]'.format(layout))
 
@@ -357,6 +367,8 @@ class DSSClient(SwaggerClient):
     def _download_manifest_bundle(self,
                                   manifest,
                                   replica,
+                                  no_metadata,
+                                  no_data,
                                   num_retries,
                                   min_delay_seconds,
                                   download_dir):
@@ -367,6 +379,8 @@ class DSSClient(SwaggerClient):
                                       for bundle_uuid, bundle_download_task in
                                       self._download_manifest_tasks(manifest,
                                                                     replica,
+                                                                    no_metadata,
+                                                                    no_data,
                                                                     num_retries,
                                                                     min_delay_seconds,
                                                                     download_dir)}
@@ -409,7 +423,6 @@ class DSSClient(SwaggerClient):
         """
         Returns an iterator of tasks that each download one of the files in a bundle.
         """
-
         logger.info('Downloading bundle %s version %s ...', bundle_uuid, version)
         manifest = self._get_full_bundle_manifest(bundle_uuid, replica, version)
         bundle_version = manifest['bundle']['version']
@@ -488,7 +501,14 @@ class DSSClient(SwaggerClient):
         manifest['bundle']['files'] = ordered_files
         return manifest
 
-    def _download_manifest_tasks(self, manifest, replica, num_retries, min_delay_seconds, download_dir):
+    def _download_manifest_tasks(self,
+                                 manifest,
+                                 replica,
+                                 num_retries,
+                                 no_metadata,
+                                 no_data,
+                                 min_delay_seconds,
+                                 download_dir):
         """
         Returns an iterator of tasks for downloading all of the files in a bundle. Note that these tasks all
         return iterators to further tasks.
@@ -501,12 +521,20 @@ class DSSClient(SwaggerClient):
             for row in reader:
                 bundles[(row['bundle_uuid'], row['bundle_version'])].add(row['file_name'])
         for (bundle_uuid, bundle_version), data_files in bundles.items():
-            data_globs = tuple(glob_escape(file_name) for file_name in data_files if file_name)
+            if no_data:
+                data_filter = ('',)
+            else:
+                data_filter = tuple(glob_escape(file_name) for file_name in data_files if file_name)
+            if no_metadata:
+                metadata_filter = ('',)
+            else:
+                metadata_filter = ('*',)
             yield bundle_uuid, functools.partial(self._bundle_download_tasks, bundle_uuid,
                                                  replica,
                                                  version=bundle_version,
                                                  download_dir=download_dir,
-                                                 data_filter=data_globs,
+                                                 metadata_filter=metadata_filter,
+                                                 data_filter=data_filter,
                                                  num_retries=num_retries,
                                                  min_delay_seconds=min_delay_seconds)
 
