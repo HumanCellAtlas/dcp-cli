@@ -63,6 +63,7 @@ class DSSFile(namedtuple('DSSFile', ['name', 'uuid', 'version', 'sha256', 'size'
         return cls(name='bundle.json',
                    uuid=bundle_uuid,
                    version=datetime.utcnow().strftime("%Y-%m-%dT%H%M%S.%fZ"),
+                   # TODO channge this to bundle_version from manifest
                    sha256=hashlib.sha256(metadata_bytes).hexdigest(),
                    size=len(metadata_bytes),
                    indexed=False,
@@ -443,6 +444,7 @@ class DSSClient(SwaggerClient):
             executor.submit(self._download_and_link_to_filestore, download_dir, dss_file, file_path,
                             num_retries=num_retries, min_delay_seconds=min_delay_seconds)
         #  TODO error handling here
+
     def _download_metadata(self, metadata, download_dir, bundle_dir, dss_file):
         dest_path = self._file_path(dss_file.sha256, download_dir)
         if os.path.exists(dest_path):

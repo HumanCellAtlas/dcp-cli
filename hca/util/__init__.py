@@ -149,8 +149,8 @@ class _ClientMethodFactory(object):
         headers = headers if headers else {}
         kwargs = {'json': json_input, 'params': query, 'stream': stream, 'headers': headers,
                   'timeout': self.client.timeout_policy}
-        if retries:
-            kwargs['retries'] = retries
+        if retries is not None:
+            kwargs['allow_redirects'] = retries
         res = session.request(self.http_method, url, **kwargs)
         if res.status_code >= 400:
             raise SwaggerAPIException(response=res)
