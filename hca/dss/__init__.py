@@ -685,17 +685,16 @@ class DSSClient(SwaggerClient):
                 col.extend(self.get_collection(uuid=obj['uuid'], replica=replica,
                                                version=obj.get('version', ''))['contents'])
             elif obj['type'] == 'bundle':
-                bundle = self._bundle_download_tasks(bundle_uuid=obj['uuid'],
-                                                     replica=replica,
-                                                     version=obj.get('version', ''))
+                bundle = self.get_bundle(replica=replica, version=obj.get('version', ''),
+                                         uuid=obj['uuid'])
                 rows.extend(({
                     'bundle_uuid': obj['uuid'],
                     'bundle_version': obj.get('version', None),
-                    'file_name': f.name,
-                    'file_sha256': f.sha256,
-                    'file_uuid': f.uuid,
-                    'file_size': f.size,
-                    'file_version': f.version} for f, _ in bundle))
+                    'file_name': f['name'],
+                    'file_sha256': f['sha256'],
+                    'file_uuid': f['uuid'],
+                    'file_size': f['size'],
+                    'file_version': f['version']} for f in bundle['bundle']['files']))
             else:
                 errors += 1
                 logger.warning("Failed to download file %s version %s",
