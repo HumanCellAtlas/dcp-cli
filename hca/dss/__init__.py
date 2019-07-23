@@ -59,10 +59,10 @@ class DSSFile(namedtuple('DSSFile', ['name', 'uuid', 'version', 'sha256', 'size'
                    replica=replica)
 
     @classmethod
-    def from_bundle_json(cls, manifest_bytes, bundle_uuid, replica):
+    def from_bundle_json(cls, manifest_bytes, bundle_uuid, version, replica):
         return cls(name='bundle.json',
                    uuid=bundle_uuid,
-                   version=datetime.utcnow().strftime("%Y-%m-%dT%H%M%S.%fZ"),
+                   version=version,
                    sha256=hashlib.sha256(manifest_bytes).hexdigest(),
                    size=len(manifest_bytes),
                    indexed=False,
@@ -395,12 +395,13 @@ class DSSClient(SwaggerClient):
         """
         logger.info('Downloading bundle %s version %s ...', bundle_uuid, version)
         manifest = self._get_full_bundle_manifest(bundle_uuid, replica, version)
-        bundle_fqid = bundle_uuid + '.' + manifest['bundle']['version']
+        bundle_version = manifest['bundle']['version']
+        bundle_fqid = bundle_uuid + '.' + bundle_version
         bundle_dir = os.path.join(download_dir, bundle_fqid)
 
         # Download bundle.json (manifest for bundle as a file)
         manifest_bytes = json.dumps(manifest, sort_keys=True).encode()
-        manifest_dss_file = DSSFile.from_bundle_json(manifest_bytes, bundle_uuid, replica)
+        manifest_dss_file = DSSFile.from_bundle_json(manifest_bytes, bundle_uuid, bundle_version, replica)
         yield (manifest_dss_file,
                functools.partial(self._download_bundle_manifest,
                                  manifest_bytes,
