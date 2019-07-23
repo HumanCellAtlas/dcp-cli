@@ -351,7 +351,8 @@ class DSSClient(SwaggerClient):
         with concurrent.futures.ThreadPoolExecutor(self.threads) as executor:
             bundle_futures_to_uuid = {executor.submit(bundle_download_task): bundle_uuid
                                       for bundle_uuid, bundle_download_task in
-                                      self._download_manifest_tasks(manifest,
+                                      self._download_manifest_tasks(executor,
+                                                                    manifest,
                                                                     replica,
                                                                     num_retries,
                                                                     min_delay_seconds,
@@ -398,6 +399,7 @@ class DSSClient(SwaggerClient):
         """
         logger.info('Downloading bundle %s version %s ...', bundle_uuid, version)
         metadata = self._get_full_bundle_metadata(bundle_uuid, replica, version)
+        bundle_file_list = sorted(metadata['bundle']['files'].values(), key=lambda f: f['size'])
         bundle_fqid = bundle_uuid + '.' + metadata['bundle']['version']
         bundle_dir = os.path.join(download_dir, bundle_fqid)
 
@@ -407,7 +409,7 @@ class DSSClient(SwaggerClient):
         yield (metadata_dss_file,
                functools.partial(self._download_metadata, metadata_bytes, download_dir, bundle_dir, metadata_dss_file))
 
-        for file_ in metadata['bundle']['files'].values():
+        for file_ in bundle_file_list:
             dss_file = DSSFile.from_dss_bundle_response(file_, replica)
             filename = file_.get("name", dss_file.uuid)
             walking_dir = bundle_dir
@@ -433,8 +435,8 @@ class DSSClient(SwaggerClient):
         logger.info('Getting checkout status for file: %s', dss_file.name)
         response = self.get_file._request(
             dict(uuid=dss_file.uuid, version=dss_file.version, replica=dss_file.replica),
-            retries=False)
-        logger.info('status_code %s', response.status_code)
+            retries=False, stream=True)
+        logger.debug('status_code %s for file %s', response.status_code, dss_file.name)
         if response.status_code == 301:
             logger.info('file: %s still checking out...', dss_file.name)
             executor.submit(self._try_file_checkout, executor, download_dir, dss_file, file_path, num_retries,
@@ -483,7 +485,7 @@ class DSSClient(SwaggerClient):
         metadata['bundle']['files'] = files
         return metadata
 
-    def _download_manifest_tasks(self, manifest, replica, num_retries, min_delay_seconds, download_dir):
+    def _download_manifest_tasks(self, executor, manifest, replica, num_retries, min_delay_seconds, download_dir):
         """
         Returns an iterator of tasks for downloading all of the files in a bundle. Note that these tasks all
         return iterators to further tasks.
@@ -497,7 +499,8 @@ class DSSClient(SwaggerClient):
                 bundles[(row['bundle_uuid'], row['bundle_version'])].add(row['file_name'])
         for (bundle_uuid, bundle_version), data_files in bundles.items():
             data_globs = tuple(glob_escape(file_name) for file_name in data_files if file_name)
-            yield bundle_uuid, functools.partial(self._bundle_download_tasks, bundle_uuid,
+            yield bundle_uuid, functools.partial(self._bundle_download_tasks, executor,
+                                                 bundle_uuid,
                                                  replica,
                                                  version=bundle_version,
                                                  download_dir=download_dir,
