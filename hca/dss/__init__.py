@@ -59,12 +59,12 @@ class DSSFile(namedtuple('DSSFile', ['name', 'uuid', 'version', 'sha256', 'size'
                    replica=replica)
 
     @classmethod
-    def from_bundle_json(cls, metadata_bytes, bundle_uuid, replica):
+    def from_bundle_json(cls, manifest_bytes, bundle_uuid, replica):
         return cls(name='bundle.json',
                    uuid=bundle_uuid,
                    version=datetime.utcnow().strftime("%Y-%m-%dT%H%M%S.%fZ"),
-                   sha256=hashlib.sha256(metadata_bytes).hexdigest(),
-                   size=len(metadata_bytes),
+                   sha256=hashlib.sha256(manifest_bytes).hexdigest(),
+                   size=len(manifest_bytes),
                    indexed=False,
                    replica=replica)
 
@@ -394,17 +394,21 @@ class DSSClient(SwaggerClient):
         Returns an iterator of tasks that each download one of the files in a bundle.
         """
         logger.info('Downloading bundle %s version %s ...', bundle_uuid, version)
-        metadata = self._get_full_bundle_metadata(bundle_uuid, replica, version)
-        bundle_fqid = bundle_uuid + '.' + metadata['bundle']['version']
+        manifest = self._get_full_bundle_manifest(bundle_uuid, replica, version)
+        bundle_fqid = bundle_uuid + '.' + manifest['bundle']['version']
         bundle_dir = os.path.join(download_dir, bundle_fqid)
 
-        # Download bundle.json (metadata for bundle as a file)
-        metadata_bytes = json.dumps(metadata, sort_keys=True).encode()
-        metadata_dss_file = DSSFile.from_bundle_json(metadata_bytes, bundle_uuid, replica)
-        yield (metadata_dss_file,
-               functools.partial(self._download_metadata, metadata_bytes, download_dir, bundle_dir, metadata_dss_file))
+        # Download bundle.json (manifest for bundle as a file)
+        manifest_bytes = json.dumps(manifest, sort_keys=True).encode()
+        manifest_dss_file = DSSFile.from_bundle_json(manifest_bytes, bundle_uuid, replica)
+        yield (manifest_dss_file,
+               functools.partial(self._download_bundle_manifest,
+                                 manifest_bytes,
+                                 download_dir,
+                                 bundle_dir,
+                                 manifest_dss_file))
 
-        for file_ in metadata['bundle']['files'].values():
+        for file_ in manifest['bundle']['files'].values():
             dss_file = DSSFile.from_dss_bundle_response(file_, replica)
             filename = file_.get("name", dss_file.uuid)
             walking_dir = bundle_dir
@@ -426,19 +430,19 @@ class DSSClient(SwaggerClient):
                                               num_retries=num_retries,
                                               min_delay_seconds=min_delay_seconds)
 
-    def _download_metadata(self, metadata, download_dir, bundle_dir, dss_file):
+    def _download_bundle_manifest(self, manifest, download_dir, bundle_dir, dss_file):
         dest_path = self._file_path(dss_file.sha256, download_dir)
         if os.path.exists(dest_path):
             logger.info("Skipping download of '%s' because it already exists at '%s'.", dss_file.name, dest_path)
         else:
             self._make_path_if_necessary(dest_path)
             with atomic_write(dest_path, mode="wb", overwrite=True) as fh:
-                fh.write(metadata)
+                fh.write(manifest)
         file_path = os.path.join(bundle_dir, dss_file.name)
         self._make_path_if_necessary(file_path)
         hardlink(dest_path, file_path)
 
-    def _get_full_bundle_metadata(self, bundle_uuid, replica, version):
+    def _get_full_bundle_manifest(self, bundle_uuid, replica, version):
         """
         Takes care of paging through the bundle and checks for name collisions
         """
@@ -458,11 +462,11 @@ class DSSClient(SwaggerClient):
                     raise ValueError("Bundle {bundle_uuid} version {version} contains multiple files named "
                                      "'{filename}' or a case derivation thereof"
                                      .format(filename=filename, bundle_uuid=bundle_uuid, version=version))
-            metadata = page
+                manifest = page
         # there will always be one page (or else we would have gotten a 404)
         # noinspection PyUnboundLocalVariable
-        metadata['bundle']['files'] = files
-        return metadata
+        manifest['bundle']['files'] = files
+        return manifest
 
     def _download_manifest_tasks(self, manifest, replica, num_retries, min_delay_seconds, download_dir):
         """
