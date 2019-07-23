@@ -409,7 +409,7 @@ class DSSClient(SwaggerClient):
                                  bundle_dir,
                                  manifest_dss_file))
 
-        for file_ in manifest['bundle']['files'].values():
+        for file_ in manifest['bundle']['files']:
             dss_file = DSSFile.from_dss_bundle_response(file_, replica)
             filename = file_.get("name", dss_file.uuid)
             walking_dir = bundle_dir
@@ -449,7 +449,9 @@ class DSSClient(SwaggerClient):
         """
         pages = self.get_bundle.paginate(uuid=bundle_uuid, replica=replica, version=version if version else None)
         files = {}
+        ordered_files = []
         for page in pages:
+            ordered_files += page['bundle']['files']
             for file_ in page['bundle']['files']:
                 # The file name collision check is case-insensitive even if the local file system we're running on is
                 # case-sensitive. We do this in order to get consistent download behavior on all operating systems and
@@ -466,7 +468,7 @@ class DSSClient(SwaggerClient):
                 manifest = page
         # there will always be one page (or else we would have gotten a 404)
         # noinspection PyUnboundLocalVariable
-        manifest['bundle']['files'] = files
+        manifest['bundle']['files'] = ordered_files
         return manifest
 
     def _download_manifest_tasks(self, manifest, replica, num_retries, min_delay_seconds, download_dir):

@@ -414,12 +414,12 @@ class TestManifestDownloadBundle(AbstractTestDSSClient):
         self.assertEqual(dss_file.name, 'bundle.json')
         task()
         actual_files = self._files_present()
-        expected_hash = '5eea2e2bf59b04758dd8265d8acaaef4d382a9cc899a0a01f7ed42d7b0591b94'
+        expected_hash = '79a04be897c762008078631346bf39ea86af3d8fb653fec0e235f892ab9776b6'
         bundle_json_path = os.path.join('.', 'a_uuid.1_version', 'bundle.json')
         expected_files = {
             bundle_json_path,
             os.path.join('.', 'manifest.tsv'),
-            os.path.join('.', self.version_dir, '5e', 'ea2e', expected_hash)
+            os.path.join('.', self.version_dir, '79', 'a04b', expected_hash)
         }
         self.assertEqual(expected_files, actual_files)
         with open(bundle_json_path, 'rb') as f:
@@ -484,12 +484,12 @@ class TestDownload(AbstractTestDSSClient):
         self.assertEqual(dss_file.name, 'bundle.json')
         task()
         actual_files = self._files_present()
-        expected_hash = '5eea2e2bf59b04758dd8265d8acaaef4d382a9cc899a0a01f7ed42d7b0591b94'
+        expected_hash = '79a04be897c762008078631346bf39ea86af3d8fb653fec0e235f892ab9776b6'
         bundle_json_path = os.path.join('.', 'a_uuid.1_version', 'bundle.json')
         expected_files = {
             bundle_json_path,
             os.path.join('.', 'manifest.tsv'),
-            os.path.join('.', self.version_dir, '5e', 'ea2e', expected_hash)
+            os.path.join('.', self.version_dir, '79', 'a04b', expected_hash)
         }
         self.assertEqual(expected_files, actual_files)
         with open(bundle_json_path, 'rb') as f:
