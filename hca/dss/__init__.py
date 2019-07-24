@@ -59,7 +59,11 @@ class DSSFile(namedtuple('DSSFile', ['name', 'uuid', 'version', 'sha256', 'size'
                    replica=replica)
 
     @classmethod
-    def from_bundle_json(cls, manifest_bytes, bundle_uuid, version, replica):
+    def for_bundle_manifest(cls, manifest_bytes, bundle_uuid, version, replica):
+        """
+        Even though the bundle manifest is not a DSS file, we need to wrap it's info in a DSSFile object for consistency
+        and logging purposes.
+        """
         return cls(name='bundle.json',
                    uuid=bundle_uuid,
                    version=version,
@@ -401,7 +405,7 @@ class DSSClient(SwaggerClient):
 
         # Download bundle.json (manifest for bundle as a file)
         manifest_bytes = json.dumps(manifest, sort_keys=True).encode()
-        manifest_dss_file = DSSFile.from_bundle_json(manifest_bytes, bundle_uuid, bundle_version, replica)
+        manifest_dss_file = DSSFile.for_bundle_manifest(manifest_bytes, bundle_uuid, bundle_version, replica)
         yield (manifest_dss_file,
                functools.partial(self._download_bundle_manifest,
                                  manifest_bytes,
