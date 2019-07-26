@@ -47,7 +47,6 @@ class TestDSSDocAPI(unittest.TestCase):
 
     def checkExpectedOut(self, input_method, script, expectedOutput):
         outerr = self.checkExitCode(input_method, script)
-        print(outerr)
         index = outerr.replace('"', "").find(expectedOutput)
         self.assertGreater(index, -1, index)
 
@@ -95,6 +94,9 @@ class TestDSSDocAPI(unittest.TestCase):
     def testRefreshSwagger_api(self):
         self.checkExitCode("api", "refresh_swagger_api.py")
 
+    def testDownload_api(self):
+        self.checkExitCode("api", "download_api.py")
+
     def testLogout_api(self):
         self.checkExitCode("api", "logout_api.py")
 
@@ -135,6 +137,9 @@ class TestDSSDocAPI(unittest.TestCase):
 
     def testRefreshSwagger_cli(self):
         self.checkExitCode("cli", "refresh_swagger_cli.sh")
+
+    def testDownload_cli(self):
+        self.checkExitCode("cli", "download_cli.sh")
 
     def testLogout_cli(self):
         self.checkExitCode("cli", "logout_cli.sh")
