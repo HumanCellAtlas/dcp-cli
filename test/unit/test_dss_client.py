@@ -179,10 +179,10 @@ class TestManifestDownloadFilestore(AbstractTestDSSClient):
         self.assertEqual(parts, ['.', '.hca', 'v2', 'files_1_3_2', 'a', 'bcd', 'ef', 'abcdefghij'])
 
     @patch('hca.dss.DSSClient.DIRECTORY_NAME_LENGTHS', [1, 3, 2])
-    def test_file_path_filestore_root(self):
-        self.assertRaises(AssertionError, self.dss._file_path, 'a', 'nested_filestore')
-        parts = self.dss._file_path('abcdefghij', 'nested_filestore').split(os.sep)
-        self.assertEqual(parts, ['nested_filestore', '.hca', 'v2', 'files_1_3_2', 'a', 'bcd', 'ef', 'abcdefghij'])
+    def test_file_path_cache_root(self):
+        self.assertRaises(AssertionError, self.dss._file_path, 'a', 'nested_cache')
+        parts = self.dss._file_path('abcdefghij', 'nested_cache').split(os.sep)
+        self.assertEqual(parts, ['nested_cache', '.hca', 'v2', 'files_1_3_2', 'a', 'bcd', 'ef', 'abcdefghij'])
 
     @unittest.skipIf(os.name is 'nt', 'Unable to test on Windows')  # TODO windows testing refactor
     @patch('logging.Logger.warning')
@@ -314,10 +314,10 @@ class TestManifestDownloadBundle(AbstractTestDSSClient):
         if sys.version_info >= (3,) or platform.system() != 'Windows':
             for linked_file in self.data_files(prefix=prefix):
                 self.assertEqual(os.stat(linked_file).st_nlink, 2,
-                                 'Expected one link for the "filestore" entry and link in bundle download')
+                                 'Expected one link for the "cache" entry and link in bundle download')
             for linked_file in self.metadata_files(prefix=prefix):
                 self.assertEqual(os.stat(linked_file).st_nlink, 4,
-                                 'Expected one link for the "filestore" entry and one for each bundle')
+                                 'Expected one link for the "cache" entry and one for each bundle')
 
     def _assert_all_files_downloaded(self, more_files=None, prefix=''):
         bundle_files = self.data_files(prefix=prefix).union(self.metadata_files(prefix=prefix))
