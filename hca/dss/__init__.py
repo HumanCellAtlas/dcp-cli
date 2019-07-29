@@ -219,9 +219,16 @@ class DSSClient(SwaggerClient):
         :param int num_retries: The initial quota of download failures to accept before exiting due to failures.
                                 The number of retries increase and decrease as file chucks succeed and fail.
         :param float min_delay_seconds: The minimum number of seconds to wait in between retries.
-        :param bool delete_cache: When downloading files, the folder '.hca' contains duplicate hardlinks that serve as
-                                  a cache when downloading.  Specifying this option will delete that cache after the
-                                  files are downloaded.
+        :param bool delete_cache: When downloading files, the folder '.hca' contains additional file references
+                                  (hard links) that serve as a cache when downloading.  Specifying this option will
+                                  delete that cache after the files are downloaded.
+
+                                  Note that deleting the file store (the folder '.hca') prevents efficient switching of
+                                  the download layout (see --layout), especially when rerunning the download with
+                                  additional rows in the manifest. Once you delete the file store, the next invocation
+                                  will download all files again fresh. Also note that the cache does not take up
+                                  significant disk space. Each file is be stored exactly once, the file store
+                                  contains only references (hard links) to the downloaded files.
 
         Download a bundle and save it to the local filesystem as a directory.
         By default, all data and metadata files are downloaded. To disable the downloading of data files,
@@ -256,7 +263,7 @@ class DSSClient(SwaggerClient):
             raise RuntimeError('{} file(s) failed to download'.format(errors))
 
         if delete_cache:
-            shutil.rmtree(self._dir_path(download_dir))
+            shutil.rmtree(self._filestore_path(download_dir))
 
     def download_manifest(self,
                           manifest,
@@ -281,9 +288,16 @@ class DSSClient(SwaggerClient):
         :param float min_delay_seconds: The minimum number of seconds to wait in between retries for downloading any
             file
         :param str download_dir: The directory into which to download
-        :param bool delete_cache: When downloading files, the folder '.hca' contains duplicate hardlinks that serve as
-                                  a cache when downloading.  Specifying this option will delete that cache after the
-                                  files are downloaded.
+        :param bool delete_cache: When downloading files, the folder '.hca' contains additional file references
+                                  (hard links) that serve as a cache when downloading.  Specifying this option will
+                                  delete that cache after the files are downloaded.
+
+                                  Note that deleting the file store (the folder '.hca') prevents efficient switching of
+                                  the download layout (see --layout), especially when rerunning the download with
+                                  additional rows in the manifest. Once you delete the file store, the next invocation
+                                  will download all files again fresh. Also note that the cache does not take up
+                                  significant disk space. Each file is be stored exactly once, the file store
+                                  contains only references (hard links) to the downloaded files.
 
         Files are always downloaded to a cache / filestore directory called '.hca'. This directory is created in the
         current directory where download is initiated. A copy of the manifest used is also written to the current
@@ -322,7 +336,7 @@ class DSSClient(SwaggerClient):
             raise ValueError('Invalid layout {} not one of [none, bundle]'.format(layout))
 
         if delete_cache:
-            shutil.rmtree(self._dir_path(download_dir))
+            shutil.rmtree(self._filestore_path(download_dir))
 
     def _download_manifest_filestore(self,
                                      manifest,
@@ -620,7 +634,7 @@ class DSSClient(SwaggerClient):
         return hasher.hexdigest()
 
     @classmethod
-    def _dir_path(cls, download_dir):
+    def _filestore_path(cls, download_dir):
         return os.path.join(download_dir, '.hca', 'v2')
 
     @classmethod
@@ -633,7 +647,7 @@ class DSSClient(SwaggerClient):
         """
         checksum = checksum.lower()
         file_prefix = '_'.join(['files'] + list(map(str, cls.DIRECTORY_NAME_LENGTHS)))
-        path_pieces = [cls._dir_path(download_dir), file_prefix]
+        path_pieces = [cls._filestore_path(download_dir), file_prefix]
         checksum_index = 0
         assert(sum(cls.DIRECTORY_NAME_LENGTHS) <= len(checksum))
         for prefix_length in cls.DIRECTORY_NAME_LENGTHS:
