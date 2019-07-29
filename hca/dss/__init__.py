@@ -339,11 +339,11 @@ class DSSClient(SwaggerClient):
             shutil.rmtree(self._cache_path(download_dir))
 
     def _download_manifest_cache(self,
-                                     manifest,
-                                     replica,
-                                     num_retries,
-                                     min_delay_seconds,
-                                     download_dir):
+                                 manifest,
+                                 replica,
+                                 num_retries,
+                                 min_delay_seconds,
+                                 download_dir):
         fieldnames, rows = self._parse_manifest(manifest)
         errors = 0
 
@@ -530,9 +530,9 @@ class DSSClient(SwaggerClient):
 
     def _download_and_link_to_cache(self, download_dir, dss_file, file_path, num_retries, min_delay_seconds):
         file_store_path = self._download_to_cache(download_dir,
-                                                      dss_file,
-                                                      num_retries=num_retries,
-                                                      min_delay_seconds=min_delay_seconds)
+                                                  dss_file,
+                                                  num_retries=num_retries,
+                                                  min_delay_seconds=min_delay_seconds)
         self._make_path_if_necessary(file_path)
         hardlink(file_store_path, file_path)
 
