@@ -57,7 +57,7 @@ for results in dss.post_search.iterate(replica="aws", es_query={}):
             s += f"     UUID/Version:{file_uuid}.{file_version} \n"
         print(s[:-1])
         break
-    except:
+    except ValueError:
         pass
 
 

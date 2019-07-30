@@ -5,4 +5,4 @@ hca_config = HCAConfig()
 hca_config["DSSClient"].swagger_url = f"https://dss.data.humancellatlas.org/v1/swagger.json"
 dss = DSSClient(config=hca_config)
 
-dss.create_version()
+print(dss.get_subscriptions(replica='aws'))

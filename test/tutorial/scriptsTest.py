@@ -97,6 +97,12 @@ class TestDSSDocAPI(unittest.TestCase):
     def testDownload_api(self):
         self.checkExitCode("api", "download_api.py")
 
+    def testPutFile_api(self):
+        self.checkExitCode("api", "put_file_api.py")
+
+    def testPutBundle_api(self):
+        self.checkExitCode("api", "put_bundle_api.py")
+
     def testLogout_api(self):
         self.checkExitCode("api", "logout_api.py")
 
@@ -121,8 +127,8 @@ class TestDSSDocAPI(unittest.TestCase):
     def testGetBundlesCheckout_cli(self):
         self.checkExpectedOut("cli", "get_bundles_checkout_cli.sh", "status")
 
-    def testGetFileCheckout_cli(self):
-        self.checkExpectedOut("cli", "get_file_cli.sh", "type")
+    def testGetFile_cli(self):
+        self.checkExpectedOut("cli", "get_file_cli.sh", "describedBy")
 
     def testGetFileHead_cli(self):
         self.checkExpectedOut(
@@ -141,8 +147,42 @@ class TestDSSDocAPI(unittest.TestCase):
     def testDownload_cli(self):
         self.checkExitCode("cli", "download_cli.sh")
 
+    def testPutFile_cli(self):
+        self.checkExitCode("cli", "put_file_cli.sh")
+
+    def testPutBundle_cli(self):
+        self.checkExitCode("cli", "put_bundle_api.sh")
+
     def testLogout_cli(self):
         self.checkExitCode("cli", "logout_cli.sh")
+
+
+# ---------------------------------------
+# NEEDS .DEV
+# ---------------------------------------
+    # def testUpload_api(self):
+    #     self.checkExpectedOut("api", "upload_api.py", "Upload successful")
+
+    # def testGetCollections_api(self):
+    #     self.checkExpectedOut("api", "get_collections_api.py", "collections")
+
+    # def testGetSubs_api(self):
+    #     self.checkExpectedOut("api", "get_subscriptions_api.py", "subscriptions")
+
+    # def testPatchBundle_api(self):
+    #     self.checkExitCode("api", "patch_bundle_api.py")
+
+    # def testUpload_cli(self):
+    #     self.checkExpectedOut("cli", "upload_cli.sh", "bundle_uuid")
+
+    # def testGetCollections_cli(self):
+    #     self.checkExpectedOut("cli", "get_collections_cli.sh", "collections")
+
+    # def testGetSubs_cli(self):
+    #     self.checkExpectedOut("cli", "get_subscriptions_cli.sh", "subscriptions")
+
+    # def testPatchBundle_cli(self):
+    #     self.checkExitCode("cli", "patch_bundle_cli.sh")
 
 
 if __name__ == "__main__":
