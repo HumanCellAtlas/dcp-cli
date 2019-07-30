@@ -386,6 +386,9 @@ class TestDssApi(unittest.TestCase):
         resp = self.client.put_subscription(es_query=query, callback_url="https://www.example.com", replica="aws")
         self.assertIn("uuid", resp)
 
+        deletion_resp = self.client.delete_subscription(uuid=resp['uuid'], replica='aws',
+                                                        subscription_type='elasticsearch')
+        self.assertIn("timeDeleted", deletion_resp)
         access_token = "test_access_token"
 
         self.client.login(access_token=access_token)
