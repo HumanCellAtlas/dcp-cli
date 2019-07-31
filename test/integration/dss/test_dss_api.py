@@ -121,8 +121,11 @@ class TestDssApi(unittest.TestCase):
                                              source_url=source_url)
 
                     with TemporaryDirectory() as dest_dir:
-                        self.client.download(bundle_uuid=bundle_uuid, replica="aws", download_dir=dest_dir,
-                                             metadata_filter=metadata_globs, data_filter=data_globs)
+                        self.client.download(bundle_uuid=bundle_uuid,
+                                             download_dir=dest_dir,
+                                             replica="aws",
+                                             data_filter=data_globs,
+                                             metadata_filter=metadata_globs)
                         # Check that contents are the same
                         try:
                             downloaded_files = set(os.listdir(os.path.join(dest_dir, bundle_fqid)))
@@ -196,7 +199,7 @@ class TestDssApi(unittest.TestCase):
                             self.client.download_manifest('manifest.tsv', replica="aws", layout='bundle')
                         except RuntimeError as e:
                             self.assertTrue(bad_bundle, "Should only raise with a bad bundle in the manifest")
-                            self.assertEqual("1 bundle(s) failed to download", e.args[0])
+                            self.assertEqual('1 download task(s) failed.', e.args[0])
                         else:
                             self.assertFalse(bad_bundle)
                         for file in manifest_files:
