@@ -14,7 +14,7 @@ import six
 from mock import patch
 
 from hca.util.compat import USING_PYTHON2, walk
-from hca.dss import DSSClient, ManifestDownloadContext, DownloadContext
+from hca.dss import DSSClient, ManifestDownloadContext
 
 if USING_PYTHON2:
     import backports.tempfile as tempfile
