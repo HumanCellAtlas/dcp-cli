@@ -21,7 +21,6 @@ import tempfile
 import time
 import uuid
 from io import open
-from typing import Callable, Any, Mapping
 
 import requests
 from atomicwrites import atomic_write
@@ -525,11 +524,11 @@ class DownloadContext(object):
         if os.path.exists(dest_path):
             logger.info("Skipping download of '%s' because it already exists at '%s'.", dss_file.name, dest_path)
         else:
-            self._make_path_if_necessary(dest_path)
+            self._make_dirs_if_necessary(dest_path)
             with atomic_write(dest_path, mode="wb", overwrite=True) as fh:
                 fh.write(manifest_bytes)
         file_path = os.path.join(bundle_dir, dss_file.name)
-        self._make_path_if_necessary(file_path)
+        self._make_dirs_if_necessary(file_path)
         hardlink(dest_path, file_path)
 
     def _get_full_bundle_manifest(self, bundle_uuid, version):
@@ -577,7 +576,7 @@ class DownloadContext(object):
 
     def _download_and_link_to_filestore(self, dss_file, file_path):
         file_store_path = self._download_to_filestore(dss_file)
-        self._make_path_if_necessary(file_path)
+        self._make_dirs_if_necessary(file_path)
         hardlink(file_store_path, file_path)
 
     def _download_file(self, dss_file, dest_path):
@@ -589,7 +588,7 @@ class DownloadContext(object):
         If we can, we will attempt HTTP resume.  However, we verify that the server supports HTTP resume.  If the
         ranged get doesn't yield the correct header, then we start over.
         """
-        self._make_path_if_necessary(dest_path)
+        self._make_dirs_if_necessary(dest_path)
         with atomic_write(dest_path, mode="wb", overwrite=True) as fh:
             if dss_file.size == 0:
                 return
@@ -602,9 +601,8 @@ class DownloadContext(object):
                 raise ValueError("Expected sha256 {} Received sha256 {}".format(
                     dss_file.sha256.lower(), download_hash.lower()))
 
-    # TODO: rename
     @classmethod
-    def _make_path_if_necessary(cls, dest_path):
+    def _make_dirs_if_necessary(cls, dest_path):
         directory, _ = os.path.split(dest_path)
         if directory:
             try:
