@@ -1,3 +1,17 @@
+Changes for v6.4.0 (2019-08-02)
+===============================
+
+Make filters more intuitive for manifest download (#338) Make file
+filters more intuitive for bundle download (#207) Fix get collection
+iteration bug. (#407) Clarify how bundle manifest can be a DSSFile
+Correct bundle.json format from dict to array (#398) Fix timestamp in
+bundle.json download log Rename metadata to manifest for bundle.json
+download Clarity improvement to download-collection Update CLI
+integration tests for brevity Skip download-collections tests on Windows
+[easy] Help menu formatting. (#395) Add basic support for downloading
+collections (closes #339) Download bundle metadata into bundle.json
+(#231)
+
 Changes for v6.3.0 (2019-06-17)
 ===============================
 
