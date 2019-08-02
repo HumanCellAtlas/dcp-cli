@@ -7,8 +7,8 @@ hca_config["DSSClient"].swagger_url = f"https://dss.data.humancellatlas.org/v1/s
 dss = DSSClient(config=hca_config)
 
 bundle = dss.get_bundle(replica="aws",
-                        uuid='ffffa79b-99fe-461c-afa1-240cbc54d071',
-                        version='2019-03-26T130456.302299Z')
+                        uuid='fff746b3-e3eb-496a-88a3-5fa1fa358392',
+                        version='2019-08-01T200147.130156Z')
 
 print('Bundle Contents:')
 for file in bundle["bundle"]["files"]:

@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
 
-hca dss upload --src-dir ../api/data --replica aws --staging-bucket jeffwu-test
+hca dss upload --src-dir ../../data --replica aws --staging-bucket jeffwu-test

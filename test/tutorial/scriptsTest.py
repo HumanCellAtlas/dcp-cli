@@ -167,7 +167,7 @@ class TestDSSDocAPI(unittest.TestCase):
     #     self.checkExpectedOut("api", "get_collections_api.py", "collections")
 
     # def testGetSubs_api(self):
-    #     self.checkExpectedOut("api", "get_subscriptions_api.py", "subscriptions")
+    #     self.checkExpectedOut("api", "get_sub_api.py", "subscriptions")
 
     # def testPatchBundle_api(self):
     #     self.checkExitCode("api", "patch_bundle_api.py")
@@ -179,7 +179,7 @@ class TestDSSDocAPI(unittest.TestCase):
     #     self.checkExpectedOut("cli", "get_collections_cli.sh", "collections")
 
     # def testGetSubs_cli(self):
-    #     self.checkExpectedOut("cli", "get_subscriptions_cli.sh", "subscriptions")
+    #     self.checkExpectedOut("cli", "get_sub_cli.sh", "subscriptions")
 
     # def testPatchBundle_cli(self):
     #     self.checkExitCode("cli", "patch_bundle_cli.sh")
