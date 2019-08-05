@@ -537,7 +537,7 @@ class SwaggerClient(object):
 
         parameters = {p["name"]: p for p in method_data.get("parameters", [])}
         body_json_schema = {"properties": {}}
-        if "requestBody" in method_data:
+        if "requestBody" in method_data and "application/json" in method_data["requestBody"]["content"]:
             body_json_schema = method_data["requestBody"]["content"]["application/json"]["schema"]
         else:
             for p in parameters:

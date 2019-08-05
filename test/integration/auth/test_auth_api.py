@@ -38,7 +38,7 @@ class TestDssApi(unittest.TestCase):
         resp = self.client.get_v1_user(user_id=user_id)
         resp = self.client.get_v1_user_groups(user_id=user_id)
         resp = self.client.get_v1_user_roles(user_id=user_id)
-        resp = self.client.get_v1_user_owns(user_id=user_id, )
+        resp = self.client.get_v1_user_owns(user_id=user_id, resource_type='role')
         pass
 
 

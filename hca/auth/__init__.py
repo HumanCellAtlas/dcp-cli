@@ -14,7 +14,3 @@ class AuthClient(SwaggerClient):
     Client for Authentication and Authorization System.
     """
 
-    def __init__(self, *args, **kwargs):
-        super(AuthClient, self).__init__(*args, **kwargs)
-        self.commands += []
-
