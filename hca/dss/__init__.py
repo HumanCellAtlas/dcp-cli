@@ -349,7 +349,7 @@ class DSSClient(SwaggerClient):
         if layout == 'none':
             if no_metadata or no_data:
                 raise ValueError("--no-metadata and --no-data are only compatible with the 'bundle' layout")
-            self._download_manifest_filestore(manifest, replica, num_retries, min_delay_seconds, download_dir)
+            self._download_manifest_cache(manifest, replica, num_retries, min_delay_seconds, download_dir)
         elif layout == 'bundle':
             self._download_manifest_bundle(manifest,
                                            replica,
