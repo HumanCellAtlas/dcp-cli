@@ -179,6 +179,9 @@ texinfo_documents = [
 
 
 # -- Do not remove. -------------------------------------------------------
-# Used for Generating the DSS API Documentation
-from hca.dss import DSSClient
-dss_client = DSSClient()
+# To generate the API autodocs for hca.util.SwaggerClient driven clients,
+# call the constructor for each of the clients to dynamically build the
+# API client methods and their docstrings.
+import hca
+for swagger_client in hca.util.SwaggerClient.__subclasses__():
+    swagger_client()
