@@ -462,7 +462,8 @@ class SwaggerClient(object):
                    'exp': exp,
                    'email': service_credentials["client_email"],
                    'scope': ['email', 'openid', 'offline_access'],
-                   'https://auth.data.humancellatlas.org/group': 'hca'
+                   'https://auth.data.humancellatlas.org/group': 'hca',
+                   'https://auth.data.humancellatlas.org/email': service_credentials["client_email"]
                    }
         additional_headers = {'kid': service_credentials["private_key_id"]}
         signed_jwt = jwt.encode(payload, service_credentials["private_key"], headers=additional_headers,
@@ -574,7 +575,7 @@ class SwaggerClient(object):
                 param_doc = _md2rst(method_args[param]["doc"] or "")
                 docstring += ":param {}: {}\n".format(param, param_doc.replace("\n", " "))
                 docstring += ":type {}: {}\n".format(param, method_args[param]["param"].annotation)
-        docstring += "\n\n" + _md2rst(method_data["description"])
+        docstring += "\n\n" + _md2rst(method_data.get("description", ''))
         client_method.__doc__ = docstring
 
         setattr(self.__class__, method_name, types.MethodType(client_method, SwaggerClient))

@@ -6,5 +6,8 @@
   },
   "DCPQueryClient": {
     "swagger_url": "https://query.data.humancellatlas.org/v1/openapi.json"
+  },
+  "AuthClient": {
+    "swagger_url": "https://auth.data.humancellatlas.org/swagger.json"
   }
 }

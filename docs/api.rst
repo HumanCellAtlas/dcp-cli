@@ -6,4 +6,9 @@ API documentation
    :inherited-members:
 
 .. automodule:: hca.upload
-   :members:
+    :members:
+    :inherited-members:
+
+.. automodule:: hca.auth
+    :members:
+    :inherited-members:

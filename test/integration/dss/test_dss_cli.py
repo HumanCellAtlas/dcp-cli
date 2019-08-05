@@ -54,7 +54,7 @@ class TestDssCLI(unittest.TestCase):
             with open(file_path, 'rb') as bytes_fh:
                 self.assertEqual(bytes_fh.read(), download_content)
 
-    @unittest.skipIf(True, "Manual Test")
+    @unittest.skipIf(False, "Manual Test")
     @reset_tweak_changes
     def test_remote_login(self):
         """Test that remote logins work for non-interactive systems

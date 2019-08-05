@@ -395,7 +395,7 @@ class TestDssApi(unittest.TestCase):
         self.client.logout()
         self.assertNotIn("oauth2_token", config)
 
-    @unittest.skipIf(True, "Manual Test")
+    @unittest.skipIf(False, "Manual Test")
     @reset_tweak_changes
     def test_python_login_logout_user_account(self):
         config = hca.get_config()
