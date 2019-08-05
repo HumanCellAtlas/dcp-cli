@@ -121,11 +121,8 @@ class TestDssApi(unittest.TestCase):
                                              source_url=source_url)
 
                     with TemporaryDirectory() as dest_dir:
-                        self.client.download(bundle_uuid=bundle_uuid,
-                                             download_dir=dest_dir,
-                                             replica="aws",
-                                             data_files=data_globs,
-                                             metadata_files=metadata_globs)
+                        self.client.download(bundle_uuid=bundle_uuid, replica="aws", download_dir=dest_dir,
+                                             metadata_filter=metadata_globs, data_filter=data_globs)
                         # Check that contents are the same
                         try:
                             downloaded_files = set(os.listdir(os.path.join(dest_dir, bundle_fqid)))
@@ -386,6 +383,9 @@ class TestDssApi(unittest.TestCase):
         resp = self.client.put_subscription(es_query=query, callback_url="https://www.example.com", replica="aws")
         self.assertIn("uuid", resp)
 
+        deletion_resp = self.client.delete_subscription(uuid=resp['uuid'], replica='aws',
+                                                        subscription_type='elasticsearch')
+        self.assertIn("timeDeleted", deletion_resp)
         access_token = "test_access_token"
 
         self.client.login(access_token=access_token)

@@ -60,12 +60,16 @@ class DSSFile(namedtuple('DSSFile', ['name', 'uuid', 'version', 'sha256', 'size'
                    replica=replica)
 
     @classmethod
-    def from_bundle_json(cls, metadata_bytes, bundle_uuid, replica):
+    def for_bundle_manifest(cls, manifest_bytes, bundle_uuid, version, replica):
+        """
+        Even though the bundle manifest is not a DSS file, we need to wrap it's info in a DSSFile object for consistency
+        and logging purposes.
+        """
         return cls(name='bundle.json',
                    uuid=bundle_uuid,
-                   version=datetime.utcnow().strftime("%Y-%m-%dT%H%M%S.%fZ"),
-                   sha256=hashlib.sha256(metadata_bytes).hexdigest(),
-                   size=len(metadata_bytes),
+                   version=version,
+                   sha256=hashlib.sha256(manifest_bytes).hexdigest(),
+                   size=len(manifest_bytes),
                    indexed=False,
                    replica=replica)
 
@@ -194,8 +198,10 @@ class DSSClient(SwaggerClient):
                  replica,
                  version="",
                  download_dir="",
-                 metadata_files=('*',),
-                 data_files=('*',),
+                 metadata_filter=('*',),
+                 data_filter=('*',),
+                 no_metadata=False,
+                 no_data=False,
                  num_retries=10,
                  min_delay_seconds=0.25,
                  delete_cache=False):
@@ -208,14 +214,16 @@ class DSSClient(SwaggerClient):
         :param str version: The version to download, else if not specified, download the latest. The version is a
                             timestamp of bundle creation in RFC3339
         :param str download_dir: The directory into which to download
-        :param iterable metadata_files: One or more shell patterns against which all metadata files in the bundle will
+        :param iterable metadata_filter: One or more shell patterns against which all metadata files in the bundle will
                                         be matched case-sensitively. A file is considered a metadata file if the
                                         `indexed` property in the manifest is set. If and only if a metadata file
                                         matches any of the patterns in `metadata_files` will it be downloaded.
-        :param iterable data_files: One or more shell patterns against which all data files in the bundle will be
+        :param iterable data_filter: One or more shell patterns against which all data files in the bundle will be
                                     matched case-sensitively. A file is considered a data file if the `indexed` property
                                     in the manifest is not set. The file will be downloaded only if a data file matches
                                     any of the patterns in `data_files` will it be downloaded.
+        :param no_metadata: Exclude metadata files. Cannot be set when --metadata-filter is also set.
+        :param no_data: Exclude data files. Cannot be set when --data-filter is also set.
         :param int num_retries: The initial quota of download failures to accept before exiting due to failures.
                                 The number of retries increase and decrease as file chucks succeed and fail.
         :param float min_delay_seconds: The minimum number of seconds to wait in between retries.
@@ -239,16 +247,24 @@ class DSSClient(SwaggerClient):
         decreases each time we successfully read a block.  We set a quota for the number of failures that goes up with
         every successful block read and down with each failure.
         """
-        errors = 0
+        if no_metadata:
+            if metadata_filter != ('*',):
+                raise ValueError('--metadata-filter and --no-metadata are mutually exclusive options.')
+            metadata_filter = ('',)
+        if no_data:
+            if data_filter != ('*',):
+                raise ValueError('--data-filter and --no-data are mutually exclusive options.')
+            data_filter = ('',)
 
+        errors = 0
         with concurrent.futures.ThreadPoolExecutor(self.threads) as executor:
             futures_to_dss_file = {executor.submit(task): dss_file
                                    for dss_file, task in self._bundle_download_tasks(bundle_uuid,
                                                                                      replica,
                                                                                      version,
                                                                                      download_dir,
-                                                                                     metadata_files,
-                                                                                     data_files,
+                                                                                     metadata_filter,
+                                                                                     data_filter,
                                                                                      num_retries,
                                                                                      min_delay_seconds)}
             for future in concurrent.futures.as_completed(futures_to_dss_file):
@@ -269,6 +285,8 @@ class DSSClient(SwaggerClient):
                           manifest,
                           replica,
                           layout='none',
+                          no_metadata=False,
+                          no_data=False,
                           num_retries=10,
                           min_delay_seconds=0.25,
                           download_dir='',
@@ -329,9 +347,17 @@ class DSSClient(SwaggerClient):
         to the user's preferred format.
         """
         if layout == 'none':
-            self._download_manifest_cache(manifest, replica, num_retries, min_delay_seconds, download_dir)
+            if no_metadata or no_data:
+                raise ValueError("--no-metadata and --no-data are only compatible with the 'bundle' layout")
+            self._download_manifest_filestore(manifest, replica, num_retries, min_delay_seconds, download_dir)
         elif layout == 'bundle':
-            self._download_manifest_bundle(manifest, replica, num_retries, min_delay_seconds, download_dir)
+            self._download_manifest_bundle(manifest,
+                                           replica,
+                                           num_retries,
+                                           no_data,
+                                           no_metadata,
+                                           min_delay_seconds,
+                                           download_dir)
         else:
             raise ValueError('Invalid layout {} not one of [none, bundle]'.format(layout))
 
@@ -370,6 +396,8 @@ class DSSClient(SwaggerClient):
     def _download_manifest_bundle(self,
                                   manifest,
                                   replica,
+                                  no_metadata,
+                                  no_data,
                                   num_retries,
                                   min_delay_seconds,
                                   download_dir):
@@ -380,6 +408,8 @@ class DSSClient(SwaggerClient):
                                       for bundle_uuid, bundle_download_task in
                                       self._download_manifest_tasks(manifest,
                                                                     replica,
+                                                                    no_metadata,
+                                                                    no_data,
                                                                     num_retries,
                                                                     min_delay_seconds,
                                                                     download_dir)}
@@ -415,30 +445,35 @@ class DSSClient(SwaggerClient):
                                replica,
                                version="",
                                download_dir="",
-                               metadata_files=('*',),
-                               data_files=('*',),
+                               metadata_filter=('*',),
+                               data_filter=('*',),
                                num_retries=10,
                                min_delay_seconds=0.25):
         """
         Returns an iterator of tasks that each download one of the files in a bundle.
         """
         logger.info('Downloading bundle %s version %s ...', bundle_uuid, version)
-        metadata = self._get_full_bundle_metadata(bundle_uuid, replica, version)
-        bundle_fqid = bundle_uuid + '.' + metadata['bundle']['version']
+        manifest = self._get_full_bundle_manifest(bundle_uuid, replica, version)
+        bundle_version = manifest['bundle']['version']
+        bundle_fqid = bundle_uuid + '.' + bundle_version
         bundle_dir = os.path.join(download_dir, bundle_fqid)
 
-        # Download bundle.json (metadata for bundle as a file)
-        metadata_bytes = json.dumps(metadata, sort_keys=True).encode()
-        metadata_dss_file = DSSFile.from_bundle_json(metadata_bytes, bundle_uuid, replica)
-        yield (metadata_dss_file,
-               functools.partial(self._download_metadata, metadata_bytes, download_dir, bundle_dir, metadata_dss_file))
+        # Download bundle.json (manifest for bundle as a file)
+        manifest_bytes = json.dumps(manifest, sort_keys=True).encode()
+        manifest_dss_file = DSSFile.for_bundle_manifest(manifest_bytes, bundle_uuid, bundle_version, replica)
+        yield (manifest_dss_file,
+               functools.partial(self._download_bundle_manifest,
+                                 manifest_bytes,
+                                 download_dir,
+                                 bundle_dir,
+                                 manifest_dss_file))
 
-        for file_ in metadata['bundle']['files'].values():
+        for file_ in manifest['bundle']['files']:
             dss_file = DSSFile.from_dss_bundle_response(file_, replica)
             filename = file_.get("name", dss_file.uuid)
             walking_dir = bundle_dir
 
-            globs = metadata_files if file_['indexed'] else data_files
+            globs = metadata_filter if file_['indexed'] else data_filter
             if not any(fnmatchcase(filename, glob) for glob in globs):
                 continue
 
@@ -455,25 +490,27 @@ class DSSClient(SwaggerClient):
                                               num_retries=num_retries,
                                               min_delay_seconds=min_delay_seconds)
 
-    def _download_metadata(self, metadata, download_dir, bundle_dir, dss_file):
+    def _download_bundle_manifest(self, manifest, download_dir, bundle_dir, dss_file):
         dest_path = self._file_path(dss_file.sha256, download_dir)
         if os.path.exists(dest_path):
             logger.info("Skipping download of '%s' because it already exists at '%s'.", dss_file.name, dest_path)
         else:
             self._make_path_if_necessary(dest_path)
             with atomic_write(dest_path, mode="wb", overwrite=True) as fh:
-                fh.write(metadata)
+                fh.write(manifest)
         file_path = os.path.join(bundle_dir, dss_file.name)
         self._make_path_if_necessary(file_path)
         hardlink(dest_path, file_path)
 
-    def _get_full_bundle_metadata(self, bundle_uuid, replica, version):
+    def _get_full_bundle_manifest(self, bundle_uuid, replica, version):
         """
         Takes care of paging through the bundle and checks for name collisions
         """
         pages = self.get_bundle.paginate(uuid=bundle_uuid, replica=replica, version=version if version else None)
         files = {}
+        ordered_files = []
         for page in pages:
+            ordered_files += page['bundle']['files']
             for file_ in page['bundle']['files']:
                 # The file name collision check is case-insensitive even if the local file system we're running on is
                 # case-sensitive. We do this in order to get consistent download behavior on all operating systems and
@@ -487,13 +524,20 @@ class DSSClient(SwaggerClient):
                     raise ValueError("Bundle {bundle_uuid} version {version} contains multiple files named "
                                      "'{filename}' or a case derivation thereof"
                                      .format(filename=filename, bundle_uuid=bundle_uuid, version=version))
-            metadata = page
+                manifest = page
         # there will always be one page (or else we would have gotten a 404)
         # noinspection PyUnboundLocalVariable
-        metadata['bundle']['files'] = files
-        return metadata
+        manifest['bundle']['files'] = ordered_files
+        return manifest
 
-    def _download_manifest_tasks(self, manifest, replica, num_retries, min_delay_seconds, download_dir):
+    def _download_manifest_tasks(self,
+                                 manifest,
+                                 replica,
+                                 num_retries,
+                                 no_metadata,
+                                 no_data,
+                                 min_delay_seconds,
+                                 download_dir):
         """
         Returns an iterator of tasks for downloading all of the files in a bundle. Note that these tasks all
         return iterators to further tasks.
@@ -506,12 +550,20 @@ class DSSClient(SwaggerClient):
             for row in reader:
                 bundles[(row['bundle_uuid'], row['bundle_version'])].add(row['file_name'])
         for (bundle_uuid, bundle_version), data_files in bundles.items():
-            data_globs = tuple(glob_escape(file_name) for file_name in data_files if file_name)
+            if no_data:
+                data_filter = ('',)
+            else:
+                data_filter = tuple(glob_escape(file_name) for file_name in data_files if file_name)
+            if no_metadata:
+                metadata_filter = ('',)
+            else:
+                metadata_filter = ('*',)
             yield bundle_uuid, functools.partial(self._bundle_download_tasks, bundle_uuid,
                                                  replica,
                                                  version=bundle_version,
                                                  download_dir=download_dir,
-                                                 data_files=data_globs,
+                                                 metadata_filter=metadata_filter,
+                                                 data_filter=data_filter,
                                                  num_retries=num_retries,
                                                  min_delay_seconds=min_delay_seconds)
 
@@ -718,17 +770,16 @@ class DSSClient(SwaggerClient):
                 col.extend(self.get_collection(uuid=obj['uuid'], replica=replica,
                                                version=obj.get('version', ''))['contents'])
             elif obj['type'] == 'bundle':
-                bundle = self._bundle_download_tasks(bundle_uuid=obj['uuid'],
-                                                     replica=replica,
-                                                     version=obj.get('version', ''))
+                bundle = self.get_bundle(replica=replica, version=obj.get('version', ''),
+                                         uuid=obj['uuid'])
                 rows.extend(({
                     'bundle_uuid': obj['uuid'],
                     'bundle_version': obj.get('version', None),
-                    'file_name': f.name,
-                    'file_sha256': f.sha256,
-                    'file_uuid': f.uuid,
-                    'file_size': f.size,
-                    'file_version': f.version} for f, _ in bundle))
+                    'file_name': f['name'],
+                    'file_sha256': f['sha256'],
+                    'file_uuid': f['uuid'],
+                    'file_size': f['size'],
+                    'file_version': f['version']} for f in bundle['bundle']['files']))
             else:
                 errors += 1
                 logger.warning("Failed to download file %s version %s",

@@ -414,12 +414,12 @@ class TestManifestDownloadBundle(AbstractTestDSSClient):
         self.assertEqual(dss_file.name, 'bundle.json')
         task()
         actual_files = self._files_present()
-        expected_hash = '5eea2e2bf59b04758dd8265d8acaaef4d382a9cc899a0a01f7ed42d7b0591b94'
+        expected_hash = '79a04be897c762008078631346bf39ea86af3d8fb653fec0e235f892ab9776b6'
         bundle_json_path = os.path.join('.', 'a_uuid.1_version', 'bundle.json')
         expected_files = {
             bundle_json_path,
             os.path.join('.', 'manifest.tsv'),
-            os.path.join('.', self.version_dir, '5e', 'ea2e', expected_hash)
+            os.path.join('.', self.version_dir, '79', 'a04b', expected_hash)
         }
         self.assertEqual(expected_files, actual_files)
         with open(bundle_json_path, 'rb') as f:
@@ -439,6 +439,48 @@ class TestDownload(AbstractTestDSSClient):
         more_files.add(os.path.join(self.version_dir, '8f', 'fe48',
                                     '8ffe4838ac08672041f73f82e5f8361860627271ec31aa479fbb65f2ccc46d05'))
         self._assert_all_files_downloaded(more_files=more_files)
+
+    def test_no_data(self):
+        self._test_download_filters(no_data=True, no_metadata=False)
+
+    def test_no_metadata(self):
+        self._test_download_filters(no_data=False, no_metadata=True)
+
+    def test_neither_data_nor_metadata(self):
+        self._test_download_filters(no_data=True, no_metadata=True)
+
+    def test_both_data_and_metadata(self):
+        self._test_download_filters(no_data=False, no_metadata=False)
+
+    def _test_download_filters(self, no_metadata, no_data):
+        data_files = {
+            os.path.join('.', 'any_bundle_uuid.1_version', 'a_file_name'),
+            os.path.join('.', 'any_bundle_uuid.1_version', 'b_file_name'),
+            os.path.join('.', 'any_bundle_uuid.1_version', 'c_file_name')
+        }
+        metadata_files = {os.path.join('.', 'any_bundle_uuid.1_version', 'metadata_file.pdf')}
+        all_files = metadata_files.union(data_files)
+        with patch('hca.dss.DSSClient.get_bundle') as mock_get_bundle, \
+                patch('hca.dss.DSSClient._download_file', side_effect=_fake_download_file):
+            mock_get_bundle.paginate = _fake_get_bundle_paginate
+            self.dss.download('any_bundle_uuid', 'aws', no_metadata=no_metadata, no_data=no_data)
+            expected_files = all_files
+            if no_data:
+                expected_files.difference_update(data_files)
+            if no_metadata:
+                expected_files.difference_update(metadata_files)
+            actual_files = self._files_present()
+            for f in expected_files:
+                self.assertIn(f, actual_files)
+            unexpected_files = all_files.difference(expected_files)
+            for f in unexpected_files:
+                self.assertNotIn(f, actual_files)
+
+    def test_download_filters_conflict(self):
+        with self.assertRaises(ValueError):
+            self.dss.download('any_bundle_uuid', 'aws', no_data=True, data_filter=('a_file',))
+        with self.assertRaises(ValueError):
+            self.dss.download('any_bundle_uuid', 'aws', no_metadata=True, metadata_filter=('a_file',))
 
     @patch('hca.dss.DSSClient.get_bundle')
     @patch('logging.Logger.warning')
@@ -484,12 +526,12 @@ class TestDownload(AbstractTestDSSClient):
         self.assertEqual(dss_file.name, 'bundle.json')
         task()
         actual_files = self._files_present()
-        expected_hash = '5eea2e2bf59b04758dd8265d8acaaef4d382a9cc899a0a01f7ed42d7b0591b94'
+        expected_hash = '79a04be897c762008078631346bf39ea86af3d8fb653fec0e235f892ab9776b6'
         bundle_json_path = os.path.join('.', 'a_uuid.1_version', 'bundle.json')
         expected_files = {
             bundle_json_path,
             os.path.join('.', 'manifest.tsv'),
-            os.path.join('.', self.version_dir, '5e', 'ea2e', expected_hash)
+            os.path.join('.', self.version_dir, '79', 'a04b', expected_hash)
         }
         self.assertEqual(expected_files, actual_files)
         with open(bundle_json_path, 'rb') as f:
@@ -533,6 +575,7 @@ class TestDownload(AbstractTestDSSClient):
         skel['contents'][0]['uuid'] = child_uuid
         return [skel] + TestDownload._generate_col_hierarchy(depth - 1, child_uuid)
 
+    @unittest.skipIf(os.name is 'nt', 'Unable to test on Windows')  # TODO windows testing refactor
     def test_collection_download_self_nested(self):
         """
         If a collection contains itself, download should ignore
@@ -555,6 +598,7 @@ class TestDownload(AbstractTestDSSClient):
                 self.dss.download_collection(uuid=test_col['uuid'],
                                              replica='aws', download_dir=t)
 
+    @unittest.skipIf(os.name is 'nt', 'Unable to test on Windows')  # TODO windows testing refactor
     def test_collection_download_deep(self):
         """Test that we can download nested collections"""
         test_cols = self._generate_col_hierarchy(4)

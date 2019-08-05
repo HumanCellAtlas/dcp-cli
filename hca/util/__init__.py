@@ -234,7 +234,7 @@ class _PaginatingClientMethodFactory(_ClientMethodFactory):
                 for file in page.json()['bundle']['files']:
                     yield file
             else:
-                for collection in page.json().get('collections'):
+                for collection in page.json().get('collections', []):
                     yield collection
 
     def paginate(self, **kwargs):

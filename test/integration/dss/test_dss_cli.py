@@ -39,31 +39,20 @@ class TestDssCLI(unittest.TestCase):
         self.assertIn("results", result)
 
     def test_get_files_cli(self):
-            try:
-                filename = "SRR2967608_1.fastq.gz"
-                dirpath = os.path.join(TEST_DIR, "res", "bundle")
-                file_path = os.path.join(dirpath, filename)
-                dest_dir = tempfile.mkdtemp(dir=os.getcwd(), prefix="cli-test-", suffix=".tmp")
-                replica = "aws"
-                staging_bucket = "org-humancellatlas-dss-cli-test"
-
-                upload_args = ['dss', 'upload', '--src-dir', dirpath, '--replica', replica,
-                               '--staging-bucket', staging_bucket]
-                with CapturingIO('stdout') as stdout_upload:
-                    hca.cli.main(args=upload_args)
-                upload_res = json.loads(stdout_upload.captured())
-                download_args = ['dss', 'download', '--bundle-uuid', upload_res['bundle_uuid'],
-                                 '--replica', replica, '--download-dir', dest_dir]
-                with CapturingIO('stdout'):
-                    hca.cli.main(args=download_args)
-                bundle_fqid = upload_res['bundle_uuid'] + '.' + upload_res['version']
-                with open(os.path.join(dest_dir, bundle_fqid, filename), 'rb') as download_data:
-                    download_content = download_data.read()
-                with open(file_path, "rb") as bytes_fh:
-                    file_content = bytes_fh.read()
-                    self.assertEqual(file_content, download_content)
-            finally:
-                shutil.rmtree(dest_dir)
+        with tempfile.TemporaryDirectory(prefix='cli-test-', suffix='.tmp',
+                                         dir=os.getcwd()) as dest_dir, \
+             self._put_test_bdl() as upload_res:
+            filename = "SRR2967608_1.fastq.gz"
+            file_path = os.path.join(TEST_DIR, 'res', 'bundle', filename)
+            download_args = ['dss', 'download', '--bundle-uuid', upload_res['bundle_uuid'],
+                             '--replica', 'aws', '--download-dir', dest_dir]
+            with CapturingIO('stdout'):
+                hca.cli.main(args=download_args)
+            bundle_fqid = upload_res['bundle_uuid'] + '.' + upload_res['version']
+            with open(os.path.join(dest_dir, bundle_fqid, filename), 'rb') as download_data:
+                download_content = download_data.read()
+            with open(file_path, 'rb') as bytes_fh:
+                self.assertEqual(bytes_fh.read(), download_content)
 
     @unittest.skipIf(True, "Manual Test")
     @reset_tweak_changes
@@ -165,6 +154,7 @@ class TestDssCLI(unittest.TestCase):
             # Deleting bundles is a privilege, not a right
             assert e.code == 403
 
+    @unittest.skipIf(os.name is 'nt', 'Unable to test on Windows')  # TODO windows testing refactor
     def test_collection_download(self):
         """
         Upload a bundle, add it to a collection, and try downloading
