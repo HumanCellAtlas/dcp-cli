@@ -61,7 +61,7 @@ class DSSFile(namedtuple('DSSFile', ['name', 'uuid', 'version', 'sha256', 'size'
     @classmethod
     def for_bundle_manifest(cls, manifest_bytes, bundle_uuid, version, replica):
         """
-        Even though the bundle manifest is not a DSS file, we need to wrap it's info in a DSSFile object for consistency
+        Even though the bundle manifest is not a DSS file, we need to wrap its info in a DSSFile object for consistency
         and logging purposes.
         """
         return cls(name='bundle.json',
