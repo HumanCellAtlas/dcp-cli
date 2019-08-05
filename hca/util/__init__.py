@@ -530,6 +530,7 @@ class SwaggerClient(object):
         return body_props, method_args
 
     def _build_client_method(self, http_method, http_path, method_data):
+        http_path = http_path.replace('.', '')
         method_name_parts = [http_method] + [p for p in http_path.split("/")[1:] if not p.startswith("{")]
         method_name = "_".join(method_name_parts)
         if method_name.endswith("s") and (http_method.upper() in {"POST", "PUT"} or http_path.endswith("/{uuid}")):
