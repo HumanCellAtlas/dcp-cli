@@ -27,6 +27,7 @@ class TestDssApi(unittest.TestCase):
     def setUpClass(cls):
         cls.client = hca.auth.AuthClient(swagger_url="https://auth.dev.data.humancellatlas.org/swagger.json")
 
-
+    def test_smoke(self):
+        self.client.get_well_known_openid_configuration()
 if __name__ == "__main__":
     unittest.main()
