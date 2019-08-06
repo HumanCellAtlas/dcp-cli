@@ -507,18 +507,26 @@ class SwaggerClient(object):
     def _process_method_args(self, parameters, body_json_schema):
         body_props = {}
         method_args = collections.OrderedDict()
-        for prop_name, prop_data in body_json_schema["properties"].items():
-            enum_values = prop_data.get("enum")
-            type_ = prop_data.get("type") if enum_values is None else 'string'
-            anno = self._type_map[type_]
-            if prop_name not in body_json_schema.get("required", []):
-                anno = typing.Optional[anno]
-            param = Parameter(prop_name, Parameter.POSITIONAL_OR_KEYWORD, default=prop_data.get("default"),
-                              annotation=anno)
-            method_args[prop_name] = dict(param=param, doc=prop_data.get("description"),
-                                          choices=enum_values,
-                                          required=prop_name in body_json_schema.get("required", []))
-            body_props[prop_name] = body_json_schema
+
+        def _parse_properties(properties):
+            for prop_name, prop_data in properties.items():
+                enum_values = prop_data.get("enum")
+                type_ = prop_data.get("type") if enum_values is None else 'string'
+                anno = self._type_map[type_]
+                if prop_name not in body_json_schema.get("required", []):
+                    anno = typing.Optional[anno]
+                param = Parameter(prop_name, Parameter.POSITIONAL_OR_KEYWORD, default=prop_data.get("default"),
+                                  annotation=anno)
+                method_args[prop_name] = dict(param=param, doc=prop_data.get("description"),
+                                              choices=enum_values,
+                                              required=prop_name in body_json_schema.get("required", []))
+                body_props[prop_name] = body_json_schema
+
+        if body_json_schema.get("properties"):
+            _parse_properties(body_json_schema.get("properties"))
+        if body_json_schema.get("allOf"):
+            for schema in body_json_schema["allOf"]:
+                _parse_properties(schema)
 
         for parameter in parameters.values():
             annotation = str if parameter.get("required") else typing.Optional[str]
