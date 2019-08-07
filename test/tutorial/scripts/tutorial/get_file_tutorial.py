@@ -1,10 +1,6 @@
-from hca import HCAConfig
 from hca.dss import DSSClient
-import sys
 
-hca_config = HCAConfig()
-hca_config["DSSClient"].swagger_url = f"https://dss.data.humancellatlas.org/v1/swagger.json"
-dss = DSSClient(config=hca_config)
+dss = DSSClient()
 
 # Generates a timestamp in that can be used for versioning.
 # Output: '2019-07-08T233341.765030'
@@ -46,7 +42,7 @@ for results in dss.post_search.iterate(replica="aws", es_query={}):
 
         # Retrieves a bundle given a UUID and optionally a version.
         files_uuid = []
-        for bundle in dss.get_bundle(replica="aws", uuid=uuid, version=version)["bundle"]["files"]:
+        for file in dss.get_bundle:
             file_version = bundle["version"]
             file_uuid = bundle["uuid"]
             file_name = bundle["name"]
