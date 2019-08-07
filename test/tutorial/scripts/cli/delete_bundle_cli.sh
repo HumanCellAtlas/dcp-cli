@@ -1,5 +1,3 @@
 #!/usr/bin/env bash
 
-# CANNOT TEST THIS
-
-hca dss delete-bundle --uuid 38f6c379-cb78-4a61-9310-f8cc0341c0ea --replica aws --reason test
+hca dss delete-bundle --reason test --uuid 98f6c379-cb78-4a61-9310-f8cc0341c0ea --version 2019-08-02T202456.025543Z --replica gcp

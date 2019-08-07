@@ -25,7 +25,7 @@ with open("manifest.tsv", "w") as manifest:
     )
     tsv.writeheader()
 
-    with open("./data/get_bundle.json") as jsonfile:
+    with open("data/get_bundle.json") as jsonfile:
         try:
             data = json.load(jsonfile)
             bundle_uuid, bundle_version = (
@@ -48,6 +48,5 @@ with open("manifest.tsv", "w") as manifest:
                     )
         except ValueError as e:
             print("Not JSON FILE %s" % e)
-            pass
 
 dss.download_manifest(replica="aws", manifest="manifest.tsv")

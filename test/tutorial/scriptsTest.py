@@ -40,6 +40,7 @@ class TestDSSDocAPI(unittest.TestCase):
                 stderr=subprocess.PIPE
             )
         stdout, stderr = process.communicate()
+        print(stderr)
         self.teardown()
         if isinstance(stdout, bytes):
             return stdout.decode("utf-8") + " " + stderr.decode("utf-8")
@@ -97,12 +98,6 @@ class TestDSSDocAPI(unittest.TestCase):
     def testDownload_api(self):
         self.checkExitCode("api", "download_api.py")
 
-    def testPutFile_api(self):
-        self.checkExitCode("api", "put_file_api.py")
-
-    def testPutBundle_api(self):
-        self.checkExitCode("api", "put_bundle_api.py")
-
     def testLogout_api(self):
         self.checkExitCode("api", "logout_api.py")
 
@@ -147,43 +142,56 @@ class TestDSSDocAPI(unittest.TestCase):
     def testDownload_cli(self):
         self.checkExitCode("cli", "download_cli.sh")
 
-    def testPutFile_cli(self):
-        self.checkExitCode("cli", "put_file_cli.sh")
-
-    def testPutBundle_cli(self):
-        self.checkExitCode("cli", "put_bundle_api.sh")
-
     def testLogout_cli(self):
         self.checkExitCode("cli", "logout_cli.sh")
 
+   
+# ---------------------------------------
+# NEEDS .DEV/ PROPER CREDENTIALS TO TEST
+# ---------------------------------------
 
-# ---------------------------------------
-# NEEDS .DEV
-# ---------------------------------------
+    # def testPutBundle_api(self):
+    #     self.checkExitCode("api", "put_bundle_api.py")
+
     # def testUpload_api(self):
-    #     self.checkExpectedOut("api", "upload_api.py", "Upload successful")
+    #    self.checkExpectedOut("api", "upload_api.py", "Upload successful")
 
-    # def testGetCollections_api(self):
-    #     self.checkExpectedOut("api", "get_collections_api.py", "collections")
+    # def testCollections_api(self):
+    #     self.checkExpectedOut("api", "put_delete_get_patch_collection_api.py", "collections")
 
-    # def testGetSubs_api(self):
-    #     self.checkExpectedOut("api", "get_sub_api.py", "subscriptions")
+    # def testDelteBundle_api(self):
+    #     self.checkExpectedOut("api", "delete_bundle_api.py", "{}")
 
     # def testPatchBundle_api(self):
     #     self.checkExitCode("api", "patch_bundle_api.py")
 
+    # def testSubscriptions_api(self):
+    #     self.checkExpectedOut("api", "put_delete_get_sub_api.py", "subscriptions")
+    
+    # def testPutFile_api(self):
+    #     self.checkExitCode("api", "put_file_api.py")
+
+    # def testPutBundle_cli(self):
+    #     self.checkExitCode("cli", "put_bundle_cli.sh")
+
     # def testUpload_cli(self):
-    #     self.checkExpectedOut("cli", "upload_cli.sh", "bundle_uuid")
+    #    self.checkExpectedOut("cli", "upload_cli.sh", "bundle_uuid")
 
-    # def testGetCollections_cli(self):
-    #     self.checkExpectedOut("cli", "get_collections_cli.sh", "collections")
-
-    # def testGetSubs_cli(self):
-    #     self.checkExpectedOut("cli", "get_sub_cli.sh", "subscriptions")
+    # def testCollections_cli(self):
+    #     self.checkExpectedOut("cli", "put_delete_get_patch_collection_cli.sh", "collections")
 
     # def testPatchBundle_cli(self):
     #     self.checkExitCode("cli", "patch_bundle_cli.sh")
 
+    # def testDeleteBundle_cli(self):
+    #     self.checkExpectedOut("cli", "delete_bundle_cli.sh", "{}")
 
+    # def testSubscriptions_cli(self):
+    #     self.checkExpectedOut("cli","put_delete_get_sub_cli.sh","subscriptions")
+
+    # def testPutFile_cli(self):
+    #     self.checkExitCode("cli", "put_file_cli.sh")
+    
 if __name__ == "__main__":
     unittest.main()
+

@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
 
-hca dss download --replica aws --bundle-uuid ffffa79b-99fe-461c-afa1-240cbc54d071 \
---version 2019-03-26T130456.302299Z --download-dir  download_test
+hca dss download --replica aws --bundle-uuid ffffaf55-f19c-40e3-aa81-a6c69d357265 \
+--version 2019-08-01T200147.836832Z --download-dir  download_test
