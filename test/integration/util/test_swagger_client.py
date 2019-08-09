@@ -4,9 +4,10 @@
 import argparse
 import json
 import os
-import requests
 import sys
 import unittest
+
+import requests
 
 pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))  # noqa
 sys.path.insert(0, pkg_root)  # noqa
@@ -54,7 +55,8 @@ class TestSwaggerClient(unittest.TestCase):
         "post_with_list_in_body_param",
         "delete_with_missing_required_param",
         "head_with_optional_param",
-        "put_with_invalid_enum_param"
+        "put_with_invalid_enum_param",
+        "get_with_allOf_in_body_param"
     ]
 
     @classmethod
@@ -230,6 +232,49 @@ class TestSwaggerClient(unittest.TestCase):
                                             stream=False,
                                             headers={},
                                             timeout=mock.ANY)
+
+    def test_get_with_allOf_in_body_param(self):
+        path = "/with/allOf/in/body/param"
+        http_method = "get"
+        func_name = http_method + path
+        body_param = {
+            'prop1': "param1",
+            'prop2': "param2"
+        }
+        url = self.url_base + path
+
+        with self.subTest('API'):
+            with mock.patch('requests.Session.request') as mock_request, \
+                    mock.patch('hca.util._ClientMethodFactory._consume_response') as mock_consume_response:
+                mock_request.return_value = self.dummy_response
+
+                resp = getattr(self.client, func_name.replace('/', '_'))(**body_param)
+                mock_consume_response.assert_called_once_with(mock.ANY)
+                mock_request.assert_called_once_with(http_method,
+                                                     url,
+                                                     params={},
+                                                     json=body_param,
+                                                     stream=False,
+                                                     headers={},
+                                                     timeout=mock.ANY)
+
+        with self.subTest('CLI'):
+            with mock.patch('requests.Session.request') as mock_request, \
+                    mock.patch('hca.util._ClientMethodFactory._consume_response') as mock_consume_response:
+                mock_request.return_value = self.dummy_response
+
+                args = self.parser.parse_args([func_name.replace('/', '-'),
+                                               "--prop1", body_param['prop1'],
+                                               "--prop2", body_param['prop2']])
+                args.entry_point(args)
+                mock_consume_response.assert_called_once_with(mock.ANY)
+                mock_request.assert_called_once_with(http_method,
+                                                     url,
+                                                     params={},
+                                                     json=body_param,
+                                                     stream=False,
+                                                     headers={},
+                                                     timeout=mock.ANY)
 
     def test_delete_with_missing_required_param(self):
         path = "/with/missing/required/param"

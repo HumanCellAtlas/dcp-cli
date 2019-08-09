@@ -508,7 +508,7 @@ class SwaggerClient(object):
         body_props = {}
         method_args = collections.OrderedDict()
 
-        def _parse_properties(properties):
+        def _parse_properties(properties, schema):
             for prop_name, prop_data in properties.items():
                 enum_values = prop_data.get("enum")
                 type_ = prop_data.get("type") if enum_values is None else 'string'
@@ -520,13 +520,13 @@ class SwaggerClient(object):
                 method_args[prop_name] = dict(param=param, doc=prop_data.get("description"),
                                               choices=enum_values,
                                               required=prop_name in body_json_schema.get("required", []))
-                body_props[prop_name] = body_json_schema
+                body_props[prop_name] = schema
 
         if body_json_schema.get("properties"):
-            _parse_properties(body_json_schema.get("properties"))
+            _parse_properties(body_json_schema.get("properties"), body_json_schema)
         if body_json_schema.get("allOf"):
             for schema in body_json_schema["allOf"]:
-                _parse_properties(schema)
+                _parse_properties(schema['properties'], schema)
 
         for parameter in parameters.values():
             annotation = str if parameter.get("required") else typing.Optional[str]
