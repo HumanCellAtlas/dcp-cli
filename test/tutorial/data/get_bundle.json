@@ -1,0 +1,201 @@
+{
+  "bundle": {
+    "creator_uid": 8008,
+    "files": [
+      {
+        "content-type": "application/json; dcp-type=\"metadata/biomaterial\"",
+        "crc32c": "5c084696",
+        "indexed": true,
+        "name": "cell_suspension_0.json",
+        "s3_etag": "bd60da05055d1cd544855dd35cb12470",
+        "sha1": "fdeb52d3caf0becce0575528c81bf0a06cb4a023",
+        "sha256": "e0ff1c402a4d6c659937f90d00d9820a2ebf0ebc920260a2a2bddf0961c30de5",
+        "size": 847,
+        "uuid": "134c0f04-76ae-405d-aea4-b72c08a53dd9",
+        "version": "2019-07-09T230754.589000Z"
+      },
+      {
+        "content-type": "application/json; dcp-type=\"metadata/biomaterial\"",
+        "crc32c": "39e6f9e1",
+        "indexed": true,
+        "name": "specimen_from_organism_0.json",
+        "s3_etag": "f30917f841530d78e16223354049c8dc",
+        "sha1": "98171c05647a3b771afb3bd61e65d0a25b0afe7f",
+        "sha256": "35406f0b8fa1ece3e3589151978aefef28f358afa163874b286eab837fcabfca",
+        "size": 864,
+        "uuid": "577a91d8-e579-41b6-9353-7e4e774c161a",
+        "version": "2019-07-09T222811.151000Z"
+      },
+      {
+        "content-type": "application/json; dcp-type=\"metadata/biomaterial\"",
+        "crc32c": "aa46dcec",
+        "indexed": true,
+        "name": "donor_organism_0.json",
+        "s3_etag": "93e25b0e095cd4d972aeeb9e18458ed7",
+        "sha1": "9b461948ea6a1932286303a31278ad862e90bc27",
+        "sha256": "c6a3a0ebbaead51f4377daf864399f77a60307e9af7118b85799dfd4676faa3b",
+        "size": 1455,
+        "uuid": "dd78d5eb-7cb0-4112-81fe-90e1aecb81db",
+        "version": "2019-07-09T221322.880000Z"
+      },
+      {
+        "content-type": "application/json; dcp-type=\"metadata/file\"",
+        "crc32c": "3f84c261",
+        "indexed": true,
+        "name": "sequence_file_0.json",
+        "s3_etag": "a75a6907b3a2fa2bd739b83e100c9d37",
+        "sha1": "ad3bd749cb5020625e239baca8f4560569b145b4",
+        "sha256": "1e6b8dd142adf0f9be06633608eb16a4787185b9852d3ab965615a1142090598",
+        "size": 535,
+        "uuid": "68097b58-e5ee-47e8-8704-84fba5aec4e4",
+        "version": "2019-07-10T214500.829000Z"
+      },
+      {
+        "content-type": "application/json; dcp-type=\"metadata/file\"",
+        "crc32c": "01f87a8e",
+        "indexed": true,
+        "name": "sequence_file_1.json",
+        "s3_etag": "c26c6c2d397a2e915c59bb741ade8740",
+        "sha1": "b7f08fdef4d1b808c800a87cca99c10059c3c603",
+        "sha256": "0af0426debba7ea37dbe314fb2c16f001ab8c7cf849c09e7733ab30862c9d3c5",
+        "size": 535,
+        "uuid": "a32f1d9b-ef08-46b7-b180-9093f3c5eb87",
+        "version": "2019-07-10T215731.313000Z"
+      },
+      {
+        "content-type": "application/json; dcp-type=\"metadata/project\"",
+        "crc32c": "e2b599b7",
+        "indexed": true,
+        "name": "project_0.json",
+        "s3_etag": "a27d8980b701b4fe7a551190f8540ee0",
+        "sha1": "c3cc63ac906c3d04f23395a367a7383059fa9e3c",
+        "sha256": "ba4df5b43e0bdff717f6d81b5aaaa941987fb50d3a91498b47a49353abbbedee",
+        "size": 6366,
+        "uuid": "e0009214-c0a0-4a7b-96e2-d6a83e966ce0",
+        "version": "2019-07-09T221320.395000Z"
+      },
+      {
+        "content-type": "application/json; dcp-type=\"metadata/protocol\"",
+        "crc32c": "48b46ee4",
+        "indexed": true,
+        "name": "library_preparation_protocol_0.json",
+        "s3_etag": "178201e2ddfcfaf1f83a1cc93746ce5a",
+        "sha1": "a4ce5f58c2c2365dc7db0d1f0dcc8054775d7746",
+        "sha256": "d5ffbc2575c154d7ca0ee84cdc778dfd4589549440222119b4cfa122079d58f3",
+        "size": 901,
+        "uuid": "47d78ecd-e946-4591-9ed4-acbbdbdf82a1",
+        "version": "2019-07-09T210434.114000Z"
+      },
+      {
+        "content-type": "application/json; dcp-type=\"metadata/protocol\"",
+        "crc32c": "7f5baa13",
+        "indexed": true,
+        "name": "sequencing_protocol_0.json",
+        "s3_etag": "59e4ed4ecdacb4bc9662ff4304f6ba91",
+        "sha1": "71bc2e75cea6b3ccada9f8fc784f46225127708e",
+        "sha256": "b7b21fc6edc81738145dbda7c41d8b1da27f80277f5f07cc00f5c72e16ef99e7",
+        "size": 918,
+        "uuid": "571cc0c7-4dc2-443b-93f4-0ce4af08cf6d",
+        "version": "2019-07-09T210434.377000Z"
+      },
+      {
+        "content-type": "application/json; dcp-type=\"metadata/protocol\"",
+        "crc32c": "f1ddaf63",
+        "indexed": true,
+        "name": "collection_protocol_0.json",
+        "s3_etag": "18bc9cd53a6b4e1c9445e4855a14f914",
+        "sha1": "6bbeaa34a665c6fb4a488ac7d26fb112241e82d8",
+        "sha256": "77a129c640f07e0b055c5b2904fe2be3dc0c14d47adb5b467a5425bb4dba0dca",
+        "size": 685,
+        "uuid": "f2feb317-c73a-4ee8-8545-84ac73c6000c",
+        "version": "2019-07-09T210433.353000Z"
+      },
+      {
+        "content-type": "application/json; dcp-type=\"metadata/protocol\"",
+        "crc32c": "a3a0099b",
+        "indexed": true,
+        "name": "enrichment_protocol_0.json",
+        "s3_etag": "99fcc5cc8919256c99c955551be39948",
+        "sha1": "9eb8bfcc2d776d63b990276c523b50b24849f812",
+        "sha256": "999492f6834a0ed06990d3e3eaad0fd0dddcc031eb3f8386cf726dea0fb98acd",
+        "size": 1069,
+        "uuid": "5f9f63ea-9268-472b-a3fd-144569fbddcd",
+        "version": "2019-07-09T210434.001000Z"
+      },
+      {
+        "content-type": "application/json; dcp-type=\"metadata/process\"",
+        "crc32c": "d0c04f95",
+        "indexed": true,
+        "name": "process_0.json",
+        "s3_etag": "de25c57347e9ea6bcb1384336bcdbdf9",
+        "sha1": "0fe460527983c56a097cd01f9e42ce4fb273db17",
+        "sha256": "f9ddf1844c6a20f178c2eca03f67f1c73736e0c340f98be88840e98bbdd7cbdb",
+        "size": 377,
+        "uuid": "0b19ab8c-29e9-4c47-99f1-24b039b06c5a",
+        "version": "2019-07-10T012809.978000Z"
+      },
+      {
+        "content-type": "application/json; dcp-type=\"metadata/process\"",
+        "crc32c": "c9f35447",
+        "indexed": true,
+        "name": "process_1.json",
+        "s3_etag": "9abc5706e0b707535c027959c45ee992",
+        "sha1": "ac750fe4a75fa729c69c9d8a6f64d50bb2af7f6c",
+        "sha256": "e4f819e7046402fbac503a3456d138b4b5393ad35d25c6671269ae8cf6cc2c27",
+        "size": 380,
+        "uuid": "2196a626-38da-4489-8b2f-645d342f6aab",
+        "version": "2019-07-10T001103.121000Z"
+      },
+      {
+        "content-type": "application/json; dcp-type=\"metadata/process\"",
+        "crc32c": "8d462403",
+        "indexed": true,
+        "name": "process_2.json",
+        "s3_etag": "627e78546c6208309b888accda776798",
+        "sha1": "b07922cb306b23d8b8efa4c1bd9cf49a44beb3f7",
+        "sha256": "d84753ff4538652bf79848c0292e8e8275f37382369c4fce9e8f16c14c7384d1",
+        "size": 377,
+        "uuid": "c9076ce7-6bd8-4179-a5b0-be2699bac7c8",
+        "version": "2019-07-10T000837.500000Z"
+      },
+      {
+        "content-type": "application/json; dcp-type=\"metadata/links\"",
+        "crc32c": "f67947ba",
+        "indexed": true,
+        "name": "links.json",
+        "s3_etag": "1f8c97a688b7afdaa7777f7171d4ffaa",
+        "sha1": "644206645a77e2827cac4fe2d3226c12d3bc9881",
+        "sha256": "da4df14eb39cacdff01a08f27685534822c2d40adf534ea7b3e4adf261b9079a",
+        "size": 2081,
+        "uuid": "dbf7bd27-b58e-431d-ba05-6a48f29e7cef",
+        "version": "2019-08-03T150636.118831Z"
+      },
+      {
+        "content-type": "application/gzip; dcp-type=data",
+        "crc32c": "9d9f8b53",
+        "indexed": false,
+        "name": "SRR6579532_1.fastq.gz",
+        "s3_etag": "33adc76d3b044fe9cdcf83cbaa29d797",
+        "sha1": "84b917e6aae5ac889f6978f2ab970f92aee03cdb",
+        "sha256": "4c726118ae1e1e25c0420ddee99f74583c3f14001df59f0365e3d8373f6a9635",
+        "size": 40578473,
+        "uuid": "1e527779-6117-480a-acd4-9bee1415874c",
+        "version": "2019-08-03T150636.499346Z"
+      },
+      {
+        "content-type": "application/gzip; dcp-type=data",
+        "crc32c": "38f31e58",
+        "indexed": false,
+        "name": "SRR6579532_2.fastq.gz",
+        "s3_etag": "ac67e10df687471f5808be96499836c6",
+        "sha1": "8743feb4d1ce82328127d10e2b1dfa35e5ae4b5a",
+        "sha256": "3d788e06b5ca4c8fc679b47c790b1e266f73d48818a1749743ec85f096d657ea",
+        "size": 43810957,
+        "uuid": "1330ef1a-7a21-40c6-84c5-5cec18204028",
+        "version": "2019-08-03T150636.729022Z"
+      }
+    ],
+    "uuid": "ffffaf55-f19c-40e3-aa81-a6c69d357265",
+    "version": "2019-08-01T200147.836832Z"
+  }
+}
