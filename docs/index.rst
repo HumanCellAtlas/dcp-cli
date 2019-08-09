@@ -6,4 +6,5 @@
 
    cli
    api
-
+   APIExamples
+   CLIExmaples
