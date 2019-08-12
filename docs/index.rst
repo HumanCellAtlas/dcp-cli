@@ -6,5 +6,7 @@
 
    cli
    api
-   APIExamples
-   CLIExmaples
+   OpenAPIExamples
+   OpenCLIExamples
+   RestrictedAPIExamples
+   RestrictedCLIExamples
