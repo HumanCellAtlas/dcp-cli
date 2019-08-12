@@ -576,7 +576,7 @@ class SwaggerClient(object):
                 param_doc = _md2rst(method_args[param]["doc"] or "")
                 docstring += ":param {}: {}\n".format(param, param_doc.replace("\n", " "))
                 docstring += ":type {}: {}\n".format(param, method_args[param]["param"].annotation)
-        docstring += "\n\n" + _md2rst(method_data.get("description", ''))
+        docstring += "\n\n" + _md2rst(method_data.get["description"])
         client_method.__doc__ = docstring
 
         setattr(self.__class__, method_name, types.MethodType(client_method, SwaggerClient))
@@ -612,8 +612,8 @@ class SwaggerClient(object):
         for method_name, method_data in self.methods.items():
             subcommand_name = method_name.replace("_", "-")
             subparser = subparsers.add_parser(subcommand_name,
-                                              help=method_data.get("summary"),
-                                              description=method_data.get("description"),
+                                              help=method_data["summary"],
+                                              description=method_data["description"],
                                               formatter_class=RawTextHelpFormatter)
             if help_menu:
                 required_group_parser = subparser.add_argument_group('Required Arguments')
@@ -640,8 +640,8 @@ class SwaggerClient(object):
             docstring = command.__doc__.format(prog=subparsers._prog_prefix)
             method_args = _parse_docstring(docstring)
             command_subparser = subparsers.add_parser(command.__name__.replace("_", "-"),
-                                                      help=method_data.get("summary"),
-                                                      description=method_args.get('description'),
+                                                      help=method_data["summary"],
+                                                      description=method_args['description'],
                                                       formatter_class=RawTextHelpFormatter)
             if help_menu:
                 required_group_parser = command_subparser.add_argument_group('Required Arguments')

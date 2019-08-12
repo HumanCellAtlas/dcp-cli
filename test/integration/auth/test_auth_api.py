@@ -29,5 +29,7 @@ class TestDssApi(unittest.TestCase):
 
     def test_smoke(self):
         self.client.get_well_known_openid_configuration()
+
+
 if __name__ == "__main__":
     unittest.main()
