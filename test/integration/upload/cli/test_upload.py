@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
-
+import itertools
 import os
 import sys
 import unittest
@@ -24,6 +24,19 @@ class TestUploadCliUploadCommand(UploadTestCase):
         self.area = self.mock_current_upload_area()
         self.test_files = ['LICENSE', 'README.rst']
 
+    def upload_command(self, args):
+        paths = []
+        if args.target_filename:
+            paths.append(args.target_filename)
+        for arg in args.upload_paths:
+            if os.path.isdir(arg):
+                paths.extend(itertools.chain.from_iterable((f for _, _, f in os.walk(arg))))
+            else:
+                paths.append(arg)
+        for path in paths:
+            self.add_upload_mock(self.area.uuid, path)
+        return UploadCommand(args)
+
     @responses.activate
     def test_upload_with_target_filename_option(self):
         args = Namespace(
@@ -36,7 +49,7 @@ class TestUploadCliUploadCommand(UploadTestCase):
 
         self.simulate_credentials_api(area_uuid=self.area.uuid)
 
-        UploadCommand(args)
+        self.upload_command(args)
 
         obj = self.upload_bucket.Object("{}/FOO".format(self.area.uuid))
         self.assertEqual(obj.content_type, 'application/json; dcp-type=data')
@@ -49,7 +62,7 @@ class TestUploadCliUploadCommand(UploadTestCase):
         args = Namespace(upload_paths=self.test_files, target_filename=None, no_transfer_acceleration=False,
                          dcp_type=None, quiet=True, file_extension=None, sync=True)
         self.simulate_credentials_api(area_uuid=self.area.uuid)
-        upload_command = UploadCommand(args)
+        upload_command = self.upload_command(args)
         s3_path_with_no_prefix = "s3://fake-bucket"
 
         bucket, prefix = upload_command._parse_s3_path(s3_path_with_no_prefix)
@@ -62,7 +75,7 @@ class TestUploadCliUploadCommand(UploadTestCase):
         args = Namespace(upload_paths=self.test_files, target_filename=None, no_transfer_acceleration=False,
                          dcp_type=None, quiet=True, file_extension=None, sync=True)
         self.simulate_credentials_api(area_uuid=self.area.uuid)
-        upload_command = UploadCommand(args)
+        upload_command = self.upload_command(args)
         s3_path_with_no_prefix = "s3://fake-bucket/fake-dir/"
 
         bucket, prefix = upload_command._parse_s3_path(s3_path_with_no_prefix)
@@ -75,7 +88,7 @@ class TestUploadCliUploadCommand(UploadTestCase):
         args = Namespace(upload_paths=self.test_files, target_filename=None, no_transfer_acceleration=False,
                          dcp_type=None, quiet=True, file_extension=None, sync=True)
         self.simulate_credentials_api(area_uuid=self.area.uuid)
-        upload_command = UploadCommand(args)
+        upload_command = self.upload_command(args)
         s3_path_with_no_prefix = "s3://fake-bucket/fake-dir/fake-obj"
 
         bucket, prefix = upload_command._parse_s3_path(s3_path_with_no_prefix)
@@ -88,7 +101,7 @@ class TestUploadCliUploadCommand(UploadTestCase):
         args = Namespace(upload_paths=self.test_files, target_filename=None, no_transfer_acceleration=False,
                          dcp_type=None, quiet=True, file_extension=None, sync=True)
         self.simulate_credentials_api(area_uuid=self.area.uuid)
-        upload_command = UploadCommand(args)
+        upload_command = self.upload_command(args)
         area_s3_path = "s3://{0}/{1}".format(self.upload_bucket_name, self.area.uuid)
 
         s3_file_paths, total_fize_size = upload_command._retrieve_files_list_and_size_sum_tuple_from_s3_path(
@@ -104,7 +117,7 @@ class TestUploadCliUploadCommand(UploadTestCase):
         args = Namespace(upload_paths=self.test_files, target_filename=None, no_transfer_acceleration=False,
                          dcp_type=None, quiet=True, file_extension=None, sync=True)
         self.simulate_credentials_api(area_uuid=self.area.uuid)
-        upload_command = UploadCommand(args)
+        upload_command = self.upload_command(args)
         area_path = "s3://{0}/{1}".format(self.upload_bucket_name, self.area.uuid)
         partial_obj_key = "{0}/LIC".format(area_path)
         complete_obj_key = "{0}/LICENSE".format(area_path)
@@ -121,7 +134,7 @@ class TestUploadCliUploadCommand(UploadTestCase):
         args = Namespace(upload_paths=self.test_files, target_filename=None, no_transfer_acceleration=False,
                          dcp_type=None, quiet=True, file_extension=None, sync=True)
         self.simulate_credentials_api(area_uuid=self.area.uuid)
-        upload_command = UploadCommand(args)
+        upload_command = self.upload_command(args)
         area_path = "s3://{0}/{1}".format(self.upload_bucket_name, self.area.uuid)
         partial_obj_key = "{0}/LIC".format(area_path)
         complete_obj_key = "{0}/LICENSE".format(area_path)
@@ -137,7 +150,7 @@ class TestUploadCliUploadCommand(UploadTestCase):
         args = Namespace(upload_paths=self.test_files, target_filename=None, no_transfer_acceleration=False,
                          dcp_type=None, quiet=True, file_extension=None, sync=True)
         self.simulate_credentials_api(area_uuid=self.area.uuid)
-        upload_command = UploadCommand(args)
+        upload_command = self.upload_command(args)
         area_path = "s3://{0}/{1}".format(self.upload_bucket_name, self.area.uuid)
         complete_obj_key = "{0}/LICENSE".format(area_path)
 
@@ -155,7 +168,7 @@ class TestUploadCliUploadCommand(UploadTestCase):
 
         self.simulate_credentials_api(area_uuid=self.area.uuid)
 
-        UploadCommand(args)
+        self.upload_command(args)
 
         obj = self.upload_bucket.Object("{}/LICENSE".format(self.area.uuid))
         self.assertEqual(obj.content_type, 'application/octet-stream; dcp-type=data')
@@ -174,12 +187,12 @@ class TestUploadCliUploadCommand(UploadTestCase):
 
             self.simulate_credentials_api(area_uuid=self.area.uuid)
 
-            UploadCommand(args)
+            self.upload_command(args)
             mock_config.assert_called_once_with(s3={'use_accelerate_endpoint': True})
 
             mock_config.reset_mock()
             args.no_transfer_acceleration = True
-            UploadCommand(args)
+            self.upload_command(args)
             mock_config.assert_called_once_with()
 
     @responses.activate
@@ -189,7 +202,7 @@ class TestUploadCliUploadCommand(UploadTestCase):
 
         self.simulate_credentials_api(area_uuid=self.area.uuid)
 
-        UploadCommand(args)
+        self.upload_command(args)
 
         for filename in self.test_files:
             obj = self.upload_bucket.Object("{}/{}".format(self.area.uuid, filename))
@@ -204,10 +217,10 @@ class TestUploadCliUploadCommand(UploadTestCase):
 
         self.simulate_credentials_api(area_uuid=self.area.uuid)
 
-        UploadCommand(args)
+        self.upload_command(args)
         last_modified_time_for_first_attempted_upload = self.upload_bucket.Object(
             "{}/LICENSE".format(self.area.uuid)).last_modified
-        UploadCommand(args)
+        self.upload_command(args)
         last_modified_time_for_second_attempted_upload = self.upload_bucket.Object(
             "{}/LICENSE".format(self.area.uuid)).last_modified
 
@@ -220,10 +233,10 @@ class TestUploadCliUploadCommand(UploadTestCase):
 
         self.simulate_credentials_api(area_uuid=self.area.uuid)
 
-        UploadCommand(args)
+        self.upload_command(args)
         last_modified_time_for_first_attempted_upload = self.upload_bucket.Object(
             "{}/LICENSE".format(self.area.uuid)).last_modified
-        UploadCommand(args)
+        self.upload_command(args)
         last_modified_time_for_second_attempted_upload = self.upload_bucket.Object(
             "{}/LICENSE".format(self.area.uuid)).last_modified
 
@@ -241,7 +254,7 @@ class TestUploadCliUploadCommand(UploadTestCase):
             sync=True)
 
         self.simulate_credentials_api(area_uuid=self.area.uuid)
-        UploadCommand(args)
+        self.upload_command(args)
         self.assertEqual(len(list(self.upload_bucket.objects.all())), 6)
 
     @responses.activate
@@ -256,7 +269,7 @@ class TestUploadCliUploadCommand(UploadTestCase):
             sync=True)
 
         self.simulate_credentials_api(area_uuid=self.area.uuid)
-        UploadCommand(args)
+        self.upload_command(args)
         self.assertEqual(len(list(self.upload_bucket.objects.all())), 3)
 
     @responses.activate
@@ -272,7 +285,7 @@ class TestUploadCliUploadCommand(UploadTestCase):
             sync=True)
 
         self.simulate_credentials_api(area_uuid=self.area.uuid)
-        UploadCommand(args)
+        self.upload_command(args)
         self.assertEqual(len(list(self.upload_bucket.objects.all())), 3)
 
     @responses.activate
@@ -288,7 +301,7 @@ class TestUploadCliUploadCommand(UploadTestCase):
             sync=True)
 
         self.simulate_credentials_api(area_uuid=self.area.uuid)
-        UploadCommand(args)
+        self.upload_command(args)
         self.assertEqual(len(list(self.upload_bucket.objects.all())), 2)
 
 
