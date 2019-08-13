@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 import itertools
+import time
 import os
 import sys
 import unittest
@@ -220,11 +221,12 @@ class TestUploadCliUploadCommand(UploadTestCase):
         self.upload_command(args)
         last_modified_time_for_first_attempted_upload = self.upload_bucket.Object(
             "{}/LICENSE".format(self.area.uuid)).last_modified
+        time.sleep(5)
         self.upload_command(args)
         last_modified_time_for_second_attempted_upload = self.upload_bucket.Object(
             "{}/LICENSE".format(self.area.uuid)).last_modified
 
-        self.assertTrue(last_modified_time_for_first_attempted_upload == last_modified_time_for_second_attempted_upload)
+        self.assertEqual(last_modified_time_for_first_attempted_upload, last_modified_time_for_second_attempted_upload)
 
     @responses.activate
     def test_upload_overwrite_same_file_with_sync_off(self):
@@ -236,11 +238,12 @@ class TestUploadCliUploadCommand(UploadTestCase):
         self.upload_command(args)
         last_modified_time_for_first_attempted_upload = self.upload_bucket.Object(
             "{}/LICENSE".format(self.area.uuid)).last_modified
+        time.sleep(5)  # sit in the corner and think about what you've done
         self.upload_command(args)
         last_modified_time_for_second_attempted_upload = self.upload_bucket.Object(
             "{}/LICENSE".format(self.area.uuid)).last_modified
 
-        self.assertTrue(last_modified_time_for_first_attempted_upload < last_modified_time_for_second_attempted_upload)
+        self.assertLess(last_modified_time_for_first_attempted_upload, last_modified_time_for_second_attempted_upload)
 
     @responses.activate
     def test_directory_upload_path_without_file_extension(self):
