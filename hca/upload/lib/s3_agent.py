@@ -132,7 +132,7 @@ class S3Agent:
         file's checksums, and false otherwise."""
         try:
             obj = self.target_s3.meta.client.head_object(Bucket=bucket, Key=key)
-            if obj and obj.containsKey('Metadata'):
+            if obj and 'Metadata' in obj:
                 if obj['Metadata'] == checksums:
                     return True
         except ClientError:
