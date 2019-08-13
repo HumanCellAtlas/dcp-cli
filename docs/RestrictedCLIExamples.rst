@@ -1,19 +1,21 @@
-====================================
+===================================
 CLI Examples (Restricted End-points)
-====================================
+===================================
 
 The HCA CLI ensures and provides a simple and open access to Human Cell Atlas data. This way, it allows researchers and
 curious users to be able to download repuitable data and use it to compute either locally on their own systems or
 in the cloud. 
 
-CLI calls listed here are restricted to those with proper permission to upload/ingest.
+CLI calls listed here are restricted to those with proper permission to upload/ingest. Data 
+will be submitted through a single Ingestion Service API. Submitted data will go through basic quality 
+assurance before depositing the data into the Data Store.
+
+Privileged users are those with proper credentials who can upload/ingest data into the Data Store.  
 
 Compliant with python 3.5+
 
-
-=============================
 delete_bundle()
-=============================
+------------------------
 
 .. note:
     Privileged Users.
@@ -22,9 +24,8 @@ Deletes an existing bundle given a UUID, version, and replica.
 
 .. literalinclude:: ../test/tutorial/scripts/cli/delete_bundle_cli.sh
 
-=============================
 patch_bundle()
-=============================
+------------------------
 
 .. note ::
     Privileged Users
@@ -44,9 +45,8 @@ add_files/remove_files follow this format:
 
 .. literalinclude:: ../test/tutorial/scripts/cli/patch_bundle_cli.sh
 
-=============================
 put_bundle()
-=============================
+------------------------
 
 .. note :: 
     Privileged Users
@@ -76,9 +76,8 @@ with the following details:
 
 .. literalinclude:: ../test/tutorial/scripts/cli/put_bundle_cli.sh
 
-=============================
 put_file()
-=============================
+------------------------
 
 .. note :: 
     Privileged Users
@@ -87,9 +86,10 @@ Create a new version of a file given an existing UUID, verison, creator_uid, and
 
 .. literalinclude:: ../test/tutorial/scripts/cli/put_file_cli.sh
 
-=============================
+
 (put/delete/patch/get)-collection and get-collections
-=============================
+------------------------
+
 .. note ::
     Privileged Users
 
@@ -116,9 +116,9 @@ delete-collection: Given a UUID and rpelica or the subscription, delete the coll
 
 .. literalinclude:: ../test/tutorial/scripts/cli/put_delete_get_patch_collection_cli.sh
 
-=============================
 upload()
-=============================
+------------------------
+
 .. note :: 
     Privileged Users
 
