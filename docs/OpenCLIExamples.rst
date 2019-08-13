@@ -1,6 +1,6 @@
-===============================
-CLI Examples (Open End-points))
-===============================
+==============================
+CLI Examples (Open End-points)
+==============================
 
 The HCA CLI ensures and provides a simple and open access to Human Cell Atlas data. This way, it allows researchers and
 curious users to be able to download repuitable data and use it to compute either locally on their own systems or
@@ -8,17 +8,16 @@ in the cloud.
 
 Compliant with python 3.5+
 
-=============================
+
 create-version
-=============================
+------------------------
 
 Returns a timestamp in DSS_VERSION format (ie 1985-04-12T232050.520000Z) that can be used for versioning.    
 
 .. literalinclude:: ../test/tutorial/scripts/cli/create_version_cli.sh
 
-=============================
 download
-=============================
+------------------------
 
 Download a bundle and save it to the local filesystem as a directory. By default, all data and metadata files 
 are downloaded to cache / filestore directory called '.hca'. 
@@ -79,15 +78,15 @@ Example bundle (use get_bundle()):
   }
 
 .. literalinclude:: ../test/tutorial/scripts/cli/download_cli.sh
-
-=============================    
+    
 download-manifest
-=============================
+------------------------
 
 Files are downloaded to a cache / filestore directory called ‘.hca’. The directory is created in the current directory where download started and 
 a copy of the manifest then written to the directory.
 
-Before running download_manifest, create a .tsv (tab-separated-file) file and input details given from get_bundle.
+Before running download_manifest(), create a .tsv (tab-separated-file) file and input details given from get_bundle() in the respective columns
+also separated by tabs.
 
 The header row must declare the following columns: 
 
@@ -107,9 +106,10 @@ file_size - the size of the file
 
 .. literalinclude:: ../test/tutorial/scripts/cli/download_manifest_cli.sh
 
-=============================
+
 file-head
-=============================
+------------------------
+
 
 Given a file UUID, return the metadata for the latest version of that file. 
 If the version is provided, that version’s metadata is returned instead. 
@@ -117,18 +117,68 @@ The metadata is returned in the headers.
 
 .. literalinclude:: ../test/tutorial/scripts/cli/get_file_head_cli.sh
 
-=============================
+
 get-bundle
-=============================
+------------------------
 
 Given a bundle’s UUID and optionally a version, return the latest version of the bundle. 
-Displays details about the bundle and each file’s info such as name, UUID, version, etc.
+Displays details about the bundle and file.
+
+Example bundle:
+::
+  {
+    "bundle": {
+      "creator_uid": 8008,
+      "files": [
+        {
+          "content-type": "application/json; dcp-type=\"metadata/biomaterial\"",
+          "crc32c": "5c084696",
+          "indexed": true,
+          "name": "cell_suspension_0.json",
+          "s3_etag": "bd60da05055d1cd544855dd35cb12470",
+          "sha1": "fdeb52d3caf0becce0575528c81bf0a06cb4a023",
+          "sha256": "e0ff1c402a4d6c659937f90d00d9820a2ebf0ebc920260a2a2bddf0961c30de5",
+          "size": 847,
+          "uuid": "134c0f04-76ae-405d-aea4-b72c08a53dd9",
+          "version": "2019-07-09T230754.589000Z"
+        },
+        {
+          "content-type": "application/json; dcp-type=\"metadata/biomaterial\"",
+          "crc32c": "39e6f9e1",
+          "indexed": true,
+          "name": "specimen_from_organism_0.json",
+          "s3_etag": "f30917f841530d78e16223354049c8dc",
+          "sha1": "98171c05647a3b771afb3bd61e65d0a25b0afe7f",
+          "sha256": "35406f0b8fa1ece3e3589151978aefef28f358afa163874b286eab837fcabfca",
+          "size": 864,
+          "uuid": "577a91d8-e579-41b6-9353-7e4e774c161a",
+          "version": "2019-07-09T222811.151000Z"
+        },
+        ...
+        },
+        {
+          "content-type": "application/gzip; dcp-type=data",
+          "crc32c": "38f31e58",
+          "indexed": false,
+          "name": "SRR6579532_2.fastq.gz",
+          "s3_etag": "ac67e10df687471f5808be96499836c6",
+          "sha1": "8743feb4d1ce82328127d10e2b1dfa35e5ae4b5a",
+          "sha256": "3d788e06b5ca4c8fc679b47c790b1e266f73d48818a1749743ec85f096d657ea",
+          "size": 43810957,
+          "uuid": "1330ef1a-7a21-40c6-84c5-5cec18204028",
+          "version": "2019-08-03T150636.729022Z"
+        }
+      ],
+      "uuid": "ffffaf55-f19c-40e3-aa81-a6c69d357265",
+      "version": "2019-08-01T200147.836832Z"
+    }
+  }
 
 .. literalinclude:: ../test/tutorial/scripts/cli/get_bundle_cli.sh
 
-=============================
+
 get-bundles-checkout
-=============================
+------------------------
 
 .. note:
     How to find the checkout-job-id? Run post-bundles-checkout in order to get checkout-job-id.
@@ -145,9 +195,9 @@ Example output:
 
 .. literalinclude:: ../test/tutorial/scripts/cli/get_bundles_checkout_cli.sh
 
-=============================
+
 get-file 
-=============================
+------------------------
 
 Retrieves a file given a UUID, optionally a version, and displays the details of the file.
 
@@ -173,34 +223,34 @@ Example output:
 
 .. literalinclude:: ../test/tutorial/scripts/cli/get_file_cli.sh
 
-=============================
+
 login
-=============================
+------------------------
 
 Configure and save authentication credentials.
 
 .. literalinclude:: ../test/tutorial/scripts/cli/login_cli.sh
 
-=============================
+
 logout
-=============================
+------------------------
 
 Clear authentication credentials previously configured with login.    
 
 .. literalinclude:: ../test/tutorial/scripts/cli/logout_cli.sh
 
-=============================
+
 post-bundles-checkout
-=============================
+------------------------
 
 Returns a checkout-job-id (ie 4de1c603-fa8b-4c07-af37-06159e6951e0). This checkout-job-id can then
-be used for get_bundles_checkout.
+be used for get-bundles-checkout.
 
 .. literalinclude:: ../test/tutorial/scripts/cli/post_bundles_checkout_cli.sh
 
-=============================
+
 post-search
-=============================
+------------------------
 
 Find bundles by listing bundle_fqid, which is the bundles UUID and version separated by a dot(.), 
 and the bundle_url. 
@@ -228,6 +278,7 @@ Example output:
 .. literalinclude:: ../test/tutorial/scripts/cli/post_search_cli.sh
 
 (put/delete/get)-subscription and get-subscriptions
+------------------------------------------------
 
 get-subscritpions: Get a list of users subscription.
 
@@ -239,9 +290,9 @@ delete-subscription: Given a UUID and rpelica or the subscription, delete the su
 
 .. literalinclude:: ../test/tutorial/scripts/cli/put_delete_get_sub_cli.sh
 
-=============================
+
 refresh-swagger
-=============================
+------------------------
 
 Manually refresh the swagger document.
 
