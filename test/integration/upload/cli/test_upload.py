@@ -26,16 +26,12 @@ class TestUploadCliUploadCommand(UploadTestCase):
         self.test_files = ['LICENSE', 'README.rst']
 
     def upload_command(self, args):
-        paths = []
-        if args.target_filename:
-            paths.append(args.target_filename)
-        for arg in args.upload_paths:
+        for arg in args.upload_paths + [args.target_filename or '']:
             if os.path.isdir(arg):
-                paths.extend(itertools.chain.from_iterable((f for _, _, f in os.walk(arg))))
-            else:
-                paths.append(arg)
-        for path in paths:
-            self.add_upload_mock(self.area.uuid, path)
+                for path in itertools.chain.from_iterable((f for _, _, f in os.walk(arg))):
+                    self.add_upload_mock(self.area.uuid, path)
+            elif arg:  # ignore '' (but not arbitrary file names)
+                self.add_upload_mock(self.area.uuid, arg)
         return UploadCommand(args)
 
     @responses.activate
