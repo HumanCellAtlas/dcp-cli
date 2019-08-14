@@ -178,6 +178,7 @@ class TestUploadAreaFileUpload(UploadTestCase):
         self.simulate_credentials_api(area_uuid=self.area.uuid)
 
         file_path = os.path.join(TEST_DIR, "res", "bundle", "assay.json")
+        self.add_upload_mock(self.area.uuid, 'assay.json')
         self.area.upload_files(file_paths=[file_path])
 
         obj = self.upload_bucket.Object("{}/assay.json".format(self.area.uuid))
@@ -189,6 +190,7 @@ class TestUploadAreaFileUpload(UploadTestCase):
     @responses.activate
     def test_file_upload_with_target_filename_option(self):
         self.simulate_credentials_api(area_uuid=self.area.uuid)
+        self.add_upload_mock(self.area.uuid, 'POO')
 
         self.area.upload_files(file_paths=["LICENSE"], target_filename='POO')
 
@@ -224,6 +226,7 @@ class TestUploadAreaFileUpload(UploadTestCase):
     def test_test_s3_agent_setup_for_file_upload__for_single_file__computes_stats_correctly(self):
         self.simulate_credentials_api(area_uuid=self.area.uuid)
         file_paths = ["LICENSE"]
+        self.add_upload_mock(self.area.uuid, 'LICENSE')
 
         self.area.upload_files(file_paths=file_paths, file_size_sum=1078)
 
@@ -235,6 +238,7 @@ class TestUploadAreaFileUpload(UploadTestCase):
     def test_test_s3_agent_setup_for_file_upload__for_multiple_files__computes_stats_correctly(self):
         self.simulate_credentials_api(area_uuid=self.area.uuid)
         file_paths = ["LICENSE", "LICENSE"]
+        self.add_upload_mock(self.area.uuid, 'LICENSE')
 
         self.area.upload_files(file_paths=file_paths, file_size_sum=2156)
 
