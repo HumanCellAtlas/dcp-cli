@@ -276,6 +276,39 @@ class TestSwaggerClient(unittest.TestCase):
                                                      headers={},
                                                      timeout=mock.ANY)
 
+    def test_get_with_allOf_multiple_in_body_param(self):
+        path = "/with/allOf/multiple/in/body/param"
+        http_method = "get"
+        func_name = http_method + path
+        url = self.url_base + path
+
+        with self.subTest('API'):
+            with mock.patch('requests.Session.request') as mock_request, \
+                    mock.patch('hca.util._ClientMethodFactory._consume_response') as mock_consume_response:
+                mock_request.return_value = self.dummy_response
+
+                getattr(self.client, func_name.replace('/', '_'))(prop1='a')
+                mock_consume_response.assert_called_once_with(mock.ANY)
+                mock_request.assert_called_once_with(http_method,
+                                                     url,
+                                                     params={},
+                                                     json={'prop1': 'a'},
+                                                     stream=False,
+                                                     headers={},
+                                                     timeout=mock.ANY)
+
+        # In the CLI test, we try passing a value to `--prop1` that isn't in
+        # its enum. If the schema is parsed correctly, we'll get an error.
+        with self.subTest('CLI'):
+            try:
+                args = self.parser.parse_args([func_name.replace('/', '-'),
+                                               '--prop1', 'not-in-enum'])
+                args.entry_point(args)
+            except SystemExit:  # an argparse.ArgumentError is raised, leading to SystemExit
+                pass
+            else:
+                raise AssertionError("Expected SystemExit")
+
     def test_delete_with_missing_required_param(self):
         path = "/with/missing/required/param"
         command = "delete-with-missing-required-param"

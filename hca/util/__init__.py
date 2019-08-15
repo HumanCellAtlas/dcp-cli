@@ -96,9 +96,9 @@ import time
 import jwt
 
 try:
-    from inspect import signature, Signature, Parameter
+    from inspect import signature, Parameter
 except ImportError:
-    from funcsigs import signature, Signature, Parameter
+    from funcsigs import signature, Parameter
 
 import requests
 
@@ -517,10 +517,10 @@ class SwaggerClient(object):
                     anno = typing.Optional[anno]
                 param = Parameter(prop_name, Parameter.POSITIONAL_OR_KEYWORD, default=prop_data.get("default"),
                                   annotation=anno)
-                method_args[prop_name] = dict(param=param, doc=prop_data.get("description"),
-                                              choices=enum_values,
-                                              required=prop_name in body_json_schema.get("required", []))
-                body_props[prop_name] = schema
+                method_args.setdefault(prop_name, {}).update(dict(param=param, doc=prop_data.get("description"),
+                                                                  choices=enum_values,
+                                                                  required=prop_name in body_json_schema.get("required", [])))
+                body_props[prop_name] = merge_dict(schema, body_props.get('prop_name', {}))
 
         if body_json_schema.get("properties"):
             _parse_properties(body_json_schema.get("properties"), body_json_schema)
@@ -659,3 +659,14 @@ class SwaggerClient(object):
                                                help=method_args['params'].get(param_name, None),
                                                **params)
             command_subparser.set_defaults(entry_point=self._command_arg_forwarder_factory(command, sig))
+
+
+def merge_dict(source, destination):
+    """Recursive dict merge"""
+    for key, value in source.items():
+        if isinstance(value, dict):
+            node = destination.setdefault(key, {})
+            merge_dict(value, node)
+        else:
+            destination[key] = value
+    return destination
