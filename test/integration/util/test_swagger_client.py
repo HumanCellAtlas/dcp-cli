@@ -56,7 +56,8 @@ class TestSwaggerClient(unittest.TestCase):
         "delete_with_missing_required_param",
         "head_with_optional_param",
         "put_with_invalid_enum_param",
-        "get_with_allOf_in_body_param"
+        "get_with_allOf_in_body_param",
+        "test_get_with_allOf_multiple_in_body_param"
     ]
 
     @classmethod
