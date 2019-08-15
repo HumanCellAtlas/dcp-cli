@@ -337,6 +337,8 @@ class DSSClient(SwaggerClient):
         rows = []
         seen = []
         col = self.get_collection(uuid=uuid, replica=replica, version=version)['contents']
+        context = DownloadContext(download_dir=None, dss_client=self, replica=replica,
+                                  num_retries=0, min_delay_seconds=0)
         while col:
             obj = col.pop()
             if obj['type'] == 'file':
@@ -354,8 +356,8 @@ class DSSClient(SwaggerClient):
                 col.extend(self.get_collection(uuid=obj['uuid'], replica=replica,
                                                version=obj.get('version', ''))['contents'])
             elif obj['type'] == 'bundle':
-                bundle = self.get_bundle(replica=replica, version=obj.get('version', ''),
-                                         uuid=obj['uuid'])
+                bundle = context._get_full_bundle_manifest(bundle_uuid=obj['uuid'],
+                                                           version=obj['version'])
                 rows.extend(({
                     'bundle_uuid': obj['uuid'],
                     'bundle_version': obj.get('version', None),
