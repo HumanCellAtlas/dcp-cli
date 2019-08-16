@@ -522,10 +522,10 @@ class SwaggerClient(object):
                                                                   required=prop_name in body_json_schema.get("required", [])))
                 body_props[prop_name] = merge_dict(schema, body_props.get('prop_name', {}))
 
-        if 'properties' in body_json_schema:
-            _parse_properties(body_json_schema.get("properties"), body_json_schema)
+        if body_json_schema.get('properties', {}):
+            _parse_properties(body_json_schema["properties"], body_json_schema)
         for schema in body_json_schema.get('allOf', []):
-            _parse_properties(schema['properties'], schema)
+            _parse_properties(schema.get('properties', {}), schema)
 
         for parameter in parameters.values():
             annotation = str if parameter.get("required") else typing.Optional[str]
