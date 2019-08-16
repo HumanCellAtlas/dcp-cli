@@ -7,3 +7,6 @@ API documentation
 
 .. automodule:: hca.upload
    :members:
+
+.. automodule:: hca.query
+   :members:
