@@ -137,6 +137,87 @@
         }
       }
     },
+    "/with/allOf/in/body/param": {
+      "get": {
+        "description": "GET method with allOf in parameter.",
+        "summary": "",
+        "parameters": [
+          {
+            "name": "json_request_body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "allOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "prop1": {
+                      "description": "Property 1",
+                      "type": "string"
+                    }
+                  }
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "prop2": {
+                      "description": "Property 2",
+                      "type": "string"
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/with/allOf/multiple/in/body/param": {
+      "get": {
+        "description": "GET method with allOf in parameter.",
+        "summary": "",
+        "parameters": [
+          {
+            "name": "json_request_body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "allOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "prop1": {
+                      "description": "Property 1",
+                      "type": "string"
+                    }
+                  }
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "prop1": {
+                      "description": "Property 2",
+                      "type": "string",
+                      "enum": ["a", "b", "c"]
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/with/missing/required/param/{path_param}": {
       "delete": {
         "description": "DELETE method with a path parameter.",

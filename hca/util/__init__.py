@@ -96,9 +96,9 @@ import time
 import jwt
 
 try:
-    from inspect import signature, Signature, Parameter
+    from inspect import signature, Parameter
 except ImportError:
-    from funcsigs import signature, Signature, Parameter
+    from funcsigs import signature, Parameter
 
 import requests
 
@@ -475,18 +475,25 @@ class SwaggerClient(object):
     def _process_method_args(self, parameters, body_json_schema):
         body_props = {}
         method_args = collections.OrderedDict()
-        for prop_name, prop_data in body_json_schema["properties"].items():
-            enum_values = prop_data.get("enum")
-            type_ = prop_data.get("type") if enum_values is None else 'string'
-            anno = self._type_map[type_]
-            if prop_name not in body_json_schema.get("required", []):
-                anno = typing.Optional[anno]
-            param = Parameter(prop_name, Parameter.POSITIONAL_OR_KEYWORD, default=prop_data.get("default"),
-                              annotation=anno)
-            method_args[prop_name] = dict(param=param, doc=prop_data.get("description"),
-                                          choices=enum_values,
-                                          required=prop_name in body_json_schema.get("required", []))
-            body_props[prop_name] = body_json_schema
+
+        def _parse_properties(properties, schema):
+            for prop_name, prop_data in properties.items():
+                enum_values = prop_data.get("enum")
+                type_ = prop_data.get("type") if enum_values is None else 'string'
+                anno = self._type_map[type_]
+                if prop_name not in body_json_schema.get("required", []):
+                    anno = typing.Optional[anno]
+                param = Parameter(prop_name, Parameter.POSITIONAL_OR_KEYWORD, default=prop_data.get("default"),
+                                  annotation=anno)
+                method_args.setdefault(prop_name, {}).update(dict(param=param, doc=prop_data.get("description"),
+                                                                  choices=enum_values,
+                                                                  required=prop_name in body_json_schema.get("required", [])))
+                body_props[prop_name] = _merge_dict(schema, body_props.get('prop_name', {}))
+
+        if body_json_schema.get('properties', {}):
+            _parse_properties(body_json_schema["properties"], body_json_schema)
+        for schema in body_json_schema.get('allOf', []):
+            _parse_properties(schema.get('properties', {}), schema)
 
         for parameter in parameters.values():
             annotation = str if parameter.get("required") else typing.Optional[str]
@@ -619,3 +626,14 @@ class SwaggerClient(object):
                                                help=method_args['params'].get(param_name, None),
                                                **params)
             command_subparser.set_defaults(entry_point=self._command_arg_forwarder_factory(command, sig))
+
+
+def _merge_dict(source, destination):
+    """Recursive dict merge"""
+    for key, value in source.items():
+        if isinstance(value, dict):
+            node = destination.setdefault(key, {})
+            _merge_dict(value, node)
+        else:
+            destination[key] = value
+    return destination
