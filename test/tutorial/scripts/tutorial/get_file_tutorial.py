@@ -12,7 +12,7 @@ access_token = "test_access_token"
 dss.login(access_token=access_token)
 
 # Refreshes Swagger document. Can help resolve errors communicate with the API.
-dss.refresh_swagger()
+dss.clear_cache()
 
 # JSON query and returns matching bundle identifiers.
 for results in dss.post_search.iterate(replica="aws", es_query={}):
