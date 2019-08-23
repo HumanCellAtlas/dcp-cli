@@ -89,7 +89,7 @@ class DSSClient(SwaggerClient):
     def _create_version(self):
         return datetime.utcnow().strftime("%Y-%m-%dT%H%M%S.%fZ")
 
-    def upload(self, src_dir, replica, staging_bucket, timeout_seconds=1200):
+    def upload(self, src_dir, replica, staging_bucket, timeout_seconds=1200, no_progress=False):
         """
         Upload a directory of files from the local filesystem and create a bundle containing the uploaded files.
 
@@ -98,6 +98,9 @@ class DSSClient(SwaggerClient):
             `gcp` for Google Cloud Platform. [aws, gcp]
         :param str staging_bucket: a client controlled AWS S3 storage bucket to upload from.
         :param int timeout_seconds: the time to wait for a file to upload to replica.
+        :param bool no_progress: if set, will not report upload progress. Note that even if this flag
+                                 is not set, progress will not be reported if the logging level is higher
+                                 than INFO or if the session is not interactive.
 
         Upload a directory of files from the local filesystem and create a bundle containing the uploaded files.
         This method requires the use of a client-controlled object storage bucket to stage the data for upload.
@@ -112,7 +115,7 @@ class DSSClient(SwaggerClient):
 
         logger.info("Uploading %i files from %s to %s", len(files_to_upload), src_dir, staging_bucket)
         file_uuids, uploaded_keys, abs_file_paths = upload_to_cloud(files_to_upload, staging_bucket=staging_bucket,
-                                                                    replica=replica, from_cloud=False)
+                                                                    replica=replica, from_cloud=False, log_progress=not no_progress)
         for file_handle in files_to_upload:
             file_handle.close()
         filenames = [object_name_builder(p, src_dir) for p in abs_file_paths]
