@@ -249,7 +249,7 @@ class SwaggerClient(object):
         else:
             self.__class__.__doc__ = _md2rst(self.swagger_spec["info"]["description"])
         self.methods = {}
-        self.commands = [self.login, self.logout, self.refresh_swagger]
+        self.commands = [self.login, self.logout]
         self.http_paths = collections.defaultdict(dict)
         if "openapi" in self.swagger_spec:
             server = self.swagger_spec["servers"][0]
@@ -314,9 +314,9 @@ class SwaggerClient(object):
         swagger_filename = os.path.join(self.config.user_config_dir, swagger_filename)
         return swagger_filename
 
-    def refresh_swagger(self):
+    def clear_cache(self):
         """
-        Manually refresh the swagger document. This can help resolve errors communicate with the API.
+        Clear the cached API definitions for a component. This can help resolve errors communicating with the API.
         """
         try:
             os.remove(self._get_swagger_filename(self.swagger_url))
