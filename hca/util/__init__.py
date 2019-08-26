@@ -316,7 +316,7 @@ class SwaggerClient(object):
 
     def clear_cache(self):
         """
-        Clear the cached api for a component. This can help resolve errors communicating with the API.
+        Clear the cached API definitions for a component. This can help resolve errors communicating with the API.
         """
         try:
             os.remove(self._get_swagger_filename(self.swagger_url))

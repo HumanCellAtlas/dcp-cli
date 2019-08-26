@@ -5,7 +5,7 @@ from . import dss, upload, query
 
 
 def clear_hca_cache(args):
-    """Clear the cached hca api definitions. This can help resolve errors communicating with the API."""
+    """Clear the cached HCA API definitions. This can help resolve errors communicating with the API."""
     from hca.util import SwaggerClient
     for swagger_client in SwaggerClient.__subclasses__():
         swagger_client().clear_cache()
