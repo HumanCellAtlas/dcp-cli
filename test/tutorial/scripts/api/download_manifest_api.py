@@ -5,7 +5,7 @@ import pprint
 
 dss = DSSClient()
 
-with open("manifest.tsv", "w") as manifest:
+with open("manifest.tsv", "w", newline='') as manifest:
     tsv = csv.DictWriter(
         manifest,
         fieldnames=(

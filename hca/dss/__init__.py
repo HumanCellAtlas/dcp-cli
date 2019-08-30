@@ -756,7 +756,7 @@ class ManifestDownloadContext(DownloadContext):
         fieldnames, source_manifest = self._parse_manifest(self.manifest)
         if 'file_path' not in fieldnames:
             fieldnames.append('file_path')
-        with atomic_write(output, overwrite=True) as f:
+        with atomic_write(output, overwrite=True, newline='') as f:
             writer = csv.DictWriter(f, fieldnames, delimiter='\t', quoting=csv.QUOTE_NONE)
             writer.writeheader()
             for row in source_manifest:
