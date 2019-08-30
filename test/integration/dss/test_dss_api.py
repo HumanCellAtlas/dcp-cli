@@ -162,7 +162,7 @@ class TestDssApi(unittest.TestCase):
                     cwd = os.getcwd()
                     os.chdir(work_dir)
                     try:
-                        with open('manifest.tsv', 'w') as manifest:
+                        with open('manifest.tsv', 'w', newline='') as manifest:
                             tsv = csv.DictWriter(manifest,
                                                  fieldnames=('bundle_uuid',
                                                              'bundle_version',
