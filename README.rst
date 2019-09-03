@@ -79,7 +79,7 @@ Use an email from one of the whitelisted domains (in ``DSS_SUBSCRIPTION_AUTHORIZ
 
 Then :code:`make test`.
 
-Primary CI testing is through Travis CI; there is also additiona testing with the
+Primary CI testing is through Travis CI; there is also additional testing with the
 `Gitlab/Allspark <https://allspark.dev.data.humancellatlas.org/HumanCellAtlas/dcp-cli/>`_ that runs tests for Windows.
 If submitting PRs that have the potential of being platform dependent, please ensure the status Windows Testing is verified before merging.
 
@@ -90,7 +90,7 @@ Please report bugs, issues, feature requests, etc. on `GitHub <https://github.co
 
 Security Policy
 ---------------
-See our `Security Policy <https://github.com/HumanCellAtlas/dcp/blob/master/SECURITY.md>`_.
+See our `Security Policy <https://github.com/HumanCellAtlas/.github/blob/master/SECURITY.md>`_.
 
 License
 -------
