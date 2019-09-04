@@ -15,7 +15,12 @@ setup(
     description='Human Cell Atlas Data Storage System Command Line Interface',
     long_description=open('README.rst').read(),
     install_requires=install_requires,
-    extras_require={},
+    extras_require={
+        ':python_version < "3.5"': [
+            'typing >= 3.6.2, < 4',
+            'scandir >= 1.9.0, < 2'
+        ],
+    },
     packages=find_packages(exclude=['test']),
     entry_points={
         'console_scripts': [
