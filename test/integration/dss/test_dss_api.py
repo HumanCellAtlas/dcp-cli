@@ -19,7 +19,6 @@ sys.path.insert(0, pkg_root)  # noqa
 import hca.dss
 from hca.dss.util import iter_paths, object_name_builder
 from test import reset_tweak_changes, TEST_DIR
-TemporaryDirectory = tempfile.TemporaryDirectory
 
 
 class TestDssApi(unittest.TestCase):
@@ -30,7 +29,7 @@ class TestDssApi(unittest.TestCase):
         cls.client = hca.dss.DSSClient()
 
     def test_set_host(self):
-        with TemporaryDirectory() as home:
+        with tempfile.TemporaryDirectory() as home:
             with unittest.mock.patch.dict(os.environ, HOME=home):
                 dev = hca.dss.DSSClient(
                     swagger_url="https://dss.dev.data.humancellatlas.org/v1/swagger.json")
@@ -41,7 +40,7 @@ class TestDssApi(unittest.TestCase):
         num_threads = 2
         for repeat in range(num_repeats):
             with self.subTest(repeat=repeat):
-                with TemporaryDirectory() as config_dir:
+                with tempfile.TemporaryDirectory() as config_dir:
                     with unittest.mock.patch.dict(os.environ, XDG_CONFIG_HOME=config_dir):
 
                         def f(_):
@@ -66,7 +65,7 @@ class TestDssApi(unittest.TestCase):
         self.assertEqual(list(file['name'] for file in manifest_files).sort(), uploaded_files.sort())
         bundle_uuid = manifest['bundle_uuid']
         with self.subTest(bundle_uuid=bundle_uuid):
-            with TemporaryDirectory() as dest_dir:
+            with tempfile.TemporaryDirectory() as dest_dir:
                 client.download(bundle_uuid=bundle_uuid, replica='aws', download_dir=dest_dir)
                 downloaded_file_names = [x.path for x in iter_paths(dest_dir)]
                 downloaded_file_paths = [object_name_builder(p, dest_dir) for p in downloaded_file_names]
@@ -110,7 +109,7 @@ class TestDssApi(unittest.TestCase):
                                              bundle_uuid=bundle_uuid,
                                              source_url=source_url)
 
-                    with TemporaryDirectory() as dest_dir:
+                    with tempfile.TemporaryDirectory() as dest_dir:
                         self.client.download(bundle_uuid=bundle_uuid,
                                              download_dir=dest_dir,
                                              replica="aws",
@@ -159,7 +158,7 @@ class TestDssApi(unittest.TestCase):
 
         for bad_bundle in False, True:
             with self.subTest(bad_bundle=bad_bundle):
-                with TemporaryDirectory() as work_dir:
+                with tempfile.TemporaryDirectory() as work_dir:
                     cwd = os.getcwd()
                     os.chdir(work_dir)
                     try:
@@ -205,7 +204,7 @@ class TestDssApi(unittest.TestCase):
 
     @unittest.skipIf(os.name is 'nt', 'Unable to test on Windows')  # TODO windows testing refactor
     def test_python_upload_lg_file(self):
-        with TemporaryDirectory() as src_dir, TemporaryDirectory() as dest_dir:
+        with tempfile.TemporaryDirectory() as src_dir, tempfile.TemporaryDirectory() as dest_dir:
             with tempfile.NamedTemporaryFile(dir=src_dir, suffix=".bin") as fh:
                 fh.write(os.urandom(64 * 1024 * 1024 + 1))
                 fh.flush()
@@ -224,7 +223,7 @@ class TestDssApi(unittest.TestCase):
         bundle_output = self.client.upload(src_dir=bundle_path, replica="aws", staging_bucket=self.staging_bucket)
         bundle_uuid = bundle_output['bundle_uuid']
 
-        with TemporaryDirectory() as dest_dir:
+        with tempfile.TemporaryDirectory() as dest_dir:
             self.client.download(bundle_uuid=bundle_output['bundle_uuid'], replica="aws", download_dir=dest_dir)
 
         # Test get-files and head-files
