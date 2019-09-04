@@ -6,6 +6,8 @@ Data Coordination Platform (DCP) of the Human Cell Atlas (HCA).
 Currently the `hca` package supports interaction with the `Upload Service <https://github.com/HumanCellAtlas/upload-service>`_ and `Data Storage Service (DSS) <https://github.com/HumanCellAtlas/data-store>`_ for services such as uploading, downloading,
 and querying data.
 
+Just testing.
+
 Installation
 ------------
 :code:`pip install hca`.
