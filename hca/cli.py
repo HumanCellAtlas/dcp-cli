@@ -22,7 +22,7 @@ from .version import __version__
 from .dss import cli as dss_cli
 from .upload import cli as upload_cli
 from .query import cli as query_cli
-from . import logger, get_config
+from . import logger, get_config, clear_hca_cache
 
 
 class HCAArgumentParser(argparse.ArgumentParser):
@@ -87,6 +87,7 @@ def get_parser(help_menu=False):
     parser.add_argument("--log-level", default=get_config().get("log_level"),
                         help=str([logging.getLevelName(i) for i in range(10, 60, 10)]),
                         choices={logging.getLevelName(i) for i in range(10, 60, 10)})
+    parser.add_parser_func(clear_hca_cache, help=clear_hca_cache.__doc__)
 
     def help(args):
         parser.print_help()
