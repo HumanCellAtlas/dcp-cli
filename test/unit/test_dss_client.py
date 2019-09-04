@@ -11,8 +11,7 @@ import unittest
 import uuid
 import six
 
-from unittest.mock import patch
-
+from mock import patch
 from hca.util.compat import walk
 from hca.dss import DSSClient, ManifestDownloadContext
 
