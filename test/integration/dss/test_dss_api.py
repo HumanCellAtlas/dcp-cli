@@ -358,14 +358,14 @@ class TestDssApi(unittest.TestCase):
                 if ix > limit:
                     break
 
-    def test_refresh_swagger(self):
-        """Testing refresh_swagger by comparing the creation date of the old swagger with the refreshed swagger that
+    def test_clear_cache(self):
+        """Testing clear_cache by comparing the creation date of the old swagger with the refreshed swagger that
         replaces it"""
         client = hca.dss.DSSClient()
         swagger_filename = client._get_swagger_filename(client.swagger_url)
         self.assertTrue(os.path.isfile(swagger_filename), "Pass if file exists initially")
         old_swagger = datetime.datetime.fromtimestamp(os.path.getmtime(swagger_filename))
-        client.refresh_swagger()
+        client.clear_cache()
         new_swagger = datetime.datetime.fromtimestamp(os.path.getmtime(swagger_filename))
         self.assertGreater(new_swagger, old_swagger)
 
