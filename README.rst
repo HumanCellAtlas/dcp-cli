@@ -6,7 +6,7 @@ Data Coordination Platform (DCP) of the Human Cell Atlas (HCA).
 Currently the `hca` package supports interaction with the `Upload Service <https://github.com/HumanCellAtlas/upload-service>`_ and `Data Storage Service (DSS) <https://github.com/HumanCellAtlas/data-store>`_ for services such as uploading, downloading,
 and querying data.
 
-The HCA CLI is compatible with python versions 3.5+ (we are no longer compatible with python2.7, and our last compatible python2.7 version was `hca==5.0.0`).
+The HCA CLI is compatible with python versions 3.5+ (we are no longer compatible with python2.7, and our last compatible python2.7 version was `hca==6.4.0`).
 
 Installation
 ------------
