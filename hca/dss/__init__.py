@@ -2,9 +2,6 @@
 Data Storage System
 *******************
 """
-
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import errno
 import functools
 import json

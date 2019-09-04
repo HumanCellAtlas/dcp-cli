@@ -80,9 +80,6 @@ client. Subclasses can add more commands by adding them to the
 ``special_cli_command`` in the example above.
 
 """
-
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import os
 import multiprocessing
 import types
@@ -241,7 +238,7 @@ class SwaggerClient(object):
 
         self.__class__.__doc__ = _md2rst(self.swagger_spec["info"]["description"])
         self.methods = {}
-        self.commands = [self.login, self.logout]
+        self.commands = [self.login, self.logout, self.refresh_swagger]
         self.http_paths = collections.defaultdict(dict)
         if "openapi" in self.swagger_spec:
             server = self.swagger_spec["servers"][0]
@@ -306,9 +303,9 @@ class SwaggerClient(object):
         swagger_filename = os.path.join(self.config.user_config_dir, swagger_filename)
         return swagger_filename
 
-    def clear_cache(self):
+    def refresh_swagger(self):
         """
-        Clear the cached API definitions for a component. This can help resolve errors communicating with the API.
+        Manually refresh the swagger document. This can help resolve errors communicate with the API.
         """
         try:
             os.remove(self._get_swagger_filename(self.swagger_url))

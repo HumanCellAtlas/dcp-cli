@@ -1,8 +1,5 @@
 #!/usr/bin/env python
 # coding: utf-8
-
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import contextlib
 import filecmp
 import json
@@ -11,7 +8,6 @@ import sys
 import unittest
 import uuid
 import tempfile
-import shutil
 
 pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))  # noqa
 sys.path.insert(0, pkg_root)  # noqa
