@@ -10,26 +10,16 @@ import os
 import sys
 import tempfile
 import uuid
+import unittest
 from fnmatch import fnmatchcase
-
 
 pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))  # noqa
 sys.path.insert(0, pkg_root)  # noqa
 
 import hca.dss
 from hca.dss.util import iter_paths, object_name_builder
-from hca.util.compat import USING_PYTHON2
 from test import reset_tweak_changes, TEST_DIR
-
-if USING_PYTHON2:
-    import backports.tempfile
-    import mock
-    import unittest2 as unittest
-    TemporaryDirectory = backports.tempfile.TemporaryDirectory
-else:
-    import unittest
-    from unittest import mock
-    TemporaryDirectory = tempfile.TemporaryDirectory
+TemporaryDirectory = tempfile.TemporaryDirectory
 
 
 class TestDssApi(unittest.TestCase):
@@ -41,7 +31,7 @@ class TestDssApi(unittest.TestCase):
 
     def test_set_host(self):
         with TemporaryDirectory() as home:
-            with mock.patch.dict(os.environ, HOME=home):
+            with unittest.mock.patch.dict(os.environ, HOME=home):
                 dev = hca.dss.DSSClient(
                     swagger_url="https://dss.dev.data.humancellatlas.org/v1/swagger.json")
                 self.assertEqual("dss.dev.data.humancellatlas.org", dev._swagger_spec['host'])
@@ -52,7 +42,7 @@ class TestDssApi(unittest.TestCase):
         for repeat in range(num_repeats):
             with self.subTest(repeat=repeat):
                 with TemporaryDirectory() as config_dir:
-                    with mock.patch.dict(os.environ, XDG_CONFIG_HOME=config_dir):
+                    with unittest.mock.patch.dict(os.environ, XDG_CONFIG_HOME=config_dir):
 
                         def f(_):
                             dev = hca.dss.DSSClient(

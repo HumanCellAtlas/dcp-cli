@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 # coding: utf-8
-
 import io
 import os
 import socket
@@ -11,22 +10,14 @@ import uuid
 from datetime import datetime
 from requests import ConnectTimeout
 from urllib3 import Timeout
+from unittest import mock
 
 pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))  # noqa
 sys.path.insert(0, pkg_root)  # noqa
 
 import hca.dss
 from hca.util import RetryPolicy
-from hca.util.compat import USING_PYTHON2
 from hca.dss import upload_to_cloud
-
-if USING_PYTHON2:
-    import backports.tempfile
-    TemporaryDirectory = backports.tempfile.TemporaryDirectory
-    import mock
-else:
-    TemporaryDirectory = tempfile.TemporaryDirectory
-    from unittest import mock
 
 
 class TestDssApiRetry(unittest.TestCase):
@@ -35,7 +26,7 @@ class TestDssApiRetry(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        with TemporaryDirectory() as src_dir:
+        with tempfile.TemporaryDirectory() as src_dir:
             bundle_path = os.path.join(src_dir, "bundle")
             os.makedirs(bundle_path)
             hello_world_path = os.path.join(bundle_path, "hello_world")

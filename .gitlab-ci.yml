@@ -59,6 +59,11 @@ test-3.6:
   variables:
     PYTHON_VERSION: "3.6"
 
+test-3.7:
+  extends: .linux-test-base
+  variables:
+    PYTHON_VERSION: "3.7"
+
 test-3.6-win:
   extends: .windows-test-base
   variables:

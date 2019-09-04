@@ -28,7 +28,6 @@ from .version import __version__
 from .dss import cli as dss_cli
 from .upload import cli as upload_cli
 from .query import cli as query_cli
-from .util.compat import USING_PYTHON2
 from . import logger, get_config
 
 
@@ -159,7 +158,6 @@ def main(args=None):
         raise result
     elif result is not None:
         if isinstance(result, bytes):
-            out_stream = sys.stdout if USING_PYTHON2 else sys.stdout.buffer
-            out_stream.write(result)
+            sys.stdout.buffer.write(result)
         elif not isinstance(result, upload_cli.UploadCLICommand):
             print(json.dumps(result, indent=2, default=lambda x: str(x)))

@@ -12,26 +12,19 @@ sys.path.insert(0, pkg_root)  # noqa
 
 import hca.util
 from hca import HCAConfig
-from hca.util.compat import USING_PYTHON2
 from test import TEST_DIR
-
-if USING_PYTHON2:
-    import mock
-    from mock import mock_open
-else:
-    from unittest import mock
-    from unittest.mock import mock_open
+from unittest import mock
+from unittest.mock import mock_open
 
 
 class TestSwaggerClient(unittest.TestCase):
-
     @classmethod
     def setUpClass(cls):
         """
         Initialize SwaggerClient with a test HCAConfig.
         """
         cls.swagger_url = "test_swagger_url"
-        cls.open_fn_name = "__builtin__.open" if USING_PYTHON2 else "builtins.open"
+        cls.open_fn_name = "builtins.open"
         cls.test_response = requests.models.Response()
         cls.test_response.status_code = 200
         with open(os.path.join(TEST_DIR, "res", "test_swagger.json"), 'rb') as fh:

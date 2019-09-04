@@ -94,24 +94,19 @@ import base64
 import argparse
 import time
 import jwt
-
-try:
-    from inspect import signature, Parameter
-except ImportError:
-    from funcsigs import signature, Parameter
-
 import requests
 
+from inspect import signature, Parameter
 from requests.adapters import HTTPAdapter, DEFAULT_POOLSIZE
 from requests_oauthlib import OAuth2Session
 from urllib3.util import retry, timeout
+from urllib.parse import urljoin
 from jsonpointer import resolve_pointer
 from threading import Lock
 from argparse import RawTextHelpFormatter
 from dcplib.networking import Session
 
 from .. import get_config, logger
-from .compat import USING_PYTHON2, urljoin
 from .exceptions import SwaggerAPIException, SwaggerClientInternalError
 from ._docs import _pagination_docstring, _streaming_docstring, _md2rst, _parse_docstring
 from .fs_helper import FSHelper as fs
@@ -244,10 +239,7 @@ class SwaggerClient(object):
         self._session_kwargs = session_kwargs
         self._swagger_spec = None
 
-        if USING_PYTHON2:
-            self.__doc__ = _md2rst(self.swagger_spec["info"]["description"])
-        else:
-            self.__class__.__doc__ = _md2rst(self.swagger_spec["info"]["description"])
+        self.__class__.__doc__ = _md2rst(self.swagger_spec["info"]["description"])
         self.methods = {}
         self.commands = [self.login, self.logout, self.refresh_swagger]
         self.http_paths = collections.defaultdict(dict)

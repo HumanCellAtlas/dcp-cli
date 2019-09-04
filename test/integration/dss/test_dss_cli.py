@@ -20,12 +20,7 @@ import hca
 import hca.cli
 import hca.dss
 import hca.util.exceptions
-from hca.util.compat import USING_PYTHON2
 from test import CapturingIO, reset_tweak_changes, TEST_DIR
-
-if USING_PYTHON2:
-    import backports.tempfile
-    tempfile = backports.tempfile
 
 
 class TestDssCLI(unittest.TestCase):
