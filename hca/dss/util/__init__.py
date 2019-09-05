@@ -1,9 +1,7 @@
-import errno
 import os
-import platform
-import sys
-
+from builtins import FileExistsError
 from ...util.compat import scandir
+
 
 def separator_to_camel_case(separated, separator):
     components = separated.split(separator)
@@ -44,15 +42,12 @@ def hardlink(source, link_name):
     """
     try:
         os.link(source, link_name)
-    except OSError as e:
-        if e.errno != errno.EEXIST:
+    except FileExistsError:
+        # It's possible that the user created a different file with the same name as the
+        # one we're trying to download. Thus we need to check the if the inode is different
+        # and raise an error in this case.
+        source_stat = os.stat(source)
+        dest_stat = os.stat(link_name)
+        # Check device first because different drives can have the same inode number
+        if source_stat.st_dev != dest_stat.st_dev or source_stat.st_ino != dest_stat.st_ino:
             raise
-        else:
-            # It's possible that the user created a different file with the same name as the
-            # one we're trying to download. Thus we need to check the if the inode is different
-            # and raise an error in this case.
-            source_stat = os.stat(source)
-            dest_stat = os.stat(link_name)
-            # Check device first because different drives can have the same inode number
-            if source_stat.st_dev != dest_stat.st_dev or source_stat.st_ino != dest_stat.st_ino:
-                raise

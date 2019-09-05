@@ -260,7 +260,6 @@ class TestManifestDownloadFilestore(AbstractTestDSSClient):
         self._assert_manifest_not_updated()
 
     @unittest.skipIf(os.name is 'nt', 'Unable to test on Windows')  # TODO windows testing refactor
-    @unittest.skipIf(sys.version_info < (3,), 'Threading.Barrier is not available in Python 2')
     def test_manifest_download_parallel(self):
         """
         The goal is to make sure the download of the file happens simultaneously in multiple threads.
@@ -376,8 +375,6 @@ class TestManifestDownloadBundle(AbstractTestDSSClient):
         _touch_file(os.path.join(manifest_directory, self.manifest[1][3]))
         self.assertRaises(RuntimeError, self.dss.download_manifest, self.manifest_file, 'aws', layout='bundle')
 
-    @unittest.skipIf(sys.version_info < (3,) and platform.system() == 'Windows',
-                     'os.stat() returns dummy values with Python 2.7 on Windows')
     @patch('hca.dss.DSSClient.get_bundle')
     @patch('hca.dss.DownloadContext._download_file', side_effect=_fake_download_file)
     def test_manifest_download_bundle_parallel(self, _, mock_get_bundle):
