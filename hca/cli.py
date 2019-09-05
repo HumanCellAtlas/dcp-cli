@@ -39,8 +39,7 @@ class HCAArgumentParser(argparse.ArgumentParser):
         subparser.set_defaults(**get_config().get(command, {}))
         if subparser.description is None:
             subparser.description = kwargs.get("help", func.__doc__)
-        if sys.version_info < (2, 7, 9):  # See https://bugs.python.org/issue9351
-            self._defaults.pop("entry_point", None)
+        self._defaults.pop("entry_point", None)
         return subparser
 
     def print_help(self, file=None):
