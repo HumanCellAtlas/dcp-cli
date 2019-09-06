@@ -9,15 +9,11 @@ import tempfile
 import threading
 import unittest
 import uuid
-
 import six
+
 from mock import patch
-
-from hca.util.compat import USING_PYTHON2, walk
+from hca.util.compat import walk
 from hca.dss import DSSClient, ManifestDownloadContext
-
-if USING_PYTHON2:
-    import backports.tempfile as tempfile
 
 logging.basicConfig()
 
@@ -77,8 +73,7 @@ def _fake_get_bundle_paginate(*args, **kwargs):
     yield {'bundle': bundle_dict}
 
 
-if sys.version_info >= (3,):
-    barrier = threading.Barrier(3)
+barrier = threading.Barrier(3)
 
 
 def _fake_do_download_file_with_barrier(*args, **kwargs):
@@ -265,7 +260,6 @@ class TestManifestDownloadFilestore(AbstractTestDSSClient):
         self._assert_manifest_not_updated()
 
     @unittest.skipIf(os.name is 'nt', 'Unable to test on Windows')  # TODO windows testing refactor
-    @unittest.skipIf(sys.version_info < (3,), 'Threading.Barrier is not available in Python 2')
     def test_manifest_download_parallel(self):
         """
         The goal is to make sure the download of the file happens simultaneously in multiple threads.
@@ -309,15 +303,12 @@ class TestManifestDownloadBundle(AbstractTestDSSClient):
         }
 
     def _assert_links(self, prefix):
-        # os.stat() returns dummy values with Python 2.7 on Windows so we have to skip
-        # I (Jesse) tested this manually on Python 2.7 on Windows 10 and hard links worked
-        if sys.version_info >= (3,) or platform.system() != 'Windows':
-            for linked_file in self.data_files(prefix=prefix):
-                self.assertEqual(os.stat(linked_file).st_nlink, 2,
-                                 'Expected one link for the "filestore" entry and link in bundle download')
-            for linked_file in self.metadata_files(prefix=prefix):
-                self.assertEqual(os.stat(linked_file).st_nlink, 4,
-                                 'Expected one link for the "filestore" entry and one for each bundle')
+        for linked_file in self.data_files(prefix=prefix):
+            self.assertEqual(os.stat(linked_file).st_nlink, 2,
+                             'Expected one link for the "filestore" entry and link in bundle download')
+        for linked_file in self.metadata_files(prefix=prefix):
+            self.assertEqual(os.stat(linked_file).st_nlink, 4,
+                             'Expected one link for the "filestore" entry and one for each bundle')
 
     def _assert_all_files_downloaded(self, more_files=None, prefix=''):
         bundle_files = self.data_files(prefix=prefix).union(self.metadata_files(prefix=prefix))
@@ -384,8 +375,6 @@ class TestManifestDownloadBundle(AbstractTestDSSClient):
         _touch_file(os.path.join(manifest_directory, self.manifest[1][3]))
         self.assertRaises(RuntimeError, self.dss.download_manifest, self.manifest_file, 'aws', layout='bundle')
 
-    @unittest.skipIf(sys.version_info < (3,) and platform.system() == 'Windows',
-                     'os.stat() returns dummy values with Python 2.7 on Windows')
     @patch('hca.dss.DSSClient.get_bundle')
     @patch('hca.dss.DownloadContext._download_file', side_effect=_fake_download_file)
     def test_manifest_download_bundle_parallel(self, _, mock_get_bundle):

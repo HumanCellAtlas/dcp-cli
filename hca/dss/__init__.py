@@ -2,14 +2,10 @@
 Data Storage System
 *******************
 """
-
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import errno
 import functools
 import json
-import threading
-from collections import defaultdict, namedtuple, OrderedDict
+from collections import defaultdict, namedtuple
 import csv
 import concurrent.futures
 from datetime import datetime
@@ -27,8 +23,7 @@ from atomicwrites import atomic_write
 from requests.exceptions import ChunkedEncodingError, ConnectionError, ReadTimeout
 
 from hca.dss.util import iter_paths, object_name_builder, hardlink
-from hca.util import USING_PYTHON2
-from hca.util.compat import glob_escape
+from glob import escape as glob_escape
 from ..util import SwaggerClient, DEFAULT_THREAD_COUNT
 from ..util.exceptions import SwaggerAPIException
 from .. import logger
@@ -400,7 +395,7 @@ class DSSClient(SwaggerClient):
                                              'file_uuid',
                                              'file_version',
                                              'file_size'),
-                                 delimiter=str('\t'),  # cast for py2.7 compat
+                                 delimiter='\t',
                                  quoting=csv.QUOTE_NONE)
             tsv.writeheader()
             tsv.writerows(collection)
@@ -472,7 +467,6 @@ class DownloadContext(object):
     # This variable is the configuration for download_manifest_v2. It specifies the length of the names of nested
     # directories for downloaded files.
     DIRECTORY_NAME_LENGTHS = [2, 4]
-    MANIFEST_DELIMITER = b'\t' if USING_PYTHON2 else '\t'
 
     def __init__(self, download_dir, dss_client, replica, num_retries, min_delay_seconds):
         self.runner = TaskRunner()
@@ -535,7 +529,7 @@ class DownloadContext(object):
 
     def _get_full_bundle_manifest(self, bundle_uuid, version):
         """
-        Takes care of paging through the bundle and checks for name collisions
+        Takes care of paging through the bundle and checks for name collisions.
         """
         pages = self.dss_client.get_bundle.paginate(uuid=bundle_uuid,
                                                     version=version if version else None,
@@ -734,8 +728,7 @@ class ManifestDownloadContext(DownloadContext):
         with open(self.manifest) as f:
             bundles = defaultdict(set)
             # unicode_literals is on so all strings are unicode. CSV wants a str so we need to jump through a hoop.
-            delimiter = self.MANIFEST_DELIMITER
-            reader = csv.DictReader(f, delimiter=delimiter, quoting=csv.QUOTE_NONE)
+            reader = csv.DictReader(f, delimiter='\t', quoting=csv.QUOTE_NONE)
             for row in reader:
                 bundles[(row['bundle_uuid'], row['bundle_version'])].add(row['file_name'])
         for (bundle_uuid, bundle_version), data_files in bundles.items():
@@ -761,8 +754,7 @@ class ManifestDownloadContext(DownloadContext):
         if 'file_path' not in fieldnames:
             fieldnames.append('file_path')
         with atomic_write(output, overwrite=True) as f:
-            delimiter = b'\t' if USING_PYTHON2 else '\t'
-            writer = csv.DictWriter(f, fieldnames, delimiter=delimiter, quoting=csv.QUOTE_NONE)
+            writer = csv.DictWriter(f, fieldnames, delimiter='\t', quoting=csv.QUOTE_NONE)
             writer.writeheader()
             for row in source_manifest:
                 row['file_path'] = self._file_path(row['file_sha256'], self.download_dir)
@@ -775,6 +767,5 @@ class ManifestDownloadContext(DownloadContext):
     def _parse_manifest(cls, manifest):
         with open(manifest) as f:
             # unicode_literals is on so all strings are unicode. CSV wants a str so we need to jump through a hoop.
-            delimiter = cls.MANIFEST_DELIMITER
-            reader = csv.DictReader(f, delimiter=delimiter, quoting=csv.QUOTE_NONE)
+            reader = csv.DictReader(f, delimiter='\t', quoting=csv.QUOTE_NONE)
             return reader.fieldnames, list(reader)

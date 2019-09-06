@@ -48,10 +48,6 @@ stages:
     - (Get-Content .\hca\default_config.json).replace('dss.data.humancellatlas.org',"dss.${DSS_TEST_STAGE}.data.humancellatlas.org")| Set-Content  .\hca\default_config.json
   script:
     - make test-win
-test-2.7:
-  extends: .linux-test-base
-  variables:
-    PYTHON_VERSION: "2.7"
 
 test-3.5:
   extends: .linux-test-base

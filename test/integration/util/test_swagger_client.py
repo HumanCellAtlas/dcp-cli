@@ -1,28 +1,20 @@
 #!/usr/bin/env python
 # coding: utf-8
-
 import argparse
 import json
 import os
 import sys
 import unittest
-
 import requests
+from unittest import mock
+from unittest.mock import mock_open
 
 pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))  # noqa
 sys.path.insert(0, pkg_root)  # noqa
 
 import hca.util
 from hca import HCAConfig
-from hca.util.compat import USING_PYTHON2
 from test import TEST_DIR
-
-if USING_PYTHON2:
-    import mock
-    from mock import mock_open
-else:
-    from unittest import mock
-    from unittest.mock import mock_open
 
 
 class TestSwaggerClient(unittest.TestCase):
@@ -38,7 +30,6 @@ class TestSwaggerClient(unittest.TestCase):
     swagger_url = "test_swagger_url"
     swagger_filename = "test_swagger.json"
     test_swagger_json = None
-    open_fn_name = "__builtin__.open" if USING_PYTHON2 else "builtins.open"
 
     parser = argparse.ArgumentParser(description="Test ArgumentParser")
     subparsers = parser.add_subparsers()
@@ -78,7 +69,7 @@ class TestSwaggerClient(unittest.TestCase):
                         cls.test_swagger_json['basePath'])
 
         with mock.patch('requests.Session.get') as mock_get, \
-                mock.patch(cls.open_fn_name, mock_open()), \
+                mock.patch("builtins.open", mock_open()), \
                 mock.patch('hca.util.fs.atomic_write'), \
                 mock.patch('hca.dss.SwaggerClient.load_swagger_json') as mock_load_swagger_json:
             # init SwaggerClient with test swagger JSON file

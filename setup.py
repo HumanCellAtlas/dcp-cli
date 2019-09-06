@@ -16,12 +16,6 @@ setup(
     long_description=open('README.rst').read(),
     install_requires=install_requires,
     extras_require={
-        ':python_version == "2.7"': [
-            'enum34 >= 1.1.6, < 2',
-            'funcsigs >= 1.0.2, < 2',
-            'futures >= 3.2.0, < 4',
-            'pyopenssl >= 17.5.0'
-        ],
         ':python_version < "3.5"': [
             'typing >= 3.6.2, < 4',
             'scandir >= 1.9.0, < 2'
@@ -44,7 +38,6 @@ setup(
         'Operating System :: MacOS :: MacOS X',
         'Operating System :: POSIX',
         'Programming Language :: Python',
-        'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',

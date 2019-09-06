@@ -1,16 +1,11 @@
-import sys
 from threading import Thread
 from . import DEFAULT_THREAD_COUNT
 
-USING_PYTHON2 = True if sys.version_info < (3, 0) else False
-if USING_PYTHON2:
-    from Queue import Queue
-else:
-    from queue import Queue
+from queue import Queue
 
 
 class Worker(Thread):
-    """ Thread executing tasks from a given tasks queue """
+    """ Thread executing tasks from a given tasks queue."""
     def __init__(self, thread_pool):
         Thread.__init__(self)
         self.thread_pool = thread_pool
