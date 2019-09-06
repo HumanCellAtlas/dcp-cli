@@ -79,7 +79,7 @@ class DSSClient(SwaggerClient):
     Client for the Data Storage Service API.
     """
     UPLOAD_BACKOFF_FACTOR = 1.618
-    threads = DEFAULT_THREAD_COUNT
+    threads = 3
 
     def __init__(self, *args, **kwargs):
         super(DSSClient, self).__init__(*args, **kwargs)
@@ -503,7 +503,8 @@ class DownloadContext(object):
                                  manifest_dss_file)
         self.runner.submit(manifest_dss_file, task)
 
-        for file_ in manifest['bundle']['files']:
+        bundle_file_list = sorted(manifest['bundle']['files'], key=lambda f: f['size'])
+        for file_ in bundle_file_list:
             dss_file = DSSFile.from_dss_bundle_response(file_, self.replica)
             filename = file_.get("name", dss_file.uuid)
             walking_dir = bundle_dir
@@ -516,9 +517,28 @@ class DownloadContext(object):
             if intermediate_path:
                 walking_dir = os.path.join(walking_dir, intermediate_path)
 
-            logger.info("File %s: Retrieving...", filename)
             file_path = os.path.join(walking_dir, filename_base)
-            task = functools.partial(self._download_and_link_to_filestore, dss_file, file_path)
+            task = functools.partial(self._try_file_checkout,
+                                     dispatch_task=self._download_and_link_to_filestore,
+                                     dss_file=dss_file,
+                                     file_path=file_path)
+            self.runner.submit(dss_file, task)
+
+    def _try_file_checkout(self, dispatch_task, dss_file, **kwargs):
+        kwargs['dss_file'] = dss_file
+        logger.info('Getting checkout status for file: %s', dss_file.name)
+        response = self.dss_client.get_file._request(
+            dict(uuid=dss_file.uuid, version=dss_file.version, replica=dss_file.replica),
+            retries=False, stream=True)
+        logger.debug('status_code %s for file %s', response.status_code, dss_file.name)
+        if response.status_code == 301:
+            logger.info('file: %s still checking out...', dss_file.name)
+            kwargs['dispatch_task'] = dispatch_task
+            task = functools.partial(self._try_file_checkout, **kwargs)
+            self.runner.submit(dss_file, task)
+        elif response.status_code == 302:
+            logger.info('file: %s ready to download', dss_file.name)
+            task = functools.partial(dispatch_task, **kwargs)
             self.runner.submit(dss_file, task)
 
     def _download_bundle_manifest(self, manifest_bytes, bundle_dir, dss_file):
@@ -715,7 +735,9 @@ class ManifestDownloadContext(DownloadContext):
         with self.runner:
             for row in rows:
                 dss_file = DSSFile.from_manifest_row(row, self.replica)
-                self.runner.submit(dss_file, self._download_to_filestore, dss_file)
+                self.runner.submit(dss_file, self._try_file_checkout,
+                                   dispatch_task=self._download_to_filestore,
+                                   dss_file=dss_file)
         self._write_output_manifest()
 
     def download_manifest_bundle_layout(self, no_metadata, no_data):

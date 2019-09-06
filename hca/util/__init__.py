@@ -130,7 +130,7 @@ class _ClientMethodFactory(object):
         self.__dict__.update(locals())
         self._context_manager_response = None
 
-    def _request(self, req_args, url=None, stream=False, headers=None):
+    def _request(self, req_args, url=None, stream=False, headers=None, retries=None):
         supplied_path_params = [p for p in req_args if p in self.path_parameters and req_args[p] is not None]
         if url is None:
             url = self.client.host + self.client.http_paths[self.method_name][frozenset(supplied_path_params)]
@@ -147,8 +147,11 @@ class _ClientMethodFactory(object):
         # TODO: (akislyuk) if using service account credentials, use manual refresh here
         json_input = body if self.body_props else None
         headers = headers if headers else {}
-        res = session.request(self.http_method, url, params=query, json=json_input, stream=stream,
-                              headers=headers, timeout=self.client.timeout_policy)
+        kwargs = {'json': json_input, 'params': query, 'stream': stream, 'headers': headers,
+                  'timeout': self.client.timeout_policy}
+        if retries is not None:
+            kwargs['allow_redirects'] = retries
+        res = session.request(self.http_method, url, **kwargs)
         if res.status_code >= 400:
             raise SwaggerAPIException(response=res)
         return res
