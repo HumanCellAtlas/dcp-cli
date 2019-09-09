@@ -7,7 +7,6 @@ import unittest
 from argparse import Namespace
 
 import responses
-import six
 
 pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..', '..'))  # noqa
 sys.path.insert(0, pkg_root)  # noqa
@@ -30,9 +29,9 @@ class TestUploadCliCredsCommand(UploadTestCase):
 
         non_blank_lines = [s for s in stdout.captured().split("\n") if s]
         self.assertEqual(3, len(non_blank_lines))
-        six.assertRegex(self, stdout.captured(), "AWS_ACCESS_KEY_ID=")
-        six.assertRegex(self, stdout.captured(), "AWS_SECRET_ACCESS_KEY=")
-        six.assertRegex(self, stdout.captured(), "AWS_SESSION_TOKEN=")
+        self.assertRegex(stdout.captured(), "AWS_ACCESS_KEY_ID=")
+        self.assertRegex(stdout.captured(), "AWS_SECRET_ACCESS_KEY=")
+        self.assertRegex(stdout.captured(), "AWS_SESSION_TOKEN=")
 
 
 if __name__ == "__main__":

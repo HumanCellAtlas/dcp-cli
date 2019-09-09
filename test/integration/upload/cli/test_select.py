@@ -7,8 +7,6 @@ import uuid
 import unittest
 from argparse import Namespace
 
-import six
-
 pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", ".."))  # noqa
 sys.path.insert(0, pkg_root)  # noqa
 
@@ -63,7 +61,7 @@ class TestUploadCliSelectCommand(UploadTestCase):
             args = Namespace(uri_or_alias=new_area_uri)
             SelectCommand(args)
 
-        six.assertRegex(self, stdout.captured(), "alias \"{}\"".format('deaf'))
+        self.assertRegex(stdout.captured(), "alias \"{}\"".format('deaf'))
 
     def test_when_given_an_alias_that_matches_no_areas_it_prints_a_warning(self):
 
@@ -75,7 +73,7 @@ class TestUploadCliSelectCommand(UploadTestCase):
             args = Namespace(uri_or_alias='aaa')
             SelectCommand(args)
 
-        six.assertRegex(self, stdout.captured(), "don't recognize area")
+        self.assertRegex(stdout.captured(), "don't recognize area")
 
     def test_when_given_an_alias_that_matches_more_than_one_area_it_prints_a_warning(self):
         config = hca.get_config()
@@ -91,7 +89,7 @@ class TestUploadCliSelectCommand(UploadTestCase):
             args = Namespace(uri_or_alias='dea')
             SelectCommand(args)
 
-        six.assertRegex(self, stdout.captured(), "matches more than one")
+        self.assertRegex(stdout.captured(), "matches more than one")
 
     def test_when_given_an_alias_that_matches_one_area_it_selects_it(self):
         a_uuid = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'

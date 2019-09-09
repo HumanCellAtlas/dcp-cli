@@ -4,12 +4,10 @@ import logging
 import os
 import platform
 import shutil
-import sys
 import tempfile
 import threading
 import unittest
 import uuid
-import six
 
 from mock import patch
 from hca.util.compat import walk
@@ -82,9 +80,9 @@ def _fake_do_download_file_with_barrier(*args, **kwargs):
     """
     barrier.wait()
     fh = args[1]
-    fh.write(six.b('Here we write some stuff so that the fake download takes some time. '
-                   'This helps ensure that multiple threads are writing at once and thus '
-                   'allows us to test for race conditions.'))
+    fh.write(b'Here we write some stuff so that the fake download takes some time. '
+             b'This helps ensure that multiple threads are writing at once and thus '
+             b'allows us to test for race conditions.')
     return 'FAKEhash'
 
 
