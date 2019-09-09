@@ -22,7 +22,7 @@ class TestUploadCliForgetCommand(UploadTestCase):
         self.assertIn(area.uuid, UploadConfig().areas)
         self.assertEqual(area.uuid, UploadConfig().current_area)
 
-        with CapturingIO('stdout') as stdout:
+        with CapturingIO('stdout'):
             args = Namespace(uuid_or_alias=area.uuid)
             ForgetCommand(args)
 
