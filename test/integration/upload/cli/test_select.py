@@ -24,7 +24,7 @@ class TestUploadCliSelectCommand(UploadTestCase):
         self._uri = "s3://org-humancellatlas-upload-test/{}/".format(self._area_uuid)
 
     def test_when_given_an_unrecognized_urn_it_stores_it_in_upload_area_list_and_sets_it_as_current_area(self):
-        with CapturingIO('stdout') as stdout:
+        with CapturingIO('stdout'):
             args = Namespace(uri_or_alias=self._uri)
             SelectCommand(args)
 
@@ -35,7 +35,7 @@ class TestUploadCliSelectCommand(UploadTestCase):
 
     def test_when_given_an_unrecognized_uri_without_slash_it_sets_it_as_current_area(self):
         uri_without_slash = "s3://org-humancellatlas-upload-test/{}".format(self._area_uuid)
-        with CapturingIO('stdout') as stdout:
+        with CapturingIO('stdout'):
             args = Namespace(uri_or_alias=uri_without_slash)
             SelectCommand(args)
 
@@ -103,7 +103,7 @@ class TestUploadCliSelectCommand(UploadTestCase):
         }
         config.save()
 
-        with CapturingIO('stdout') as stdout:
+        with CapturingIO('stdout'):
             args = Namespace(uri_or_alias='bbb')
             SelectCommand(args)
 
