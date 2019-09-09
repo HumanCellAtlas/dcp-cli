@@ -7,7 +7,6 @@ import sys
 import unittest
 
 import responses
-import six
 
 pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", ".."))  # noqa
 sys.path.insert(0, pkg_root)  # noqa
@@ -57,9 +56,9 @@ class TestUploadListAreaCommand(UploadTestCase):
         with CapturingIO('stdout') as stdout:
             ListAreaCommand(Namespace(long=True))
 
-        six.assertRegex(self, stdout.captured(), "size\s+123")
-        six.assertRegex(self, stdout.captured(), "Content-Type\s+binary/octet-stream; dcp-type=data")
-        six.assertRegex(self, stdout.captured(), "SHA1\s+shaaa")
+        self.assertRegex(stdout.captured(), "size\s+123")
+        self.assertRegex(stdout.captured(), "Content-Type\s+binary/octet-stream; dcp-type=data")
+        self.assertRegex(stdout.captured(), "SHA1\s+shaaa")
 
 
 if __name__ == "__main__":

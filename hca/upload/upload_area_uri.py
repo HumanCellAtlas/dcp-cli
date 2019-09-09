@@ -1,4 +1,5 @@
-from six.moves.urllib.parse import urlparse
+# -*- coding: utf-8 -*-
+import urllib.parse
 
 
 class UploadAreaURI:
@@ -11,7 +12,7 @@ class UploadAreaURI:
 
     def __init__(self, uri):
         self.uri = uri
-        self.parsed = urlparse(self.uri)
+        self.parsed = urllib.parse.urlparse(self.uri)
 
     def __str__(self):
         return self.uri
