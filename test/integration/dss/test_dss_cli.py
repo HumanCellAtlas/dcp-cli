@@ -4,7 +4,6 @@ import contextlib
 import filecmp
 import json
 import os
-import pty
 import sys
 import unittest
 import uuid
@@ -131,6 +130,7 @@ class TestDssCLI(unittest.TestCase):
     @unittest.skipIf(os.name is 'nt', 'No pty support on Windows')
     def test_upload_progress_bar_interactive(self):
         """Tests upload progress bar with a simulated interactive session"""
+        import pty  # Trying to import this on Windows will cause a ModuleNotFoundError
         dirpath = os.path.join(TEST_DIR, 'tutorial', 'data')  # arbitrary and small
         put_args = ['dss', 'upload', '--src-dir', dirpath, '--replica',
                     'aws', '--staging-bucket', 'org-humancellatlas-dss-cli-test']
