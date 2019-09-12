@@ -2,17 +2,24 @@
 API Examples (Open End-points)
 ==============================
 
-The HCA API ensures and provides a simple and open access to Human Cell Atlas data. This way, it allows researchers and
-curious users to be able to download repuitable data and use it to compute either locally on their own systems or
-in the cloud. 
+The HCA API ensures and provides a simple and open access to Human Cell Atlas data. This way, it
+allows researchers and curious users to be able to download reputable data and use it to compute
+either locally on their own systems or in the cloud.
 
-Compliant with python 3.5+
+Compliant with Python 3.5+.
 
 
 create_version()
 ------------------------
 
-Returns a timestamp in DSS_VERSION format (ie 1985-04-12T232050.520000Z) that can be used for versioning.    
+Returns a timestamp in DSS_VERSION format (e.g., ``1985-04-12T232050.520000Z``) that can be used for
+versioning.
+
+.. note::
+  A version is a timestamp in RFC3339 format that keeps track of the most recent iteration of a
+  bundle/file.
+
+  A bundle consists of many different data files.
 
 .. literalinclude:: ../test/tutorial/scripts/api/create_version_api.py
 
@@ -20,15 +27,16 @@ Returns a timestamp in DSS_VERSION format (ie 1985-04-12T232050.520000Z) that ca
 download()
 ------------------------
 
-Download a bundle to the local filesystem as a directory. By default, all data and metadata files 
-are downloaded to cache / filestore directory called '.hca'. 
+Download a bundle to the local filesystem as a directory. By default, all data and metadata files
+are downloaded to a cache/filestore directory called ``.hca``.
 
 .. note::
-  A version is a timestamp in RFC3339 format that keeps track of the most recent iteration of a bundle/file.
+  A version is a timestamp in RFC3339 format that keeps track of the most recent iteration of a
+  bundle/file.
 
   A bundle consists of many different data files.
 
-Example bundle (use get_bundle()):
+Example bundle (see ``get_bundle()`` method):
 ::
   {
     "bundle": {
@@ -84,21 +92,21 @@ Example bundle (use get_bundle()):
 download_manifest()
 ------------------------
 
-Files are downloaded to a cache / filestore directory called ‘.hca’. The directory is created in the current directory where download started and 
-a copy of the manifest then written to the directory.
+Files are downloaded to a cache/filestore directory called ``.hca``. This directory is created in
+the directory where the download was started. A copy of the manifest is written to the directory.
 
-Before running download_manifest(), create a .tsv (tab-separated-file) file and input details given from get_bundle() in the respective columns
-also separated by tabs.
+Before running ``download_manifest()``, create a .tsv (tab-separated variables) file and input the
+details given from the ``get_bundle()`` method into the respective columns, separated by tabs.
 
-The header row must declare the following columns: 
+The header row must declare the following columns:
 
-bundle_uuid - the UUID of the bundle containing the file in DSS. 
+bundle_uuid - the UUID of the bundle containing the file in DSS.
 
-bundle_version - the version of the bundle containing the file in DSS. 
+bundle_version - the version of the bundle containing the file in DSS.
 
-file_name - the name of the file as specified in the bundle. 
+file_name - the name of the file as specified in the bundle.
 
-file_uuid - the UUID of the file in the DSS. 
+file_uuid - the UUID of the file in the DSS.
 
 file_version - the version of the file.
 
@@ -112,9 +120,8 @@ file_size - the size of the file
 file_head()
 ------------------------
 
-Given a file UUID, return the metadata for the latest version of that file. 
-If the version is provided, that version’s metadata is returned instead. 
-The metadata is returned in the headers.
+Given a file UUID, return the metadata for the latest version of that file. If the version is
+provided, that version’s metadata is returned instead. The metadata is returned in the headers.
 
 .. literalinclude:: ../test/tutorial/scripts/api/get_file_head_api.py
 
@@ -122,7 +129,7 @@ The metadata is returned in the headers.
 get_bundle()
 ------------------------
 
-Given a bundle’s UUID and optionally a version, return the latest version of the bundle. 
+Given a bundle’s UUID and optionally a version, return the latest version of the bundle.
 Displays details about the bundle and each file’s info such as name, UUID, version, etc.
 
 Example bundle:
@@ -182,9 +189,9 @@ get_bundles_checkout()
 ------------------------
 
 .. note:
-    How to find the checkout-job-id? Run post-bundles-checkout in order to get checkout-job-id.
+    To get the ``checkout-job-id``, run ``post_bundles_checkout()``.
 
-Check the status and location of a checkout request.    
+Check the status and location of a checkout request.
 
 Example output:
 ::
@@ -196,7 +203,7 @@ Example output:
 
 .. literalinclude:: ../test/tutorial/scripts/api/get_bundles_checkout_api.py
 
-get_file() 
+get_file()
 ------------------------
 
 Retrieves a file given a UUID, optionally a version, and displays the details of the file.
@@ -233,27 +240,29 @@ Configure and save authentication credentials.
 logout()
 ------------------------
 
-Clear authentication credentials previously configured with login.    
+Clear authentication credentials previously configured with login.
 
 .. literalinclude:: ../test/tutorial/scripts/api/logout_api.py
 
 post_bundles_checkout()
 ------------------------
 
-Returns a checkout-job-id (ie 4de1c603-fa8b-4c07-af37-06159e6951e0). This checkout-job-id can then
-be used for get_bundles_checkout().
+Returns a ``checkout-job-id`` (e.g., ``4de1c603-fa8b-4c07-af37-06159e6951e0``). This
+``checkout-job-id`` can then be used with the ``get_bundles_checkout()`` method.
 
 .. literalinclude:: ../test/tutorial/scripts/api/post_bundles_checkout_api.py
 
 post_search()
 ------------------------
 
-Find bundles by listing bundle_fqid, which is the bundles UUID and version separated by a dot(.), 
-and the bundle_url. 
+Find bundles by their ``bundle_fqid``, which is the bundle's UUID and version separated by a dot(.)
+(e.g., ``fff807ba-bc98-4247-a560-49fb90c9675c.2019-08-01T200147.111027Z`` is a bundle with the UUID
+``fff807ba-bc98-4247-a560-49fb90c9675c`` and the version number ``2019-08-01T200147.111027Z``).
+This method returns an fqid and URL for each matching bundle.
 
 .. note::
     "bundle_fqid": "fff807ba-bc98-4247-a560-49fb90c9675c.2019-08-01T200147.111027Z"
-    
+
     Before the dot (.) is the UUID, a string that defines the unique bundle,
     and the version follows.
 
@@ -273,15 +282,15 @@ Example output:
 
 .. literalinclude:: ../test/tutorial/scripts/api/post_search_api.py
 
-(put/delete/get)_subscription() and get_subscriptions()
+``put_subscription()``, ``delete_subscription()``, ``get_subscription()``, ``get_subscriptions()``: 
 
-get-subscritpions: Gets a list of users subscription.
+get-subscriptions: Gets a list of users subscription.
 
 put-subscription: Create a collection for the user given a replica and a call-back url.
 
-get-subscription: Given the UUID of the subscription, show a subscription that the user created. 
+get-subscription: Given the UUID of the subscription, show a subscription that the user created.
 
-delete-subscription: Given a UUID and rpelica or the subscription, delete the subscription the user created. 
+delete-subscription: Given a UUID and rpelica or the subscription, delete the subscription the user created.
 
 .. literalinclude:: ../test/tutorial/scripts/api/put_delete_get_sub_api.py
 
