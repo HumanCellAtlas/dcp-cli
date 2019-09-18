@@ -122,6 +122,17 @@ class _ClientMethodFactory(object):
         self.__dict__.update(locals())
         self._context_manager_response = None
 
+    def _make_authenticated_request(self, body, headers, url, query, stream):
+        if "security" in self.method_data:
+            session = self.client.get_authenticated_session()
+        else:
+            session = self.client.get_session()
+        json_input = body if self.body_props else None
+        headers = headers if headers else {}
+        res = session.request(self.http_method, url, params=query, json=json_input, stream=stream,
+                              headers=headers, timeout=self.client.timeout_policy)
+        return res
+
     def _request(self, req_args, url=None, stream=False, headers=None):
         supplied_path_params = [p for p in req_args if p in self.path_parameters and req_args[p] is not None]
         if url is None:
@@ -131,16 +142,15 @@ class _ClientMethodFactory(object):
         query = {k: v for k, v in req_args.items()
                  if self.parameters.get(k, {}).get("in") == "query" and v is not None}
         body = {k: v for k, v in req_args.items() if k in self.body_props and v is not None}
-        if "security" in self.method_data:
-            session = self.client.get_authenticated_session()
-        else:
-            session = self.client.get_session()
+        res = self._make_authenticated_request(body, headers, url, query, stream)
 
-        # TODO: (akislyuk) if using service account credentials, use manual refresh here
-        json_input = body if self.body_props else None
-        headers = headers if headers else {}
-        res = session.request(self.http_method, url, params=query, json=json_input, stream=stream,
-                              headers=headers, timeout=self.client.timeout_policy)
+        keep_session_alive = True
+        while keep_session_alive:
+            res = self._make_authenticated_request(body, headers, url, query, stream)
+            # DSSException 401 is returned and the jwt token expiration is only preserved in the stack trace
+            if not ('jwt.exceptions.ExpiredSignatureError: Signature has expired' in res.json().get('stacktrace', '')):
+                keep_session_alive = False  # session exited without the token terminating
+
         if res.status_code >= 400:
             raise SwaggerAPIException(response=res)
         return res
@@ -427,30 +437,30 @@ class SwaggerClient(object):
         return signed_jwt, exp
 
     def get_authenticated_session(self):
-        if self._authenticated_session is None:
-            oauth2_client_data = self.application_secrets["installed"]
-            if 'GOOGLE_APPLICATION_CREDENTIALS' in os.environ:
-                token, expires_at = self._get_jwt_from_service_account_credentials()
-                # TODO: (akislyuk) figure out the right strategy for persisting the service account oauth2 token
-                self._authenticated_session = OAuth2Session(client_id=oauth2_client_data["client_id"],
-                                                            token=dict(access_token=token),
-                                                            **self._session_kwargs)
-            else:
-                if "oauth2_token" not in self.config:
-                    msg = ('Please configure {prog} authentication credentials using "{prog} login" '
-                           'or set the GOOGLE_APPLICATION_CREDENTIALS environment variable')
-                    raise Exception(msg.format(prog=self.__module__.replace(".", " ")))
-                self._authenticated_session = OAuth2Session(
-                    client_id=oauth2_client_data["client_id"],
-                    token=self.config.oauth2_token,
-                    auto_refresh_url=oauth2_client_data["token_uri"],
-                    auto_refresh_kwargs=dict(client_id=oauth2_client_data["client_id"],
-                                             client_secret=oauth2_client_data["client_secret"]),
-                    token_updater=self._save_auth_token_refresh_result,
-                    **self._session_kwargs
-                )
-            self._authenticated_session.headers.update({"User-Agent": self.__class__.__name__})
-            self._set_retry_policy(self._authenticated_session)
+        # if self._authenticated_session is None:
+        oauth2_client_data = self.application_secrets["installed"]
+        if 'GOOGLE_APPLICATION_CREDENTIALS' in os.environ:
+            token, expires_at = self._get_jwt_from_service_account_credentials()
+            # TODO: (akislyuk) figure out the right strategy for persisting the service account oauth2 token
+            self._authenticated_session = OAuth2Session(client_id=oauth2_client_data["client_id"],
+                                                        token=dict(access_token=token),
+                                                        **self._session_kwargs)
+        else:
+            if "oauth2_token" not in self.config:
+                msg = ('Please configure {prog} authentication credentials using "{prog} login" '
+                       'or set the GOOGLE_APPLICATION_CREDENTIALS environment variable')
+                raise Exception(msg.format(prog=self.__module__.replace(".", " ")))
+            self._authenticated_session = OAuth2Session(
+                client_id=oauth2_client_data["client_id"],
+                token=self.config.oauth2_token,
+                auto_refresh_url=oauth2_client_data["token_uri"],
+                auto_refresh_kwargs=dict(client_id=oauth2_client_data["client_id"],
+                                         client_secret=oauth2_client_data["client_secret"]),
+                token_updater=self._save_auth_token_refresh_result,
+                **self._session_kwargs
+            )
+        self._authenticated_session.headers.update({"User-Agent": self.__class__.__name__})
+        self._set_retry_policy(self._authenticated_session)
         return self._authenticated_session
 
     def _set_retry_policy(self, session):
