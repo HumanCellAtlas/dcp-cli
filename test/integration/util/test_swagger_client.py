@@ -48,7 +48,10 @@ class TestSwaggerClient(unittest.TestCase):
         "head_with_optional_param",
         "put_with_invalid_enum_param",
         "get_with_allOf_in_body_param",
-        "test_get_with_allOf_multiple_in_body_param"
+        "get_with_allOf_multiple_in_body_param",
+        "get_with_special_characters__in_path",
+        "get_with_header_parameter",
+        "get_with_request_body_application_json"
     ]
 
     @classmethod
@@ -91,8 +94,9 @@ class TestSwaggerClient(unittest.TestCase):
 
     def test_client_methods_exist(self):
         for method_name in self.generated_method_names:
-            self.assertTrue(hasattr(self.client.__class__, method_name) and
-                            callable(getattr(self.client.__class__, method_name)))
+            with self.subTest(method_name):
+                self.assertTrue(hasattr(self.client.__class__, method_name) and
+                                callable(getattr(self.client.__class__, method_name)))
 
     def test_get_with_path_query_params(self):
         http_method = "get"
@@ -400,6 +404,57 @@ class TestSwaggerClient(unittest.TestCase):
                 self.parser.parse_args(args=[command,
                                              '--query-param', query_param_invalid])
             self.assertEqual(e.exception.code, 2)
+
+    def test_get_special_characters_in_path(self):
+        self._test("/with/special_characters.-/in/path", "get")
+
+    def test_get_with_header_parameter(self):
+        self._test("/with/header/parameter",
+                   "get",
+                   headers={"some_header": "foo"},
+                   command_args=["--some-header", "foo"])
+
+    def test_get_with_request_body_application_json(self):
+        self._test("/with/request_body/not_application/json",
+                   "get",
+                   json={"foo": "bar"},
+                   command_args=["--foo", "bar"])
+
+    def _test(self,
+              path: str,
+              http_method: str,
+              json: dict = None,
+              stream: bool = False,
+              params: dict = None,
+              headers: dict = None,
+              timeout = mock.ANY,
+              command_args: list = None):
+
+        params = params or {}
+        headers = headers or {}
+        command_args = command_args or []
+
+        command = self.get_command(http_method, path)
+        url = self.url_base + path
+
+        with mock.patch('requests.Session.request') as mock_request, \
+                mock.patch('hca.util._ClientMethodFactory._consume_response') as mock_consume_response:
+            mock_request.return_value = self.dummy_response
+
+            args = self.parser.parse_args([command] + command_args)
+            args.entry_point(args)
+            mock_consume_response.assert_called_once_with(mock.ANY)
+            mock_request.assert_called_once_with(http_method,
+                                                 url,
+                                                 json=json,
+                                                 stream=stream,
+                                                 params=params,
+                                                 headers=headers,
+                                                 timeout=timeout)
+
+    @staticmethod
+    def get_command(http_method, path):
+        return f"{http_method}{path}".replace('/', '-').replace('_', '-').replace('.', '')
 
 
 if __name__ == "__main__":
