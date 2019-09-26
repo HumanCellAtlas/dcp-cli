@@ -1,8 +1,5 @@
 #!/usr/bin/env python
 # coding: utf-8
-
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import contextlib
 import filecmp
 import json
@@ -11,7 +8,6 @@ import sys
 import unittest
 import uuid
 import tempfile
-import shutil
 
 pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))  # noqa
 sys.path.insert(0, pkg_root)  # noqa
@@ -20,12 +16,7 @@ import hca
 import hca.cli
 import hca.dss
 import hca.util.exceptions
-from hca.util.compat import USING_PYTHON2
 from test import CapturingIO, reset_tweak_changes, TEST_DIR
-
-if USING_PYTHON2:
-    import backports.tempfile
-    tempfile = backports.tempfile
 
 
 class TestDssCLI(unittest.TestCase):
@@ -123,6 +114,64 @@ class TestDssCLI(unittest.TestCase):
         with CapturingIO('stdout'):
             hca.cli.main(args=base_args)
 
+    def test_upload_progress_bar(self):
+        dirpath = os.path.join(TEST_DIR, 'tutorial', 'data')  # arbitrary and small
+        put_args = ['dss', 'upload', '--src-dir', dirpath, '--replica',
+                    'aws', '--staging-bucket', 'org-humancellatlas-dss-cli-test']
+
+        with self.subTest("Suppress progress bar if not interactive"):
+            with CapturingIO('stdout') as stdout:
+                hca.cli.main(args=put_args)
+            # If using CapturingIO, `hca dss upload` should know it's not being
+            # invoked interactively and as such not show a progress bar. Which
+            # means that stdout should parse nicely as json
+            self.assertTrue(json.loads(stdout.captured()))
+
+    @unittest.skipIf(os.name is 'nt', 'No pty support on Windows')
+    def test_upload_progress_bar_interactive(self):
+        """Tests upload progress bar with a simulated interactive session"""
+        import pty  # Trying to import this on Windows will cause a ModuleNotFoundError
+        dirpath = os.path.join(TEST_DIR, 'tutorial', 'data')  # arbitrary and small
+        put_args = ['dss', 'upload', '--src-dir', dirpath, '--replica',
+                    'aws', '--staging-bucket', 'org-humancellatlas-dss-cli-test']
+
+        # In an interactive session, we should see a progress bar if we
+        # don't pass `--no-progress`.
+        with self.subTest("Show progress bar if interactive"):
+            child_pid, fd = pty.fork()
+            if child_pid == 0:
+                hca.cli.main(args=put_args)
+                os._exit(0)
+            output = self._get_child_output(child_pid, fd)
+            self.assertTrue('Uploading to aws' in output, output)
+
+        with self.subTest("Don't show progress bar if interactive and not logging INFO"):
+            child_pid, fd = pty.fork()
+            if child_pid == 0:
+                hca.cli.main(args=['--log-level', 'WARNING'] + put_args)
+                os._exit(0)
+            output = self._get_child_output(child_pid, fd)
+            self.assertFalse('Uploading to aws' in output, output)
+
+        with self.subTest("Don't show progress bar if interactive and --no-progress"):
+            child_pid, fd = pty.fork()
+            if child_pid == 0:
+                hca.cli.main(args=put_args + ['--no-progress'])
+                os._exit(0)
+            output = self._get_child_output(child_pid, fd)
+            self.assertFalse('Uploading to aws' in output, output)
+
+    @staticmethod
+    def _get_child_output(child_pid, fd):
+        output = ''
+        while not os.waitpid(child_pid, os.WNOHANG)[0]:
+            try:
+                output += os.read(fd, 128).decode()
+            except OSError:
+                break
+        os.close(fd)
+        return output
+
     @staticmethod
     @contextlib.contextmanager
     def _put_test_bdl(dirpath=os.path.join(TEST_DIR, 'res', 'bundle'),
@@ -139,8 +188,8 @@ class TestDssCLI(unittest.TestCase):
         :rtype: dict
         :returns: upload response object
         """
-        put_args  = ['dss', 'upload', '--src-dir', dirpath, '--replica',
-                     replica, '--staging-bucket', staging_bucket]
+        put_args = ['dss', 'upload', '--src-dir', dirpath, '--replica',
+                    replica, '--staging-bucket', staging_bucket, '--no-progress']
         with CapturingIO('stdout') as stdout:
             hca.cli.main(args=put_args)
         rv = json.loads(stdout.captured())
@@ -177,8 +226,8 @@ class TestDssCLI(unittest.TestCase):
                 '--name', 'collection_test:%s' % bdl['bundle_uuid']
             ]
             with self._put_test_col(put_col_args) as col, \
-                 tempfile.TemporaryDirectory() as t1, \
-                 tempfile.TemporaryDirectory() as t2:
+                    tempfile.TemporaryDirectory() as t1, \
+                    tempfile.TemporaryDirectory() as t2:
                 dl_col_args = ['dss', 'download-collection', '--uuid', col['uuid'],
                                '--replica', 'aws', '--download-dir', t1]
                 hca.cli.main(args=dl_col_args)

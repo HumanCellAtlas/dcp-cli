@@ -5,8 +5,6 @@ import boto3
 
 from hca.upload import UploadService
 from .common import UploadCLICommand
-from ..upload_area import UploadArea
-from ..upload_config import UploadConfig
 
 
 class UploadCommand(UploadCLICommand):

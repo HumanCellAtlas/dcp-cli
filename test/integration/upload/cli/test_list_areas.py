@@ -6,8 +6,6 @@ import sys
 import unittest
 from argparse import Namespace
 
-import six
-
 pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..', '..'))  # noqa
 sys.path.insert(0, pkg_root)  # noqa
 
@@ -34,8 +32,8 @@ class TestUploadCliListAreasCommand(unittest.TestCase):
         with CapturingIO('stdout') as stdout:
             ListAreasCommand(Namespace())
 
-        six.assertRegex(self, stdout.captured(), "%s <- selected" % a_uuid)
-        six.assertRegex(self, stdout.captured(), b_uuid)
+        self.assertRegex(stdout.captured(), "%s <- selected" % a_uuid)
+        self.assertRegex(stdout.captured(), b_uuid)
 
 
 if __name__ == "__main__":

@@ -1,6 +1,10 @@
-import os, logging
+# -*- coding: utf-8 -*-
+import logging
+import os
 
+import tqdm
 from tweak import Config as _Config
+
 
 class HCAConfig(_Config):
     default_config_file = os.path.join(os.path.dirname(__file__), "default_config.json")
@@ -18,11 +22,22 @@ class HCAConfig(_Config):
 
 
 _config = None
+
+
 def get_config():
     global _config
     if _config is None:
         _config = HCAConfig()
     return _config
+
+
+class ProgressBarStreamHandler(object):
+    """
+    Stream handler that allows for logging with a :mod:`tqdm` progress bar.
+    """
+    @staticmethod
+    def write(msg):
+        tqdm.tqdm.write(msg, end='')
 
 
 logger = logging.getLogger("hca")

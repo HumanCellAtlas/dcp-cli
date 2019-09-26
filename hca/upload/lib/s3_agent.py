@@ -131,11 +131,10 @@ class S3Agent:
         """ Returns true if the key already exists in the current bucket and the clientside checksum matches the
         file's checksums, and false otherwise."""
         try:
-            obj = self.target_s3.meta.client.head_object(Bucket=bucket, Key=key)
-            if obj and obj.containsKey('Metadata'):
-                if obj['Metadata'] == checksums:
-                    return True
+            obj = self.target_s3.meta.client.head_object(Bucket=bucket, Key=key) or {}
         except ClientError:
             # An exception from calling `head_object` indicates that no file with the specified name could be found
             # in the specified bucket.
             return False
+        if obj.get('Metadata') == checksums:
+            return True

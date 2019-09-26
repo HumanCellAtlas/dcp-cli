@@ -80,9 +80,6 @@ client. Subclasses can add more commands by adding them to the
 ``special_cli_command`` in the example above.
 
 """
-
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import os
 import multiprocessing
 import types
@@ -94,24 +91,19 @@ import base64
 import argparse
 import time
 import jwt
-
-try:
-    from inspect import signature, Signature, Parameter
-except ImportError:
-    from funcsigs import signature, Signature, Parameter
-
 import requests
 
+from inspect import signature, Parameter
 from requests.adapters import HTTPAdapter, DEFAULT_POOLSIZE
 from requests_oauthlib import OAuth2Session
 from urllib3.util import retry, timeout
+from urllib.parse import urljoin
 from jsonpointer import resolve_pointer
 from threading import Lock
 from argparse import RawTextHelpFormatter
 from dcplib.networking import Session
 
 from .. import get_config, logger
-from .compat import USING_PYTHON2, urljoin
 from .exceptions import SwaggerAPIException, SwaggerClientInternalError
 from ._docs import _pagination_docstring, _streaming_docstring, _md2rst, _parse_docstring
 from .fs_helper import FSHelper as fs
@@ -130,39 +122,6 @@ class _ClientMethodFactory(object):
         self.__dict__.update(locals())
         self._context_manager_response = None
 
-    def request_with_retries_on_post_search(self, session, url, query, json_input, stream, headers):
-        """
-        Submit a request and retry POST search requests specifically.
-
-        We don't currently retry on POST requests, and this is intended as a temporary fix until
-        the swagger is updated and changes applied to prod.  In the meantime, this function will add
-        retries specifically for POST search (and any other POST requests will not be retried).
-        """
-        # TODO: Revert this PR as soon as the appropriate swagger definitions have percolated up
-        # to prod and merged; see https://github.com/HumanCellAtlas/data-store/pull/1961
-        status_code = 500
-        if '/v1/search' in url:
-            retry_count = 10
-        else:
-            retry_count = 1
-        while status_code in (500, 502, 503, 504) and retry_count > 0:
-            try:
-                retry_count -= 1
-                res = session.request(self.http_method,
-                                      url,
-                                      params=query,
-                                      json=json_input,
-                                      stream=stream,
-                                      headers=headers,
-                                      timeout=self.client.timeout_policy)
-                status_code = res.status_code
-            except SwaggerAPIException:
-                if retry_count > 0:
-                    pass
-                else:
-                    raise
-        return res
-
     def _request(self, req_args, url=None, stream=False, headers=None):
         supplied_path_params = [p for p in req_args if p in self.path_parameters and req_args[p] is not None]
         if url is None:
@@ -180,7 +139,8 @@ class _ClientMethodFactory(object):
         # TODO: (akislyuk) if using service account credentials, use manual refresh here
         json_input = body if self.body_props else None
         headers = headers if headers else {}
-        res = self.request_with_retries_on_post_search(session, url, query, json_input, stream, headers)
+        res = session.request(self.http_method, url, params=query, json=json_input, stream=stream,
+                              headers=headers, timeout=self.client.timeout_policy)
         if res.status_code >= 400:
             raise SwaggerAPIException(response=res)
         return res
@@ -276,12 +236,9 @@ class SwaggerClient(object):
         self._session_kwargs = session_kwargs
         self._swagger_spec = None
 
-        if USING_PYTHON2:
-            self.__doc__ = _md2rst(self.swagger_spec["info"]["description"])
-        else:
-            self.__class__.__doc__ = _md2rst(self.swagger_spec["info"]["description"])
+        self.__class__.__doc__ = _md2rst(self.swagger_spec["info"]["description"])
         self.methods = {}
-        self.commands = [self.login, self.logout, self.refresh_swagger]
+        self.commands = [self.login, self.logout]
         self.http_paths = collections.defaultdict(dict)
         if "openapi" in self.swagger_spec:
             server = self.swagger_spec["servers"][0]
@@ -346,9 +303,9 @@ class SwaggerClient(object):
         swagger_filename = os.path.join(self.config.user_config_dir, swagger_filename)
         return swagger_filename
 
-    def refresh_swagger(self):
+    def clear_cache(self):
         """
-        Manually refresh the swagger document. This can help resolve errors communicate with the API.
+        Clear the cached API definitions for a component. This can help resolve errors communicating with the API.
         """
         try:
             os.remove(self._get_swagger_filename(self.swagger_url))
@@ -508,18 +465,25 @@ class SwaggerClient(object):
     def _process_method_args(self, parameters, body_json_schema):
         body_props = {}
         method_args = collections.OrderedDict()
-        for prop_name, prop_data in body_json_schema["properties"].items():
-            enum_values = prop_data.get("enum")
-            type_ = prop_data.get("type") if enum_values is None else 'string'
-            anno = self._type_map[type_]
-            if prop_name not in body_json_schema.get("required", []):
-                anno = typing.Optional[anno]
-            param = Parameter(prop_name, Parameter.POSITIONAL_OR_KEYWORD, default=prop_data.get("default"),
-                              annotation=anno)
-            method_args[prop_name] = dict(param=param, doc=prop_data.get("description"),
-                                          choices=enum_values,
-                                          required=prop_name in body_json_schema.get("required", []))
-            body_props[prop_name] = body_json_schema
+
+        def _parse_properties(properties, schema):
+            for prop_name, prop_data in properties.items():
+                enum_values = prop_data.get("enum")
+                type_ = prop_data.get("type") if enum_values is None else 'string'
+                anno = self._type_map[type_]
+                if prop_name not in body_json_schema.get("required", []):
+                    anno = typing.Optional[anno]
+                param = Parameter(prop_name, Parameter.POSITIONAL_OR_KEYWORD, default=prop_data.get("default"),
+                                  annotation=anno)
+                method_args.setdefault(prop_name, {}).update(dict(param=param, doc=prop_data.get("description"),
+                                                                  choices=enum_values,
+                                                                  required=prop_name in body_json_schema.get("required", [])))
+                body_props[prop_name] = _merge_dict(schema, body_props.get('prop_name', {}))
+
+        if body_json_schema.get('properties', {}):
+            _parse_properties(body_json_schema["properties"], body_json_schema)
+        for schema in body_json_schema.get('allOf', []):
+            _parse_properties(schema.get('properties', {}), schema)
 
         for parameter in parameters.values():
             annotation = str if parameter.get("required") else typing.Optional[str]
@@ -653,3 +617,14 @@ class SwaggerClient(object):
                                                help=method_args['params'].get(param_name, None),
                                                **params)
             command_subparser.set_defaults(entry_point=self._command_arg_forwarder_factory(command, sig))
+
+
+def _merge_dict(source, destination):
+    """Recursive dict merge"""
+    for key, value in source.items():
+        if isinstance(value, dict):
+            node = destination.setdefault(key, {})
+            _merge_dict(value, node)
+        else:
+            destination[key] = value
+    return destination

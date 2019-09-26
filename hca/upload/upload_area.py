@@ -124,18 +124,17 @@ class UploadArea:
                           report_progress=report_progress,
                           sync=sync)
         pool.wait_for_completion()
-        if report_progress:
-            number_of_errors = len(self.s3agent.failed_uploads)
-            if number_of_errors == 0:
-                print(
-                    "Completed upload of %d files to upload area %s\n" %
-                    (self.s3agent.file_upload_completed_count, self.uuid))
-            else:
-                error = "\nThe following files failed:"
-                for k, v in self.s3agent.failed_uploads.items():
-                    error += "\n%s: [Exception] %s" % (k, v)
-                error += "\nPlease retry or contact an hca administrator at data-help@humancellatlas.org for help.\n"
-                raise UploadException(error)
+        number_of_errors = len(self.s3agent.failed_uploads)
+        if report_progress and number_of_errors == 0:
+            print(
+                "Completed upload of %d files to upload area %s\n" %
+                (self.s3agent.file_upload_completed_count, self.uuid))
+        elif number_of_errors > 0:
+            error = "\nThe following files failed:"
+            for k, v in self.s3agent.failed_uploads.items():
+                error += "\n%s: [Exception] %s" % (k, v)
+            error += "\nPlease retry or contact an hca administrator at data-help@humancellatlas.org for help.\n"
+            raise UploadException(error)
 
     def validate_files(self, file_list, validator_image, original_validation_id="", environment={}):
         """

@@ -1,27 +1,20 @@
 #!/usr/bin/env python
 # coding: utf-8
-
 import argparse
 import json
 import os
-import requests
 import sys
 import unittest
+import requests
+from unittest import mock
+from unittest.mock import mock_open
 
 pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))  # noqa
 sys.path.insert(0, pkg_root)  # noqa
 
 import hca.util
 from hca import HCAConfig
-from hca.util.compat import USING_PYTHON2
 from test import TEST_DIR
-
-if USING_PYTHON2:
-    import mock
-    from mock import mock_open
-else:
-    from unittest import mock
-    from unittest.mock import mock_open
 
 
 class TestSwaggerClient(unittest.TestCase):
@@ -37,7 +30,6 @@ class TestSwaggerClient(unittest.TestCase):
     swagger_url = "test_swagger_url"
     swagger_filename = "test_swagger.json"
     test_swagger_json = None
-    open_fn_name = "__builtin__.open" if USING_PYTHON2 else "builtins.open"
 
     parser = argparse.ArgumentParser(description="Test ArgumentParser")
     subparsers = parser.add_subparsers()
@@ -54,7 +46,9 @@ class TestSwaggerClient(unittest.TestCase):
         "post_with_list_in_body_param",
         "delete_with_missing_required_param",
         "head_with_optional_param",
-        "put_with_invalid_enum_param"
+        "put_with_invalid_enum_param",
+        "get_with_allOf_in_body_param",
+        "test_get_with_allOf_multiple_in_body_param"
     ]
 
     @classmethod
@@ -75,7 +69,7 @@ class TestSwaggerClient(unittest.TestCase):
                         cls.test_swagger_json['basePath'])
 
         with mock.patch('requests.Session.get') as mock_get, \
-                mock.patch(cls.open_fn_name, mock_open()), \
+                mock.patch("builtins.open", mock_open()), \
                 mock.patch('hca.util.fs.atomic_write'), \
                 mock.patch('hca.dss.SwaggerClient.load_swagger_json') as mock_load_swagger_json:
             # init SwaggerClient with test swagger JSON file
@@ -230,6 +224,82 @@ class TestSwaggerClient(unittest.TestCase):
                                             stream=False,
                                             headers={},
                                             timeout=mock.ANY)
+
+    def test_get_with_allOf_in_body_param(self):
+        path = "/with/allOf/in/body/param"
+        http_method = "get"
+        func_name = http_method + path
+        body_param = {
+            'prop1': "param1",
+            'prop2': "param2"
+        }
+        url = self.url_base + path
+
+        with self.subTest('API'):
+            with mock.patch('requests.Session.request') as mock_request, \
+                    mock.patch('hca.util._ClientMethodFactory._consume_response') as mock_consume_response:
+                mock_request.return_value = self.dummy_response
+
+                resp = getattr(self.client, func_name.replace('/', '_'))(**body_param)
+                mock_consume_response.assert_called_once_with(mock.ANY)
+                mock_request.assert_called_once_with(http_method,
+                                                     url,
+                                                     params={},
+                                                     json=body_param,
+                                                     stream=False,
+                                                     headers={},
+                                                     timeout=mock.ANY)
+
+        with self.subTest('CLI'):
+            with mock.patch('requests.Session.request') as mock_request, \
+                    mock.patch('hca.util._ClientMethodFactory._consume_response') as mock_consume_response:
+                mock_request.return_value = self.dummy_response
+
+                args = self.parser.parse_args([func_name.replace('/', '-'),
+                                               "--prop1", body_param['prop1'],
+                                               "--prop2", body_param['prop2']])
+                args.entry_point(args)
+                mock_consume_response.assert_called_once_with(mock.ANY)
+                mock_request.assert_called_once_with(http_method,
+                                                     url,
+                                                     params={},
+                                                     json=body_param,
+                                                     stream=False,
+                                                     headers={},
+                                                     timeout=mock.ANY)
+
+    def test_get_with_allOf_multiple_in_body_param(self):
+        path = "/with/allOf/multiple/in/body/param"
+        http_method = "get"
+        func_name = http_method + path
+        url = self.url_base + path
+
+        with self.subTest('API'):
+            with mock.patch('requests.Session.request') as mock_request, \
+                    mock.patch('hca.util._ClientMethodFactory._consume_response') as mock_consume_response:
+                mock_request.return_value = self.dummy_response
+
+                getattr(self.client, func_name.replace('/', '_'))(prop1='a')
+                mock_consume_response.assert_called_once_with(mock.ANY)
+                mock_request.assert_called_once_with(http_method,
+                                                     url,
+                                                     params={},
+                                                     json={'prop1': 'a'},
+                                                     stream=False,
+                                                     headers={},
+                                                     timeout=mock.ANY)
+
+        # In the CLI test, we try passing a value to `--prop1` that isn't in
+        # its enum. If the schema is parsed correctly, we'll get an error.
+        with self.subTest('CLI'):
+            try:
+                args = self.parser.parse_args([func_name.replace('/', '-'),
+                                               '--prop1', 'not-in-enum'])
+                args.entry_point(args)
+            except SystemExit:  # an argparse.ArgumentError is raised, leading to SystemExit
+                pass
+            else:
+                raise AssertionError("Expected SystemExit")
 
     def test_delete_with_missing_required_param(self):
         path = "/with/missing/required/param"

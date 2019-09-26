@@ -5,8 +5,6 @@ Human Cell Atlas Command Line Interface
 For general help, run ``{prog} help``.
 For help with individual commands, run ``{prog} <command> --help``.
 """
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import os
 import sys
 import argparse
@@ -18,19 +16,14 @@ import platform
 import argcomplete
 from io import open
 from botocore.exceptions import NoRegionError
-
-try:
-    import xmlrpclib
-except ImportError:
-    import xmlrpc.client as xmlrpclib
+import xmlrpc.client as xmlrpclib
 
 from .version import __version__
 from .dss import cli as dss_cli
 from .upload import cli as upload_cli
 from .query import cli as query_cli
 from .auth import cli as auth_cli
-from .util.compat import USING_PYTHON2
-from . import logger, get_config
+from . import logger, get_config, clear_hca_cache
 
 
 class HCAArgumentParser(argparse.ArgumentParser):
@@ -47,8 +40,7 @@ class HCAArgumentParser(argparse.ArgumentParser):
         subparser.set_defaults(**get_config().get(command, {}))
         if subparser.description is None:
             subparser.description = kwargs.get("help", func.__doc__)
-        if sys.version_info < (2, 7, 9):  # See https://bugs.python.org/issue9351
-            self._defaults.pop("entry_point", None)
+        self._defaults.pop("entry_point", None)
         return subparser
 
     def print_help(self, file=None):
@@ -95,6 +87,7 @@ def get_parser(help_menu=False):
     parser.add_argument("--log-level", default=get_config().get("log_level"),
                         help=str([logging.getLevelName(i) for i in range(10, 60, 10)]),
                         choices={logging.getLevelName(i) for i in range(10, 60, 10)})
+    parser.add_parser_func(clear_hca_cache, help=clear_hca_cache.__doc__)
 
     def help(args):
         parser.print_help()
@@ -161,7 +154,6 @@ def main(args=None):
         raise result
     elif result is not None:
         if isinstance(result, bytes):
-            out_stream = sys.stdout if USING_PYTHON2 else sys.stdout.buffer
-            out_stream.write(result)
+            sys.stdout.buffer.write(result)
         elif not isinstance(result, upload_cli.UploadCLICommand):
             print(json.dumps(result, indent=2, default=lambda x: str(x)))

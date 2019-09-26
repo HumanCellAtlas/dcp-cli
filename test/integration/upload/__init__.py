@@ -39,6 +39,11 @@ class UploadTestCase(unittest.TestCase):
         self.sts_mock.stop()
         self.tweak_resetter.restore_config()
 
+    @staticmethod
+    def add_upload_mock(uuid, path):
+        url = 'https://upload.test.data.humancellatlas.org/v1/area/{uuid}/{path}'
+        responses.add(responses.POST, url.format(path=path, uuid=uuid), status=200)
+
     def mock_current_upload_area(self, area_uuid=None, bucket_name=None):
         area = self.mock_upload_area(area_uuid=area_uuid, bucket_name=bucket_name)
         UploadConfig().select_area(area.uuid)
@@ -87,4 +92,3 @@ class UploadTestCase(unittest.TestCase):
     def _make_area_uri(self, area_uuid=None):
         return "s3://{bucket}/{uuid}/".format(bucket=self.upload_bucket_name,
                                               uuid=(area_uuid or str(uuid.uuid4())))
-

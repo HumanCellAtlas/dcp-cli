@@ -6,11 +6,14 @@ Run "pip install crcmod python-magic boto3" to install this script's dependencie
 import logging
 import mimetypes
 import os
+import sys
 import uuid
 
 import boto3
 from boto3.s3.transfer import TransferConfig
+import tqdm
 
+from ..config import logger, ProgressBarStreamHandler
 from dcplib import s3_multipart
 from dcplib.checksumming_io import ChecksummingBufferedReader
 
@@ -50,7 +53,7 @@ def _copy_from_s3(path, s3):
     return file_uuids, key_names
 
 
-def upload_to_cloud(file_handles, staging_bucket, replica, from_cloud=False):
+def upload_to_cloud(file_handles, staging_bucket, replica, from_cloud=False, log_progress=False):
     """
     Upload files to cloud.
 
@@ -58,17 +61,29 @@ def upload_to_cloud(file_handles, staging_bucket, replica, from_cloud=False):
                          metadata uploaded. Else, a list of binary file_handles to upload.
     :param staging_bucket: The aws bucket to upload the files to.
     :param replica: The cloud replica to write to. One of 'aws', 'gc', or 'azure'. No functionality now.
+    :param bool log_progress: set to True to log progress to stdout. Progress bar will reflect bytes
+                              uploaded (and not files uploaded). This is off by default,
+                              as direct calls to this function are assumed to be programmatic.
+                              In addition, even if this is set to True, a progress bar will not
+                              be shown if (a) the logging level is not INFO or lower or (b) an
+                              interactive session is not detected.
     :return: a list of file uuids, key-names, and absolute file paths (local) for uploaded files
     """
     s3 = boto3.resource("s3")
     file_uuids = []
     key_names = []
     abs_file_paths = []
+    log_progress = all((logger.getEffectiveLevel() <= logging.INFO, sys.stdout.isatty(), log_progress))
 
     if from_cloud:
         file_uuids, key_names = _copy_from_s3(file_handles[0], s3)
     else:
         destination_bucket = s3.Bucket(staging_bucket)
+        if log_progress:
+            total_upload_size = sum(os.fstat(f.fileno()).st_size for f in file_handles)
+            logger.addHandler(ProgressBarStreamHandler())
+            progress = tqdm.tqdm(total=total_upload_size, desc="Uploading to " + replica,
+                                 unit="B", unit_scale=True, unit_divisor=1024)
         for raw_fh in file_handles:
             file_size = os.path.getsize(raw_fh.name)
             multipart_chunksize = s3_multipart.get_s3_multipart_chunk_size(file_size)
@@ -81,6 +96,7 @@ def upload_to_cloud(file_handles, staging_bucket, replica, from_cloud=False):
                     fh,
                     key_name,
                     Config=tx_cfg,
+                    Callback=lambda x: progress.update(x) if log_progress else None,
                     ExtraArgs={
                         'ContentType': _mime_type(fh.raw.name),
                     }
@@ -98,5 +114,7 @@ def upload_to_cloud(file_handles, staging_bucket, replica, from_cloud=False):
                 file_uuids.append(file_uuid)
                 key_names.append(key_name)
                 abs_file_paths.append(fh.raw.name)
-
+        if log_progress:
+            logger.handlers = [l for l in logger.handlers if not isinstance(l, ProgressBarStreamHandler)]
+            progress.close()
     return file_uuids, key_names, abs_file_paths
