@@ -494,14 +494,15 @@ class SwaggerClient(object):
         return body_props, method_args
 
     def _build_client_method(self, http_method, http_path, method_data):
-        method_name_parts = [http_method] + [p for p in http_path.split("/")[1:] if not p.startswith("{")]
+        _http_path = http_path.replace('.', '').replace('-', '_')
+        method_name_parts = [http_method] + [p for p in _http_path.split("/")[1:] if not p.startswith("{")]
         method_name = "_".join(method_name_parts)
-        if method_name.endswith("s") and (http_method.upper() in {"POST", "PUT"} or http_path.endswith("/{uuid}")):
+        if method_name.endswith("s") and (http_method.upper() in {"POST", "PUT"} or _http_path.endswith("/{uuid}")):
             method_name = method_name[:-1]
 
         parameters = {p["name"]: p for p in method_data.get("parameters", [])}
         body_json_schema = {"properties": {}}
-        if "requestBody" in method_data:
+        if "requestBody" in method_data and "application/json" in method_data["requestBody"]["content"]:
             body_json_schema = method_data["requestBody"]["content"]["application/json"]["schema"]
         else:
             for p in parameters:
