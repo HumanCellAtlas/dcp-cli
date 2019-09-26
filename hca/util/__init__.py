@@ -138,7 +138,8 @@ class _ClientMethodFactory(object):
 
         # TODO: (akislyuk) if using service account credentials, use manual refresh here
         json_input = body if self.body_props else None
-        headers = headers if headers else {}
+        headers = headers or {}
+        headers.update({k: v for k, v in req_args.items() if self.parameters.get(k, {}).get('in') == 'header'})
         res = session.request(self.http_method, url, params=query, json=json_input, stream=stream,
                               headers=headers, timeout=self.client.timeout_policy)
         if res.status_code >= 400:
