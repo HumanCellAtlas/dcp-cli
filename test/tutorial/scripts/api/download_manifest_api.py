@@ -44,6 +44,6 @@ with open("manifest.tsv", "w", newline='') as manifest:
                         )
                     )
         except ValueError as e:
-            print("Not JSON FILE %s" % e)
+            print("Not a JSON file: %s" % e)
 
 dss.download_manifest(replica="aws", manifest="manifest.tsv")
