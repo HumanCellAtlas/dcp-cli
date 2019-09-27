@@ -427,7 +427,7 @@ class TestSwaggerClient(unittest.TestCase):
               stream: bool = False,
               params: dict = None,
               headers: dict = None,
-              timeout = mock.ANY,
+              timeout=mock.ANY,
               command_args: list = None):
 
         params = params or {}
