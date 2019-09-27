@@ -281,6 +281,87 @@
           }
         }
       }
+    },
+    "/with/something/.well-known/in/path": {
+      "get": {
+        "description": "GET method with /.well-known in path.",
+        "summary": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/with/header/parameter": {
+      "get": {
+        "description": "GET a method a header parameter.",
+        "summary": "",
+        "parameters": [
+          {
+            "name": "some_header",
+            "description": "A required header parameter.",
+            "in": "header",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/with/request_body/application/json": {
+      "get": {
+        "description": "GET a method a header parameter.",
+        "summary": "",
+        "requestBody":{
+          "content": {
+            "application/json":{
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "foo": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/with/request_body/not_application/json": {
+      "get": {
+        "description": "GET a method a header parameter.",
+        "summary": "",
+        "requestBody":{
+          "content": {
+            "application/json":{
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "foo": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
     }
   }
 }
