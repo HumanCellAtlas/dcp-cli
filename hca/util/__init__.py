@@ -498,7 +498,7 @@ class SwaggerClient(object):
         method_name = http_path.replace('/.well-known', '').replace('-', '_')
         method_name_parts = [http_method] + [p for p in method_name.split("/")[1:] if not p.startswith("{")]
         method_name = "_".join(method_name_parts)
-        if method_name.endswith("s") and (http_method.upper() in {"POST", "PUT"} or method_name.endswith("/{uuid}")):
+        if method_name.endswith("s") and (http_method.upper() in {"POST", "PUT"} or http_path.endswith("/{uuid}")):
             method_name = method_name[:-1]
         return method_name
 
