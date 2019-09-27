@@ -545,7 +545,7 @@ class SwaggerClient(object):
                 param_doc = _md2rst(method_args[param]["doc"] or "")
                 docstring += ":param {}: {}\n".format(param, param_doc.replace("\n", " "))
                 docstring += ":type {}: {}\n".format(param, method_args[param]["param"].annotation)
-        docstring += "\n\n" + _md2rst(method_data["description"])
+        docstring += "\n\n" + _md2rst(method_data.get("description", ''))
         client_method.__doc__ = docstring
 
         setattr(self.__class__, method_name, types.MethodType(client_method, SwaggerClient))
