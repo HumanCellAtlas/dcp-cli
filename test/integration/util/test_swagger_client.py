@@ -49,7 +49,7 @@ class TestSwaggerClient(unittest.TestCase):
         "put_with_invalid_enum_param",
         "get_with_allOf_in_body_param",
         "get_with_allOf_multiple_in_body_param",
-        "get_with_special_characters__in_path",
+        "get_with_something_in_path",
         "get_with_header_parameter",
         "get_with_request_body_application_json"
     ]
@@ -405,8 +405,8 @@ class TestSwaggerClient(unittest.TestCase):
                                              '--query-param', query_param_invalid])
             self.assertEqual(e.exception.code, 2)
 
-    def test_get_special_characters_in_path(self):
-        self._test("/with/special_characters.-/in/path", "get")
+    def test_get_with_something_in_path(self):
+        self._test("/with/something/.well-known/in/path", "get")
 
     def test_get_with_header_parameter(self):
         self._test("/with/header/parameter",
@@ -452,9 +452,8 @@ class TestSwaggerClient(unittest.TestCase):
                                                  headers=headers,
                                                  timeout=timeout)
 
-    @staticmethod
-    def get_command(http_method, path):
-        return f"{http_method}{path}".replace('/', '-').replace('_', '-').replace('.', '')
+    def get_command(self, http_method, path):
+        return self.client._build_method_name(http_method, path).replace('_', '-')
 
 
 if __name__ == "__main__":

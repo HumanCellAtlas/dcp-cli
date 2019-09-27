@@ -282,9 +282,9 @@
         }
       }
     },
-    "/with/special_characters.-/in/path": {
+    "/with/something/.well-known/in/path": {
       "get": {
-        "description": "GET method with special characters.",
+        "description": "GET method with /.well-known in path.",
         "summary": "",
         "responses": {
           "200": {
