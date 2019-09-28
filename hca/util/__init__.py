@@ -532,7 +532,7 @@ class SwaggerClient(object):
                   Parameter("client", Parameter.POSITIONAL_OR_KEYWORD)]
         params += [v["param"] for k, v in method_args.items() if not k.startswith("_")]
         client_method.__signature__ = signature(client_method).replace(parameters=params)
-        docstring = method_data["summary"] + "\n\n"
+        docstring = method_data.get("summary", '') + "\n\n"
 
         if method_supports_pagination:
             docstring += _pagination_docstring.format(client_name=self.__class__.__name__, method_name=method_name)
