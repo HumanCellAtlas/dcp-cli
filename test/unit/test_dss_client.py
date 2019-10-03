@@ -125,6 +125,19 @@ class DSSClientTestCase(unittest.TestCase):
                 for dir_path, _, files in walk('.')
                 for f in files}
 
+    def _mock_download_manifest(self, *args, **kwargs):
+        with patch('hca.dss.DownloadContext._download_file', side_effect=_fake_download_file) as download_func:
+            with patch('hca.dss.DSSClient.get_bundle') as mock_get_bundle:
+                mock_get_bundle.paginate = _fake_get_bundle_paginate
+                self.dss.download_manifest(*args, **kwargs)
+        return download_func
+
+    def _mock_download(self, *args, **kwargs):
+        with patch('hca.dss.DownloadContext._download_file', side_effect=_fake_download_file):
+            with patch('hca.dss.DSSClient.get_bundle') as mock_get_bundle:
+                mock_get_bundle.paginate = _fake_get_bundle_paginate
+                self.dss.download(*args, **kwargs)
+
     def _assert_all_files_downloaded(self, more_files=None, prefix=''):
         prefix = os.path.join(prefix, self.version_dir)
         files_present = self._files_present()
@@ -177,27 +190,25 @@ class TestManifestDownloadFilestore(DSSClientTestCase):
         self.assertEqual(parts, ['nested_filestore', '.hca', 'v2', 'files_1_3_2', 'a', 'bcd', 'ef', 'abcdefghij'])
 
     @patch('logging.Logger.warning')
-    @patch('hca.dss.DownloadContext._download_file', side_effect=_fake_download_file)
-    def test_manifest_download(self, download_func, warning_log):
-        self.dss.download_manifest(self.manifest_file, 'aws', layout='none')
+    def test_manifest_download(self, warning_log):
+        download_func = self._mock_download_manifest(self.manifest_file, 'aws', layout='none')
         self.assertEqual(download_func.call_count, len(self.manifest) - 1)
         self.assertEqual(warning_log.call_count, 1, 'Only expected warning for overwriting manifest')
         # Since files now exist, running again ensures that we avoid unnecessary downloads
-        self.dss.download_manifest(self.manifest_file, 'aws', layout='none')
+        self._mock_download_manifest(self.manifest_file, 'aws', layout='none')
         self.assertEqual(warning_log.call_count, 2, 'Only expected warning for overwriting manifest')
         self.assertEqual(download_func.call_count, len(self.manifest) - 1)
         self._assert_all_files_downloaded()
         self._assert_manifest_updated_with_paths('')
 
     def _test_download_dir(self, download_dir):
-        with patch('hca.dss.DownloadContext._download_file', side_effect=_fake_download_file) as download_func:
-            self.dss.download_manifest(self.manifest_file, 'aws', layout='none', download_dir=download_dir)
-            self.assertEqual(download_func.call_count, len(self.manifest) - 1)
-            # Since files now exist, running again ensures that we avoid unnecessary downloads
-            self.dss.download_manifest(self.manifest_file, 'aws', layout='none', download_dir=download_dir)
-            self.assertEqual(download_func.call_count, len(self.manifest) - 1)
-            self._assert_all_files_downloaded(prefix=download_dir)
-            self._assert_manifest_updated_with_paths(download_dir)
+        download_func = self._mock_download_manifest(self.manifest_file, 'aws', layout='none', download_dir=download_dir)
+        self.assertEqual(download_func.call_count, len(self.manifest) - 1)
+        # Since files now exist, running again ensures that we avoid unnecessary downloads
+        self._mock_download_manifest(self.manifest_file, 'aws', layout='none', download_dir=download_dir)
+        self.assertEqual(download_func.call_count, len(self.manifest) - 1)
+        self._assert_all_files_downloaded(prefix=download_dir)
+        self._assert_manifest_updated_with_paths(download_dir)
 
     def test_download_dir_empty(self):
         self._test_download_dir('')
@@ -212,18 +223,17 @@ class TestManifestDownloadFilestore(DSSClientTestCase):
         self._test_download_dir(os.path.join('.', 'a_nested_dir'))
 
     @patch('logging.Logger.warning')
-    @patch('hca.dss.DownloadContext._download_file', side_effect=_fake_download_file)
-    def test_manifest_download_different_path(self, download_func, warning_log):
+    def test_manifest_download_different_path(self, warning_log):
         # Move manifest file so it is not overwritten on download
         os.mkdir('my_manifest_dir')
         new_manifest_path = os.path.join('my_manifest_dir', self.manifest_file)
         os.rename(self.manifest_file, new_manifest_path)
         self.manifest_file = new_manifest_path
-        self.dss.download_manifest(self.manifest_file, 'aws', layout='none')
+        download_func = self._mock_download_manifest(self.manifest_file, 'aws', layout='none')
         self.assertEqual(download_func.call_count, len(self.manifest) - 1)
         self.assertEqual(warning_log.call_count, 0)
         # Since files now exist, running again ensures that we avoid unnecessary downloads
-        self.dss.download_manifest(self.manifest_file, 'aws', layout='none')
+        self._mock_download_manifest(self.manifest_file, 'aws', layout='none')
         self.assertEqual(warning_log.call_count, 1, 'Only expected warning for overwriting manifest')
         self.assertEqual(download_func.call_count, len(self.manifest) - 1)
         # Remove the original manifest file for accurate count
@@ -232,11 +242,10 @@ class TestManifestDownloadFilestore(DSSClientTestCase):
         self._assert_manifest_updated_with_paths('')
 
     @patch('logging.Logger.warning')
-    @patch('hca.dss.DownloadContext._download_file', side_effect=_fake_download_file)
-    def test_manifest_download_partial(self, _, warning_log):
+    def test_manifest_download_partial(self, warning_log):
         """Test download when some files are already present"""
         _touch_file(ManifestDownloadContext._file_path(self.manifest[1][4], '.'))
-        self.dss.download_manifest(self.manifest_file, 'aws', layout='none')
+        self._mock_download_manifest(self.manifest_file, 'aws', layout='none')
         self.assertEqual(warning_log.call_count, 1, 'Only expected warning for overwriting manifest')
         self._assert_all_files_downloaded()
         self._assert_manifest_updated_with_paths('')
@@ -264,8 +273,7 @@ class TestManifestDownloadFilestore(DSSClientTestCase):
             new_row[4] = 'fakeHASH'
             new_manifest.append(new_row)
         self._write_manifest(new_manifest)
-        with patch('hca.dss.DownloadContext._do_download_file', side_effect=_fake_do_download_file_with_barrier):
-            self.dss.download_manifest(self.manifest_file, 'aws', layout='none')
+        self._mock_download_manifest(self.manifest_file, 'aws', layout='none')
         files_expected = {
             os.path.join('.', 'manifest.tsv'),
             os.path.join('.', self.version_dir, 'fa', 'keha', 'fakehash')
@@ -304,28 +312,22 @@ class TestManifestDownloadBundle(DSSClientTestCase):
         more_files = bundle_files.union(more_files) if more_files else bundle_files
         super(TestManifestDownloadBundle, self)._assert_all_files_downloaded(more_files=more_files, prefix=prefix)
 
-    @patch('hca.dss.DSSClient.get_bundle')
-    @patch('hca.dss.DownloadContext._download_file', side_effect=_fake_download_file)
-    def test_manifest_download_bundle(self, _, mock_get_bundle):
-        mock_get_bundle.paginate = _fake_get_bundle_paginate
-        self.dss.download_manifest(self.manifest_file, 'aws', layout='bundle')
+    def test_manifest_download_bundle(self):
+        self._mock_download_manifest(self.manifest_file, 'aws', layout='bundle')
         self._assert_all_files_downloaded()
-        self.dss.download_manifest(self.manifest_file, 'aws', layout='bundle')
+        self._mock_download_manifest(self.manifest_file, 'aws', layout='bundle')
         self._assert_all_files_downloaded()
         self._assert_manifest_updated_with_paths('')
         self._assert_links('')
 
     def _test_download_dir(self, download_dir):
-        with patch('hca.dss.DownloadContext._download_file', side_effect=_fake_download_file), \
-                patch('hca.dss.DSSClient.get_bundle') as mock_get_bundle:
-            mock_get_bundle.paginate = _fake_get_bundle_paginate
-            self.dss.download_manifest(self.manifest_file, 'aws', layout='bundle', download_dir=download_dir)
-            self._assert_all_files_downloaded(prefix=download_dir)
-            self.dss.download_manifest(self.manifest_file, 'aws', layout='bundle', download_dir=download_dir)
-            self._assert_all_files_downloaded(prefix=download_dir)
-            self._assert_manifest_updated_with_paths(download_dir)
-            self._assert_links(download_dir)
-            self._assert_bundle_json(prefix=download_dir)
+        self._mock_download_manifest(self.manifest_file, 'aws', layout='bundle', download_dir=download_dir)
+        self._assert_all_files_downloaded(prefix=download_dir)
+        self._mock_download_manifest(self.manifest_file, 'aws', layout='bundle', download_dir=download_dir)
+        self._assert_all_files_downloaded(prefix=download_dir)
+        self._assert_manifest_updated_with_paths(download_dir)
+        self._assert_links(download_dir)
+        self._assert_bundle_json(prefix=download_dir)
 
     def _assert_bundle_json(self, prefix=''):
         prefix = os.path.join(prefix, self.version_dir)
@@ -347,22 +349,16 @@ class TestManifestDownloadBundle(DSSClientTestCase):
     def test_download_dir_dot_dir(self):
         self._test_download_dir(os.path.join('.', 'a_nested_dir'))
 
-    @patch('hca.dss.DSSClient.get_bundle')
-    @patch('hca.dss.DownloadContext._download_file', side_effect=_fake_download_file)
-    def test_manifest_download_bad_file(self, _, mock_get_bundle):
+    def test_manifest_download_bad_file(self):
         """
         Ensure error is raised if a user created file has the same name as the one
         we're trying to download.
         """
-        mock_get_bundle.paginate = _fake_get_bundle_paginate
         manifest_directory = self.manifest[1][0] + '.' + self.manifest[1][1]
         _touch_file(os.path.join(manifest_directory, self.manifest[1][3]))
-        self.assertRaises(RuntimeError, self.dss.download_manifest, self.manifest_file, 'aws', layout='bundle')
+        self.assertRaises(RuntimeError, self._mock_download_manifest, self.manifest_file, 'aws', layout='bundle')
 
-    @patch('hca.dss.DSSClient.get_bundle')
-    @patch('hca.dss.DownloadContext._download_file', side_effect=_fake_download_file)
-    def test_manifest_download_bundle_parallel(self, _, mock_get_bundle):
-        mock_get_bundle.paginate = _fake_get_bundle_paginate
+    def test_manifest_download_bundle_parallel(self):
         self.dss.threads = 3  # 3 threads for three files with barrier size 3
         new_manifest = [self.manifest[0]]
         for row in self.manifest[1:]:
@@ -371,27 +367,23 @@ class TestManifestDownloadBundle(DSSClientTestCase):
             new_manifest.append(new_row)
         self._write_manifest(new_manifest)
         with patch('hca.dss.DownloadContext._do_download_file', side_effect=_fake_do_download_file_with_barrier):
-            self.dss.download_manifest(self.manifest_file, 'aws', layout='bundle')
+            self._mock_download_manifest(self.manifest_file, 'aws', layout='bundle')
         self._assert_all_files_downloaded(more_files=self.data_files().union(self.metadata_files()))
         self._assert_links('')
-        self.dss.download_manifest(self.manifest_file, 'aws', layout='bundle')
+        self._mock_download_manifest(self.manifest_file, 'aws', layout='bundle')
 
     def test_link_fail(self):
         """
         If linking raises some other OSError, make sure that percolates up
         """
-        with patch('os.link', side_effect=OSError()), \
-                patch('hca.dss.DownloadContext._download_file', side_effect=_fake_download_file):
-            self.assertRaises(RuntimeError, self.dss.download_manifest, self.manifest_file, 'aws', layout='bundle')
+        with patch('os.link', side_effect=OSError()):
+            self.assertRaises(RuntimeError, self._mock_download_manifest, self.manifest_file, 'aws', layout='bundle')
 
 
 class TestDownload(DSSClientTestCase):
 
-    @patch('hca.dss.DSSClient.get_bundle')
-    @patch('hca.dss.DownloadContext._download_file', side_effect=_fake_download_file)
-    def test_download(self, _, mock_get_bundle):
-        mock_get_bundle.paginate = _fake_get_bundle_paginate
-        self.dss.download('any_bundle_uuid', 'aws')
+    def test_download(self):
+        self._mock_download('any_bundle_uuid', 'aws')
         more_files = {os.path.join('.', 'any_bundle_uuid', file_name)
                       for file_name in ['a_file_name', 'b_file_name', 'c_file_name', 'metadata_file.pdf']}
         more_files.add(os.path.join(self.version_dir, '8f', 'fe48',
@@ -418,21 +410,18 @@ class TestDownload(DSSClientTestCase):
         }
         metadata_files = {os.path.join('.', 'any_bundle_uuid.1_version', 'metadata_file.pdf')}
         all_files = metadata_files.union(data_files)
-        with patch('hca.dss.DSSClient.get_bundle') as mock_get_bundle, \
-                patch('hca.dss.DownloadContext._download_file', side_effect=_fake_download_file):
-            mock_get_bundle.paginate = _fake_get_bundle_paginate
-            self.dss.download('any_bundle_uuid', 'aws', no_metadata=no_metadata, no_data=no_data)
-            expected_files = all_files
-            if no_data:
-                expected_files.difference_update(data_files)
-            if no_metadata:
-                expected_files.difference_update(metadata_files)
-            actual_files = self._files_present()
-            for f in expected_files:
-                self.assertIn(f, actual_files)
-            unexpected_files = all_files.difference(expected_files)
-            for f in unexpected_files:
-                self.assertNotIn(f, actual_files)
+        self._mock_download('any_bundle_uuid', 'aws', no_metadata=no_metadata, no_data=no_data)
+        expected_files = all_files
+        if no_data:
+            expected_files.difference_update(data_files)
+        if no_metadata:
+            expected_files.difference_update(metadata_files)
+        actual_files = self._files_present()
+        for f in expected_files:
+            self.assertIn(f, actual_files)
+        unexpected_files = all_files.difference(expected_files)
+        for f in unexpected_files:
+            self.assertNotIn(f, actual_files)
 
     def test_download_filters_conflict(self):
         with self.assertRaises(ValueError):
@@ -450,16 +439,13 @@ class TestDownload(DSSClientTestCase):
         self._assert_manifest_not_updated()
 
     def _test_download_dir(self, download_dir):
-        with patch('hca.dss.DownloadContext._download_file', side_effect=_fake_download_file), \
-                patch('hca.dss.DSSClient.get_bundle') as mock_get_bundle:
-            mock_get_bundle.paginate = _fake_get_bundle_paginate
-            self.dss.download('any_bundle_uuid', 'aws')
-            more_files = {os.path.join(download_dir, 'any_bundle_uuid', file_name)
-                          for file_name in ['a_file_name', 'b_file_name', 'c_file_name', 'metadata_file.pdf']}
-            more_files.add(os.path.join(download_dir, self.version_dir, '8f', 'fe48',
-                                        '8ffe4838ac08672041f73f82e5f8361860627271ec31aa479fbb65f2ccc46d05'))
-            self._assert_all_files_downloaded(more_files=more_files)
-            self._assert_bundle_json()
+        self._mock_download('any_bundle_uuid', 'aws')
+        more_files = {os.path.join(download_dir, 'any_bundle_uuid', file_name)
+                      for file_name in ['a_file_name', 'b_file_name', 'c_file_name', 'metadata_file.pdf']}
+        more_files.add(os.path.join(download_dir, self.version_dir, '8f', 'fe48',
+                                    '8ffe4838ac08672041f73f82e5f8361860627271ec31aa479fbb65f2ccc46d05'))
+        self._assert_all_files_downloaded(more_files=more_files)
+        self._assert_bundle_json()
 
     def _assert_bundle_json(self):
         expected_hash = '2ec1263c1e48086a47184266e079a0a9207800d2bd6bdfa00182aa9b8ac776bb'
