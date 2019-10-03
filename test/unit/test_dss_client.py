@@ -85,7 +85,7 @@ def _fake_do_download_file_with_barrier(*args, **kwargs):
     return 'FAKEhash'
 
 
-class AbstractTestDSSClient(unittest.TestCase):
+class DSSClientTestCase(unittest.TestCase):
     manifest = list(zip(
         ('bundle_uuid', 'a_uuid', 'b_uuid', 'c_uuid'),
         ('bundle_version', '1_version', '1_version', '1_version'),
@@ -103,7 +103,7 @@ class AbstractTestDSSClient(unittest.TestCase):
     version_dir = os.path.join('.hca', 'v2', 'files_2_4')
 
     def setUp(self):
-        super(AbstractTestDSSClient, self).setUp()
+        super(DSSClientTestCase, self).setUp()
         self.prev_wd = os.getcwd()
         self.tmp_dir = tempfile.mkdtemp()
         os.chdir(self.tmp_dir)
@@ -114,7 +114,7 @@ class AbstractTestDSSClient(unittest.TestCase):
     def tearDown(self):
         os.chdir(self.prev_wd)
         shutil.rmtree(self.tmp_dir)
-        super(AbstractTestDSSClient, self).tearDown()
+        super(DSSClientTestCase, self).tearDown()
 
     def _write_manifest(self, manifest):
         with open('manifest.tsv', 'w') as f:
@@ -162,7 +162,7 @@ class AbstractTestDSSClient(unittest.TestCase):
             self.assertNotIn('file_path', row)
 
 
-class TestManifestDownloadFilestore(AbstractTestDSSClient):
+class TestManifestDownloadFilestore(DSSClientTestCase):
 
     @patch('hca.dss.DownloadContext.DIRECTORY_NAME_LENGTHS', [1, 3, 2])
     def test_file_path(self):
@@ -273,7 +273,7 @@ class TestManifestDownloadFilestore(AbstractTestDSSClient):
         self.assertEqual(self._files_present(), files_expected)
 
 
-class TestManifestDownloadBundle(AbstractTestDSSClient):
+class TestManifestDownloadBundle(DSSClientTestCase):
 
     def data_files(self, prefix='.'):
         return {
@@ -385,7 +385,7 @@ class TestManifestDownloadBundle(AbstractTestDSSClient):
             self.assertRaises(RuntimeError, self.dss.download_manifest, self.manifest_file, 'aws', layout='bundle')
 
 
-class TestDownload(AbstractTestDSSClient):
+class TestDownload(DSSClientTestCase):
 
     @patch('hca.dss.DSSClient.get_bundle')
     @patch('hca.dss.DownloadContext._download_file', side_effect=_fake_download_file)
