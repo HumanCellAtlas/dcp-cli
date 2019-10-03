@@ -173,6 +173,21 @@ class DSSClientTestCase(unittest.TestCase):
     def _assert_manifest_not_updated(self):
         for row in ManifestDownloadContext._parse_manifest(self.manifest_file):
             self.assertNotIn('file_path', row)
+    
+    def _assert_link_fails(self, num_logs, download_func, *args, **kwargs):
+        """Test that download_func(*args, **kwargs) fails to link num_logs times"""
+        os_error = OSError()
+        os_error.errno = errno.EMLINK
+        for error in [os_error, ValueError(), RuntimeError()]:
+            with self.subTest(error=error):
+                with patch('os.link', side_effect=os_error):
+                    from hca.dss.util import log as log_
+                    with self.assertLogs(logger=log_, level=logging.WARNING) as logs:
+                        download_func(*args, **kwargs)
+                for record in logs.records:
+                    self.assertEqual(record.funcName, 'hardlink')
+                    self.assertEqual(record.msg, 'Failed to link source `%s` to destination `%s`; reverting to copying')
+                self.assertEqual(len(logs.records), num_logs)
 
 
 class TestManifestDownloadFilestore(DSSClientTestCase):
@@ -337,6 +352,12 @@ class TestManifestDownloadBundle(DSSClientTestCase):
             actual_hash = hashlib.sha256(f.read()).hexdigest()
         self.assertEqual(actual_hash, expected_hash)
 
+    @unittest.skipIf(os.name is 'nt', 'os.link is not used on Windows')
+    def test_link_fails(self):
+        """If hardlinking fails, we should revert to copy"""
+        num_logs = 9  # 3 fake bundles with 3 data files each
+        self._assert_link_fails(num_logs, self._mock_download_manifest, self.manifest_file, 'aws', layout='bundle')
+
     def test_download_dir_empty(self):
         self._test_download_dir('')
 
@@ -371,13 +392,6 @@ class TestManifestDownloadBundle(DSSClientTestCase):
         self._assert_all_files_downloaded(more_files=self.data_files().union(self.metadata_files()))
         self._assert_links('')
         self._mock_download_manifest(self.manifest_file, 'aws', layout='bundle')
-
-    def test_link_fail(self):
-        """
-        If linking raises some other OSError, make sure that percolates up
-        """
-        with patch('os.link', side_effect=OSError()):
-            self.assertRaises(RuntimeError, self._mock_download_manifest, self.manifest_file, 'aws', layout='bundle')
 
 
 class TestDownload(DSSClientTestCase):
@@ -465,6 +479,11 @@ class TestDownload(DSSClientTestCase):
 
     def test_download_dir_dot_dir(self):
         self._test_download_dir(os.path.join('.', 'a_nested_dir'))
+
+    @unittest.skipIf(os.name is 'nt', 'os.link is not used on Windows')
+    def test_link_fails(self):
+        num_logs = 5  # 4 files in bundle, + bundle manifest
+        self._assert_link_fails(num_logs, self._mock_download, 'any_bundle_uuid', 'aws')
 
     @staticmethod
     def _fake_get_collection(collections):

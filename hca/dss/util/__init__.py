@@ -1,6 +1,11 @@
+import errno
+import logging
 import os
+import shutil
 from builtins import FileExistsError
 from ...util.compat import scandir
+
+log = logging.getLogger(__name__)
 
 
 def separator_to_camel_case(separated, separator):
@@ -35,10 +40,8 @@ def object_name_builder(file_name, src_dir):
 
 def hardlink(source, link_name):
     """
-    Create a hardlink in a portable way
-
-    The code for Windows support is adapted from:
-    https://github.com/sunshowers/ntfs/blob/master/ntfsutils/hardlink.py
+    Create a hardlink in a thread safe way, and revert to copying if the link
+    limit for the file is reached
     """
     try:
         os.link(source, link_name)
@@ -50,4 +53,11 @@ def hardlink(source, link_name):
         dest_stat = os.stat(link_name)
         # Check device first because different drives can have the same inode number
         if source_stat.st_dev != dest_stat.st_dev or source_stat.st_ino != dest_stat.st_ino:
+            raise
+    except OSError as e:
+        if e.errno == errno.EMLINK:
+            # FIXME: Copying is not space efficient; see https://github.com/HumanCellAtlas/dcp-cli/issues/453
+            log.warning('Failed to link source `%s` to destination `%s`; reverting to copying', source, link_name)
+            shutil.copyfile(source, link_name)
+        else:
             raise
