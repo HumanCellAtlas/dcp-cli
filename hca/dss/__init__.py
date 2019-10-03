@@ -494,7 +494,7 @@ class DownloadContext(object):
         bundle_dir = os.path.join(self.download_dir, bundle_fqid)
 
         # Download bundle.json (manifest for bundle as a file)
-        manifest_bytes = json.dumps(manifest, sort_keys=True).encode()
+        manifest_bytes = json.dumps(manifest, indent=4, sort_keys=True).encode()
         manifest_dss_file = DSSFile.for_bundle_manifest(manifest_bytes, bundle_uuid, bundle_version, self.replica)
         task = functools.partial(self._download_bundle_manifest,
                                  manifest_bytes,

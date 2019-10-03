@@ -329,8 +329,8 @@ class TestManifestDownloadBundle(AbstractTestDSSClient):
 
     def _assert_bundle_json(self, prefix=''):
         prefix = os.path.join(prefix, self.version_dir)
-        expected_hash = '79a04be897c762008078631346bf39ea86af3d8fb653fec0e235f892ab9776b6'
-        bundle_json_path = os.path.join(prefix, '79', 'a04b', expected_hash)
+        expected_hash = '2b9c91b0c982e46bc8d3b15f4e01763c5b8f3da52ae501ad3796a4c4566d24c5'
+        bundle_json_path = os.path.join(prefix, '2b', '9c91', expected_hash)
         with open(bundle_json_path, 'rb') as f:
             actual_hash = hashlib.sha256(f.read()).hexdigest()
         self.assertEqual(actual_hash, expected_hash)
@@ -462,8 +462,8 @@ class TestDownload(AbstractTestDSSClient):
             self._assert_bundle_json()
 
     def _assert_bundle_json(self):
-        expected_hash = 'caf808b3bc12f21db43d3483ac6bd23d448b958fa36ce0eaf2f681f909e52c2b'
-        bundle_json_path = os.path.join(self.version_dir, 'ca', 'f808', expected_hash)
+        expected_hash = '2ec1263c1e48086a47184266e079a0a9207800d2bd6bdfa00182aa9b8ac776bb'
+        bundle_json_path = os.path.join(self.version_dir, '2e', 'c126', expected_hash)
         with open(bundle_json_path, 'rb') as f:
             actual_hash = hashlib.sha256(f.read()).hexdigest()
         self.assertEqual(actual_hash, expected_hash)
