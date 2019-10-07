@@ -189,7 +189,10 @@ class _PaginatingClientMethodFactory(_ClientMethodFactory):
         """
         for page in self._get_raw_pages(**kwargs):
             content_key = page.headers.get("X-OpenAPI-Paginated-Content-Key", "results")
-            for result in page.json()[content_key]:
+            results = page.json()
+            for key in content_key.split("."):
+                results = results[key]
+            for result in results:
                 yield result
 
     def paginate(self, **kwargs):
