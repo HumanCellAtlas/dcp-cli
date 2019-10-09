@@ -775,6 +775,5 @@ class ManifestDownloadContext(DownloadContext):
     @classmethod
     def _parse_manifest(cls, manifest):
         with open(manifest) as f:
-            # unicode_literals is on so all strings are unicode. CSV wants a str so we need to jump through a hoop.
             reader = csv.DictReader(f, delimiter='\t', quoting=csv.QUOTE_NONE)
             return reader.fieldnames, list(reader)
