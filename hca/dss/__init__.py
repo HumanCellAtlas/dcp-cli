@@ -6,7 +6,6 @@ import errno
 import functools
 import json
 from collections import defaultdict, namedtuple
-import csv
 import concurrent.futures
 from datetime import datetime
 from fnmatch import fnmatchcase
@@ -24,6 +23,7 @@ from requests.exceptions import ChunkedEncodingError, ConnectionError, ReadTimeo
 
 from hca.dss.util import iter_paths, object_name_builder, hardlink
 from glob import escape as glob_escape
+from hca.util import csv
 from ..util import SwaggerClient, DEFAULT_THREAD_COUNT
 from ..util.exceptions import SwaggerAPIException
 from .. import logger
@@ -403,9 +403,7 @@ class DSSClient(SwaggerClient):
                                              'file_sha256',
                                              'file_uuid',
                                              'file_version',
-                                             'file_size'),
-                                 delimiter='\t',
-                                 quoting=csv.QUOTE_NONE)
+                                             'file_size'))
             tsv.writeheader()
             tsv.writerows(collection)
             # Flushing the I/O buffer here is preferable to closing the file
@@ -737,7 +735,7 @@ class ManifestDownloadContext(DownloadContext):
         with open(self.manifest) as f:
             bundles = defaultdict(set)
             # unicode_literals is on so all strings are unicode. CSV wants a str so we need to jump through a hoop.
-            reader = csv.DictReader(f, delimiter='\t', quoting=csv.QUOTE_NONE)
+            reader = csv.DictReader(f)
             for row in reader:
                 bundles[(row['bundle_uuid'], row['bundle_version'])].add(row['file_name'])
         for (bundle_uuid, bundle_version), data_files in bundles.items():
@@ -763,7 +761,7 @@ class ManifestDownloadContext(DownloadContext):
         if 'file_path' not in fieldnames:
             fieldnames.append('file_path')
         with atomic_write(output, overwrite=True, newline='') as f:
-            writer = csv.DictWriter(f, fieldnames, delimiter='\t', quoting=csv.QUOTE_NONE)
+            writer = csv.DictWriter(f, fieldnames)
             writer.writeheader()
             for row in source_manifest:
                 row['file_path'] = self._file_path(row['file_sha256'], self.download_dir)
@@ -775,5 +773,5 @@ class ManifestDownloadContext(DownloadContext):
     @classmethod
     def _parse_manifest(cls, manifest):
         with open(manifest) as f:
-            reader = csv.DictReader(f, delimiter='\t', quoting=csv.QUOTE_NONE)
+            reader = csv.DictReader(f)
             return reader.fieldnames, list(reader)

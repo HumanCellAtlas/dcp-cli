@@ -2,9 +2,9 @@
 # coding: utf-8
 import errno
 from concurrent.futures import ThreadPoolExecutor
-import csv
 import datetime
 import filecmp
+from hca.util import csv
 import itertools
 import os
 import sys
@@ -167,9 +167,7 @@ class TestDssApi(unittest.TestCase):
                                                  fieldnames=('bundle_uuid',
                                                              'bundle_version',
                                                              'file_name',
-                                                             'file_sha256'),
-                                                 delimiter='\t',
-                                                 quoting=csv.QUOTE_NONE)
+                                                             'file_sha256'))
                             tsv.writeheader()
                             tsv.writerow(dict(bundle_uuid=bundle_uuid,
                                               bundle_version=bundle_version,

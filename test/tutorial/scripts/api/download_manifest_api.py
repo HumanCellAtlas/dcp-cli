@@ -1,6 +1,6 @@
 from hca.dss import DSSClient
 import os
-import csv
+from hca.util import csv
 import json
 import pprint
 from get_bundle_api import fetch_bundle, save_bundle, BUNDLE_JSON
@@ -22,9 +22,7 @@ with open("manifest.tsv", "w", newline='') as manifest:
             "file_version",
             "file_sha256",
             "file_size",
-        ),
-        delimiter="\t",
-        quoting=csv.QUOTE_NONE,
+        )
     )
     tsv.writeheader()
 
