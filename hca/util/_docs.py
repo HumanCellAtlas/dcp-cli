@@ -52,7 +52,7 @@ def _md2rst(docstring):
 def _parse_docstring(docstring):
     """
     Using the sphinx RSTParse to parse __doc__ for argparse `parameters`, `help`, and `description`. The first
-    rst paragraph encountered it treated as the argparse help text. Any param fields are treated as argparse
+    rst paragraph encountered is treated as the argparse help text. Any param fields are treated as argparse
     arguments. Any other text is combined and added to the argparse description.
 
     example:
