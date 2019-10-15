@@ -103,7 +103,7 @@ class DSSClientTestCase(unittest.TestCase):
     version_dir = os.path.join('.hca', 'v2', 'files_2_4')
 
     def setUp(self):
-        super(DSSClientTestCase, self).setUp()
+        super().setUp()
         self.prev_wd = os.getcwd()
         self.tmp_dir = tempfile.mkdtemp()
         os.chdir(self.tmp_dir)
@@ -114,7 +114,7 @@ class DSSClientTestCase(unittest.TestCase):
     def tearDown(self):
         os.chdir(self.prev_wd)
         shutil.rmtree(self.tmp_dir)
-        super(DSSClientTestCase, self).tearDown()
+        super().tearDown()
 
     def _write_manifest(self, manifest):
         with open('manifest.tsv', 'w') as f:
@@ -325,7 +325,7 @@ class TestManifestDownloadBundle(DSSClientTestCase):
     def _assert_all_files_downloaded(self, more_files=None, prefix=''):
         bundle_files = self.data_files(prefix=prefix).union(self.metadata_files(prefix=prefix))
         more_files = bundle_files.union(more_files) if more_files else bundle_files
-        super(TestManifestDownloadBundle, self)._assert_all_files_downloaded(more_files=more_files, prefix=prefix)
+        super()._assert_all_files_downloaded(more_files=more_files, prefix=prefix)
 
     def test_manifest_download_bundle(self):
         self._mock_download_manifest(self.manifest_file, 'aws', layout='bundle')
