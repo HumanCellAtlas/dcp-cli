@@ -188,15 +188,12 @@ class _PaginatingClientMethodFactory(_ClientMethodFactory):
         items contained within; POST /search yields search result items.
         """
         for page in self._get_raw_pages(**kwargs):
-            if page.json().get('results'):
-                for result in page.json()['results']:
-                    yield result
-            elif page.json().get('bundle'):
-                for file in page.json()['bundle']['files']:
-                    yield file
-            else:
-                for collection in page.json().get('collections', []):
-                    yield collection
+            content_key = page.headers.get("X-OpenAPI-Paginated-Content-Key", "results")
+            results = page.json()
+            for key in content_key.split("."):
+                results = results[key]
+            for result in results:
+                yield result
 
     def paginate(self, **kwargs):
         """Yield paginated responses one response body at a time."""
