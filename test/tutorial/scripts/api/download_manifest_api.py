@@ -1,6 +1,6 @@
 from hca.dss import DSSClient
 import os
-from hca.util import csv
+from hca.util import tsv
 import json
 import pprint
 from get_bundle_api import fetch_bundle, save_bundle, BUNDLE_JSON
@@ -12,7 +12,7 @@ if not os.path.isfile(BUNDLE_JSON):
     save_bundle(bundle)
 
 with open("manifest.tsv", "w", newline='') as manifest:
-    tsv = csv.DictWriter(
+    writer = tsv.DictWriter(
         manifest,
         fieldnames=(
             "bundle_uuid",
@@ -24,7 +24,7 @@ with open("manifest.tsv", "w", newline='') as manifest:
             "file_size",
         )
     )
-    tsv.writeheader()
+    writer.writeheader()
 
     with open(BUNDLE_JSON, "w") as jsonfile:
         try:
@@ -36,7 +36,7 @@ with open("manifest.tsv", "w", newline='') as manifest:
             pprint.pprint(data)
             for content in data["bundle"]["files"]:
                 if content["name"].endswith(".json"):
-                    tsv.writerow(
+                    writer.writerow(
                         dict(
                             bundle_uuid=bundle_uuid,
                             bundle_version=bundle_version,

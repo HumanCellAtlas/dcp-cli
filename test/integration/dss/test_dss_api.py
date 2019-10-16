@@ -4,7 +4,7 @@ import errno
 from concurrent.futures import ThreadPoolExecutor
 import datetime
 import filecmp
-from hca.util import csv
+from hca.util import tsv
 import itertools
 import os
 import sys
@@ -163,23 +163,25 @@ class TestDssApi(unittest.TestCase):
                     os.chdir(work_dir)
                     try:
                         with open('manifest.tsv', 'w', newline='') as manifest:
-                            tsv = csv.DictWriter(manifest,
-                                                 fieldnames=('bundle_uuid',
-                                                             'bundle_version',
-                                                             'file_name',
-                                                             'file_sha256'))
-                            tsv.writeheader()
-                            tsv.writerow(dict(bundle_uuid=bundle_uuid,
-                                              bundle_version=bundle_version,
-                                              file_name=data_files[0],
-                                              file_sha256=
-                                              '9b4c0dde8683f924975d0867903dc7a967f46bee5c0a025c451b9ba73e43f120'))
+                            writer = tsv.DictWriter(manifest,
+                                                    fieldnames=('bundle_uuid',
+                                                                'bundle_version',
+                                                                'file_name',
+                                                                'file_sha256'))
+                            writer.writeheader()
+                            writer.writerow(dict(bundle_uuid=bundle_uuid,
+                                                 bundle_version=bundle_version,
+                                                 file_name=data_files[0],
+                                                 file_sha256=
+                                                 '9b4c0dde8683f924975d0867903dc7a9'
+                                                 '67f46bee5c0a025c451b9ba73e43f120'))
                             if bad_bundle:
-                                tsv.writerow(dict(bundle_uuid=str(uuid.uuid4()),
-                                                  bundle_version=bundle_version,
-                                                  file_name=data_files[0],
-                                                  file_sha256=
-                                                  '9b4c0dde8683f924975d0867903dc7a967f46bee5c0a025c451b9ba73e43f120'))
+                                writer.writerow(dict(bundle_uuid=str(uuid.uuid4()),
+                                                     bundle_version=bundle_version,
+                                                     file_name=data_files[0],
+                                                     file_sha256=
+                                                     '9b4c0dde8683f924975d0867903dc7a9'
+                                                     '67f46bee5c0a025c451b9ba73e43f120'))
 
                         dest_dir = os.path.join(work_dir, bundle_fqid)
                         try:
