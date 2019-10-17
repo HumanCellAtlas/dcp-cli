@@ -55,7 +55,7 @@ def _render_bullet_list(node):
     bc = [j[1] for j in node.attlist() if j[0] == 'bullet'][0]
     result = "\n\n"
     for child in node.children:
-        result += f"{bc} {child.astext()}\n"
+        result += "%s %s\n" % (bc, child.astext())
     result += "\n"
     return result
 
