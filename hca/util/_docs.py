@@ -49,6 +49,17 @@ def _md2rst(docstring):
     return renderer.render(ast)
 
 
+def _render_bullet_list(node):
+    """Render a docstrings bullet list as plain text"""
+    # Extract and use the bullet character in the list
+    bc = [j[1] for j in node.attlist() if j[0] == 'bullet'][0]
+    result = "\n\n"
+    for child in node.children:
+        result += f"{bc} {child.astext()}\n"
+    result += "\n"
+    return result
+
+
 def _parse_docstring(docstring):
     """
     Using the sphinx RSTParse to parse __doc__ for argparse `parameters`, `help`, and `description`. The first
@@ -94,6 +105,8 @@ def _parse_docstring(docstring):
             method_args['summary'] = node.astext()
         elif node.tagname == 'field_list':
             get_params(node, method_args['params'])
+        elif node.tagname is 'bullet_list':
+            method_args['description'] += _render_bullet_list(node)
         else:
-            method_args['description'] += '\n' + node.astext()
+            method_args['description'] += '\n\n' + node.astext()
     return method_args
