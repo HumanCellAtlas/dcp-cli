@@ -206,7 +206,6 @@ class _PaginatingClientMethodFactory(_ClientMethodFactory):
 
     def _cli_call(self, cli_args):
         if str.lower(vars(cli_args)['page']) == 'false':
-            print('super hit')
             return super()._cli_call(cli_args)
         else:
             response_data = None
