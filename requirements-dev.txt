@@ -1,7 +1,14 @@
+# List development (test or documentation) dependencies here.
+# Runtime dependencies should be listed in requirements.txt.
+# See the comment in requirements.txt on managing dependencies and their versions.
+
 coverage
-flake8==3.5.0
+flake8
 mock
-moto>1.3.3
+
+# Old versions of moto do not mock boto3 objects with sufficient fidelity.
+moto > 1.3.3
+
 pyyaml
 responses
 Sphinx
