@@ -92,6 +92,7 @@ import argparse
 import time
 import jwt
 import requests
+import jmespath
 
 from inspect import signature, Parameter
 from requests.adapters import HTTPAdapter, DEFAULT_POOLSIZE
@@ -209,8 +210,13 @@ class _PaginatingClientMethodFactory(_ClientMethodFactory):
             if response_data is None:
                 response_data = page
             else:
+
                 content_key = response_data['_internal_api_content_key']
-                response_data[content_key] += page[content_key]
+                data_aggregrator = jmespath.search(content_key, response_data)
+                patch = jmespath.search(content_key, page)
+                if patch:
+                    data_aggregrator += patch
+                response_data[content_key] = data_aggregrator
         response_data.pop('_internal_api_content_key')
         return response_data
 
