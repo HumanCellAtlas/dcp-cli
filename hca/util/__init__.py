@@ -198,7 +198,21 @@ class _PaginatingClientMethodFactory(_ClientMethodFactory):
     def paginate(self, **kwargs):
         """Yield paginated responses one response body at a time."""
         for page in self._get_raw_pages(**kwargs):
-            yield page.json()
+            data = page.json()
+            content_key = page.headers.get("X-OpenAPI-Paginated-Content-Key", "results")
+            data['_internal_api_content_key'] = content_key
+            yield data
+
+    def _cli_call(self, cli_args):
+        response_data = None
+        for page in self.paginate(**vars(cli_args)):
+            if response_data is None:
+                response_data = page
+            else:
+                content_key = response_data['_internal_api_content_key']
+                response_data[content_key] += page[content_key]
+        response_data.pop('_internal_api_content_key')
+        return response_data
 
 
 class SwaggerClient(object):
