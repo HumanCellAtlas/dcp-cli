@@ -2,6 +2,7 @@
 # Runtime dependencies should be listed in requirements.txt.
 # See the comment in requirements.txt on managing dependencies and their versions.
 
+awscli
 coverage
 flake8
 mock
