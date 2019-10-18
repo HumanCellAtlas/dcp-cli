@@ -472,9 +472,10 @@ class SwaggerClient(object):
                     anno = typing.Optional[anno]
                 param = Parameter(prop_name, Parameter.POSITIONAL_OR_KEYWORD, default=prop_data.get("default"),
                                   annotation=anno)
-                method_args.setdefault(prop_name, {}).update(dict(param=param, doc=prop_data.get("description"),
-                                                                  choices=enum_values,
-                                                                  required=prop_name in body_json_schema.get("required", [])))
+                method_args.setdefault(prop_name, {}).update(param=param,
+                                                             doc=prop_data.get("description"),
+                                                             choices=enum_values,
+                                                             required=prop_name in body_json_schema.get("required", []))
                 body_props[prop_name] = _merge_dict(schema, body_props.get('prop_name', {}))
 
         if body_json_schema.get('properties', {}):

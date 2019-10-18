@@ -35,7 +35,7 @@ class HCAArgumentParser(argparse.ArgumentParser):
             self._subparsers = self.add_subparsers()
         subparser = self._subparsers.add_parser(func.__name__.replace("_", "-"), **kwargs)
         subparser.set_defaults(entry_point=func)
-        command = subparser.prog[len(self.prog)+1:].replace("-", "_").replace(" ", "_")
+        command = subparser.prog[len(self.prog) + 1:].replace("-", "_").replace(" ", "_")
         subparser.set_defaults(**get_config().get(command, {}))
         if subparser.description is None:
             subparser.description = kwargs.get("help", func.__doc__)
