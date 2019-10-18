@@ -205,20 +205,24 @@ class _PaginatingClientMethodFactory(_ClientMethodFactory):
             yield data
 
     def _cli_call(self, cli_args):
-        response_data = None
-        for page in self.paginate(**vars(cli_args)):
-            if response_data is None:
-                response_data = page
-            else:
+        if str.lower(vars(cli_args)['page']) == 'false':
+            print('super hit')
+            return super()._cli_call(cli_args)
+        else:
+            response_data = None
+            for page in self.paginate(**vars(cli_args)):
+                if response_data is None:
+                    response_data = page
+                else:
 
-                content_key = response_data['_internal_api_content_key']
-                data_aggregrator = jmespath.search(content_key, response_data)
-                patch = jmespath.search(content_key, page)
-                if patch:
-                    data_aggregrator += patch
-                response_data[content_key] = data_aggregrator
-        response_data.pop('_internal_api_content_key')
-        return response_data
+                    content_key = response_data['_internal_api_content_key']
+                    data_aggregrator = jmespath.search(content_key, response_data)
+                    patch = jmespath.search(content_key, page)
+                    if patch:
+                        data_aggregrator += patch
+                    response_data[content_key] = data_aggregrator
+            response_data.pop('_internal_api_content_key')
+            return response_data
 
 
 class SwaggerClient(object):
@@ -534,10 +538,13 @@ class SwaggerClient(object):
         path_parameters = [p_name for p_name, p_data in parameters.items() if p_data["in"] == "path"]
         self.http_paths[method_name][frozenset(path_parameters)] = http_path
 
-        body_props, method_args = self._process_method_args(parameters=parameters, body_json_schema=body_json_schema)
-
         method_supports_pagination = True if str(requests.codes.partial) in method_data["responses"] else False
         highlight_streaming_support = True if str(requests.codes.found) in method_data["responses"] else False
+
+        if method_supports_pagination:
+            parameters['page'] = dict(description='Use the internal CLI paging mechanism', required=False,
+                                      name='page', default="True", type=str)
+        body_props, method_args = self._process_method_args(parameters=parameters, body_json_schema=body_json_schema)
 
         factory = _PaginatingClientMethodFactory if method_supports_pagination else _ClientMethodFactory
         client_method = factory(self, parameters, path_parameters, http_method, method_name, method_data, body_props)
