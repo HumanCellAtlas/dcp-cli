@@ -41,6 +41,7 @@ _streaming_docstring = """
  ``{client_name}.{method_name}()`` listed here.
 """
 
+
 def _md2rst(docstring):
     parser = commonmark.Parser()
     ast = parser.parse(docstring)
@@ -89,9 +90,9 @@ def _parse_docstring(docstring):
 
     method_args = {'summary': '', 'params': dict(), 'description': ''}
     for node in document.children:
-        if node.tagname is 'paragraph' and method_args['summary'] == '':
+        if node.tagname == 'paragraph' and method_args['summary'] == '':
             method_args['summary'] = node.astext()
-        elif node.tagname is 'field_list':
+        elif node.tagname == 'field_list':
             get_params(node, method_args['params'])
         else:
             method_args['description'] += '\n' + node.astext()
