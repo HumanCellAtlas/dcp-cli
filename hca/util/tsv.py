@@ -1,8 +1,11 @@
 import csv
-import functools
 
 
 # Wrap the csv library with our required options
 
-DictReader = functools.partial(csv.DictReader, delimiter='\t', dialect='excel-tab')
-DictWriter = functools.partial(csv.DictWriter, delimiter='\t', dialect='excel-tab')
+def DictReader(f):
+    return csv.DictReader(f, delimiter='\t', dialect='excel-tab')
+
+
+def DictWriter(f, fieldnames):
+    return csv.DictWriter(f, fieldnames, delimiter='\t', dialect='excel-tab')
