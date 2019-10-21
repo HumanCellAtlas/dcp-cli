@@ -1,3 +1,38 @@
+Changes for v6.5.0 (2019-10-21)
+===============================
+
+-  Improvements to package dependency lists (#463)
+
+-  Unpin cryptography dependency and set min version to 2.6.1 (#462)
+
+-  PaginatingClientMethodFactory: Use configurable paginated content
+   keys (#457)
+
+-  Swagger client parser fixes (#451)
+
+-  Adding header values into request when values are present in req_args
+   (#447)
+
+-  Add progress bar to ``hca dss upload`` (closes #117)
+
+-  Deprecate python2.7 (remove python2.7 testing). (#430)
+
+-  Modify how HCA cache is cleared (#431)
+
+-  Fix pagination bug in download-collection
+
+-  Add query service to documentation (#421)
+
+-  Remove POST /search retry logic (reverts b2a87f) (#429)
+
+-  Rename path builder to make dirs
+
+-  Refactor download (#406)
+
+-  Autodocs: call all SwaggerClient constructors (#416)
+
+-  added delete for login_logout (#408)
+
 Changes for v6.4.0 (2019-08-02)
 ===============================
 
