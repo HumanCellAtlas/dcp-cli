@@ -205,7 +205,11 @@ class _PaginatingClientMethodFactory(_ClientMethodFactory):
             yield data
 
     def _cli_call(self, cli_args):
-        if str.lower(vars(cli_args)['page']) == 'false':
+        # print(dir(self))
+        # print(self.http_method)
+        # print(self.method_data)
+        # print(self.body_props)
+        if cli_args.paginate is not True:
             return super()._cli_call(cli_args)
         else:
             response_data = None
@@ -222,6 +226,10 @@ class _PaginatingClientMethodFactory(_ClientMethodFactory):
                     response_data[content_key] = data_aggregrator
             response_data.pop('_internal_api_content_key')
             return response_data
+
+
+    def _get_content_key(self):
+        return self.__getattribute__("content_key",None)
 
 
 class SwaggerClient(object):
@@ -540,9 +548,6 @@ class SwaggerClient(object):
         method_supports_pagination = True if str(requests.codes.partial) in method_data["responses"] else False
         highlight_streaming_support = True if str(requests.codes.found) in method_data["responses"] else False
 
-        if method_supports_pagination:
-            parameters['page'] = dict(description='Use the internal CLI paging mechanism', required=False,
-                                      name='page', default="True", type=str)
         body_props, method_args = self._process_method_args(parameters=parameters, body_json_schema=body_json_schema)
 
         factory = _PaginatingClientMethodFactory if method_supports_pagination else _ClientMethodFactory
@@ -622,6 +627,9 @@ class SwaggerClient(object):
                                        help=method_data["args"][param_name]["doc"],
                                        choices=method_data["args"][param_name]["choices"],
                                        required=method_data["args"][param_name]["required"])
+            if str(requests.codes.partial) in method_data["responses"]:
+                subparser.add_argument("--no-paginate",action="store_false", dest="paginate",
+                                       help='Do not automatically page the responses')
             subparser.set_defaults(entry_point=method_data["entry_point"])
 
         for command in self.commands:
