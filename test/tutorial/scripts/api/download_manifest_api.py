@@ -5,6 +5,11 @@ import pprint
 
 dss = DSSClient()
 
+if not os.path.isfile("data/get_bundle.json"):
+    raise FileNotFoundError(
+        "Error: data/get_bundle.json is missing. Run get_bundle.py script to generate it."
+    )
+
 with open("manifest.tsv", "w", newline='') as manifest:
     tsv = csv.DictWriter(
         manifest,
