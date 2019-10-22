@@ -5,6 +5,8 @@ Python API Examples (Open End-points)
 The HCA API provides several ways for users of the Human Cell Atlas (HCA) to access and download
 data sets from the HCA. This page covers how to access the HCA using Python API bindings.
 
+*NOTE:* The HCA cli utility is compatible with Python 3.5+.
+
 
 create_version()
 ------------------------
@@ -95,7 +97,7 @@ download_manifest()
 
 Downloads a list of files specified in a user-provided manifest file.
 
-The manifest file is provided in TSV (tab-separated variable) format, with one line in the manifest
+The manifest file should be in TSV (tab-separated variable) format, with one line in the manifest
 per file to download. The manifest should contain information about files (one file per line).
 The information that must be provided for a given bundle is available from the ``get_bundle()``
 method.
@@ -131,7 +133,7 @@ Example call to `file_head()`:
 
 .. literalinclude:: ../test/tutorial/scripts/api/get_file_head_api.py
 
-Example header JSON returned:
+Example JSON header returned by API:
 
 ::
     {
@@ -228,8 +230,6 @@ Example output:
 get_file()
 ------------------------
 
-**Corresponding API Endpoint:** `GET /bundle/{uuid}`
-
 Retrieves a file given a UUID, optionally a version, and displays the details of the file.
 
 Example output:
@@ -287,13 +287,13 @@ This method returns an fqid and URL for each matching bundle.
 .. note::
     "bundle_fqid": "fff807ba-bc98-4247-a560-49fb90c9675c.2019-08-01T200147.111027Z"
 
-    Before the dot (.) is the UUID, a string that defines the unique bundle,
-    and the version follows.
+    Before the dot (.) is the UUID, a string that defines the unique bundle;
+    after the dot is the version number.
 
 Example output:
 ::
     {
-    ...
+        ...
     },
     {
       "bundle_fqid": "fff807ba-bc98-4247-a560-49fb90c9675c.2019-08-01T200147.111027Z",
@@ -306,15 +306,18 @@ Example output:
 
 .. literalinclude:: ../test/tutorial/scripts/api/post_search_api.py
 
-``put_subscription()``, ``delete_subscription()``, ``get_subscription()``, ``get_subscriptions()``: 
+put_subscription(), delete_subscription(), get_subscription(), get_subscriptions(): 
+-----------------------------------------------------------------------------------
 
-get-subscriptions: Gets a list of users subscription.
+* ``get_subscriptions()``: Gets a list of users subscription.
 
-put-subscription: Create a collection for the user given a replica and a call-back url.
+* ``put_subscription()``: Create a collection for the user given a replica and a call-back url.
 
-get-subscription: Given the UUID of the subscription, show a subscription that the user created.
+* ``get_subscription()``: Given the UUID of the subscription, show a subscription that the user created.
 
-delete-subscription: Given a UUID and rpelica or the subscription, delete the subscription the user created.
+* ``delete_subscription()``: Given a UUID and rpelica or the subscription, delete the subscription the user created.
+
+Example API calls:
 
 .. literalinclude:: ../test/tutorial/scripts/api/put_delete_get_sub_api.py
 
