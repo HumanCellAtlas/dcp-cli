@@ -1,5 +1,5 @@
 from .config import HCAConfig, get_config, logger
-from . import dss, upload, query
+from . import dss, upload, auth, query
 
 
 def clear_hca_cache(args):

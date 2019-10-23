@@ -22,6 +22,7 @@ from .version import __version__
 from .dss import cli as dss_cli
 from .upload import cli as upload_cli
 from .query import cli as query_cli
+from .auth import cli as auth_cli
 from . import logger, get_config, clear_hca_cache
 
 
@@ -96,6 +97,7 @@ def get_parser(help_menu=False):
     upload_cli.add_commands(parser._subparsers)
     dss_cli.add_commands(parser._subparsers, help_menu=help_menu)
     query_cli.add_commands(parser._subparsers, help_menu=help_menu)
+    auth_cli.add_commands(parser._subparsers, help_menu=help_menu)
 
     argcomplete.autocomplete(parser)
     return parser
