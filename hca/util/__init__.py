@@ -92,6 +92,7 @@ import argparse
 import time
 import jwt
 import requests
+import re
 
 from inspect import signature, Parameter
 from requests.adapters import HTTPAdapter, DEFAULT_POOLSIZE
@@ -495,7 +496,8 @@ class SwaggerClient(object):
     @staticmethod
     def _build_method_name(http_method, http_path):
         method_name = http_path.replace('/.well-known', '').replace('-', '_')
-        method_name_parts = [http_method] + [p for p in method_name.split("/")[1:] if not p.startswith("{")]
+        method_name_parts = [http_method] + [p for p in method_name.split("/")[1:] if not p.startswith("{") and
+                                             not re.match(r"[v]\d", p)]
         method_name = "_".join(method_name_parts)
         if method_name.endswith("s") and (http_method.upper() in {"POST", "PUT"} or http_path.endswith("/{uuid}")):
             method_name = method_name[:-1]
