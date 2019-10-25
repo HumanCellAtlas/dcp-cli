@@ -232,6 +232,10 @@ get_file()
 
 Retrieves a file given a UUID, optionally a version, and displays the details of the file.
 
+Example call to ``get_file()``:
+
+.. literalinclude:: ../test/tutorial/scripts/api/get_file_api.py
+
 Example output:
 ::
     {
@@ -252,19 +256,22 @@ Example output:
         "update_date": "2019-02-19T17:17:10.540Z"
     }
 
-.. literalinclude:: ../test/tutorial/scripts/api/get_file_api.py
 
 login()
 ------------------------
 
-Configure and save authentication credentials.
+Configures and saves authentication credentials.
+
+Example call to ``login()``:
 
 .. literalinclude:: ../test/tutorial/scripts/api/login_api.py
 
 logout()
 ------------------------
 
-Clear authentication credentials previously configured with login.
+Clears authentication credentials previously configured with login.
+
+Example call to ``logout()``:
 
 .. literalinclude:: ../test/tutorial/scripts/api/logout_api.py
 
@@ -274,21 +281,24 @@ post_bundles_checkout()
 Returns a ``checkout-job-id`` (e.g., ``4de1c603-fa8b-4c07-af37-06159e6951e0``). This
 ``checkout-job-id`` can then be used with the ``get_bundles_checkout()`` method.
 
+Example call to ``post_bundles_checkout()``:
+
 .. literalinclude:: ../test/tutorial/scripts/api/post_bundles_checkout_api.py
 
 post_search()
 ------------------------
 
-Find bundles by their ``bundle_fqid``, which is the bundle's UUID and version separated by a dot(.)
-(e.g., ``fff807ba-bc98-4247-a560-49fb90c9675c.2019-08-01T200147.111027Z`` is a bundle with the UUID
-``fff807ba-bc98-4247-a560-49fb90c9675c`` and the version number ``2019-08-01T200147.111027Z``).
-This method returns an fqid and URL for each matching bundle.
+Find bundles by their ``bundle_fqid``, which is the bundle's UUID and version separated by a dot (.).
 
-.. note::
-    "bundle_fqid": "fff807ba-bc98-4247-a560-49fb90c9675c.2019-08-01T200147.111027Z"
+For example, the bundle FQID ``fff807ba-bc98-4247-a560-49fb90c9675c.2019-08-01T200147.111027Z`` is
+a bundle with the UUID ``fff807ba-bc98-4247-a560-49fb90c9675c`` and the version number 
+``2019-08-01T200147.111027Z``.
 
-    Before the dot (.) is the UUID, a string that defines the unique bundle;
-    after the dot is the version number.
+This method returns an FQID and URL for each matching bundle.
+
+Example call to ``post_search()``:
+
+.. literalinclude:: ../test/tutorial/scripts/api/post_search_api.py
 
 Example output:
 ::
@@ -304,7 +314,6 @@ Example output:
         ...
     },
 
-.. literalinclude:: ../test/tutorial/scripts/api/post_search_api.py
 
 put_subscription(), delete_subscription(), get_subscription(), get_subscriptions(): 
 -----------------------------------------------------------------------------------
