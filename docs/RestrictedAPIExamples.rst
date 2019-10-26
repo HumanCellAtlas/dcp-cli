@@ -12,11 +12,11 @@ basic quality assurance before it is deposited into the Data Storage System (DSS
 In the document that follows, *privileged user* refers to a user with proper credentials and
 permission to upload/ingest data into the DSS.
 
-*NOTE:* The HCA cli utility is compatible with Python 3.5+.
+*NOTE:* The HCA CLI utility is compatible with Python 3.5+.
 
 
 delete_bundle()
-------------------------
+---------------
 
 Deletes an existing bundle given a UUID, version, and replica.
 
@@ -25,9 +25,9 @@ Example call to ``delete_bundle()``:
 .. literalinclude:: ../test/tutorial/scripts/api/delete_bundle_api.py
 
 put_bundle()
-------------------------
+------------
 
-Creates a bundle. a bundle can contain multiple files of arbitrary type.
+Creates a bundle. A bundle can contain multiple files of arbitrary type.
 
 Inputs:
 
@@ -40,7 +40,6 @@ Inputs:
 * ``replica`` - which replica to use (corresponds to cloud providers; choices: ``aws`` or ``gcp``)
 
 * ``files`` - a valid list of file objects, separated by commas (e.g., ``[{<first_file>}, {<second_file>}, ...  ]``). Each file object must include the following details:
-
     * Valid UUID of the file
     * Valid version number of the file
     * Name of the file
@@ -51,7 +50,7 @@ Example call to ``put_bundle()``:
 .. literalinclude:: ../test/tutorial/scripts/api/put_bundle_api.py
 
 patch_bundle()
-------------------------
+--------------
 
 Allows a user to modify an existing bundle. User passes in an optional list of files to add or remove from an existing bundle.
 
@@ -72,7 +71,7 @@ Example call to ``patch_bundle()``:
 
 
 put_file()
-------------------------
+----------
 
 Creates a new version of a file, given an existing UUID, version, creator uid, and source URL.
 
@@ -80,8 +79,9 @@ Example call to ``put_file()``:
 
 .. literalinclude:: ../test/tutorial/scripts/api/put_file_api.py
 
+
 put_collection(), delete_collection(), patch_collection(), get_collection(s)()
-------------------------
+------------------------------------------------------------------------------
 
 * ``get_collection()`` - Given a collection UUID, get the collection.
 
@@ -93,7 +93,7 @@ put_collection(), delete_collection(), patch_collection(), get_collection(s)()
 
 * ``patch_collection()`` - Add or remove a given list of files from an existing collection.
 
-``add_files``/``remove_files`` follow this format:
+To add or remove files with the API endpoints above, specify each file in the following format:
 ::
     [
       {
@@ -110,7 +110,7 @@ Example API calls:
 
 
 upload()
-------------------------
+--------
 
 Uploads a directory of files from the local filesystem and creates a bundle containing the uploaded files.
 

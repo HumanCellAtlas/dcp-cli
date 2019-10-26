@@ -1,128 +1,119 @@
 ===================================
-CLI Examples (Restricted End-points)
+CLI Examples (Restricted Endpoints)
 ===================================
 
-The HCA CLI ensures and provides a simple and open access to Human Cell Atlas data. This way, it allows researchers and
-curious users to be able to download repuitable data and use it to compute either locally on their own systems or
-in the cloud. 
+The HCA CLI provides users of the Human Cell Atlas (HCA) to access and download data sets from the HCA. This page
+covers how to access the HCA using the HCA command line utility.
 
-CLI calls listed here are restricted to those with proper permission to upload/ingest. Data 
-will be submitted through a single Ingestion Service API. Submitted data will go through basic quality 
-assurance before depositing the data into the Data Store.
+The CLI calls listed here are restricted to those with upload or ingest permissions.
+Data will be submitted through a single Ingestion Service API. Submitted data will go through
+basic quality assurance before it is deposited into the Data Storage System (DSS) component.
 
-Privileged users are those with proper credentials who can upload/ingest data into the Data Store.  
+In the document that follows, *privileged user* refers to a user with proper credentials and
+permission to upload/ingest data into the DSS.
 
-Compliant with python 3.5+
+*NOTE:* The HCA CLI utility is compatible with Python 3.5+.
 
-delete_bundle()
-------------------------
 
-.. note:
-    Privileged Users.
+hca delete-bundle
+-----------------
 
 Deletes an existing bundle given a UUID, version, and replica.
 
+Example call to ``hca delete-bundle``:
+
 .. literalinclude:: ../test/tutorial/scripts/cli/delete_bundle_cli.sh
 
-patch_bundle()
-------------------------
 
-.. note ::
-    Privileged Users
+hca put-bundle
+--------------
+
+Creates a bundle. A bundle can contain multiple files of arbitrary type.
+
+Inputs:
+
+* ``uuid`` - a unique, user-created UUID.
+
+* ``creator-uid`` - a unique user ID (uid) for the bundle creator uid. This accepts integer values.
+
+* ``version`` - a unique, user-created version number. Use the ``create_verson()`` API function to generate a ``DSS_VERSION``.
+
+* ``replica`` - which replica to use (corresponds to cloud providers; choices: ``aws`` or ``gcp``)
+
+* ``files`` - a valid list of file objects, separated by commas (e.g., ``[{<first_file>}, {<second_file>}, ...  ]``). Each file object must include the following details:
+    * Valid UUID of the file
+    * Valid version number of the file
+    * Name of the file
+    * Boolean value - is this file indexed
+
+Example call to ``put_bundle()``:
+
+.. literalinclude:: ../test/tutorial/scripts/cli/put_bundle_cli.sh
+
+hca patch-bundle
+----------------
 
 Allows user to pass in an optional list of files to add or remove from an exisiting bundle. 
 
-add_files/remove_files follow this format:
+``add_files``/``remove_files`` follow this format:
 ::
     [
-        {
+      {
         "path": "string",
         "type": "string",
         "uuid": "string",
         "version": "string"
-        }
+      }
     ]
+
+Example call to ``hca patch-bundle``:
 
 .. literalinclude:: ../test/tutorial/scripts/cli/patch_bundle_cli.sh
 
-put_bundle()
-------------------------
 
-.. note :: 
-    Privileged Users
+hca put-file
+------------
 
-Creates a bundle. A bundle can contain a wide variety of files.
+Creates a new version of a file, given an existing UUID, version, creator uid, and source URL.
 
-Inputs:
-
-uuid: User creates a unique UUID.
-
-creator-uid: Create a unique creator-uid. Any integer value is okay.
-
-version: User creates a new version number. One can use create create_verson() to generate a DSS_VERSION.
-
-replica: Choose a replica, either AWS or GCP.
-
-files: Enter valid list of file objects, separated by commas, (ie `[{<first_file>} , {<second_file>}, ... ]` ) 
-with the following details:
-
--Enter valid UUID of the file.
-
--Enter valid version number of the file.
-
--Enter the name of the file.
-
--Enter a boolean value whether the file is indexed or not.
-
-.. literalinclude:: ../test/tutorial/scripts/cli/put_bundle_cli.sh
-
-put_file()
-------------------------
-
-.. note :: 
-    Privileged Users
-
-Create a new version of a file given an existing UUID, verison, creator_uid, and soruce_url.
+Example call to ``hca put-file``:
 
 .. literalinclude:: ../test/tutorial/scripts/cli/put_file_cli.sh
 
 
-(put/delete/patch/get)-collection and get-collections
-------------------------
+hca get-collection(s), hca put-collection, hca patch-collection, hca delete-collection
+--------------------------------------------------------------------------------------
 
-.. note ::
-    Privileged Users
+* ``hca get-collection`` - Given a collection UUID, get the collection.
 
-get-collections: Get a list of users collections
+* ``hca get-collections`` - Get a list of collections for a given user. 
 
-put-collection: Create a collection for the user.
+* ``hca delete-collection`` - Given a collection UUID and replica, delete the collection from the replica. 
 
-patch-collection: Allows user to pass in an optional list of files to add or remove from the collection. 
+* ``hca put-collection`` - Create a collection.
 
-add-files/remove-files follow this format:
+* ``hca patch-collection`` - Add or remove a given list of files from an existing collection. 
+
+To add or remove files with the CLI actions above, specify each file in the following format:
 ::
     [
-        {
+      {
         "path": "string",
         "type": "string",
         "uuid": "string",
         "version": "string"
-        }
+      }
     ]
 
-get-collection: Given the UUID of the collection, show a collection that the user created. 
-
-delete-collection: Given a UUID and rpelica or the subscription, delete the collection the user created. 
+Example CLI calls:
 
 .. literalinclude:: ../test/tutorial/scripts/cli/put_delete_get_patch_collection_cli.sh
 
-upload()
-------------------------
+hca upload
+----------
 
-.. note :: 
-    Privileged Users
+Uploads a directory of files from the local filesystem and creates a bundle containing the uploaded files.
 
-Upload a directory of files from the local filesystem and create a 
-bundle containing the uploaded files.
+Example call to ``hca upload``:
 
 .. literalinclude:: ../test/tutorial/scripts/cli/upload_cli.sh
