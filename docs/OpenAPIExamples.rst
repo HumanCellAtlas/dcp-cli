@@ -9,7 +9,7 @@ data sets from the HCA. This page covers how to access the HCA using Python API 
 
 
 create_version()
-------------------------
+----------------
 
 Returns a timestamp in ``DSS_VERSION`` format (e.g., ``1985-04-12T232050.520000Z``), useful for
 versioning bundles or files.
@@ -25,7 +25,7 @@ Example call to ``create_version()``:
 
 
 download()
-------------------------
+----------
 
 Downloads a bundle to the local filesystem as a directory. By default, both data and metadata files
 are downloaded (flags can be added to download only the data or the metadata).
@@ -93,7 +93,7 @@ Example response:
 
 
 download_manifest()
-------------------------
+-------------------
 
 Downloads a list of files specified in a user-provided manifest file.
 
@@ -124,7 +124,7 @@ Example manifest TSV file:
 
 
 file_head()
-------------------------
+-----------
 
 Returns the metadata for the latest version of a file with a given UUID. If the version is provided,
 the metadata for that specific version is returned instead. The metadata is returned in the headers.
@@ -159,7 +159,7 @@ Example JSON header returned by API:
 
 
 get_bundle()
-------------------------
+------------
 
 For a given bundle UUID and optionally a bundle version, returns information about the latest version
 of that bundle. Information returned includes the bundle creator, UUID, and version, as well as 
@@ -208,7 +208,7 @@ Example bundle:
 
 
 get_bundles_checkout()
-------------------------
+----------------------
 
 .. note:
     To get the ``checkout-job-id``, use the ``post_bundles_checkout()`` function.
@@ -228,7 +228,7 @@ Example output:
 
 
 get_file()
-------------------------
+----------
 
 Retrieves a file given a UUID, optionally a version, and displays the details of the file.
 
@@ -259,7 +259,7 @@ Example output:
 
 
 login()
-------------------------
+-------
 
 Configures and saves authentication credentials.
 
@@ -268,7 +268,7 @@ Example call to ``login()``:
 .. literalinclude:: ../test/tutorial/scripts/api/login_api.py
 
 logout()
-------------------------
+--------
 
 Clears authentication credentials previously configured with login.
 
@@ -277,7 +277,7 @@ Example call to ``logout()``:
 .. literalinclude:: ../test/tutorial/scripts/api/logout_api.py
 
 post_bundles_checkout()
-------------------------
+-----------------------
 
 Returns a ``checkout-job-id`` (e.g., ``4de1c603-fa8b-4c07-af37-06159e6951e0``). This
 ``checkout-job-id`` can then be used with the ``get_bundles_checkout()`` method.
@@ -287,7 +287,7 @@ Example call to ``post_bundles_checkout()``:
 .. literalinclude:: ../test/tutorial/scripts/api/post_bundles_checkout_api.py
 
 post_search()
-------------------------
+-------------
 
 Find bundles by their ``bundle_fqid``, which is the bundle's UUID and version separated by a dot (.).
 
@@ -333,7 +333,7 @@ Example API calls:
 
 
 refresh_swagger()
-------------------------
+-----------------
 
 Manually refresh the swagger document.
 
