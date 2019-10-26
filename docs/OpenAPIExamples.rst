@@ -42,54 +42,54 @@ Example call to ``download()``:
 
 Example response:
 ::
-  {
-    "bundle": {
-      "creator_uid": 8008,
-      "files": [
-        {
-          "content-type": "application/json; dcp-type=\"metadata/biomaterial\"",
-          "crc32c": "5c084696",
-          "indexed": true,
-          "name": "cell_suspension_0.json",
-          "s3_etag": "bd60da05055d1cd544855dd35cb12470",
-          "sha1": "fdeb52d3caf0becce0575528c81bf0a06cb4a023",
-          "sha256": "e0ff1c402a4d6c659937f90d00d9820a2ebf0ebc920260a2a2bddf0961c30de5",
-          "size": 847,
-          "uuid": "134c0f04-76ae-405d-aea4-b72c08a53dd9",
-          "version": "2019-07-09T230754.589000Z"
-        },
-        {
-          "content-type": "application/json; dcp-type=\"metadata/biomaterial\"",
-          "crc32c": "39e6f9e1",
-          "indexed": true,
-          "name": "specimen_from_organism_0.json",
-          "s3_etag": "f30917f841530d78e16223354049c8dc",
-          "sha1": "98171c05647a3b771afb3bd61e65d0a25b0afe7f",
-          "sha256": "35406f0b8fa1ece3e3589151978aefef28f358afa163874b286eab837fcabfca",
-          "size": 864,
-          "uuid": "577a91d8-e579-41b6-9353-7e4e774c161a",
-          "version": "2019-07-09T222811.151000Z"
-        },
-
-        ...
-
-        {
-          "content-type": "application/gzip; dcp-type=data",
-          "crc32c": "38f31e58",
-          "indexed": false,
-          "name": "SRR6579532_2.fastq.gz",
-          "s3_etag": "ac67e10df687471f5808be96499836c6",
-          "sha1": "8743feb4d1ce82328127d10e2b1dfa35e5ae4b5a",
-          "sha256": "3d788e06b5ca4c8fc679b47c790b1e266f73d48818a1749743ec85f096d657ea",
-          "size": 43810957,
-          "uuid": "1330ef1a-7a21-40c6-84c5-5cec18204028",
-          "version": "2019-08-03T150636.729022Z"
+    {
+        "bundle": {
+            "creator_uid": 8008,
+            "files": [
+              {
+                "content-type": "application/json; dcp-type=\"metadata/biomaterial\"",
+                "crc32c": "5c084696",
+                "indexed": true,
+                "name": "cell_suspension_0.json",
+                "s3_etag": "bd60da05055d1cd544855dd35cb12470",
+                "sha1": "fdeb52d3caf0becce0575528c81bf0a06cb4a023",
+                "sha256": "e0ff1c402a4d6c659937f90d00d9820a2ebf0ebc920260a2a2bddf0961c30de5",
+                "size": 847,
+                "uuid": "134c0f04-76ae-405d-aea4-b72c08a53dd9",
+                "version": "2019-07-09T230754.589000Z"
+              },
+              {
+                "content-type": "application/json; dcp-type=\"metadata/biomaterial\"",
+                "crc32c": "39e6f9e1",
+                "indexed": true,
+                "name": "specimen_from_organism_0.json",
+                "s3_etag": "f30917f841530d78e16223354049c8dc",
+                "sha1": "98171c05647a3b771afb3bd61e65d0a25b0afe7f",
+                "sha256": "35406f0b8fa1ece3e3589151978aefef28f358afa163874b286eab837fcabfca",
+                "size": 864,
+                "uuid": "577a91d8-e579-41b6-9353-7e4e774c161a",
+                "version": "2019-07-09T222811.151000Z"
+              },
+            
+              ...
+            
+              {
+                "content-type": "application/gzip; dcp-type=data",
+                "crc32c": "38f31e58",
+                "indexed": false,
+                "name": "SRR6579532_2.fastq.gz",
+                "s3_etag": "ac67e10df687471f5808be96499836c6",
+                "sha1": "8743feb4d1ce82328127d10e2b1dfa35e5ae4b5a",
+                "sha256": "3d788e06b5ca4c8fc679b47c790b1e266f73d48818a1749743ec85f096d657ea",
+                "size": 43810957,
+                "uuid": "1330ef1a-7a21-40c6-84c5-5cec18204028",
+                "version": "2019-08-03T150636.729022Z"
+              }
+            ],
+            "uuid": "ffffaf55-f19c-40e3-aa81-a6c69d357265",
+            "version": "2019-08-01T200147.836832Z"
         }
-      ],
-      "uuid": "ffffaf55-f19c-40e3-aa81-a6c69d357265",
-      "version": "2019-08-01T200147.836832Z"
     }
-  }
 
 
 download_manifest()
@@ -136,25 +136,25 @@ Example call to ``file_head()``:
 Example JSON header returned by API:
 ::
     {
-        "Date": "Tue, 22 Oct 2019 19:16:50 GMT",
-        "Content-Type": "text/html; charset=utf-8",
-        "Content-Length": "0",
-        "Connection": "keep-alive",
-        "x-amzn-RequestId": "bea3fd18-f373-4cb9-b0d2-0642c955eb5b",
-        "X-DSS-SHA1": "ccac0f3fb16d1209ac88de8f293e61a115cfee38",
-        "Access-Control-Allow-Origin": "*",
-        "X-DSS-S3-ETAG": "d1634210a190ae78f6dd7a21f3c6ef1d",
-        "X-DSS-SHA256": "24265fd0ebcdfe84eb1a09227c58c117ed03006b1de3f1e0694e50ed63b2f9e7",
-        "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
-        "Access-Control-Allow-Headers": "Authorization,Content-Type,X-Amz-Date,X-Amz-Security-Token,X-Api-Key",
-        "X-DSS-CONTENT-TYPE": 'application/json; dcp-type="metadata/biomaterial"',
-        "X-DSS-CRC32C": "ec41da6a",
-        "X-DSS-CREATOR-UID": "8008",
-        "x-amz-apigw-id": "B-pROGlIoAMFUwg=",
-        "X-DSS-VERSION": "2019-01-30T165057.189000Z",
-        "X-Amzn-Trace-Id": "Root=1-5daf55a1-132caa16297ffc40a4046739;Sampled=0",
-        "X-AWS-REQUEST-ID": "eeeb46a0-61a2-4fb5-aae9-21fe6a01f277",
-        "X-DSS-SIZE": "856",
+      "Date": "Tue, 22 Oct 2019 19:16:50 GMT",
+      "Content-Type": "text/html; charset=utf-8",
+      "Content-Length": "0",
+      "Connection": "keep-alive",
+      "x-amzn-RequestId": "bea3fd18-f373-4cb9-b0d2-0642c955eb5b",
+      "X-DSS-SHA1": "ccac0f3fb16d1209ac88de8f293e61a115cfee38",
+      "Access-Control-Allow-Origin": "*",
+      "X-DSS-S3-ETAG": "d1634210a190ae78f6dd7a21f3c6ef1d",
+      "X-DSS-SHA256": "24265fd0ebcdfe84eb1a09227c58c117ed03006b1de3f1e0694e50ed63b2f9e7",
+      "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
+      "Access-Control-Allow-Headers": "Authorization,Content-Type,X-Amz-Date,X-Amz-Security-Token,X-Api-Key",
+      "X-DSS-CONTENT-TYPE": 'application/json; dcp-type="metadata/biomaterial"',
+      "X-DSS-CRC32C": "ec41da6a",
+      "X-DSS-CREATOR-UID": "8008",
+      "x-amz-apigw-id": "B-pROGlIoAMFUwg=",
+      "X-DSS-VERSION": "2019-01-30T165057.189000Z",
+      "X-Amzn-Trace-Id": "Root=1-5daf55a1-132caa16297ffc40a4046739;Sampled=0",
+      "X-AWS-REQUEST-ID": "eeeb46a0-61a2-4fb5-aae9-21fe6a01f277",
+      "X-DSS-SIZE": "856",
     }
 
 
@@ -304,15 +304,15 @@ Example call to ``post_search()``:
 Example output:
 ::
     {
-      ...
+        ...
     },
     {
-      "bundle_fqid": "fff807ba-bc98-4247-a560-49fb90c9675c.2019-08-01T200147.111027Z",
-      "bundle_url": "https://dss.data.humancellatlas.org/v1/bundles/fff807ba-bc98-4247-a560-49fb90c9675c?version=2019-08-01T200147.111027Z&replica=aws",
-      "search_score": null
+        "bundle_fqid": "fff807ba-bc98-4247-a560-49fb90c9675c.2019-08-01T200147.111027Z",
+        "bundle_url": "https://dss.data.humancellatlas.org/v1/bundles/fff807ba-bc98-4247-a560-49fb90c9675c?version=2019-08-01T200147.111027Z&replica=aws",
+        "search_score": null
     },
     {
-      ...
+        ...
     }
 
 
@@ -336,5 +336,3 @@ refresh_swagger()
 -----------------
 
 Manually refresh the swagger document.
-
-.. literalinclude:: ../test/tutorial/scripts/api/refresh_swagger_api.py
