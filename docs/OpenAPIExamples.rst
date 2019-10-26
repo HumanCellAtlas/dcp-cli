@@ -32,7 +32,7 @@ are downloaded (flags can be added to download only the data or the metadata).
 
 Implementation detail: All files are downloaded to a local cache directory called ``.hca`` that is
 created in the directory where the download is initiated. The user should never need to interact
-directly with the `.hca` directory.
+directly with the ``.hca`` directory.
 
 See note above regarding version numbering.
 
@@ -111,7 +111,7 @@ The header row must define the columns:
 * ``file_sha256`` - the SHA-256 hash of the file
 * ``file_size`` - the size of the file
 
-Example call to `download_manifest()`:
+Example call to ``download_manifest()``:
 
 .. literalinclude:: ../test/tutorial/scripts/api/download_manifest_api.py
 
@@ -129,12 +129,11 @@ file_head()
 Returns the metadata for the latest version of a file with a given UUID. If the version is provided,
 the metadata for that specific version is returned instead. The metadata is returned in the headers.
 
-Example call to `file_head()`:
+Example call to ``file_head()``:
 
 .. literalinclude:: ../test/tutorial/scripts/api/get_file_head_api.py
 
 Example JSON header returned by API:
-
 ::
     {
         "Date": "Tue, 22 Oct 2019 19:16:50 GMT",
@@ -166,7 +165,7 @@ For a given bundle UUID and optionally a bundle version, returns information abo
 of that bundle. Information returned includes the bundle creator, UUID, and version, as well as 
 information about each file in the bundle, such as the file name, UUID, version, etc.
 
-Example call to `get_bundle()`:
+Example call to ``get_bundle()``:
 
 .. literalinclude:: ../test/tutorial/scripts/api/get_bundle_api.py
 
@@ -176,35 +175,36 @@ Example bundle:
       "bundle": {
         "creator_uid": 8008,
         "files": [
-            {
-              "name": "cell_suspension_0.json",
-              "uuid": "c14b99ea-d8e2-4c84-9dc2-ce2245d8a743",
-              "version": "2019-07-09T231935.003000Z"
-              "content-type": "application/json; dcp-type=\"metadata/biomaterial\"",
-              "crc32c": "892ad18b",
-              "indexed": true,
-              "s3_etag": "57814b3405165d975a6688dc8110dea0",
-              "sha1": "849ebad4cff8f4fdf10ad25ad801ebb8aacc58b7",
-              "sha256": "b43cebcca9cd5213699acce7356d226de07edef5c5604510a697159af1a12149",
-              "size": 847,
-            },
-            {
-              "name": "specimen_from_organism_0.json",
-              "uuid": "05998af7-fa6f-44fe-bd16-ac8eafb42f28",
-              "version": "2019-07-09T222953.739000Z"
-              "content-type": "application/json; dcp-type=\"metadata/biomaterial\"",
-              "crc32c": "8686eb38",
-              "indexed": true,
-              "s3_etag": "c3079914aa72f4aafa926594c756c978",
-              "sha1": "885f0d6c524796116394fc4e60f0d9f65988765f",
-              "sha256": "d0c8cc0d13e30b73241405035d98265eab891ea94fbccc3da4bb0ca10c3d0f24",
-              "size": 872,
-            },
-            ...
+          {
+            "name": "cell_suspension_0.json",
+            "uuid": "c14b99ea-d8e2-4c84-9dc2-ce2245d8a743",
+            "version": "2019-07-09T231935.003000Z"
+            "content-type": "application/json; dcp-type=\"metadata/biomaterial\"",
+            "crc32c": "892ad18b",
+            "indexed": true,
+            "s3_etag": "57814b3405165d975a6688dc8110dea0",
+            "sha1": "849ebad4cff8f4fdf10ad25ad801ebb8aacc58b7",
+            "sha256": "b43cebcca9cd5213699acce7356d226de07edef5c5604510a697159af1a12149",
+            "size": 847,
+          },
+          {
+            "name": "specimen_from_organism_0.json",
+            "uuid": "05998af7-fa6f-44fe-bd16-ac8eafb42f28",
+            "version": "2019-07-09T222953.739000Z"
+            "content-type": "application/json; dcp-type=\"metadata/biomaterial\"",
+            "crc32c": "8686eb38",
+            "indexed": true,
+            "s3_etag": "c3079914aa72f4aafa926594c756c978",
+            "sha1": "885f0d6c524796116394fc4e60f0d9f65988765f",
+            "sha256": "d0c8cc0d13e30b73241405035d98265eab891ea94fbccc3da4bb0ca10c3d0f24",
+            "size": 872,
+          },
+          ...
         ],
-          "uuid": "002aeac5-4d74-462d-baea-88f5c620cb50",
-          "version": "2019-08-01T200147.836900Z"
-        }
+        "uuid": "002aeac5-4d74-462d-baea-88f5c620cb50",
+        "version": "2019-08-01T200147.836900Z"
+      }
+    }
 
 
 get_bundles_checkout()
@@ -215,15 +215,15 @@ get_bundles_checkout()
 
 Check the status and location of a checkout request.
 
-Example call to `get_bundles_checkout()`:
+Example call to ``get_bundles_checkout()``:
 
 .. literalinclude:: ../test/tutorial/scripts/api/get_bundles_checkout_api.py
 
 Example output:
 ::
     {
-        "location": "s3://org-hca-dss-checkout-prod/bundles/fff54b87-26fe-42a9-be54-3f5a7ef8176e.2019-03-26T131455.775610Z",
-        "status": "SUCCEEDED"
+      "location": "s3://org-hca-dss-checkout-prod/bundles/fff54b87-26fe-42a9-be54-3f5a7ef8176e.2019-03-26T131455.775610Z",
+      "status": "SUCCEEDED"
     }
 
 
@@ -239,21 +239,22 @@ Example call to ``get_file()``:
 Example output:
 ::
     {
-    "describedBy": "https://schema.humancellatlas.org/type/file/7.0.2/sequence_file",
-    "schema_type": "file",
-    "file_core": {
+      "describedBy": "https://schema.humancellatlas.org/type/file/7.0.2/sequence_file",
+      "schema_type": "file",
+      "file_core": {
         "file_name": "SRR6546754_2.fastq.gz",
         "file_format": "fastq.gz"
-    },
-    "read_index": "read2",
-    "insdc_run": [
+      },
+      "read_index": "read2",
+      "insdc_run": [
         "SRR6546754"
-    ],
-    "technical_replicate_group": "Rep_id_7031",
-    "provenance": {
+      ],
+      "technical_replicate_group": "Rep_id_7031",
+      "provenance": {
         "document_id": "39a93f75-0db3-4ee2-ab22-3eaa9932cf67",
         "submission_date": "2019-01-30T11:15:21.403Z",
         "update_date": "2019-02-19T17:17:10.540Z"
+      }
     }
 
 
@@ -303,7 +304,7 @@ Example call to ``post_search()``:
 Example output:
 ::
     {
-        ...
+      ...
     },
     {
       "bundle_fqid": "fff807ba-bc98-4247-a560-49fb90c9675c.2019-08-01T200147.111027Z",
@@ -311,12 +312,12 @@ Example output:
       "search_score": null
     },
     {
-        ...
-    },
+      ...
+    }
 
 
-put_subscription(), delete_subscription(), get_subscription(), get_subscriptions(): 
------------------------------------------------------------------------------------
+put_subscription(), delete_subscription(), get_subscription(), get_subscriptions()
+----------------------------------------------------------------------------------
 
 * ``get_subscriptions()``: Gets a list of users subscription.
 
