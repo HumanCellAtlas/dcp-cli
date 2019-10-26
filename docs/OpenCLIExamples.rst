@@ -1,11 +1,11 @@
-==============================
-CLI Examples (Open End-points)
-==============================
+=============================
+CLI Examples (Open Endpoints)
+=============================
 
 The HCA CLI provides users of the Human Cell Atlas (HCA) to access and download data sets from the HCA. This page
 covers how to access the HCA using the HCA command line utility.
 
-*NOTE:* The HCA cli utility is compatible with Python 3.5+.
+*NOTE:* The HCA CLI utility is compatible with Python 3.5+.
 
 
 hca create-version
@@ -316,7 +316,7 @@ Example output:
       ...
     }
 
-hca put-subscription, hca delete-subscription, hca get-subscription(s)
+hca get-subscription(s), hca put-subscription, hca delete-subscription
 ----------------------------------------------------------------------
 
 * ``get_subscriptions()``: Gets a list of users subscription.
