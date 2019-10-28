@@ -9,7 +9,7 @@ covers how to access the HCA using the HCA command line utility.
 
 
 hca create-version
-------------------------
+------------------
 
 Returns a timestamp in ``DSS_VERSION`` format (e.g., ``1985-04-12T232050.520000Z``), useful for
 versioning bundles or files.
@@ -24,7 +24,7 @@ Example call to ``hca create-version``:
 .. literalinclude:: ../test/tutorial/scripts/cli/create_version_cli.sh
 
 hca download
-------------------------
+------------
 
 Downloads a bundle to the local filesystem as a directory. By default, both data and metadata files
 are downloaded (flags can be added to download only the data or the metadata).
@@ -41,57 +41,57 @@ Example call to ``hca get-bundle``:
 
 Example response:
 ::
-  {
-    "bundle": {
-      "creator_uid": 8008,
-      "files": [
-        {
-          "content-type": "application/json; dcp-type=\"metadata/biomaterial\"",
-          "crc32c": "5c084696",
-          "indexed": true,
-          "name": "cell_suspension_0.json",
-          "s3_etag": "bd60da05055d1cd544855dd35cb12470",
-          "sha1": "fdeb52d3caf0becce0575528c81bf0a06cb4a023",
-          "sha256": "e0ff1c402a4d6c659937f90d00d9820a2ebf0ebc920260a2a2bddf0961c30de5",
-          "size": 847,
-          "uuid": "134c0f04-76ae-405d-aea4-b72c08a53dd9",
-          "version": "2019-07-09T230754.589000Z"
-        },
-        {
-          "content-type": "application/json; dcp-type=\"metadata/biomaterial\"",
-          "crc32c": "39e6f9e1",
-          "indexed": true,
-          "name": "specimen_from_organism_0.json",
-          "s3_etag": "f30917f841530d78e16223354049c8dc",
-          "sha1": "98171c05647a3b771afb3bd61e65d0a25b0afe7f",
-          "sha256": "35406f0b8fa1ece3e3589151978aefef28f358afa163874b286eab837fcabfca",
-          "size": 864,
-          "uuid": "577a91d8-e579-41b6-9353-7e4e774c161a",
-          "version": "2019-07-09T222811.151000Z"
-        },
-
-        ...
-
-        {
-          "content-type": "application/gzip; dcp-type=data",
-          "crc32c": "38f31e58",
-          "indexed": false,
-          "name": "SRR6579532_2.fastq.gz",
-          "s3_etag": "ac67e10df687471f5808be96499836c6",
-          "sha1": "8743feb4d1ce82328127d10e2b1dfa35e5ae4b5a",
-          "sha256": "3d788e06b5ca4c8fc679b47c790b1e266f73d48818a1749743ec85f096d657ea",
-          "size": 43810957,
-          "uuid": "1330ef1a-7a21-40c6-84c5-5cec18204028",
-          "version": "2019-08-03T150636.729022Z"
-        }
-      ],
-      "uuid": "ffffaf55-f19c-40e3-aa81-a6c69d357265",
-      "version": "2019-08-01T200147.836832Z"
+    {
+      "bundle": {
+        "creator_uid": 8008,
+        "files": [
+          {
+            "content-type": "application/json; dcp-type=\"metadata/biomaterial\"",
+            "crc32c": "5c084696",
+            "indexed": true,
+            "name": "cell_suspension_0.json",
+            "s3_etag": "bd60da05055d1cd544855dd35cb12470",
+            "sha1": "fdeb52d3caf0becce0575528c81bf0a06cb4a023",
+            "sha256": "e0ff1c402a4d6c659937f90d00d9820a2ebf0ebc920260a2a2bddf0961c30de5",
+            "size": 847,
+            "uuid": "134c0f04-76ae-405d-aea4-b72c08a53dd9",
+            "version": "2019-07-09T230754.589000Z"
+          },
+          {
+            "content-type": "application/json; dcp-type=\"metadata/biomaterial\"",
+            "crc32c": "39e6f9e1",
+            "indexed": true,
+            "name": "specimen_from_organism_0.json",
+            "s3_etag": "f30917f841530d78e16223354049c8dc",
+            "sha1": "98171c05647a3b771afb3bd61e65d0a25b0afe7f",
+            "sha256": "35406f0b8fa1ece3e3589151978aefef28f358afa163874b286eab837fcabfca",
+            "size": 864,
+            "uuid": "577a91d8-e579-41b6-9353-7e4e774c161a",
+            "version": "2019-07-09T222811.151000Z"
+          },
+    
+          ...
+    
+          {
+            "content-type": "application/gzip; dcp-type=data",
+            "crc32c": "38f31e58",
+            "indexed": false,
+            "name": "SRR6579532_2.fastq.gz",
+            "s3_etag": "ac67e10df687471f5808be96499836c6",
+            "sha1": "8743feb4d1ce82328127d10e2b1dfa35e5ae4b5a",
+            "sha256": "3d788e06b5ca4c8fc679b47c790b1e266f73d48818a1749743ec85f096d657ea",
+            "size": 43810957,
+            "uuid": "1330ef1a-7a21-40c6-84c5-5cec18204028",
+            "version": "2019-08-03T150636.729022Z"
+          }
+        ],
+        "uuid": "ffffaf55-f19c-40e3-aa81-a6c69d357265",
+        "version": "2019-08-01T200147.836832Z"
+      }
     }
-  }
     
 hca download-manifest
-------------------------
+---------------------
 
 Downloads a list of files specified in a user-provided manifest file.
 
@@ -122,7 +122,7 @@ Example manifest TSV file:
 
 
 hca file-head
-------------------------
+-------------
 
 Returns the metadata for the latest version of a file with a given UUID. If the version is provided,
 the metadata for that specific version is returned instead. The metadata is returned in the headers.
@@ -157,7 +157,7 @@ Example JSON header returned by API:
 
 
 hca get-bundle
-------------------------
+--------------
 
 For a given bundle UUID and optionally a bundle version, returns information about the latest version
 of that bundle. Information returned includes the bundle creator, UUID, and version, as well as 
@@ -226,7 +226,7 @@ Example output:
 
 
 hca get-file 
-------------------------
+------------
 
 Retrieves a file given a UUID, optionally a version, and displays the details of the file.
 
@@ -257,7 +257,7 @@ Example output:
 
 
 hca login
-------------------------
+---------
 
 Configures and saves authentication credentials.
 
@@ -266,8 +266,8 @@ Example call to ``hca login``:
 .. literalinclude:: ../test/tutorial/scripts/cli/login_cli.sh
 
 
-logout
-------------------------
+hca logout
+----------
 
 Clears authentication credentials previously configured with login.
 
@@ -277,7 +277,7 @@ Example call to ``hca logout``:
 
 
 hca post-bundles-checkout
-------------------------
+-------------------------
 
 Returns a ``checkout-job-id`` (e.g., ``4de1c603-fa8b-4c07-af37-06159e6951e0``). This
 ``checkout-job-id`` can then be used with the ``get_bundles_checkout()`` method.
@@ -288,7 +288,7 @@ Example call to ``hca post-bundles-checkout``:
 
 
 hca post-search
-------------------------
+---------------
 
 Find bundles by their ``bundle_fqid``, which is the bundle's UUID and version separated by a dot (.).
 
@@ -333,7 +333,7 @@ Example CLI calls:
 
 
 hca refresh-swagger
-------------------------
+-------------------
 
 Manually refresh the swagger document.
 
