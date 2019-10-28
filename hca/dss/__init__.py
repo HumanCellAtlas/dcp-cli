@@ -71,10 +71,10 @@ class DSSFile(namedtuple('DSSFile', ['name', 'uuid', 'version', 'sha256', 'size'
 
 class DSSClient(SwaggerClient):
     """
-    Client for the Data Storage Service API.
-    Note that there are more API methods available than are defined here.
-    See docstring in hca/util/__init__.py for more info.
+    Client for the Data Storage Service API
     """
+    # Note: there are more API methods available than are defined here.
+    # See docstring in ``hca/util/__init__.py``.
     UPLOAD_BACKOFF_FACTOR = 1.618
     threads = DEFAULT_THREAD_COUNT
 
