@@ -113,8 +113,8 @@ License
 -------
 Licensed under the terms of the `MIT License <https://opensource.org/licenses/MIT>`_.
 
-.. image:: https://img.shields.io/travis/HumanCellAtlas/dcp-cli.svg
-        :target: https://travis-ci.org/HumanCellAtlas/dcp-cli
+.. image:: https://img.shields.io/travis/HumanCellAtlas/dcp-cli.svg?branch=master
+        :target: https://travis-ci.org/HumanCellAtlas/dcp-cli?branch=master
 .. image:: https://codecov.io/github/HumanCellAtlas/dcp-cli/coverage.svg?branch=master
         :target: https://codecov.io/github/HumanCellAtlas/dcp-cli?branch=master
 .. image:: https://img.shields.io/pypi/v/hca.svg
