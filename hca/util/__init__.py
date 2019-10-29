@@ -201,8 +201,7 @@ class _PaginatingClientMethodFactory(_ClientMethodFactory):
         for page in self._get_raw_pages(**kwargs):
             data = page.json()
             content_key = page.headers.get("X-OpenAPI-Paginated-Content-Key", "results")
-            data['_internal_api_content_key'] = content_key
-            yield data
+            yield data, content_key
 
     def _cli_call(self, cli_args):
         # print(dir(self))
@@ -213,23 +212,19 @@ class _PaginatingClientMethodFactory(_ClientMethodFactory):
             return super()._cli_call(cli_args)
         else:
             response_data = None
-            for page in self.paginate(**vars(cli_args)):
+            for page, content_key in self.paginate(**vars(cli_args)):
                 if response_data is None:
                     response_data = page
                 else:
-
-                    content_key = response_data['_internal_api_content_key']
                     data_aggregrator = jmespath.search(content_key, response_data)
                     patch = jmespath.search(content_key, page)
                     if patch:
                         data_aggregrator += patch
                     response_data[content_key] = data_aggregrator
-            response_data.pop('_internal_api_content_key')
             return response_data
 
-
     def _get_content_key(self):
-        return self.__getattribute__("content_key",None)
+        return self.__getattribute__("content_key", None)
 
 
 class SwaggerClient(object):
@@ -628,7 +623,7 @@ class SwaggerClient(object):
                                        choices=method_data["args"][param_name]["choices"],
                                        required=method_data["args"][param_name]["required"])
             if str(requests.codes.partial) in method_data["responses"]:
-                subparser.add_argument("--no-paginate",action="store_false", dest="paginate",
+                subparser.add_argument("--no-paginate", action="store_false", dest="paginate",
                                        help='Do not automatically page the responses')
             subparser.set_defaults(entry_point=method_data["entry_point"])
 
