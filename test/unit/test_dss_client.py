@@ -120,6 +120,15 @@ class DSSClientTestCase(unittest.TestCase):
         with open('manifest.tsv', 'w') as f:
             f.write('\n'.join(['\t'.join(row) for row in manifest]))
 
+    def _write_uniform_manifest(self):
+        """Create a manifest where all files have the same hash"""
+        new_manifest = [self.manifest[0]]
+        for row in self.manifest[1:]:
+            new_row = list(row)
+            new_row[4] = 'fakeHASH'
+            new_manifest.append(new_row)
+        self._write_manifest(new_manifest)
+
     def _files_present(self):
         return {os.path.join(dir_path, f)
                 for dir_path, _, files in walk('.')
@@ -173,7 +182,7 @@ class DSSClientTestCase(unittest.TestCase):
     def _assert_manifest_not_updated(self):
         for row in ManifestDownloadContext._parse_manifest(self.manifest_file):
             self.assertNotIn('file_path', row)
-    
+
     def _assert_link_fails(self, num_logs, download_func, *args, **kwargs):
         """Test that download_func(*args, **kwargs) fails to link num_logs times"""
         os_error = OSError()
@@ -280,14 +289,8 @@ class TestManifestDownloadFilestore(DSSClientTestCase):
         The approach is to mock the old download_file function with a replacement that runs the same code but waits
         for at least two threads to be ready before beginning.
         """
-        # make a new manifest with all the same hashes
         self.dss.threads = 3  # 3 threads for three files with barrier size 3
-        new_manifest = [self.manifest[0]]
-        for row in self.manifest[1:]:
-            new_row = list(row)
-            new_row[4] = 'fakeHASH'
-            new_manifest.append(new_row)
-        self._write_manifest(new_manifest)
+        self._write_uniform_manifest()
         self._mock_download_manifest(self.manifest_file, 'aws', layout='none')
         files_expected = {
             os.path.join('.', 'manifest.tsv'),
@@ -381,12 +384,7 @@ class TestManifestDownloadBundle(DSSClientTestCase):
 
     def test_manifest_download_bundle_parallel(self):
         self.dss.threads = 3  # 3 threads for three files with barrier size 3
-        new_manifest = [self.manifest[0]]
-        for row in self.manifest[1:]:
-            new_row = list(row)
-            new_row[4] = 'fakeHASH'
-            new_manifest.append(new_row)
-        self._write_manifest(new_manifest)
+        self._write_uniform_manifest()
         with patch('hca.dss.DownloadContext._do_download_file', side_effect=_fake_do_download_file_with_barrier):
             self._mock_download_manifest(self.manifest_file, 'aws', layout='bundle')
         self._assert_all_files_downloaded(more_files=self.data_files().union(self.metadata_files()))
