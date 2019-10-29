@@ -144,7 +144,7 @@ def main(args=None):
             try:
                 err_log_filename = os.path.join(get_config().user_config_dir, "error.log")
                 with open(err_log_filename, "ab") as fh:
-                    print(datetime.datetime.now().isoformat(), file=fh)
+                    print(datetime.datetime.now().isoformat(), file=fh)  # noqa
                     print(err_msg, file=fh)
                 exit("{}: {}. See {} for error details.".format(e.__class__.__name__, e, err_log_filename))
             except Exception:
