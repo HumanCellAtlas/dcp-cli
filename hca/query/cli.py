@@ -1,5 +1,6 @@
 from . import DCPQueryClient
 
+
 def add_commands(subparsers, help_menu=False):
     query_parser = subparsers.add_parser('query', help="Interact with the HCA DCP Query Service")
 

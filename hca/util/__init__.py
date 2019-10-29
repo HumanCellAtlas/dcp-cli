@@ -443,7 +443,8 @@ class SwaggerClient(object):
                    'exp': exp,
                    'email': service_credentials["client_email"],
                    'scope': ['email', 'openid', 'offline_access'],
-                   'https://auth.data.humancellatlas.org/group': 'hca'
+                   'https://auth.data.humancellatlas.org/group': 'hca',
+                   'https://auth.data.humancellatlas.org/email': service_credentials["client_email"]
                    }
         additional_headers = {'kid': service_credentials["private_key_id"]}
         signed_jwt = jwt.encode(payload, service_credentials["private_key"], headers=additional_headers,
@@ -498,9 +499,10 @@ class SwaggerClient(object):
                     anno = typing.Optional[anno]
                 param = Parameter(prop_name, Parameter.POSITIONAL_OR_KEYWORD, default=prop_data.get("default"),
                                   annotation=anno)
-                method_args.setdefault(prop_name, {}).update(dict(param=param, doc=prop_data.get("description"),
-                                                                  choices=enum_values,
-                                                                  required=prop_name in body_json_schema.get("required", [])))
+                method_args.setdefault(prop_name, {}).update(param=param,
+                                                             doc=prop_data.get("description"),
+                                                             choices=enum_values,
+                                                             required=prop_name in body_json_schema.get("required", []))
                 body_props[prop_name] = _merge_dict(schema, body_props.get('prop_name', {}))
 
         if body_json_schema.get('properties', {}):
@@ -554,7 +556,7 @@ class SwaggerClient(object):
                   Parameter("client", Parameter.POSITIONAL_OR_KEYWORD)]
         params += [v["param"] for k, v in method_args.items() if not k.startswith("_")]
         client_method.__signature__ = signature(client_method).replace(parameters=params)
-        docstring = method_data["summary"] + "\n\n"
+        docstring = method_data.get("summary", '') + "\n\n"
 
         if method_supports_pagination:
             docstring += _pagination_docstring.format(client_name=self.__class__.__name__, method_name=method_name)
@@ -567,7 +569,7 @@ class SwaggerClient(object):
                 param_doc = _md2rst(method_args[param]["doc"] or "")
                 docstring += ":param {}: {}\n".format(param, param_doc.replace("\n", " "))
                 docstring += ":type {}: {}\n".format(param, method_args[param]["param"].annotation)
-        docstring += "\n\n" + _md2rst(method_data["description"])
+        docstring += "\n\n" + _md2rst(method_data.get("description", ''))
         client_method.__doc__ = docstring
 
         setattr(self.__class__, method_name, types.MethodType(client_method, SwaggerClient))

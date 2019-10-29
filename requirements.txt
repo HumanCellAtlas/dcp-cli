@@ -1,22 +1,37 @@
+# List runtime dependencies here.
+# Do not pin specific versions of dependencies unless absolutely necessary.
+# Instead, set bounds on major version ranges of dependencies in accordance with SemVer (https://semver.org).
+# If you must pin a specific version of a dependency, note the reason to do so in a comment line
+# immediately preceding the dependency.
+
+# Only dependencies which are directly imported by this library should be listed here. Dependencies
+# should manage their sub-dependencies. (If a sub-dependency must be restricted to a specific version
+# range, and upstream won't do so, note this in a comment.)
+
 argcomplete >= 1.9.3, < 2
-atomicwrites >=1.3.0, <2
-awscli>1.15.70
-boto3 > 1.8
-botocore>=1.12.13
+atomicwrites >= 1.3.0, < 2
+boto3 >= 1.9.86, < 2
+botocore >= 1.12.208, < 2
 commonmark >= 0.9.0, < 1
-cryptography==2.3.1
+cryptography >= 2.6.1, < 3
 dcplib >= 2.0.2, < 3
-docutils==0.14
-google-auth >= 1.0.2, < 2
-google-auth-oauthlib >= 0.1, < 2
-Jinja2 >= 2.9, < 3
+
+# The version range of docutils is pinned by botocore. Pinning it here can cause a version conflict.
+# See https://github.com/boto/botocore/pull/1802, https://github.com/HumanCellAtlas/dcp-cli/issues/418
+docutils
+
+google-auth >= 1.3.0, < 2
+google-auth-oauthlib >= 0.4.1, < 2
+Jinja2 >= 2.10, < 3
 jsonpointer >= 1.10, < 2
 jsonschema >= 2.6, < 3
-puremagic < 1.5
-PyJWT >= 1.6.4
+
+# Version range restricted due to an incompatibility with later versions of puremagic.
+# See https://github.com/HumanCellAtlas/dcp-cli/pull/245.
+puremagic >= 1.4, < 1.5
+
+PyJWT >= 1.6.4, < 2
 requests >= 2.20.0, < 3
-rsa<=3.5.0,>=3.1.2
-s3transfer<0.3.0,>=0.2.0
-tenacity >=5.0.2, < 5.1
-tqdm >=4.33.0, < 5
-tweak >= 1.0.2, < 2
+tenacity >= 5.0.2, < 5.1
+tqdm >= 4.33.0, < 5
+tweak >= 1.0.3, < 2
