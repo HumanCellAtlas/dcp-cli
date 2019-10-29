@@ -6,7 +6,7 @@ This document describes how to submit data files to the HCA Data Coordination Pl
 
 - A system running Unix (Linux or MacOS).
 - The system's clock must be within 15 minutes of accurate. We suggest using [ntpdate](http://doc.ntp.org/4.1.1/ntpdate.htm) or [date](https://www.tutorialspoint.com/unix_commands/date.htm) to fix this if your system does not have NTP setup.
-- Python 2.7, 3.4, 3.5, or 3.6 with `pip` installed. Instructions for how to install `pip` can be found [here](https://pip.pypa.io/en/stable/installing/).
+- Python 3.5+ with `pip` installed. Instructions for how to install `pip` can be found [here](https://pip.pypa.io/en/stable/installing/).
 
 ## Installation
 
