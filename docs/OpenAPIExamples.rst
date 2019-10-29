@@ -3,7 +3,7 @@ Python API Examples (Open Endpoints)
 ====================================
 
 The HCA API provides several ways for users of the Human Cell Atlas (HCA) to access and download
-data sets from the HCA. This page covers how to access the HCA using Python API bindings.
+data sets from the HCA. This page covers how to access HCA data using Python API bindings.
 
 *NOTE:* The HCA cli utility is compatible with Python 3.5+.
 
