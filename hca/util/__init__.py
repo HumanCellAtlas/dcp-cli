@@ -199,9 +199,7 @@ class _PaginatingClientMethodFactory(_ClientMethodFactory):
     def paginate(self, **kwargs):
         """Yield paginated responses one response body at a time."""
         for page in self._get_raw_pages(**kwargs):
-            data = page.json()
-            content_key = page.headers.get("X-OpenAPI-Paginated-Content-Key", "results")
-            yield data, content_key
+            yield page
 
     def _cli_call(self, cli_args):
         # print(dir(self))
@@ -212,12 +210,14 @@ class _PaginatingClientMethodFactory(_ClientMethodFactory):
             return super()._cli_call(cli_args)
         else:
             response_data = None
-            for page, content_key in self.paginate(**vars(cli_args)):
+            for page in self._get_raw_pages(**vars(cli_args)):
+                page_data = page.json()
+                content_key = page.headers.get("X-OpenAPI-Paginated-Content-Key", "results")
                 if response_data is None:
-                    response_data = page
+                    response_data = page_data
                 else:
                     data_aggregrator = jmespath.search(content_key, response_data)
-                    patch = jmespath.search(content_key, page)
+                    patch = jmespath.search(content_key, page_data)
                     if patch:
                         data_aggregrator += patch
                     response_data[content_key] = data_aggregrator
