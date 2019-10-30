@@ -542,10 +542,10 @@ class SwaggerClient(object):
         path_parameters = [p_name for p_name, p_data in parameters.items() if p_data["in"] == "path"]
         self.http_paths[method_name][frozenset(path_parameters)] = http_path
 
+        body_props, method_args = self._process_method_args(parameters=parameters, body_json_schema=body_json_schema)
+
         method_supports_pagination = True if str(requests.codes.partial) in method_data["responses"] else False
         highlight_streaming_support = True if str(requests.codes.found) in method_data["responses"] else False
-
-        body_props, method_args = self._process_method_args(parameters=parameters, body_json_schema=body_json_schema)
 
         factory = _PaginatingClientMethodFactory if method_supports_pagination else _ClientMethodFactory
         client_method = factory(self, parameters, path_parameters, http_method, method_name, method_data, body_props)
