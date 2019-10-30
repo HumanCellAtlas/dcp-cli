@@ -199,7 +199,7 @@ class _PaginatingClientMethodFactory(_ClientMethodFactory):
     def paginate(self, **kwargs):
         """Yield paginated responses one response body at a time."""
         for page in self._get_raw_pages(**kwargs):
-            yield page
+            yield page.json()
 
     def _cli_call(self, cli_args):
         if cli_args.paginate is not True:

@@ -27,7 +27,8 @@ class TestDssCLI(unittest.TestCase):
     def test_post_search_cli(self):
         query = json.dumps({})
         replica = "aws"
-        args = ["dss", "post-search", "--es-query", query, "--replica", replica, "--output-format", "raw"]
+        args = ["dss", "post-search", "--es-query", query, "--replica", replica,
+                "--output-format", "raw", "--no-paginate"]
         with CapturingIO('stdout') as stdout:
             hca.cli.main(args)
         result = json.loads(stdout.captured())
