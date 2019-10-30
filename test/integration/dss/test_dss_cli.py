@@ -2,12 +2,16 @@
 # coding: utf-8
 import contextlib
 import filecmp
+import io
 import json
 import os
 import sys
 import unittest
+import unittest.mock
 import uuid
 import tempfile
+import requests
+from requests.models import Response
 
 pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))  # noqa
 sys.path.insert(0, pkg_root)  # noqa
@@ -245,6 +249,39 @@ class TestDssCLI(unittest.TestCase):
                 self.assertFalse(diff.left_only)
                 self.assertFalse(diff.funny_files)
                 self.assertFalse(diff.diff_files)
+
+
+class SessionMock:
+    def __init__(self):
+        self.pages = [{"results": [f"result {i}"] * i} for i in range(3)]
+
+    def request(self, *args, **kwargs):
+        res = Response()
+        res.status_code = requests.codes.ok
+        page = self.pages.pop()
+        res.headers = {"link": '<https:///>; rel="next"'} if self.pages else {}
+        res.headers['content-type'] = 'application/json'
+        res.raw = io.BytesIO(json.dumps(page).encode())
+        return res
+
+
+class MockTestCase(unittest.TestCase):
+    def _test_with_mock(self, expected_length, no_pagination=False):
+        paged_args = ['dss', 'get-bundles-all', '--replica', 'aws']
+        if no_pagination is True:
+            paged_args.append('--no-paginate')
+        with CapturingIO('stdout') as stdout:
+            hca.cli.main(args=paged_args)
+        output = json.loads(stdout.captured())
+        self.assertEqual(expected_length,len(output['results']))
+
+    @unittest.mock.patch("hca.util.SwaggerClient._session", SessionMock())
+    def test_no_page(self):
+        self._test_with_mock(2, no_pagination=True)
+
+    @unittest.mock.patch("hca.util.SwaggerClient._session", SessionMock())
+    def test_page(self):
+        self._test_with_mock(3, no_pagination=False)
 
 
 if __name__ == "__main__":

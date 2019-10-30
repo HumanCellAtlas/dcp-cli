@@ -202,29 +202,29 @@ class _PaginatingClientMethodFactory(_ClientMethodFactory):
             yield page
 
     def _cli_call(self, cli_args):
-        # print(dir(self))
-        # print(self.http_method)
-        # print(self.method_data)
-        # print(self.body_props)
         if cli_args.paginate is not True:
             return super()._cli_call(cli_args)
-        else:
-            response_data = None
-            for page in self._get_raw_pages(**vars(cli_args)):
-                page_data = page.json()
-                content_key = page.headers.get("X-OpenAPI-Paginated-Content-Key", "results")
-                if response_data is None:
-                    response_data = page_data
-                else:
-                    data_aggregrator = jmespath.search(content_key, response_data)
-                    patch = jmespath.search(content_key, page_data)
-                    if patch:
-                        data_aggregrator += patch
-                    response_data[content_key] = data_aggregrator
-            return response_data
+        return self._auto_page(**vars(cli_args))
 
-    def _get_content_key(self):
-        return self.__getattribute__("content_key", None)
+    def __call__(self, client, **kwargs):
+        # auto pagination should not be available for python bindings, use paginate attribute instead.
+        return super().__call__(client, **kwargs)
+
+    def _auto_page(self, **kwargs):
+        '''This method allows for autopaging in commands and bindings'''
+        response_data = None
+        for page in self._get_raw_pages(**kwargs):
+            page_data = page.json()
+            content_key = page.headers.get("X-OpenAPI-Paginated-Content-Key", "results")
+            if response_data is None:
+                response_data = page_data
+            else:
+                data_aggregrator = jmespath.search(content_key, response_data)
+                patch = jmespath.search(content_key, page_data)
+                if patch:
+                    data_aggregrator += patch
+                response_data[content_key] = data_aggregrator
+        return response_data
 
 
 class SwaggerClient(object):
@@ -626,7 +626,7 @@ class SwaggerClient(object):
                                        required=method_data["args"][param_name]["required"])
             if str(requests.codes.partial) in method_data["responses"]:
                 subparser.add_argument("--no-paginate", action="store_false", dest="paginate",
-                                       help='Do not automatically page the responses')
+                                       help='Do not automatically page the responses', default=True)
             subparser.set_defaults(entry_point=method_data["entry_point"])
 
         for command in self.commands:
