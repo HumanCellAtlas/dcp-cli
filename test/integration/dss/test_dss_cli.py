@@ -254,7 +254,7 @@ class TestDssCLI(unittest.TestCase):
 
 class SessionMock:
     def __init__(self):
-        self.pages = [{"results": [f"result {i}"] * i} for i in range(3)]
+        self.pages = [{"results": ["result"] * i} for i in range(3)]
 
     def request(self, *args, **kwargs):
         res = Response()
