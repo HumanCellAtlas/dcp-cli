@@ -265,6 +265,9 @@ class SessionMock:
         res.raw = io.BytesIO(json.dumps(page).encode())
         return res
 
+    def get(self, *args, **kwargs):
+        kwargs["method"] = "GET"
+        return self.request(*args, **kwargs)
 
 class MockTestCase(unittest.TestCase):
     def _test_with_mock(self, expected_length, no_pagination=False):

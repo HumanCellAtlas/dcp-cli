@@ -206,10 +206,6 @@ class _PaginatingClientMethodFactory(_ClientMethodFactory):
             return super()._cli_call(cli_args)
         return self._auto_page(**vars(cli_args))
 
-    def __call__(self, client, **kwargs):
-        # auto pagination should not be available for python bindings, use paginate attribute instead.
-        return super().__call__(client, **kwargs)
-
     def _auto_page(self, **kwargs):
         '''This method allows for autopaging in commands and bindings'''
         response_data = None
