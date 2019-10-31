@@ -262,12 +262,14 @@ class SessionMock:
         page = self.pages.pop()
         res.headers = {"link": '<https:///>; rel="next"'} if self.pages else {}
         res.headers['content-type'] = 'application/json'
+        res.headers['X-OpenAPI-Paginated-Content-Key'] = 'results'
         res.raw = io.BytesIO(json.dumps(page).encode())
         return res
 
     def get(self, *args, **kwargs):
         kwargs["method"] = "GET"
         return self.request(*args, **kwargs)
+
 
 class MockTestCase(unittest.TestCase):
     def _test_with_mock(self, expected_length, no_pagination=False):
@@ -279,12 +281,14 @@ class MockTestCase(unittest.TestCase):
         output = json.loads(stdout.captured())
         self.assertEqual(expected_length,len(output['results']))
 
-    @unittest.mock.patch("hca.util.SwaggerClient._session", SessionMock())
-    def test_no_page(self):
+    @unittest.mock.patch("hca.util._ClientMethodFactory._request")
+    def test_no_page(self, request_mock):
+        request_mock.side_effect = SessionMock().request
         self._test_with_mock(2, no_pagination=True)
 
-    @unittest.mock.patch("hca.util.SwaggerClient._session", SessionMock())
-    def test_page(self):
+    @unittest.mock.patch("hca.util._ClientMethodFactory._request")
+    def test_page(self, request_mock):
+        request_mock.side_effect = SessionMock().request
         self._test_with_mock(3, no_pagination=False)
 
 
