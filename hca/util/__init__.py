@@ -92,6 +92,7 @@ import argparse
 import time
 import jwt
 import requests
+import jmespath
 
 from inspect import signature, Parameter
 from requests.adapters import HTTPAdapter, DEFAULT_POOLSIZE
@@ -199,6 +200,27 @@ class _PaginatingClientMethodFactory(_ClientMethodFactory):
         """Yield paginated responses one response body at a time."""
         for page in self._get_raw_pages(**kwargs):
             yield page.json()
+
+    def _cli_call(self, cli_args):
+        if cli_args.paginate is not True:
+            return super()._cli_call(cli_args)
+        return self._auto_page(**vars(cli_args))
+
+    def _auto_page(self, **kwargs):
+        '''This method allows for autopaging in commands and bindings'''
+        response_data = None
+        for page in self._get_raw_pages(**kwargs):
+            page_data = page.json()
+            content_key = page.headers.get("X-OpenAPI-Paginated-Content-Key", "results")
+            if response_data is None:
+                response_data = page_data
+            else:
+                data_aggregrator = jmespath.search(content_key, response_data)
+                patch = jmespath.search(content_key, page_data)
+                if patch:
+                    data_aggregrator += patch
+                response_data[content_key] = data_aggregrator
+        return response_data
 
 
 class SwaggerClient(object):
@@ -598,6 +620,9 @@ class SwaggerClient(object):
                                        help=method_data["args"][param_name]["doc"],
                                        choices=method_data["args"][param_name]["choices"],
                                        required=method_data["args"][param_name]["required"])
+            if str(requests.codes.partial) in method_data["responses"]:
+                subparser.add_argument("--no-paginate", action="store_false", dest="paginate",
+                                       help='Do not automatically page the responses', default=True)
             subparser.set_defaults(entry_point=method_data["entry_point"])
 
         for command in self.commands:
