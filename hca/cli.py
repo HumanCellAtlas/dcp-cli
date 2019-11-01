@@ -54,7 +54,7 @@ class HCAArgumentParser(argparse.ArgumentParser):
 
 def check_if_release_is_current(log):
     """Warns the user if their release is behind the latest PyPi __version__."""
-    if __version__ == '0.0.0':
+    if __version__.endswith('dev'):
         return
     client = xmlrpclib.ServerProxy('https://pypi.python.org/pypi')
     latest_pypi_version = client.package_releases('hca')
