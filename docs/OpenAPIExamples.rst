@@ -8,8 +8,8 @@ data sets from the HCA. This page covers how to access HCA data using Python API
 *NOTE:* The HCA CLI utility is compatible with Python 3.5+.
 
 
-``create_version()``
---------------------
+``create_version``
+------------------
 
 Returns a timestamp in ``DSS_VERSION`` format (e.g., ``1985-04-12T232050.520000Z``), useful for
 versioning bundles or files.
@@ -24,8 +24,8 @@ Example call to ``create_version()``:
 .. literalinclude:: ../test/tutorial/scripts/api/create_version_api.py
 
 
-``download()``
---------------
+``download``
+------------
 
 Downloads a bundle to the local filesystem as a directory. By default, both data and metadata files
 are downloaded (flags can be added to download only the data or the metadata).
@@ -93,8 +93,8 @@ Example response:
     }
 
 
-``download_manifest()``
------------------------
+``download_manifest``
+---------------------
 
 Downloads a list of files specified in a user-provided manifest file.
 
@@ -124,8 +124,8 @@ Example manifest TSV file:
     002aeac5-4d74-462d-baea-88f5c620cb50    2019-08-01T200147.836900Z   cell_suspension_0.json  c14b99ea-d8e2-4c84-9dc2-ce2245d8a743    2019-07-09T231935.003000Z   b43cebcca9cd5213699acce7356d226de07edef5c5604510a697159af1a12149    847         .hca/v2/files_2_4/b4/3ceb/b43cebcca9cd5213699acce7356d226de07edef5c5604510a697159af1a12149
 
 
-``file_head()``
----------------
+``file_head``
+-------------
 
 Returns the metadata for the latest version of a file with a given UUID. If the version is provided,
 the metadata for that specific version is returned instead. The metadata is returned in the headers.
@@ -160,8 +160,8 @@ Example JSON header returned by API:
     }
 
 
-``get_bundle()``
-----------------
+``get_bundle``
+--------------
 
 For a given bundle UUID and optionally a bundle version, returns information about the latest version
 of that bundle. Information returned includes the bundle creator, UUID, and version, as well as 
@@ -210,8 +210,8 @@ Example of the JSON returned by ``get_bundle()``:
     }
 
 
-``get_bundles_checkout()``
---------------------------
+``get_bundles_checkout``
+------------------------
 
 .. note:
     To get the ``checkout-job-id``, use the ``post_bundles_checkout()`` function.
@@ -231,8 +231,8 @@ Example of the JSON returned by ``get_bundles_checkout()``:
     }
 
 
-``get_file()``
---------------
+``get_file``
+------------
 
 Retrieves a file given a UUID, optionally a version, and displays the details of the file.
 
@@ -263,8 +263,8 @@ Example of the JSON returned by ``get_file()``:
     }
 
 
-``login()``
------------
+``login``
+---------
 
 Configures and saves authentication credentials.
 
@@ -272,8 +272,8 @@ Example call to ``login()``:
 
 .. literalinclude:: ../test/tutorial/scripts/api/login_api.py
 
-``logout()``
-------------
+``logout``
+----------
 
 Clears authentication credentials previously configured with login.
 
@@ -281,8 +281,8 @@ Example call to ``logout()``:
 
 .. literalinclude:: ../test/tutorial/scripts/api/logout_api.py
 
-``post_bundles_checkout()``
----------------------------
+``post_bundles_checkout``
+-------------------------
 
 Returns a ``checkout-job-id`` (e.g., ``4de1c603-fa8b-4c07-af37-06159e6951e0``). This
 ``checkout-job-id`` can then be used with the ``get_bundles_checkout()`` method.
@@ -291,8 +291,8 @@ Example call to ``post_bundles_checkout()``:
 
 .. literalinclude:: ../test/tutorial/scripts/api/post_bundles_checkout_api.py
 
-``post_search()``
------------------
+``post_search``
+---------------
 
 Find bundles by their ``bundle_fqid``, which is the bundle's UUID and version separated by a dot (.).
 
@@ -322,8 +322,8 @@ Example output:
     }
 
 
-``put_subscription(), delete_subscription(), get_subscription(), get_subscriptions()``
---------------------------------------------------------------------------------------
+``put_subscription, delete_subscription, get_subscription, get_subscriptions``
+------------------------------------------------------------------------------
 
 * ``get_subscriptions()``: Gets a list of users subscription.
 
@@ -338,7 +338,7 @@ Example API calls:
 .. literalinclude:: ../test/tutorial/scripts/api/put_delete_get_sub_api.py
 
 
-``refresh_swagger()``
----------------------
+``refresh_swagger``
+-------------------
 
 Manually refresh the swagger document.

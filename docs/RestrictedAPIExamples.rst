@@ -15,8 +15,8 @@ permission to upload/ingest data into the DSS.
 *NOTE:* The HCA CLI utility is compatible with Python 3.5+.
 
 
-``delete_bundle()``
--------------------
+``delete_bundle``
+-----------------
 
 Deletes an existing bundle given a UUID, version, and replica.
 
@@ -24,8 +24,8 @@ Example call to ``delete_bundle()``:
 
 .. literalinclude:: ../test/tutorial/scripts/api/delete_bundle_api.py
 
-``put_bundle()``
-----------------
+``put_bundle``
+--------------
 
 Creates a bundle. A bundle can contain multiple files of arbitrary type.
 
@@ -49,8 +49,8 @@ Example call to ``put_bundle()``:
 
 .. literalinclude:: ../test/tutorial/scripts/api/put_bundle_api.py
 
-``patch_bundle()``
-------------------
+``patch_bundle``
+----------------
 
 Allows a user to modify an existing bundle. User passes in an optional list of files to add or remove from an existing bundle.
 
@@ -71,8 +71,8 @@ Example call to ``patch_bundle()``:
 .. literalinclude:: ../test/tutorial/scripts/api/patch_bundle_api.py
 
 
-``put_file()``
---------------
+``put_file``
+------------
 
 Creates a new version of a file, given an existing UUID, version, creator uid, and source URL.
 
@@ -81,8 +81,8 @@ Example call to ``put_file()``:
 .. literalinclude:: ../test/tutorial/scripts/api/put_file_api.py
 
 
-``put_collection(), delete_collection(), patch_collection(), get_collection(s)()``
-----------------------------------------------------------------------------------
+``put_collection, delete_collection, patch_collection, get_collection(s)``
+--------------------------------------------------------------------------
 
 * ``get_collection()`` - Given a collection UUID, get the collection.
 
@@ -111,8 +111,8 @@ Example API calls:
 .. literalinclude:: ../test/tutorial/scripts/api/put_delete_get_patch_collection_api.py
 
 
-``upload()``
-------------
+``upload``
+----------
 
 Uploads a directory of files from the local filesystem and creates a bundle containing the uploaded files.
 
