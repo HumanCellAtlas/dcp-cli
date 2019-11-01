@@ -1,6 +1,6 @@
-===================================
-CLI Examples (Restricted Endpoints)
-===================================
+================================
+CLI REstricted Endpoint Examples
+================================
 
 The HCA CLI provides users of the Human Cell Atlas (HCA) to access and download data sets from the HCA. This page
 covers how to access the HCA using the HCA command line utility.

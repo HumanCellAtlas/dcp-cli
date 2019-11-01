@@ -1,6 +1,6 @@
-====================================
-Python API Examples (Open Endpoints)
-====================================
+=============================
+Python Open Endpoint Examples
+=============================
 
 The HCA API provides several ways for users of the Human Cell Atlas (HCA) to access and download
 data sets from the HCA. This page covers how to access HCA data using Python API bindings.
@@ -42,6 +42,7 @@ Example call to ``download()``:
 
 Example response:
 ::
+
     {
         "bundle": {
             "creator_uid": 8008,
@@ -135,6 +136,7 @@ Example call to ``file_head()``:
 
 Example JSON header returned by API:
 ::
+
     {
       "Date": "Tue, 22 Oct 2019 19:16:50 GMT",
       "Content-Type": "text/html; charset=utf-8",
@@ -171,6 +173,7 @@ Example call to ``get_bundle()``:
 
 Example bundle:
 ::
+
     {
       "bundle": {
         "creator_uid": 8008,
@@ -221,6 +224,7 @@ Example call to ``get_bundles_checkout()``:
 
 Example output:
 ::
+
     {
       "location": "s3://org-hca-dss-checkout-prod/bundles/fff54b87-26fe-42a9-be54-3f5a7ef8176e.2019-03-26T131455.775610Z",
       "status": "SUCCEEDED"
@@ -238,6 +242,7 @@ Example call to ``get_file()``:
 
 Example output:
 ::
+
     {
       "describedBy": "https://schema.humancellatlas.org/type/file/7.0.2/sequence_file",
       "schema_type": "file",
@@ -303,6 +308,7 @@ Example call to ``post_search()``:
 
 Example output:
 ::
+
     {
         ...
     },
