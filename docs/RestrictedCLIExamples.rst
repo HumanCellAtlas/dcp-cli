@@ -57,6 +57,7 @@ Allows user to pass in an optional list of files to add or remove from an exisit
 
 ``add_files``/``remove_files`` follow this format:
 ::
+
     [
       {
         "path": "string",
@@ -96,6 +97,7 @@ hca get-collection(s), hca put-collection, hca patch-collection, hca delete-coll
 
 To add or remove files with the CLI actions above, specify each file in the following format:
 ::
+
     [
       {
         "path": "string",

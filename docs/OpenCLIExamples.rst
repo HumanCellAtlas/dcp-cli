@@ -41,6 +41,7 @@ Example call to ``hca get-bundle``:
 
 Example response:
 ::
+
     {
       "bundle": {
         "creator_uid": 8008,
@@ -116,9 +117,9 @@ Example call to ``hca download-manifest``:
 Example manifest TSV file:
 
 ::
+
     bundle_uuid                             bundle_version              file_name               file_uuid                               file_version                file_sha256                                                         file_size   file_path
     002aeac5-4d74-462d-baea-88f5c620cb50    2019-08-01T200147.836900Z   cell_suspension_0.json  c14b99ea-d8e2-4c84-9dc2-ce2245d8a743    2019-07-09T231935.003000Z   b43cebcca9cd5213699acce7356d226de07edef5c5604510a697159af1a12149    847         .hca/v2/files_2_4/b4/3ceb/b43cebcca9cd5213699acce7356d226de07edef5c5604510a697159af1a12149
-    ...
 
 
 hca file-head
@@ -133,6 +134,7 @@ Example call to ``hca file-head``:
 
 Example JSON header returned by API:
 ::
+
     {
         "Date": "Tue, 22 Oct 2019 19:16:50 GMT",
         "Content-Type": "text/html; charset=utf-8",
@@ -167,8 +169,9 @@ Example call to ``hca get-bundle``:
 
 .. literalinclude:: ../test/tutorial/scripts/cli/get_bundle_cli.sh
 
-Example bundle:
+Example JSON returned by ``hca get-bundle``:
 ::
+
     {
       "bundle": {
         "creator_uid": 8008,
@@ -217,8 +220,9 @@ Example call to ``hca get-bundles-checkout``:
 
 .. literalinclude:: ../test/tutorial/scripts/cli/get_bundles_checkout_cli.sh
 
-Example output:
+Example JSON returned by ``hca get-bundles-checkout``:
 ::
+
     {
       "location": "s3://org-hca-dss-checkout-prod/bundles/fff54b87-26fe-42a9-be54-3f5a7ef8176e.2019-03-26T131455.775610Z",
       "status": "SUCCEEDED"
@@ -234,8 +238,9 @@ Example call to ``hca get-file``:
 
 .. literalinclude:: ../test/tutorial/scripts/cli/get_file_cli.sh
 
-Example output:
+Example JSON returned by ``hca get-file``:
 ::
+
     {
       "describedBy": "https://schema.humancellatlas.org/type/file/7.0.2/sequence_file",
       "schema_type": "file",

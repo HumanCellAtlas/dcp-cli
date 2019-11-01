@@ -56,6 +56,7 @@ Allows a user to modify an existing bundle. User passes in an optional list of f
 
 ``add_files``/``remove_files`` follow this format:
 ::
+
     [
       {
         "path": "string",
@@ -95,6 +96,7 @@ put_collection(), delete_collection(), patch_collection(), get_collection(s)()
 
 To add or remove files with the API endpoints above, specify each file in the following format:
 ::
+
     [
       {
         "path": "string",

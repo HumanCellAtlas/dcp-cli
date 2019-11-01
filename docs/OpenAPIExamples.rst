@@ -119,9 +119,9 @@ Example call to ``download_manifest()``:
 Example manifest TSV file:
 
 ::
+
     bundle_uuid                             bundle_version              file_name               file_uuid                               file_version                file_sha256                                                         file_size   file_path
     002aeac5-4d74-462d-baea-88f5c620cb50    2019-08-01T200147.836900Z   cell_suspension_0.json  c14b99ea-d8e2-4c84-9dc2-ce2245d8a743    2019-07-09T231935.003000Z   b43cebcca9cd5213699acce7356d226de07edef5c5604510a697159af1a12149    847         .hca/v2/files_2_4/b4/3ceb/b43cebcca9cd5213699acce7356d226de07edef5c5604510a697159af1a12149
-    ...
 
 
 file_head()
@@ -171,7 +171,7 @@ Example call to ``get_bundle()``:
 
 .. literalinclude:: ../test/tutorial/scripts/api/get_bundle_api.py
 
-Example bundle:
+Example of the JSON returned by ``get_bundle()``:
 ::
 
     {
@@ -222,7 +222,7 @@ Example call to ``get_bundles_checkout()``:
 
 .. literalinclude:: ../test/tutorial/scripts/api/get_bundles_checkout_api.py
 
-Example output:
+Example of the JSON returned by ``get_bundles_checkout()``:
 ::
 
     {
@@ -240,7 +240,7 @@ Example call to ``get_file()``:
 
 .. literalinclude:: ../test/tutorial/scripts/api/get_file_api.py
 
-Example output:
+Example of the JSON returned by ``get_file()``:
 ::
 
     {
