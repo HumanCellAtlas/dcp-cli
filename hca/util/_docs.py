@@ -105,7 +105,7 @@ def _parse_docstring(docstring):
             method_args['summary'] = node.astext()
         elif node.tagname == 'field_list':
             get_params(node, method_args['params'])
-        elif node.tagname is 'bullet_list':
+        elif node.tagname == 'bullet_list':
             method_args['description'] += _render_bullet_list(node)
         else:
             method_args['description'] += '\n\n' + node.astext()
