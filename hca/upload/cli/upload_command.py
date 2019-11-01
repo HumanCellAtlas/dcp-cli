@@ -8,8 +8,7 @@ from .common import UploadCLICommand
 
 
 class UploadCommand(UploadCLICommand):
-    """
-    Upload a file to the currently selected upload area.
+    """Upload a file to the currently selected upload area.
     """
     COMPARISON_TOOL = "https://s3-accelerate-speedtest.s3-accelerate.amazonaws.com/en/accelerate-speed-comparsion.html"
 

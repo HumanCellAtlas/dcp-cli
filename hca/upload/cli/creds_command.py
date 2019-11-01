@@ -3,8 +3,7 @@ from .common import UploadCLICommand
 
 
 class CredsCommand(UploadCLICommand):
-    """
-    Get/show AWS credentials for access to Upload Area
+    """Get/show AWS credentials for access to Upload Area
     """
     @classmethod
     def add_parser(cls, upload_subparsers):

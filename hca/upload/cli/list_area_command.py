@@ -3,8 +3,7 @@ from .common import UploadCLICommand
 
 
 class ListAreaCommand(UploadCLICommand):
-    """
-    List contents of currently selected upload area.
+    """List contents of currently selected upload area.
     """
     @classmethod
     def add_parser(cls, staging_subparsers):

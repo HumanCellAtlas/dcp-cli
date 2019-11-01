@@ -7,8 +7,7 @@ from hca.upload.lib.upload_submission_state import FileStatusCheck
 
 
 class ListFileStatusCommand(UploadCLICommand):
-    """
-    Print status of file in an upload area
+    """Print status of file in an upload area
     """
     @classmethod
     def add_parser(cls, upload_subparsers):
