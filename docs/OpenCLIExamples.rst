@@ -229,7 +229,7 @@ Example JSON returned by ``hca get-bundles-checkout``:
     }
 
 
-``hca get-file ``
+``hca get-file``
 ----------------
 
 Retrieves a file given a UUID, optionally a version, and displays the details of the file.
@@ -309,6 +309,7 @@ Example call to ``hca post-search``:
 
 Example output:
 ::
+
     {
       ...
     },
