@@ -21,7 +21,7 @@ import requests
 from atomicwrites import atomic_write
 from requests.exceptions import ChunkedEncodingError, ConnectionError, ReadTimeout
 
-from hca.dss.util import iter_paths, object_name_builder, hardlink
+from hca.dss.util import iter_paths, object_name_builder, hardlink, atomic_overwrite
 from glob import escape as glob_escape
 from hca.util import tsv
 from ..util import SwaggerClient, DEFAULT_THREAD_COUNT
@@ -528,7 +528,7 @@ class DownloadContext(object):
             logger.info("Skipping download of '%s' because it already exists at '%s'.", dss_file.name, dest_path)
         else:
             self._make_dirs_if_necessary(dest_path)
-            with atomic_write(dest_path, mode="wb", overwrite=True) as fh:
+            with atomic_overwrite(dest_path, mode="wb") as fh:
                 fh.write(manifest_bytes)
         file_path = os.path.join(bundle_dir, dss_file.name)
         self._make_dirs_if_necessary(file_path)
@@ -592,14 +592,14 @@ class DownloadContext(object):
         ranged get doesn't yield the correct header, then we start over.
         """
         self._make_dirs_if_necessary(dest_path)
-        with atomic_write(dest_path, mode="wb", overwrite=True) as fh:
+        with atomic_overwrite(dest_path, mode="wb") as fh:
             if dss_file.size == 0:
                 return
 
             download_hash = self._do_download_file(dss_file, fh)
 
             if download_hash.lower() != dss_file.sha256.lower():
-                # No need to delete what's been written. atomic_write ensures we're cleaned up
+                # No need to delete what's been written. atomic_overwrite ensures we're cleaned up
                 logger.error("%s", "File {}: GET FAILED. Checksum mismatch.".format(dss_file.uuid))
                 raise ValueError("Expected sha256 {} Received sha256 {}".format(
                     dss_file.sha256.lower(), download_hash.lower()))

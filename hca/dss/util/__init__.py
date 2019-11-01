@@ -3,6 +3,9 @@ import logging
 import os
 import shutil
 from builtins import FileExistsError
+
+import atomicwrites
+
 from ...util.compat import scandir
 
 log = logging.getLogger(__name__)
@@ -61,3 +64,22 @@ def hardlink(source, link_name):
             shutil.copyfile(source, link_name)
         else:
             raise
+
+
+class atomic_overwrite:
+    """Atomically write, but don't complain if file already exists"""
+
+    def __init__(self, *args, **kwargs):
+        self.writer = atomicwrites.atomic_write(*args, overwrite=False, **kwargs)
+
+    def __enter__(self):
+        return self.writer.__enter__()
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        # During atomicwrites.atomic_write's commit() method which is called
+        # while exiting, a FileExistsError may be raised. It's fine to catch
+        # this since atomicwrites still cleans up after itself.
+        try:
+            return self.writer.__exit__(exc_type, exc_val, exc_tb)
+        except FileExistsError:
+            pass
