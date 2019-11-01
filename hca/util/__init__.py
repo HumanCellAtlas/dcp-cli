@@ -92,6 +92,7 @@ import argparse
 import time
 import jwt
 import requests
+import jmespath
 
 from inspect import signature, Parameter
 from requests.adapters import HTTPAdapter, DEFAULT_POOLSIZE
@@ -122,17 +123,6 @@ class _ClientMethodFactory(object):
         self.__dict__.update(locals())
         self._context_manager_response = None
 
-    def _make_authenticated_request(self, body, headers, url, query, stream):
-        if "security" in self.method_data:
-            session = self.client.get_authenticated_session()
-        else:
-            session = self.client.get_session()
-        json_input = body if self.body_props else None
-        headers = headers if headers else {}
-        res = session.request(self.http_method, url, params=query, json=json_input, stream=stream,
-                              headers=headers, timeout=self.client.timeout_policy)
-        return res
-
     def _request(self, req_args, url=None, stream=False, headers=None):
         supplied_path_params = [p for p in req_args if p in self.path_parameters and req_args[p] is not None]
         if url is None:
@@ -142,15 +132,17 @@ class _ClientMethodFactory(object):
         query = {k: v for k, v in req_args.items()
                  if self.parameters.get(k, {}).get("in") == "query" and v is not None}
         body = {k: v for k, v in req_args.items() if k in self.body_props and v is not None}
-        res = self._make_authenticated_request(body, headers, url, query, stream)
+        if "security" in self.method_data:
+            session = self.client.get_authenticated_session()
+        else:
+            session = self.client.get_session()
 
-        keep_session_alive = True
-        while keep_session_alive:
-            res = self._make_authenticated_request(body, headers, url, query, stream)
-            # DSSException 401 is returned and the jwt token expiration is only preserved in the stack trace
-            if not ('jwt.exceptions.ExpiredSignatureError: Signature has expired' in res.json().get('stacktrace', '')):
-                keep_session_alive = False  # session exited without the token terminating
-
+        # TODO: (akislyuk) if using service account credentials, use manual refresh here
+        json_input = body if self.body_props else None
+        headers = headers or {}
+        headers.update({k: v for k, v in req_args.items() if self.parameters.get(k, {}).get('in') == 'header'})
+        res = session.request(self.http_method, url, params=query, json=json_input, stream=stream,
+                              headers=headers, timeout=self.client.timeout_policy)
         if res.status_code >= 400:
             raise SwaggerAPIException(response=res)
         return res
@@ -197,20 +189,38 @@ class _PaginatingClientMethodFactory(_ClientMethodFactory):
         items contained within; POST /search yields search result items.
         """
         for page in self._get_raw_pages(**kwargs):
-            if page.json().get('results'):
-                for result in page.json()['results']:
-                    yield result
-            elif page.json().get('bundle'):
-                for file in page.json()['bundle']['files']:
-                    yield file
-            else:
-                for collection in page.json().get('collections', []):
-                    yield collection
+            content_key = page.headers.get("X-OpenAPI-Paginated-Content-Key", "results")
+            results = page.json()
+            for key in content_key.split("."):
+                results = results[key]
+            for result in results:
+                yield result
 
     def paginate(self, **kwargs):
         """Yield paginated responses one response body at a time."""
         for page in self._get_raw_pages(**kwargs):
             yield page.json()
+
+    def _cli_call(self, cli_args):
+        if cli_args.paginate is not True:
+            return super()._cli_call(cli_args)
+        return self._auto_page(**vars(cli_args))
+
+    def _auto_page(self, **kwargs):
+        '''This method allows for autopaging in commands and bindings'''
+        response_data = None
+        for page in self._get_raw_pages(**kwargs):
+            page_data = page.json()
+            content_key = page.headers.get("X-OpenAPI-Paginated-Content-Key", "results")
+            if response_data is None:
+                response_data = page_data
+            else:
+                data_aggregrator = jmespath.search(content_key, response_data)
+                patch = jmespath.search(content_key, page_data)
+                if patch:
+                    data_aggregrator += patch
+                response_data[content_key] = data_aggregrator
+        return response_data
 
 
 class SwaggerClient(object):
@@ -429,38 +439,49 @@ class SwaggerClient(object):
                    'exp': exp,
                    'email': service_credentials["client_email"],
                    'scope': ['email', 'openid', 'offline_access'],
-                   'https://auth.data.humancellatlas.org/group': 'hca'
+                   'https://auth.data.humancellatlas.org/group': 'hca',
+                   'https://auth.data.humancellatlas.org/email': service_credentials["client_email"]
                    }
         additional_headers = {'kid': service_credentials["private_key_id"]}
         signed_jwt = jwt.encode(payload, service_credentials["private_key"], headers=additional_headers,
                                 algorithm='RS256').decode()
         return signed_jwt, exp
 
+    def expired_token(self):
+        """Return True if we have an active session containing an expired token."""
+        ten_second_buffer = 10
+        if self._authenticated_session:
+            token_expiration = self._authenticated_session.token.get('expires_at', None)
+            if token_expiration:
+                if token_expiration <= time.time() + ten_second_buffer:
+                    return True
+        return False
+
     def get_authenticated_session(self):
-        # if self._authenticated_session is None:
-        oauth2_client_data = self.application_secrets["installed"]
-        if 'GOOGLE_APPLICATION_CREDENTIALS' in os.environ:
-            token, expires_at = self._get_jwt_from_service_account_credentials()
-            # TODO: (akislyuk) figure out the right strategy for persisting the service account oauth2 token
-            self._authenticated_session = OAuth2Session(client_id=oauth2_client_data["client_id"],
-                                                        token=dict(access_token=token),
-                                                        **self._session_kwargs)
-        else:
-            if "oauth2_token" not in self.config:
-                msg = ('Please configure {prog} authentication credentials using "{prog} login" '
-                       'or set the GOOGLE_APPLICATION_CREDENTIALS environment variable')
-                raise Exception(msg.format(prog=self.__module__.replace(".", " ")))
-            self._authenticated_session = OAuth2Session(
-                client_id=oauth2_client_data["client_id"],
-                token=self.config.oauth2_token,
-                auto_refresh_url=oauth2_client_data["token_uri"],
-                auto_refresh_kwargs=dict(client_id=oauth2_client_data["client_id"],
-                                         client_secret=oauth2_client_data["client_secret"]),
-                token_updater=self._save_auth_token_refresh_result,
-                **self._session_kwargs
-            )
-        self._authenticated_session.headers.update({"User-Agent": self.__class__.__name__})
-        self._set_retry_policy(self._authenticated_session)
+        if self._authenticated_session is None or self.expired_token():
+            oauth2_client_data = self.application_secrets["installed"]
+            if 'GOOGLE_APPLICATION_CREDENTIALS' in os.environ:
+                token, expires_at = self._get_jwt_from_service_account_credentials()
+                self._authenticated_session = OAuth2Session(client_id=oauth2_client_data["client_id"],
+                                                            token=dict(access_token=token,
+                                                                       expires_at=expires_at),
+                                                            **self._session_kwargs)
+            else:
+                if "oauth2_token" not in self.config:
+                    msg = ('Please configure {prog} authentication credentials using "{prog} login" '
+                           'or set the GOOGLE_APPLICATION_CREDENTIALS environment variable')
+                    raise Exception(msg.format(prog=self.__module__.replace(".", " ")))
+                self._authenticated_session = OAuth2Session(
+                    client_id=oauth2_client_data["client_id"],
+                    token=self.config.oauth2_token,
+                    auto_refresh_url=oauth2_client_data["token_uri"],
+                    auto_refresh_kwargs=dict(client_id=oauth2_client_data["client_id"],
+                                             client_secret=oauth2_client_data["client_secret"]),
+                    token_updater=self._save_auth_token_refresh_result,
+                    **self._session_kwargs
+                )
+            self._authenticated_session.headers.update({"User-Agent": self.__class__.__name__})
+            self._set_retry_policy(self._authenticated_session)
         return self._authenticated_session
 
     def _set_retry_policy(self, session):
@@ -484,9 +505,10 @@ class SwaggerClient(object):
                     anno = typing.Optional[anno]
                 param = Parameter(prop_name, Parameter.POSITIONAL_OR_KEYWORD, default=prop_data.get("default"),
                                   annotation=anno)
-                method_args.setdefault(prop_name, {}).update(dict(param=param, doc=prop_data.get("description"),
-                                                                  choices=enum_values,
-                                                                  required=prop_name in body_json_schema.get("required", [])))
+                method_args.setdefault(prop_name, {}).update(param=param,
+                                                             doc=prop_data.get("description"),
+                                                             choices=enum_values,
+                                                             required=prop_name in body_json_schema.get("required", []))
                 body_props[prop_name] = _merge_dict(schema, body_props.get('prop_name', {}))
 
         if body_json_schema.get('properties', {}):
@@ -502,15 +524,20 @@ class SwaggerClient(object):
                                                   choices=parameter.get("enum"), required=parameter.get("required"))
         return body_props, method_args
 
-    def _build_client_method(self, http_method, http_path, method_data):
-        method_name_parts = [http_method] + [p for p in http_path.split("/")[1:] if not p.startswith("{")]
+    @staticmethod
+    def _build_method_name(http_method, http_path):
+        method_name = http_path.replace('/.well-known', '').replace('-', '_')
+        method_name_parts = [http_method] + [p for p in method_name.split("/")[1:] if not p.startswith("{")]
         method_name = "_".join(method_name_parts)
         if method_name.endswith("s") and (http_method.upper() in {"POST", "PUT"} or http_path.endswith("/{uuid}")):
             method_name = method_name[:-1]
+        return method_name
 
+    def _build_client_method(self, http_method, http_path, method_data):
+        method_name = self._build_method_name(http_method, http_path)
         parameters = {p["name"]: p for p in method_data.get("parameters", [])}
         body_json_schema = {"properties": {}}
-        if "requestBody" in method_data:
+        if "requestBody" in method_data and "application/json" in method_data["requestBody"]["content"]:
             body_json_schema = method_data["requestBody"]["content"]["application/json"]["schema"]
         else:
             for p in parameters:
@@ -535,7 +562,7 @@ class SwaggerClient(object):
                   Parameter("client", Parameter.POSITIONAL_OR_KEYWORD)]
         params += [v["param"] for k, v in method_args.items() if not k.startswith("_")]
         client_method.__signature__ = signature(client_method).replace(parameters=params)
-        docstring = method_data["summary"] + "\n\n"
+        docstring = method_data.get("summary", '') + "\n\n"
 
         if method_supports_pagination:
             docstring += _pagination_docstring.format(client_name=self.__class__.__name__, method_name=method_name)
@@ -548,7 +575,7 @@ class SwaggerClient(object):
                 param_doc = _md2rst(method_args[param]["doc"] or "")
                 docstring += ":param {}: {}\n".format(param, param_doc.replace("\n", " "))
                 docstring += ":type {}: {}\n".format(param, method_args[param]["param"].annotation)
-        docstring += "\n\n" + _md2rst(method_data["description"])
+        docstring += "\n\n" + _md2rst(method_data.get("description", ''))
         client_method.__doc__ = docstring
 
         setattr(self.__class__, method_name, types.MethodType(client_method, SwaggerClient))
@@ -603,6 +630,9 @@ class SwaggerClient(object):
                                        help=method_data["args"][param_name]["doc"],
                                        choices=method_data["args"][param_name]["choices"],
                                        required=method_data["args"][param_name]["required"])
+            if str(requests.codes.partial) in method_data["responses"]:
+                subparser.add_argument("--no-paginate", action="store_false", dest="paginate",
+                                       help='Do not automatically page the responses', default=True)
             subparser.set_defaults(entry_point=method_data["entry_point"])
 
         for command in self.commands:
