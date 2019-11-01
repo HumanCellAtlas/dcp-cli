@@ -23,11 +23,11 @@ class UploadCommand(UploadCLICommand):
         upload_parser.add_argument('upload_paths', nargs='+', metavar="<upload_path>",
                                    help="Path to files or directories to be uploaded.")
         upload_parser.add_argument('-t', '--target-filename', metavar="<filename>", default=None,
-                                   help="Filename to use in upload area (if you wish to change it during upload)." +
-                                        " Only valid when one file is being uploaded.")
+                                   help=("Filename to use in upload area (if you wish to change it during upload)."
+                                         " Only valid when one file is being uploaded."))
         upload_parser.add_argument('--file-extension', metavar="<fileextension>", default=None,
-                                   help="File extension to limit which files should be uploaded" +
-                                        " Only valid when directories are targeted for upload.")
+                                   help=("File extension to limit which files should be uploaded"
+                                         " Only valid when directories are targeted for upload."))
         upload_parser.add_argument('--no-transfer-acceleration', action='store_true',
                                    help="""Don't use Amazon S3 Transfer Acceleration.
                                            By default we using the aforementioned service to upload via an endpoint
@@ -65,7 +65,7 @@ class UploadCommand(UploadCLICommand):
     def _load_config(self):
         self.config = UploadService.config()
         if not self.config.current_area:
-            sys.stderr.write("\nThere is no upload area selected.\n" +
+            sys.stderr.write("\nThere is no upload area selected.\n"
                              "Please select one with \"{cmdname} upload select <uri_or_alias>\"\n\n".format(
                                  cmdname=sys.argv[0]))
             exit(1)

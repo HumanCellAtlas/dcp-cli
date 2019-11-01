@@ -10,3 +10,7 @@ API documentation
 
 .. automodule:: hca.query
    :members:
+
+.. automodule:: hca.auth
+    :members:
+    :inherited-members:

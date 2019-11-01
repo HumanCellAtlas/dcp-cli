@@ -78,7 +78,8 @@ class DSSClient(SwaggerClient):
 
     def __init__(self, *args, **kwargs):
         super(DSSClient, self).__init__(*args, **kwargs)
-        self.commands += [self.upload, self.download, self.download_manifest, self.create_version, self.download_collection]
+        self.commands += [self.upload, self.download, self.download_manifest, self.create_version,
+                          self.download_collection]
 
     def create_version(self):
         """
@@ -115,7 +116,8 @@ class DSSClient(SwaggerClient):
 
         logger.info("Uploading %i files from %s to %s", len(files_to_upload), src_dir, staging_bucket)
         file_uuids, uploaded_keys, abs_file_paths = upload_to_cloud(files_to_upload, staging_bucket=staging_bucket,
-                                                                    replica=replica, from_cloud=False, log_progress=not no_progress)
+                                                                    replica=replica, from_cloud=False,
+                                                                    log_progress=not no_progress)
         for file_handle in files_to_upload:
             file_handle.close()
         filenames = [object_name_builder(p, src_dir) for p in abs_file_paths]
@@ -636,7 +638,7 @@ class DownloadContext(object):
                     server_start = 0
                     content_range_header = response.headers.get('Content-Range', None)
                     if content_range_header is not None:
-                        cre = re.compile("bytes (\d+)-(\d+)")
+                        cre = re.compile(r"bytes (\d+)-(\d+)")
                         mo = cre.search(content_range_header)
                         if mo is not None:
                             server_start = int(mo.group(1))
@@ -651,13 +653,13 @@ class DownloadContext(object):
                             dss_file.uuid, server_start, consume_bytes))
 
                         while consume_bytes > 0:
-                            bytes_to_read = min(consume_bytes, 1024*1024)
+                            bytes_to_read = min(consume_bytes, 1024 * 1024)
                             content = response.iter_content(chunk_size=bytes_to_read)
                             chunk = next(content)
                             if chunk:
                                 consume_bytes -= len(chunk)
 
-                    for chunk in response.iter_content(chunk_size=1024*1024):
+                    for chunk in response.iter_content(chunk_size=1024 * 1024):
                         if chunk:
                             fh.write(chunk)
                             hasher.update(chunk)
