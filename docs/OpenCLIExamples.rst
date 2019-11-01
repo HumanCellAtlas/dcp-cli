@@ -8,8 +8,8 @@ covers how to access the HCA using the HCA command line utility.
 *NOTE:* The HCA CLI utility is compatible with Python 3.5+.
 
 
-hca create-version
-------------------
+``hca create-version``
+----------------------
 
 Returns a timestamp in ``DSS_VERSION`` format (e.g., ``1985-04-12T232050.520000Z``), useful for
 versioning bundles or files.
@@ -23,8 +23,8 @@ Example call to ``hca create-version``:
 
 .. literalinclude:: ../test/tutorial/scripts/cli/create_version_cli.sh
 
-hca download
-------------
+``hca download``
+----------------
 
 Downloads a bundle to the local filesystem as a directory. By default, both data and metadata files
 are downloaded (flags can be added to download only the data or the metadata).
@@ -91,8 +91,8 @@ Example response:
       }
     }
     
-hca download-manifest
----------------------
+``hca download-manifest``
+-------------------------
 
 Downloads a list of files specified in a user-provided manifest file.
 
@@ -122,8 +122,8 @@ Example manifest TSV file:
     002aeac5-4d74-462d-baea-88f5c620cb50    2019-08-01T200147.836900Z   cell_suspension_0.json  c14b99ea-d8e2-4c84-9dc2-ce2245d8a743    2019-07-09T231935.003000Z   b43cebcca9cd5213699acce7356d226de07edef5c5604510a697159af1a12149    847         .hca/v2/files_2_4/b4/3ceb/b43cebcca9cd5213699acce7356d226de07edef5c5604510a697159af1a12149
 
 
-hca file-head
--------------
+``hca file-head``
+-----------------
 
 Returns the metadata for the latest version of a file with a given UUID. If the version is provided,
 the metadata for that specific version is returned instead. The metadata is returned in the headers.
@@ -158,8 +158,8 @@ Example JSON header returned by API:
     }
 
 
-hca get-bundle
---------------
+``hca get-bundle``
+------------------
 
 For a given bundle UUID and optionally a bundle version, returns information about the latest version
 of that bundle. Information returned includes the bundle creator, UUID, and version, as well as 
@@ -208,8 +208,8 @@ Example JSON returned by ``hca get-bundle``:
     }
 
 
-hca get-bundles-checkout
-------------------------
+``hca get-bundles-checkout``
+----------------------------
 
 .. note:
     To get the ``checkout-job-id``, use the ``hca post-bundles-checkout`` action.
@@ -229,8 +229,8 @@ Example JSON returned by ``hca get-bundles-checkout``:
     }
 
 
-hca get-file 
-------------
+``hca get-file ``
+----------------
 
 Retrieves a file given a UUID, optionally a version, and displays the details of the file.
 
@@ -261,8 +261,8 @@ Example JSON returned by ``hca get-file``:
     }
 
 
-hca login
----------
+``hca login``
+-------------
 
 Configures and saves authentication credentials.
 
@@ -271,8 +271,8 @@ Example call to ``hca login``:
 .. literalinclude:: ../test/tutorial/scripts/cli/login_cli.sh
 
 
-hca logout
-----------
+``hca logout``
+--------------
 
 Clears authentication credentials previously configured with login.
 
@@ -281,8 +281,8 @@ Example call to ``hca logout``:
 .. literalinclude:: ../test/tutorial/scripts/cli/logout_cli.sh
 
 
-hca post-bundles-checkout
--------------------------
+``hca post-bundles-checkout``
+-----------------------------
 
 Returns a ``checkout-job-id`` (e.g., ``4de1c603-fa8b-4c07-af37-06159e6951e0``). This
 ``checkout-job-id`` can then be used with the ``get_bundles_checkout()`` method.
@@ -292,8 +292,8 @@ Example call to ``hca post-bundles-checkout``:
 .. literalinclude:: ../test/tutorial/scripts/cli/post_bundles_checkout_cli.sh
 
 
-hca post-search
----------------
+``hca post-search``
+-------------------
 
 Find bundles by their ``bundle_fqid``, which is the bundle's UUID and version separated by a dot (.).
 
@@ -321,8 +321,8 @@ Example output:
       ...
     }
 
-hca get-subscription(s), hca put-subscription, hca delete-subscription
-----------------------------------------------------------------------
+``hca get-subscription(s), hca put-subscription, hca delete-subscription``
+--------------------------------------------------------------------------
 
 * ``get_subscriptions()``: Gets a list of users subscription.
 
@@ -337,8 +337,8 @@ Example CLI calls:
 .. literalinclude:: ../test/tutorial/scripts/cli/put_delete_get_sub_cli.sh
 
 
-hca refresh-swagger
--------------------
+``hca refresh-swagger``
+-----------------------
 
 Manually refresh the swagger document.
 

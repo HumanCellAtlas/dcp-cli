@@ -15,8 +15,8 @@ permission to upload/ingest data into the DSS.
 *NOTE:* The HCA CLI utility is compatible with Python 3.5+.
 
 
-hca delete-bundle
------------------
+``hca delete-bundle``
+---------------------
 
 Deletes an existing bundle given a UUID, version, and replica.
 
@@ -25,8 +25,8 @@ Example call to ``hca delete-bundle``:
 .. literalinclude:: ../test/tutorial/scripts/cli/delete_bundle_cli.sh
 
 
-hca put-bundle
---------------
+``hca put-bundle``
+------------------
 
 Creates a bundle. A bundle can contain multiple files of arbitrary type.
 
@@ -50,8 +50,8 @@ Example call to ``put_bundle()``:
 
 .. literalinclude:: ../test/tutorial/scripts/cli/put_bundle_cli.sh
 
-hca patch-bundle
-----------------
+``hca patch-bundle``
+--------------------
 
 Allows user to pass in an optional list of files to add or remove from an exisiting bundle. 
 
@@ -72,8 +72,8 @@ Example call to ``hca patch-bundle``:
 .. literalinclude:: ../test/tutorial/scripts/cli/patch_bundle_cli.sh
 
 
-hca put-file
-------------
+``hca put-file``
+----------------
 
 Creates a new version of a file, given an existing UUID, version, creator uid, and source URL.
 
@@ -82,8 +82,8 @@ Example call to ``hca put-file``:
 .. literalinclude:: ../test/tutorial/scripts/cli/put_file_cli.sh
 
 
-hca get-collection(s), hca put-collection, hca patch-collection, hca delete-collection
---------------------------------------------------------------------------------------
+``hca get-collection(s), hca put-collection, hca patch-collection, hca delete-collection``
+------------------------------------------------------------------------------------------
 
 * ``hca get-collection`` - Given a collection UUID, get the collection.
 
@@ -111,8 +111,8 @@ Example CLI calls:
 
 .. literalinclude:: ../test/tutorial/scripts/cli/put_delete_get_patch_collection_cli.sh
 
-hca upload
-----------
+``hca upload``
+--------------
 
 Uploads a directory of files from the local filesystem and creates a bundle containing the uploaded files.
 
