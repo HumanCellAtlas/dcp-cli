@@ -6,7 +6,7 @@ from .common import UploadCLICommand
 
 class ListAreasCommand(UploadCLICommand):
     """
-    List upload areas I know about.
+    List upload areas the current user has access to. Also see :py:class:`UploadArea`
     """
     @classmethod
     def add_parser(cls, upload_subparsers):
