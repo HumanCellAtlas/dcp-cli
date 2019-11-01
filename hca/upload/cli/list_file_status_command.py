@@ -16,11 +16,11 @@ class ListFileStatusCommand(UploadCLICommand):
                                                                  description=cls.__doc__)
         list_file_statuses_parser.set_defaults(entry_point=ListFileStatusCommand)
         list_file_statuses_parser.add_argument('filename', help='File name')
-        list_file_statuses_parser.add_argument('-env',
+        list_file_statuses_parser.add_argument('--env',
                                                help="Environment the upload area was created in (default is based on "
                                                     "currently selected upload area)",
                                                default=None)
-        list_file_statuses_parser.add_argument('-uuid',
+        list_file_statuses_parser.add_argument('--uuid',
                                                help="Full UUID of an upload area (default is based on currently "
                                                     "selected upload area)",
                                                default=None)
