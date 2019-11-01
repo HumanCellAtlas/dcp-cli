@@ -2,15 +2,17 @@ import errno
 import hashlib
 import logging
 import os
+import random
 import shutil
 import tempfile
 import threading
+import time
 import unittest
 import uuid
 
 from mock import patch
 from hca.util.compat import walk
-from hca.dss import DSSClient, ManifestDownloadContext
+from hca.dss import DSSClient, ManifestDownloadContext, TaskRunner
 
 logging.basicConfig()
 
@@ -29,45 +31,49 @@ def _fake_download_file(*args, **kwargs):
     _touch_file(args[1])
 
 
-def _fake_get_bundle_paginate(*args, **kwargs):
-    bundle_dict = {
-        'version': '1_version',
-        'files': [
-            {
-                'uuid': 'a_uuid',
-                'version': '1_version',
-                'name': 'a_file_name',
-                'indexed': False,
-                'sha256': 'ad3fc1e4898e0bce096be5151964a81929dbd2a92bd5ed56a39a8e133053831d',
-                'size': 12
-            }, {
-                'uuid': 'b_uuid',
-                'version': '2_version',
-                'name': 'b_file_name',
-                'indexed': False,
-                'sha256': '8f35071eaeedd9d6f575a8b0f291daeac4c1dfdfa133b5c561232a00bf18c4b4',
-                'size': 4
-            }, {
-                'uuid': 'c_uuid',
-                'version': '3_version',
-                'name': 'c_file_name',
-                'indexed': False,
-                'sha256': '8f3404db04bdede03e9128a4b48599d0ecde5b2e58ed9ce52ce84c3d54a3429c',
-                'size': 36
-            }, {
-                'uuid': 'd_uuid',
-                'version': '4_version',
-                'name': 'metadata_file.pdf',
-                'indexed': True,
-                'sha256': '8ffe4838ac08672041f73f82e5f8361860627271ec31aa479fbb65f2ccc46d05',
-                'size': 9
-            }
-        ]
-    }
-    # This ensures that each bundle.json is distinct
-    for f in bundle_dict['files']:
-        f['bundle_uuid'] = kwargs['uuid']
-    yield {'bundle': bundle_dict}
+def _make_fake_paginate(fake_hash=False):
+    def _fake_get_bundle_paginate(*args, **kwargs):
+        bundle_dict = {
+            'version': '1_version',
+            'files': [
+                {
+                    'uuid': 'a_uuid',
+                    'version': '1_version',
+                    'name': 'a_file_name',
+                    'indexed': False,
+                    'sha256': 'ad3fc1e4898e0bce096be5151964a81929dbd2a92bd5ed56a39a8e133053831d',
+                    'size': 12
+                }, {
+                    'uuid': 'b_uuid',
+                    'version': '2_version',
+                    'name': 'b_file_name',
+                    'indexed': False,
+                    'sha256': '8f35071eaeedd9d6f575a8b0f291daeac4c1dfdfa133b5c561232a00bf18c4b4',
+                    'size': 4
+                }, {
+                    'uuid': 'c_uuid',
+                    'version': '3_version',
+                    'name': 'c_file_name',
+                    'indexed': False,
+                    'sha256': '8f3404db04bdede03e9128a4b48599d0ecde5b2e58ed9ce52ce84c3d54a3429c',
+                    'size': 36
+                }, {
+                    'uuid': 'd_uuid',
+                    'version': '4_version',
+                    'name': 'metadata_file.pdf',
+                    'indexed': True,
+                    'sha256': '8ffe4838ac08672041f73f82e5f8361860627271ec31aa479fbb65f2ccc46d05',
+                    'size': 9
+                }
+            ]
+        }
+        # This ensures that each bundle.json is distinct
+        for f in bundle_dict['files']:
+            f['bundle_uuid'] = kwargs['uuid']
+            if fake_hash:
+                f['sha256'] = 'fakehash'
+        yield {'bundle': bundle_dict}
+    return _fake_get_bundle_paginate
 
 
 barrier = threading.Barrier(3)
@@ -82,6 +88,7 @@ def _fake_do_download_file_with_barrier(*args, **kwargs):
     fh.write(b'Here we write some stuff so that the fake download takes some time. '
              b'This helps ensure that multiple threads are writing at once and thus '
              b'allows us to test for race conditions.')
+    time.sleep(random.random())
     return 'FAKEhash'
 
 
@@ -137,14 +144,14 @@ class DSSClientTestCase(unittest.TestCase):
     def _mock_download_manifest(self, *args, **kwargs):
         with patch('hca.dss.DownloadContext._download_file', side_effect=_fake_download_file) as download_func:
             with patch('hca.dss.DSSClient.get_bundle') as mock_get_bundle:
-                mock_get_bundle.paginate = _fake_get_bundle_paginate
+                mock_get_bundle.paginate = _make_fake_paginate()
                 self.dss.download_manifest(*args, **kwargs)
         return download_func
 
     def _mock_download(self, *args, **kwargs):
         with patch('hca.dss.DownloadContext._download_file', side_effect=_fake_download_file):
             with patch('hca.dss.DSSClient.get_bundle') as mock_get_bundle:
-                mock_get_bundle.paginate = _fake_get_bundle_paginate
+                mock_get_bundle.paginate = _make_fake_paginate()
                 self.dss.download(*args, **kwargs)
 
     def _assert_all_files_downloaded(self, more_files=None, prefix=''):
@@ -382,14 +389,31 @@ class TestManifestDownloadBundle(DSSClientTestCase):
         _touch_file(os.path.join(manifest_directory, self.manifest[1][3]))
         self.assertRaises(RuntimeError, self._mock_download_manifest, self.manifest_file, 'aws', layout='bundle')
 
-    def test_manifest_download_bundle_parallel(self):
-        self.dss.threads = 3  # 3 threads for three files with barrier size 3
+    @patch('hca.dss.DSSClient.get_bundle')
+    def test_manifest_download_bundle_parallel(self, mock_get_bundle):
+        """
+        Ensure that if the same file is downloaded by multiple threads at the same time, they all link together in
+        the filestore in the end.
+
+        To do this, we download three files from three different bundles that are actually all the same file and
+        therefore stored in the same place in the filestore. All share the same `fakehash`.
+        """
+        random.seed('same seed for consistency')
         self._write_uniform_manifest()
+        mock_get_bundle.paginate = _make_fake_paginate(fake_hash=True)
         with patch('hca.dss.DownloadContext._do_download_file', side_effect=_fake_do_download_file_with_barrier):
-            self._mock_download_manifest(self.manifest_file, 'aws', layout='bundle')
-        self._assert_all_files_downloaded(more_files=self.data_files().union(self.metadata_files()))
-        self._assert_links('')
-        self._mock_download_manifest(self.manifest_file, 'aws', layout='bundle')
+            # 3 threads for three files with barrier size 3
+            with patch('hca.dss.TaskRunner', return_value=TaskRunner(threads=3)):
+                self.dss.download_manifest(self.manifest_file, 'aws', layout='bundle', no_metadata=True)
+        filestore_copy = os.path.join('.', self.version_dir, 'fa', 'keha', 'fakehash')
+        filestore_stat = os.stat(filestore_copy)
+        self.assertEqual(filestore_stat.st_nlink, 4)
+        inode_id = filestore_stat.st_dev, filestore_stat.st_ino
+        for linked_file in [os.path.join(name + '_uuid.1_version', name + '_file_name') for name in ('a', 'b', 'c')]:
+            linked_stat = os.stat(linked_file)
+            self.assertEqual(inode_id, (linked_stat.st_dev, linked_stat.st_ino))
+
+        self.dss.download_manifest(self.manifest_file, 'aws', layout='bundle')
 
 
 class TestDownload(DSSClientTestCase):
@@ -445,7 +469,7 @@ class TestDownload(DSSClientTestCase):
     @patch('logging.Logger.warning')
     @patch('hca.dss.DownloadContext._download_file', side_effect=[None, ValueError(), KeyError()])
     def test_manifest_download_failed(self, _, warning_log, mock_get_bundle):
-        mock_get_bundle.paginate = _fake_get_bundle_paginate
+        mock_get_bundle.paginate = _make_fake_paginate()
         self.assertRaises(RuntimeError, self.dss.download, 'any_bundle_uuid', 'aws')
         self.assertEqual(warning_log.call_count, 4)
         self._assert_manifest_not_updated()
