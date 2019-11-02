@@ -130,7 +130,7 @@ class TestSwaggerClient(unittest.TestCase):
 
     def test_swagger_client_refresh(self):
         """Instantiates a mock client that only makes 1 second expiration tokens, forcing it to refresh."""
-        dss = MockDSSClient(swagger_url='https://dss.data.humancellatlas.org/v1/swagger.json')
+        dss = MockDSSClient(swagger_url='https://dss.dev.data.humancellatlas.org/v1/swagger.json')
         assert dss._authenticated_session is None
 
         # we use collections to test because it's an authenticated endpoint
@@ -155,7 +155,7 @@ class TestSwaggerClient(unittest.TestCase):
         Instantiates the normal DSSClient with a 3600 second expiration token so that we can check
         that it successfully uses the same token for both requests.
         """
-        dss = DSSClient()
+        dss = DSSClient(swagger_url='https://dss.dev.data.humancellatlas.org/v1/swagger.json')
         assert dss._authenticated_session is None
 
         # we use collections to test because it's an authenticated endpoint
