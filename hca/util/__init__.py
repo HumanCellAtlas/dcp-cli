@@ -457,7 +457,6 @@ class SwaggerClient(object):
         return False
 
     def get_authenticated_session(self):
-        print('HELLO')
         if self._authenticated_session is None or self.expired_token():
             oauth2_client_data = self.application_secrets["installed"]
             if 'GOOGLE_APPLICATION_CREDENTIALS' in os.environ:
