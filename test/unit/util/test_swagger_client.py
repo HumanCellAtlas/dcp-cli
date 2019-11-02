@@ -17,6 +17,18 @@ from unittest import mock
 from unittest.mock import mock_open
 
 
+import time
+from hca.dss import DSSClient
+
+
+class MockDSSClient(DSSClient):
+    """Mocked client that always expires request tokens within 1 second."""
+    token_expiration = 1
+
+    def __init__(self, *args, **kwargs):
+        super(MockDSSClient, self).__init__(*args, **kwargs)
+
+
 class TestSwaggerClient(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -115,6 +127,55 @@ class TestSwaggerClient(unittest.TestCase):
             self.assertFalse(mock_makedirs.called)
             self.assertFalse(mock_get.called)
             self.assertFalse(mock_atomic_write.called)
+
+    def test_swagger_client_refresh(self):
+        """Instantiates a mock client that only makes 1 second expiration tokens, forcing it to refresh."""
+        dss = MockDSSClient(swagger_url='https://dss.data.humancellatlas.org/v1/swagger.json')
+        assert dss._authenticated_session is None
+
+        # we use collections to test because it's an authenticated endpoint
+        r = dss.get_collections()
+        assert 'collections' in r
+        token_one = dss._authenticated_session.token['access_token']
+        expires_at = dss._authenticated_session.token['expires_at'] - time.time()
+        assert expires_at < 1
+
+        time.sleep(2)  # wait out the 1 second expiration token
+
+        r = dss.get_collections()
+        assert 'collections' in r
+        token_two = dss._authenticated_session.token['access_token']
+        expires_at = dss._authenticated_session.token['expires_at'] - time.time()
+        assert expires_at < 1
+
+        assert token_one != token_two  # make sure it requested with two different tokens
+
+    def test_swagger_client_no_refresh(self):
+        """
+        Instantiates the normal DSSClient with a 3600 second expiration token so that we can check
+        that it successfully uses the same token for both requests.
+        """
+        dss = DSSClient()
+        assert dss._authenticated_session is None
+
+        # we use collections to test because it's an authenticated endpoint
+        r = dss.get_collections()
+        assert 'collections' in r
+        token_one = dss._authenticated_session.token['access_token']
+        expires_at = dss._authenticated_session.token['expires_at'] - time.time()
+        assert expires_at < 3600
+        assert expires_at > 3590
+
+        time.sleep(2)
+
+        r = dss.get_collections()
+        assert 'collections' in r
+        token_two = dss._authenticated_session.token['access_token']
+        expires_at = dss._authenticated_session.token['expires_at'] - time.time()
+        assert expires_at < 3600
+        assert expires_at > 3590
+
+        assert token_one == token_two  # we used one long-lived token for both requests
 
 
 if __name__ == "__main__":

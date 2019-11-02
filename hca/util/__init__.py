@@ -137,7 +137,6 @@ class _ClientMethodFactory(object):
         else:
             session = self.client.get_session()
 
-        # TODO: (akislyuk) if using service account credentials, use manual refresh here
         json_input = body if self.body_props else None
         headers = headers or {}
         headers.update({k: v for k, v in req_args.items() if self.parameters.get(k, {}).get('in') == 'header'})
@@ -448,7 +447,7 @@ class SwaggerClient(object):
         return signed_jwt, exp
 
     def expired_token(self):
-        """Return True if we have an active session containing an expired token."""
+        """Return True if we have an active session containing an expired (or nearly expired) token."""
         ten_second_buffer = 10
         if self._authenticated_session:
             token_expiration = self._authenticated_session.token.get('expires_at', None)
@@ -458,6 +457,7 @@ class SwaggerClient(object):
         return False
 
     def get_authenticated_session(self):
+        print('HELLO')
         if self._authenticated_session is None or self.expired_token():
             oauth2_client_data = self.application_secrets["installed"]
             if 'GOOGLE_APPLICATION_CREDENTIALS' in os.environ:
