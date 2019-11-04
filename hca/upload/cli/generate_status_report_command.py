@@ -13,15 +13,15 @@ class GenerateStatusReportCommand(UploadCLICommand):
         gen_file_status_report_parser = upload_subparsers.add_parser('report', help=cls.__doc__,
                                                                      description=cls.__doc__)
         gen_file_status_report_parser.set_defaults(entry_point=GenerateStatusReportCommand)
-        gen_file_status_report_parser.add_argument('-env',
+        gen_file_status_report_parser.add_argument('--env',
                                                    help="Environment the upload area was created in (default is based "
                                                         "on currently selected upload area)",
                                                    default=None)
-        gen_file_status_report_parser.add_argument('-uuid',
+        gen_file_status_report_parser.add_argument('--uuid',
                                                    help="Full UUID of an upload area (default is based on currently "
                                                         "selected upload area)",
                                                    default=None)
-        gen_file_status_report_parser.add_argument('-output_file_name',
+        gen_file_status_report_parser.add_argument('--output_file_name',
                                                    help='Name of output file (default is upload area name)',
                                                    default=None)
 
