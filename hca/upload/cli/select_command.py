@@ -3,8 +3,7 @@ from .common import UploadCLICommand
 
 
 class SelectCommand(UploadCLICommand):
-    """
-    Select upload area to which you wish to upload files.
+    """Select upload area to which you wish to upload files.
     """
     @classmethod
     def add_parser(cls, upload_subparsers):

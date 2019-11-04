@@ -3,8 +3,7 @@ from .common import UploadCLICommand
 
 
 class ForgetCommand(UploadCLICommand):
-    """
-    Forget about upload area.
+    """Forget about upload area.
     """
     @classmethod
     def add_parser(cls, upload_subparsers):

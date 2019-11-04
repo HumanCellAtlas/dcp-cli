@@ -6,8 +6,7 @@ from hca.upload.cli.common import UploadCLICommand
 
 
 class GenerateStatusReportCommand(UploadCLICommand):
-    """
-    Generate file status report for upload area
+    """Generate file status report for upload area.
     """
     @classmethod
     def add_parser(cls, upload_subparsers):

@@ -90,6 +90,7 @@ def get_parser(help_menu=False):
     parser.add_parser_func(clear_hca_cache, help=clear_hca_cache.__doc__)
 
     def help(args):
+        """Print help message"""
         parser.print_help()
 
     parser.add_parser_func(help)
