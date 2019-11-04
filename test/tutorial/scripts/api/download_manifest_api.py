@@ -1,14 +1,15 @@
 from hca.dss import DSSClient
+import os
 import csv
 import json
 import pprint
+from get_bundle_api import fetch_bundle, save_bundle, BUNDLE_JSON
 
 dss = DSSClient()
 
-if not os.path.isfile("data/get_bundle.json"):
-    raise FileNotFoundError(
-        "Error: data/get_bundle.json is missing. Run get_bundle.py script to generate it."
-    )
+if not os.path.isfile(BUNDLE_JSON):
+    bundle = fetch_bundle()
+    save_bundle(bundle)
 
 with open("manifest.tsv", "w", newline='') as manifest:
     tsv = csv.DictWriter(
@@ -27,7 +28,7 @@ with open("manifest.tsv", "w", newline='') as manifest:
     )
     tsv.writeheader()
 
-    with open("data/get_bundle.json") as jsonfile:
+    with open(BUNDLE_JSON, "w") as jsonfile:
         try:
             data = json.load(jsonfile)
             bundle_uuid, bundle_version = (
