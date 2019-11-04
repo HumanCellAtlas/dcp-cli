@@ -93,6 +93,7 @@ def _fake_do_download_file_with_barrier(*args, **kwargs):
 
 
 class DSSClientTestCase(unittest.TestCase):
+    maxDiff = None
     manifest = list(zip(
         ('bundle_uuid', 'a_uuid', 'b_uuid', 'c_uuid'),
         ('bundle_version', '1_version', '1_version', '1_version'),
