@@ -450,7 +450,7 @@ class SwaggerClient(object):
         """Return True if we have an active session containing an expired (or nearly expired) token."""
         ten_second_buffer = 10
         if self._authenticated_session:
-            token_expiration = self._authenticated_session.token.get('expires_at', None)
+            token_expiration = self._authenticated_session.token['expires_at']
             if token_expiration:
                 if token_expiration <= time.time() + ten_second_buffer:
                     return True
