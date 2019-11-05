@@ -6,7 +6,4 @@
 
    cli
    api
-   OpenAPIExamples
-   OpenCLIExamples
-   RestrictedAPIExamples
-   RestrictedCLIExamples
+   tutorials <tutorials/index>
