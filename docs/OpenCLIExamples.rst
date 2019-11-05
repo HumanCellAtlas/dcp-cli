@@ -2,8 +2,8 @@
 CLI Open Endpoint Examples
 ==========================
 
-The HCA CLI provides users of the Human Cell Atlas (HCA) to access and download data sets from the HCA. This page
-covers how to access the HCA using the HCA command line utility.
+The HCA CLI provides several ways for users of the Human Cell Atlas (HCA) to access and download 
+data sets from the HCA. This page covers how to access the HCA using the ``hca`` command line utility.
 
 *NOTE:* The HCA CLI utility is compatible with Python 3.5+.
 
@@ -11,13 +11,13 @@ covers how to access the HCA using the HCA command line utility.
 ``hca create-version``
 ----------------------
 
-Returns a timestamp in ``DSS_VERSION`` format (e.g., ``1985-04-12T232050.520000Z``), useful for
+Returns a timestamp in ``DSS_VERSION`` format (e.g., ``1985-04-12T232050.520000Z``), necessary for
 versioning bundles or files.
 
 .. note::
   A version is a timestamp in RFC3339 format that keeps track of the most recent iteration of a
-  bundle or file. A bundle consists of many different data files, and both bundles and files have
-  version numbers.
+  bundle or file. A bundle is a collection of many different data files, and both bundles and files 
+  have version numbers.
 
 Example call to ``hca create-version``:
 

@@ -11,13 +11,13 @@ data sets from the HCA. This page covers how to access HCA data using Python API
 ``create_version``
 ------------------
 
-Returns a timestamp in ``DSS_VERSION`` format (e.g., ``1985-04-12T232050.520000Z``), useful for
+Returns a timestamp in ``DSS_VERSION`` format (e.g., ``1985-04-12T232050.520000Z``), necessary for
 versioning bundles or files.
 
 .. note::
   A version is a timestamp in RFC3339 format that keeps track of the most recent iteration of a
-  bundle or file. A bundle consists of many different data files, and both bundles and files have
-  version numbers.
+  bundle or file. A bundle is a collection of many different data files, and both bundles and files 
+  have version numbers.
 
 Example call to ``create_version()``:
 
@@ -28,7 +28,8 @@ Example call to ``create_version()``:
 ------------
 
 Downloads a bundle to the local filesystem as a directory. By default, both data and metadata files
-are downloaded (flags can be added to download only the data or the metadata).
+are downloaded. The ``no_data`` or ``no_metadata`` flags can be set to True to download only the metadata
+or data, respectively (see example below).
 
 Implementation detail: All files are downloaded to a local cache directory called ``.hca`` that is
 created in the directory where the download is initiated. The user should never need to interact
@@ -91,6 +92,11 @@ Example response:
             "version": "2019-08-01T200147.836832Z"
         }
     }
+
+Example call to ``download()``, specifying the flags needed to download the
+data or the metadata only:
+
+.. literalinclude:: ../test/tutorial/scripts/api/download_data_metadata.py
 
 
 ``download_manifest``
@@ -234,7 +240,7 @@ Example of the JSON returned by ``get_bundles_checkout()``:
 ``get_file``
 ------------
 
-Retrieves a file given a UUID, optionally a version, and displays the details of the file.
+Retrieves file metadata given a UUID, optionally a version. (To download a file, use the ``hca download`` command.)
 
 Example call to ``get_file()``:
 
@@ -325,13 +331,13 @@ Example output:
 ``put_subscription, delete_subscription, get_subscription, get_subscriptions``
 ------------------------------------------------------------------------------
 
-* ``get_subscriptions()``: Gets a list of users subscription.
+* ``get_subscriptions()``: Gets a list of user subscriptions.
 
 * ``put_subscription()``: Create a collection for the user given a replica and a call-back url.
 
 * ``get_subscription()``: Given the UUID of the subscription, show a subscription that the user created.
 
-* ``delete_subscription()``: Given a UUID and rpelica or the subscription, delete the subscription the user created.
+* ``delete_subscription()``: Given a UUID and replica or the subscription, delete the subscription the user created.
 
 Example API calls:
 

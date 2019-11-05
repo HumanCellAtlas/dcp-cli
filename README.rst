@@ -97,7 +97,9 @@ Then :code:`make test`.
 
 Primary CI testing is through Travis CI; there is also additional testing with the
 `Gitlab Allspark instance <https://allspark.dev.data.humancellatlas.org/HumanCellAtlas/dcp-cli/>`_ that runs tests for Windows.
-If submitting PRs that have the potential of being platform-dependent, please ensure the status Windows Testing is verified before merging.
+(Note that Allspark is not open to the public, members of the Human Cell Atlas project can access the Allspark cluster using the Github account
+associated with the Human Cell Atlas organization on Github.) If submitting PRs that have the potential of being platform-dependent, please ensure 
+the status of "Windows Testing" is verified before merging.
 
 Bugs
 ~~~~
