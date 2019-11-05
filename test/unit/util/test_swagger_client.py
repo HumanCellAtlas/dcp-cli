@@ -21,7 +21,7 @@ import time
 from hca.dss import DSSClient
 
 
-class MockDSSClient(DSSClient):
+class TestTokenDSSClient(DSSClient):
     """Mocked client that always expires request tokens within 1 second."""
     token_expiration = 1
 
@@ -129,8 +129,8 @@ class TestSwaggerClient(unittest.TestCase):
             self.assertFalse(mock_atomic_write.called)
 
     def test_swagger_client_refresh(self):
-        """Instantiates a mock client that only makes 1 second expiration tokens, forcing it to refresh."""
-        dss = MockDSSClient(swagger_url='https://dss.dev.data.humancellatlas.org/v1/swagger.json')
+        """Instantiates a modified DSS client that only makes 1 second expiration tokens, forcing it to refresh."""
+        dss = TestTokenDSSClient(swagger_url='https://dss.dev.data.humancellatlas.org/v1/swagger.json')
         assert dss._authenticated_session is None
 
         # we use collections to test because it's an authenticated endpoint
