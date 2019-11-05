@@ -96,7 +96,7 @@ todo_include_todos = True
 # documentation.
 #
 html_theme_options = {
-    'sidebar_includehidden': True,
+    'sidebar_includehidden': False,
     'sidebar_collapse': True
 }
 
