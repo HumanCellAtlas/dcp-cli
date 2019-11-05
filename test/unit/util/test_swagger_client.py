@@ -26,7 +26,7 @@ class TestTokenDSSClient(DSSClient):
     token_expiration = 1
 
     def __init__(self, *args, **kwargs):
-        super(MockDSSClient, self).__init__(*args, **kwargs)
+        super(TestTokenDSSClient, self).__init__(*args, **kwargs)
 
 
 class TestSwaggerClient(unittest.TestCase):
