@@ -2,7 +2,6 @@
 import logging
 import os
 
-import tqdm
 from tweak import Config as _Config
 
 
@@ -37,6 +36,7 @@ class ProgressBarStreamHandler(object):
     """
     @staticmethod
     def write(msg):
+        import tqdm  # imported here to avoid unnecessary dependency breaks
         tqdm.tqdm.write(msg, end='')
 
 
