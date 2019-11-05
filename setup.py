@@ -2,12 +2,13 @@
 
 import os
 from setuptools import setup, find_packages
+from hca.version import __version__
 
 install_requires = [line.rstrip() for line in open(os.path.join(os.path.dirname(__file__), "requirements.txt"))]
 
 setup(
     name="hca",
-    version="6.5.0",
+    version=__version__,
     url='https://github.com/HumanCellAtlas/dcp-cli',
     license='Apache Software License',
     author='Human Cell Atlas contributors',
