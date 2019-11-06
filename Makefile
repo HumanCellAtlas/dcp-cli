@@ -4,10 +4,12 @@ else
 	SHELL=/bin/bash
 endif
 
+init_hooks:
+	git config core.hooksPath .githooks
+
 test: lint install integrationtests unittests
 	coverage combine
 	rm -f .coverage.*
-
 
 unittests:
 	coverage run -p --source=hca -m unittest discover -v -t . -s test/unit

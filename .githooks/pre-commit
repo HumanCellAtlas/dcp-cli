@@ -1,0 +1,21 @@
+#!/bin/bash
+#
+# This git hook will make sure developers don't modify hca/version.py
+
+root_dir=$(git rev-parse --git-dir)/..
+hooks_dir=${root_dir}/.githooks
+version_contents=$(cat ${root_dir}/hca/version.py)
+gold="__version__ = '0.0.0'"
+
+if [ "$version_contents" != "$gold" ]; then
+    echo "hca/version.py has been modified! Contents should be:"
+    echo ""
+    echo "$gold"
+    echo ""
+    echo "Commits will fail until hca/version.py contents match this line."
+    echo "Diff:"
+    echo ${gold} | diff ${root_dir}/hca/version.py -
+    exit 1
+else
+    exit 0
+fi
