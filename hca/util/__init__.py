@@ -137,7 +137,6 @@ class _ClientMethodFactory(object):
         else:
             session = self.client.get_session()
 
-        # TODO: (akislyuk) if using service account credentials, use manual refresh here
         json_input = body if self.body_props else None
         headers = headers or {}
         headers.update({k: v for k, v in req_args.items() if self.parameters.get(k, {}).get('in') == 'header'})
@@ -447,14 +446,24 @@ class SwaggerClient(object):
                                 algorithm='RS256').decode()
         return signed_jwt, exp
 
+    def expired_token(self):
+        """Return True if we have an active session containing an expired (or nearly expired) token."""
+        ten_second_buffer = 10
+        if self._authenticated_session:
+            token_expiration = self._authenticated_session.token['expires_at']
+            if token_expiration:
+                if token_expiration <= time.time() + ten_second_buffer:
+                    return True
+        return False
+
     def get_authenticated_session(self):
-        if self._authenticated_session is None:
+        if self._authenticated_session is None or self.expired_token():
             oauth2_client_data = self.application_secrets["installed"]
             if 'GOOGLE_APPLICATION_CREDENTIALS' in os.environ:
                 token, expires_at = self._get_jwt_from_service_account_credentials()
-                # TODO: (akislyuk) figure out the right strategy for persisting the service account oauth2 token
                 self._authenticated_session = OAuth2Session(client_id=oauth2_client_data["client_id"],
-                                                            token=dict(access_token=token),
+                                                            token=dict(access_token=token,
+                                                                       expires_at=expires_at),
                                                             **self._session_kwargs)
             else:
                 if "oauth2_token" not in self.config:
