@@ -49,10 +49,21 @@ def _md2rst(docstring):
     return renderer.render(ast)
 
 
+def _render_bullet_list(node):
+    """Render a docstrings bullet list as plain text"""
+    # Extract and use the bullet character in the list
+    bc = [j[1] for j in node.attlist() if j[0] == 'bullet'][0]
+    result = "\n\n"
+    for child in node.children:
+        result += "%s %s\n" % (bc, child.astext())
+    result += "\n"
+    return result
+
+
 def _parse_docstring(docstring):
     """
     Using the sphinx RSTParse to parse __doc__ for argparse `parameters`, `help`, and `description`. The first
-    rst paragraph encountered it treated as the argparse help text. Any param fields are treated as argparse
+    rst paragraph encountered is treated as the argparse help text. Any param fields are treated as argparse
     arguments. Any other text is combined and added to the argparse description.
 
     example:
@@ -94,6 +105,8 @@ def _parse_docstring(docstring):
             method_args['summary'] = node.astext()
         elif node.tagname == 'field_list':
             get_params(node, method_args['params'])
+        elif node.tagname == 'bullet_list':
+            method_args['description'] += _render_bullet_list(node)
         else:
-            method_args['description'] += '\n' + node.astext()
+            method_args['description'] += '\n\n' + node.astext()
     return method_args
