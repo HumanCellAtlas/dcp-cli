@@ -225,9 +225,11 @@ class DSSClient(SwaggerClient):
         :param float min_delay_seconds: The minimum number of seconds to wait in between retries.
 
         Download a bundle and save it to the local filesystem as a directory.
-        By default, all data and metadata files are downloaded. To disable the downloading of data files,
-        use `--data-files ''` if using the CLI (or `data_files=()` if invoking `download` programmatically).
-        Likewise for metadata files.
+
+        By default, all data and metadata files are downloaded. To disable the downloading of data, use the
+        `--no-data` flag if using the CLI or pass the `no_data=True` argument if calling the `download()` API method.
+        Likewise, to disable the downloading of metadata, use the `--no-metadata` flag for the CLI or pass the
+        `no_metadata=True` argument if calling the `download()` API method.
 
         If a retryable exception occurs, we wait a bit and retry again.  The delay increases each time we fail and
         decreases each time we successfully read a block.  We set a quota for the number of failures that goes up with
