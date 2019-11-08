@@ -24,7 +24,7 @@ Deletes an existing bundle given a UUID, version, and replica.
 
 Example call to ``delete_bundle()``:
 
-.. literalinclude:: ../test/tutorial/scripts/api/delete_bundle_api.py
+.. literalinclude:: ../../test/tutorial/scripts/api/delete_bundle_api.py
 
 ``put_bundle``
 --------------
@@ -35,7 +35,7 @@ Creates a bundle. A bundle can contain multiple files of arbitrary type.
 
 Example call to ``put_bundle()``:
 
-.. literalinclude:: ../test/tutorial/scripts/api/put_bundle_api.py
+.. literalinclude:: ../../test/tutorial/scripts/api/put_bundle_api.py
 
 ``patch_bundle``
 ----------------
@@ -56,7 +56,7 @@ Allows a user to modify an existing bundle. User passes in an optional list of f
 
 Example call to ``patch_bundle()``:
 
-.. literalinclude:: ../test/tutorial/scripts/api/patch_bundle_api.py
+.. literalinclude:: ../../test/tutorial/scripts/api/patch_bundle_api.py
 
 
 ``put_file``
@@ -66,7 +66,7 @@ Creates a new version of a file, given an existing UUID, version, creator uid, a
 
 Example call to ``put_file()``:
 
-.. literalinclude:: ../test/tutorial/scripts/api/put_file_api.py
+.. literalinclude:: ../../test/tutorial/scripts/api/put_file_api.py
 
 
 ``put_collection, delete_collection, patch_collection, get_collection(s)``
@@ -96,7 +96,7 @@ To add or remove files with the API endpoints above, specify each file in the fo
 
 Example API calls:
 
-.. literalinclude:: ../test/tutorial/scripts/api/put_delete_get_patch_collection_api.py
+.. literalinclude:: ../../test/tutorial/scripts/api/put_delete_get_patch_collection_api.py
 
 
 ``upload``
@@ -106,4 +106,4 @@ Uploads a directory of files from the local filesystem and creates a bundle cont
 
 Example call to ``upload()``:
 
-.. literalinclude:: ../test/tutorial/scripts/api/upload_api.py
+.. literalinclude:: ../../test/tutorial/scripts/api/upload_api.py

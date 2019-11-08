@@ -1,5 +1,5 @@
 ================================
-CLI REstricted Endpoint Examples
+CLI Restricted Endpoint Examples
 ================================
 
 The HCA CLI provides users of the Human Cell Atlas (HCA) to access and download data sets from the HCA. This page
@@ -22,7 +22,7 @@ Deletes an existing bundle given a UUID, version, and replica.
 
 Example call to ``hca delete-bundle``:
 
-.. literalinclude:: ../test/tutorial/scripts/cli/delete_bundle_cli.sh
+.. literalinclude:: ../../test/tutorial/scripts/cli/delete_bundle_cli.sh
 
 
 ``hca put-bundle``
@@ -48,7 +48,7 @@ Inputs:
 
 Example call to ``put_bundle()``:
 
-.. literalinclude:: ../test/tutorial/scripts/cli/put_bundle_cli.sh
+.. literalinclude:: ../../test/tutorial/scripts/cli/put_bundle_cli.sh
 
 ``hca patch-bundle``
 --------------------
@@ -69,7 +69,7 @@ Allows user to pass in an optional list of files to add or remove from an exisit
 
 Example call to ``hca patch-bundle``:
 
-.. literalinclude:: ../test/tutorial/scripts/cli/patch_bundle_cli.sh
+.. literalinclude:: ../../test/tutorial/scripts/cli/patch_bundle_cli.sh
 
 
 ``hca put-file``
@@ -79,7 +79,7 @@ Creates a new version of a file, given an existing UUID, version, creator uid, a
 
 Example call to ``hca put-file``:
 
-.. literalinclude:: ../test/tutorial/scripts/cli/put_file_cli.sh
+.. literalinclude:: ../../test/tutorial/scripts/cli/put_file_cli.sh
 
 
 ``hca get-collection(s), hca put-collection, hca patch-collection, hca delete-collection``
@@ -109,7 +109,7 @@ To add or remove files with the CLI actions above, specify each file in the foll
 
 Example CLI calls:
 
-.. literalinclude:: ../test/tutorial/scripts/cli/put_delete_get_patch_collection_cli.sh
+.. literalinclude:: ../../test/tutorial/scripts/cli/put_delete_get_patch_collection_cli.sh
 
 ``hca upload``
 --------------
@@ -118,4 +118,4 @@ Uploads a directory of files from the local filesystem and creates a bundle cont
 
 Example call to ``hca upload``:
 
-.. literalinclude:: ../test/tutorial/scripts/cli/upload_cli.sh
+.. literalinclude:: ../../test/tutorial/scripts/cli/upload_cli.sh

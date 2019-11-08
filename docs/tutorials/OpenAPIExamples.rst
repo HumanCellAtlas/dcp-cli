@@ -21,7 +21,7 @@ versioning bundles or files.
 
 Example call to ``create_version()``:
 
-.. literalinclude:: ../test/tutorial/scripts/api/create_version_api.py
+.. literalinclude:: ../../test/tutorial/scripts/api/create_version_api.py
 
 
 ``download``
@@ -39,7 +39,7 @@ See note above regarding version numbering.
 
 Example call to ``download()``:
 
-.. literalinclude:: ../test/tutorial/scripts/api/download_api.py
+.. literalinclude:: ../../test/tutorial/scripts/api/download_api.py
 
 Example response:
 ::
@@ -96,7 +96,7 @@ Example response:
 Example call to ``download()``, specifying the flags needed to download the
 data or the metadata only:
 
-.. literalinclude:: ../test/tutorial/scripts/api/download_data_metadata.py
+.. literalinclude:: ../../test/tutorial/scripts/api/download_data_metadata.py
 
 
 ``download_manifest``
@@ -120,7 +120,7 @@ The header row must define the columns:
 
 Example call to ``download_manifest()``:
 
-.. literalinclude:: ../test/tutorial/scripts/api/download_manifest_api.py
+.. literalinclude:: ../../test/tutorial/scripts/api/download_manifest_api.py
 
 Example manifest TSV file:
 
@@ -138,7 +138,7 @@ the metadata for that specific version is returned instead. The metadata is retu
 
 Example call to ``file_head()``:
 
-.. literalinclude:: ../test/tutorial/scripts/api/get_file_head_api.py
+.. literalinclude:: ../../test/tutorial/scripts/api/get_file_head_api.py
 
 Example JSON header returned by API:
 ::
@@ -175,7 +175,7 @@ information about each file in the bundle, such as the file name, UUID, version,
 
 Example call to ``get_bundle()``:
 
-.. literalinclude:: ../test/tutorial/scripts/api/get_bundle_api.py
+.. literalinclude:: ../../test/tutorial/scripts/api/get_bundle_api.py
 
 Example of the JSON returned by ``get_bundle()``:
 ::
@@ -226,7 +226,7 @@ Check the status and location of a checkout request.
 
 Example call to ``get_bundles_checkout()``:
 
-.. literalinclude:: ../test/tutorial/scripts/api/get_bundles_checkout_api.py
+.. literalinclude:: ../../test/tutorial/scripts/api/get_bundles_checkout_api.py
 
 Example of the JSON returned by ``get_bundles_checkout()``:
 ::
@@ -244,7 +244,7 @@ Retrieves file metadata given a UUID, optionally a version. (To download a file,
 
 Example call to ``get_file()``:
 
-.. literalinclude:: ../test/tutorial/scripts/api/get_file_api.py
+.. literalinclude:: ../../test/tutorial/scripts/api/get_file_api.py
 
 Example of the JSON returned by ``get_file()``:
 ::
@@ -276,7 +276,7 @@ Configures and saves authentication credentials.
 
 Example call to ``login()``:
 
-.. literalinclude:: ../test/tutorial/scripts/api/login_api.py
+.. literalinclude:: ../../test/tutorial/scripts/api/login_api.py
 
 ``logout``
 ----------
@@ -285,7 +285,7 @@ Clears authentication credentials previously configured with login.
 
 Example call to ``logout()``:
 
-.. literalinclude:: ../test/tutorial/scripts/api/logout_api.py
+.. literalinclude:: ../../test/tutorial/scripts/api/logout_api.py
 
 ``post_bundles_checkout``
 -------------------------
@@ -295,7 +295,7 @@ Returns a ``checkout-job-id`` (e.g., ``4de1c603-fa8b-4c07-af37-06159e6951e0``). 
 
 Example call to ``post_bundles_checkout()``:
 
-.. literalinclude:: ../test/tutorial/scripts/api/post_bundles_checkout_api.py
+.. literalinclude:: ../../test/tutorial/scripts/api/post_bundles_checkout_api.py
 
 ``post_search``
 ---------------
@@ -310,7 +310,7 @@ This method returns an FQID and URL for each matching bundle.
 
 Example call to ``post_search()``:
 
-.. literalinclude:: ../test/tutorial/scripts/api/post_search_api.py
+.. literalinclude:: ../../test/tutorial/scripts/api/post_search_api.py
 
 Example output:
 ::
@@ -341,7 +341,7 @@ Example output:
 
 Example API calls:
 
-.. literalinclude:: ../test/tutorial/scripts/api/put_delete_get_sub_api.py
+.. literalinclude:: ../../test/tutorial/scripts/api/put_delete_get_sub_api.py
 
 
 ``refresh_swagger``
