@@ -21,7 +21,7 @@ versioning bundles or files.
 
 Example call to ``hca create-version``:
 
-.. literalinclude:: ../test/tutorial/scripts/cli/create_version_cli.sh
+.. literalinclude:: ../../test/tutorial/scripts/cli/create_version_cli.sh
 
 ``hca download``
 ----------------
@@ -37,7 +37,7 @@ See note above regarding version numbering.
 
 Example call to ``hca get-bundle``:
 
-.. literalinclude:: ../test/tutorial/scripts/cli/download_cli.sh
+.. literalinclude:: ../../test/tutorial/scripts/cli/download_cli.sh
 
 Example response:
 ::
@@ -112,7 +112,7 @@ The header row must define the columns:
 
 Example call to ``hca download-manifest``:
 
-.. literalinclude:: ../test/tutorial/scripts/cli/download_manifest_cli.sh
+.. literalinclude:: ../../test/tutorial/scripts/cli/download_manifest_cli.sh
 
 Example manifest TSV file:
 
@@ -130,7 +130,7 @@ the metadata for that specific version is returned instead. The metadata is retu
 
 Example call to ``hca file-head``:
 
-.. literalinclude:: ../test/tutorial/scripts/cli/get_file_head_cli.sh
+.. literalinclude:: ../../test/tutorial/scripts/cli/get_file_head_cli.sh
 
 Example JSON header returned by API:
 ::
@@ -167,7 +167,7 @@ information about each file in the bundle, such as the file name, UUID, version,
 
 Example call to ``hca get-bundle``:
 
-.. literalinclude:: ../test/tutorial/scripts/cli/get_bundle_cli.sh
+.. literalinclude:: ../../test/tutorial/scripts/cli/get_bundle_cli.sh
 
 Example JSON returned by ``hca get-bundle``:
 ::
@@ -218,7 +218,7 @@ Check the status and location of a checkout request.
 
 Example call to ``hca get-bundles-checkout``:
 
-.. literalinclude:: ../test/tutorial/scripts/cli/get_bundles_checkout_cli.sh
+.. literalinclude:: ../../test/tutorial/scripts/cli/get_bundles_checkout_cli.sh
 
 Example JSON returned by ``hca get-bundles-checkout``:
 ::
@@ -236,7 +236,7 @@ Retrieves a file given a UUID, optionally a version, and displays the details of
 
 Example call to ``hca get-file``:
 
-.. literalinclude:: ../test/tutorial/scripts/cli/get_file_cli.sh
+.. literalinclude:: ../../test/tutorial/scripts/cli/get_file_cli.sh
 
 Example JSON returned by ``hca get-file``:
 ::
@@ -268,7 +268,7 @@ Configures and saves authentication credentials.
 
 Example call to ``hca login``:
 
-.. literalinclude:: ../test/tutorial/scripts/cli/login_cli.sh
+.. literalinclude:: ../../test/tutorial/scripts/cli/login_cli.sh
 
 
 ``hca logout``
@@ -278,7 +278,7 @@ Clears authentication credentials previously configured with login.
 
 Example call to ``hca logout``:
 
-.. literalinclude:: ../test/tutorial/scripts/cli/logout_cli.sh
+.. literalinclude:: ../../test/tutorial/scripts/cli/logout_cli.sh
 
 
 ``hca post-bundles-checkout``
@@ -289,7 +289,7 @@ Returns a ``checkout-job-id`` (e.g., ``4de1c603-fa8b-4c07-af37-06159e6951e0``). 
 
 Example call to ``hca post-bundles-checkout``:
 
-.. literalinclude:: ../test/tutorial/scripts/cli/post_bundles_checkout_cli.sh
+.. literalinclude:: ../../test/tutorial/scripts/cli/post_bundles_checkout_cli.sh
 
 
 ``hca post-search``
@@ -305,7 +305,7 @@ This method returns an FQID and URL for each matching bundle.
 
 Example call to ``hca post-search``:
 
-.. literalinclude:: ../test/tutorial/scripts/cli/post_search_cli.sh
+.. literalinclude:: ../../test/tutorial/scripts/cli/post_search_cli.sh
 
 Example output:
 ::
@@ -335,7 +335,7 @@ Example output:
 
 Example CLI calls:
 
-.. literalinclude:: ../test/tutorial/scripts/cli/put_delete_get_sub_cli.sh
+.. literalinclude:: ../../test/tutorial/scripts/cli/put_delete_get_sub_cli.sh
 
 
 ``hca refresh-swagger``
@@ -343,4 +343,4 @@ Example CLI calls:
 
 Manually refresh the swagger document.
 
-.. literalinclude:: ../test/tutorial/scripts/cli/refresh_swagger_cli.sh
+.. literalinclude:: ../../test/tutorial/scripts/cli/refresh_swagger_cli.sh
