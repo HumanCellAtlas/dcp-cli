@@ -21,8 +21,8 @@ class TestDSSDocAPI(unittest.TestCase):
             os.remove("./manifest.tsv")
 
     def checkExitCode(self, input_method, script):
-        script = os.path.join(self.directory, "scripts", input_method, script)
-        print(script)
+        script = os.path.join('/', self.directory, "scripts", input_method, script)
+        print("\n"+script)
 
         pkg_root = os.path.abspath(os.path.join(os.path.dirname(__file__)))
         program = os.path.join(pkg_root, script)
@@ -40,8 +40,9 @@ class TestDSSDocAPI(unittest.TestCase):
                 stderr=subprocess.PIPE
             )
         stdout, stderr = process.communicate()
-        print(stderr)
         self.teardown()
+        if len(stderr) > 0:
+            print(stderr.decode("utf-8"))
         if isinstance(stdout, bytes):
             return stdout.decode("utf-8") + " " + stderr.decode("utf-8")
         return stdout + " " + stderr

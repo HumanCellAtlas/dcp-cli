@@ -6,4 +6,4 @@
 
    cli
    api
-
+   tutorials/index

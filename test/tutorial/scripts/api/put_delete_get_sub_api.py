@@ -7,7 +7,8 @@ dss = DSSClient(config=hca_config)
 
 # Creates a sub based given a replica and a url
 subscription = dss.put_subscription(
-    replica="aws", callback_url=" https://www.example.com"
+    replica="aws",
+    callback_url=" https://dcp-cli-tutorials-put-delete-get-sub-api.humancellatlas.org`"
 )
 
 callback, owner, replica, uuid = (
@@ -17,10 +18,10 @@ callback, owner, replica, uuid = (
     subscription["uuid"],
 )
 
-# Lists all of subs created
+# Lists all subs created
 print(dss.get_subscriptions(replica="aws"))
 
-# List a sub
+# Lists a sub
 print(dss.get_subscription(replica="aws", uuid=uuid))
 
 # Deletes a sub based on a UUID

@@ -6,7 +6,7 @@ Data Coordination Platform (DCP) of the Human Cell Atlas (HCA).
 Currently the `hca` package supports interaction with the `Upload Service <https://github.com/HumanCellAtlas/upload-service>`_ and `Data Storage Service (DSS) <https://github.com/HumanCellAtlas/data-store>`_ for services such as uploading, downloading,
 and querying data.
 
-The HCA CLI is compatible with python versions 3.5+ (we are no longer compatible with python2.7, and our last compatible python2.7 version was `hca==6.4.0`).
+The HCA CLI is compatible with Python versions 3.5+ (we are no longer compatible with Python 2.7, and our last compatible Python 2.7 version was `hca==6.4.0`).
 
 Installation
 ------------
@@ -14,9 +14,22 @@ Installation
 
 Usage
 -----
-`Click here for the CLI documentation. <https://hca.readthedocs.io/en/latest/cli.html>`_
 
-`Click here for the API documentation. <https://hca.readthedocs.io/en/latest/api.html>`_
+Documentation on readthedocs.io:
+
+* `CLI documentation <https://hca.readthedocs.io/en/latest/cli.html>`_
+
+* `Python API documentation <https://hca.readthedocs.io/en/latest/api.html>`_
+
+Example CLI/API usage:
+
+* `CLI examples (open endpoints) <https://github.com/HumanCellAtlas/dcp-cli/tree/master/docs/OpenCLIExamples.rst>`_
+
+* `CLI examples (restricted endpoints) <https://github.com/HumanCellAtlas/dcp-cli/tree/master/docs/RestrictedCLIExamples.rst>`_
+
+* `Python API examples (open endpoints) <https://github.com/HumanCellAtlas/dcp-cli/tree/master/docs/OpenAPIExamples.rst>`_
+
+* `Python API examples (restricted endpoints) <https://github.com/HumanCellAtlas/dcp-cli/tree/master/docs/OpenAPIExamples.rst>`_
 
 To see the list of commands you can use, type :code:`hca --help`.
 
@@ -45,16 +58,17 @@ authenticate.
 
 One can also use: ``hca dss login``.
 
-More info on `google service credentials <https://cloud.google.com/iam/docs/understanding-service-accounts>`_ 
-and how to `create <https://console.cloud.google.com/iam-admin/serviceaccounts>`_.
+See `Google service credentials <https://cloud.google.com/iam/docs/understanding-service-accounts>`_ 
+for more information about service accounts. Use the `Google Cloud IAM web console
+<https://console.cloud.google.com/iam-admin/serviceaccounts>`_ to manage service accounts.
 
 Development
 -----------
 To develop on the CLI, first run ``pip install -r requirements-dev.txt``. You can install your locally modified copy of 
-the hca package by running `make install` in the repository root directory.
+the hca package by running ``make install`` in the repository root directory.
 
 To use the command line interface with a local or test DSS, first run ``hca`` (or ``scripts/hca`` if you want to use the
-package in place from the repository root directory). This will create the file ``~/.config/hca/config.json``, which you
+package in-place from the repository root directory). This will create the file ``~/.config/hca/config.json``, which you
 can modify to update the value of ``DSSClient.swagger_url`` to point to the URL of the Swagger definition served by your
 DSS deployment. Lastly, the CLI enforces HTTPS connection to the DSS API. If you are connecting to a local DSS, make
 this change in ``dcp-cli/hca/util/__init__.py`` in the ``SwaggerClient`` object::
@@ -75,19 +89,22 @@ variable, for example::
 
 Testing
 -------
-Before you run tests, first run ``hca dss login``.  This will pop up a browser and get you to authenticate with Google.
-Use an email from one of the whitelisted domains (in ``DSS_SUBSCRIPTION_AUTHORIZED_DOMAINS_ARRAY`` from
-`here <https://github.com/HumanCellAtlas/data-store/blob/master/environment#L55>`_).
+Before you run tests, first run ``hca dss login``.  This will open a browser where you can log in to authenticate
+with Google. Use an email address from one of the whitelisted domains (in ``DSS_SUBSCRIPTION_AUTHORIZED_DOMAINS_ARRAY``
+from `here <https://github.com/HumanCellAtlas/data-store/blob/master/environment#L55>`_).
 
 Then :code:`make test`.
 
 Primary CI testing is through Travis CI; there is also additional testing with the
-`Gitlab/Allspark <https://allspark.dev.data.humancellatlas.org/HumanCellAtlas/dcp-cli/>`_ that runs tests for Windows.
-If submitting PRs that have the potential of being platform dependent, please ensure the status Windows Testing is verified before merging.
+`Gitlab Allspark instance <https://allspark.dev.data.humancellatlas.org/HumanCellAtlas/dcp-cli/>`_ that runs tests for Windows.
+(Note that Allspark is not open to the public, members of the Human Cell Atlas project can access the Allspark cluster using the Github account
+associated with the Human Cell Atlas organization on Github.) If submitting PRs that have the potential of being platform-dependent, please ensure 
+the status of "Windows Testing" is verified before merging.
 
 Bugs
 ~~~~
-Please report bugs, issues, feature requests, etc. on `GitHub <https://github.com/HumanCellAtlas/dcp-cli/issues>`_.
+Please report bugs, issues, feature requests, etc. in the 
+`HumanCellAtlas/dcp-cli repository on GitHub <https://github.com/HumanCellAtlas/dcp-cli/issues>`_.
 
 
 Security Policy
@@ -98,8 +115,8 @@ License
 -------
 Licensed under the terms of the `MIT License <https://opensource.org/licenses/MIT>`_.
 
-.. image:: https://img.shields.io/travis/HumanCellAtlas/dcp-cli.svg
-        :target: https://travis-ci.org/HumanCellAtlas/dcp-cli
+.. image:: https://img.shields.io/travis/HumanCellAtlas/dcp-cli.svg?branch=master
+        :target: https://travis-ci.org/HumanCellAtlas/dcp-cli?branch=master
 .. image:: https://codecov.io/github/HumanCellAtlas/dcp-cli/coverage.svg?branch=master
         :target: https://codecov.io/github/HumanCellAtlas/dcp-cli?branch=master
 .. image:: https://img.shields.io/pypi/v/hca.svg

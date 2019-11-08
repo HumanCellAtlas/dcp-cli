@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Creates a sub based given a replica and a url
-instance_info=$(hca dss put-subscription --callback-url https://www.example.com --replica aws) 
+instance_info=$(hca dss put-subscription --callback-url https://dcp-cli-tutorials-put-get-delete-sub.data.humancellatlas.org --replica aws) 
 
 ID=`echo ${instance_info} | jq -r '.uuid'`
 
