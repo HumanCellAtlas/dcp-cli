@@ -1,9 +1,9 @@
 .. include:: ../README.rst
 
 .. toctree::
-    :maxdepth: 5
-    :hidden:
+   :maxdepth: 5
+   :hidden:
 
-    cli
-    api
-    tutorials/index
+   cli
+   api
+   tutorials/index
