@@ -148,7 +148,7 @@ class TestDssCLI(unittest.TestCase):
                 hca.cli.main(args=put_args)
                 os._exit(0)
             output = self._get_child_output(child_pid, fd)
-            self.assertTrue('Uploading to aws' in output, output)
+            self.assertIn('Uploading to aws: 100%', output)
 
         with self.subTest("Don't show progress bar if interactive and not logging INFO"):
             child_pid, fd = pty.fork()
@@ -156,7 +156,7 @@ class TestDssCLI(unittest.TestCase):
                 hca.cli.main(args=['--log-level', 'WARNING'] + put_args)
                 os._exit(0)
             output = self._get_child_output(child_pid, fd)
-            self.assertFalse('Uploading to aws' in output, output)
+            self.assertNotIn('Uploading to aws', output)
 
         with self.subTest("Don't show progress bar if interactive and --no-progress"):
             child_pid, fd = pty.fork()
@@ -164,17 +164,24 @@ class TestDssCLI(unittest.TestCase):
                 hca.cli.main(args=put_args + ['--no-progress'])
                 os._exit(0)
             output = self._get_child_output(child_pid, fd)
-            self.assertFalse('Uploading to aws' in output, output)
+            self.assertNotIn('Uploading to aws', output)
 
-    @staticmethod
-    def _get_child_output(child_pid, fd):
+    def _get_child_output(self, child_pid, fd):
         output = ''
-        while not os.waitpid(child_pid, os.WNOHANG)[0]:
+        while True:
+            stopped, status = os.waitpid(child_pid, os.WNOHANG)
+            if stopped:
+                break
             try:
-                output += os.read(fd, 128).decode()
+                buf = os.read(fd, 128).decode()
+                print(buf, end='')
+                output += buf
             except OSError:
                 break
         os.close(fd)
+        exit_code = os.WEXITSTATUS(status)
+        if exit_code != 0:
+            self.fail("Child process exited with %d" % exit_code)
         return output
 
     @staticmethod
