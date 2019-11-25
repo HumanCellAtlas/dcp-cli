@@ -3,7 +3,6 @@ import hashlib
 import logging
 import os
 import random
-import shutil
 import tempfile
 import threading
 import time
@@ -13,6 +12,7 @@ import uuid
 from mock import patch
 from hca.util.compat import walk
 from hca.dss import DSSClient, ManifestDownloadContext, TaskRunner
+from test.unit import TmpDirTestCase
 
 logging.basicConfig()
 
@@ -92,7 +92,7 @@ def _fake_do_download_file_with_barrier(*args, **kwargs):
     return 'FAKEhash'
 
 
-class DSSClientTestCase(unittest.TestCase):
+class DSSClientTestCase(TmpDirTestCase):
     maxDiff = None
     manifest = list(zip(
         ('bundle_uuid', 'a_uuid', 'b_uuid', 'c_uuid'),
@@ -112,16 +112,11 @@ class DSSClientTestCase(unittest.TestCase):
 
     def setUp(self):
         super().setUp()
-        self.prev_wd = os.getcwd()
-        self.tmp_dir = tempfile.mkdtemp()
-        os.chdir(self.tmp_dir)
         self.dss = DSSClient()
         self._write_manifest(self.manifest)
         self.manifest_file = 'manifest.tsv'
 
     def tearDown(self):
-        os.chdir(self.prev_wd)
-        shutil.rmtree(self.tmp_dir)
         super().tearDown()
 
     def _write_manifest(self, manifest):
