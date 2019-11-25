@@ -260,7 +260,9 @@ class TestDssApi(unittest.TestCase):
 
     def test_python_subscriptions(self):
         query = {'bool': {}}
-        resp = self.client.put_subscription(es_query=query, callback_url="https://www.example.com", replica="aws")
+        resp = self.client.put_subscription(es_query=query,
+                                            callback_url="https://www.test_python_subscriptions.dss.hca.org",
+                                            replica="aws")
         subscription_uuid = resp['uuid']
 
         resp = self.client.get_subscriptions(replica="aws", subscription_type='elasticsearch')
@@ -281,7 +283,8 @@ class TestDssApi(unittest.TestCase):
             resp = self.client.get_subscription(replica="aws", uuid=subscription_uuid, subscription_type='elasticsearch')
 
         # Test subscriptions version 2 (jmespath subscriptions)
-        resp = self.client.put_subscription(callback_url="https://www.example.com", replica="aws")
+        resp = self.client.put_subscription(callback_url="https://www.test_python_subscriptions.dss.hca.org",
+                                            replica="aws")
         subscription_uuid = resp['uuid']
 
         resp = self.client.get_subscriptions(replica="aws", subscription_type="jmespath")
@@ -372,7 +375,10 @@ class TestDssApi(unittest.TestCase):
     @reset_tweak_changes
     def test_python_login_logout_service_account(self):
         query = {'bool': {}}
-        resp = self.client.put_subscription(es_query=query, callback_url="https://www.example.com", replica="aws")
+        resp = self.client.put_subscription(es_query=query,
+                                            callback_url=
+                                            "https://www.test_python_login_logout_service_account.dss.hca.org",
+                                            replica="aws")
         self.assertIn("uuid", resp)
 
         deletion_resp = self.client.delete_subscription(uuid=resp['uuid'], replica='aws',
@@ -401,7 +407,10 @@ class TestDssApi(unittest.TestCase):
         self.assertIn("application_secrets", config)
 
         query = {'bool': {}}
-        resp = self.client.put_subscription(es_query=query, callback_url="https://www.example.com", replica="aws")
+        resp = self.client.put_subscription(es_query=query,
+                                            callback_url=
+                                            "https://www.test_python_login_logout_service_account.dss.hca.org",
+                                            replica="aws")
         self.assertIn("uuid", resp)
         self.client.delete_subscription(uuid=resp["uuid"], replica="aws", subscription_type='elasticsearch')
 
