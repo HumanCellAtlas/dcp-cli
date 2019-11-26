@@ -1,3 +1,23 @@
+Changes for v6.5.1 (2019-11-26)
+===============================
+
+Move and refactor broken hardlink tests Add TestCase that creates and
+uses a temp dir Set maxDiff for client tests Fix duplicate downloads
+(#450) Fix parallel download test to reveal linking bug Consolidate test
+code DSS Subscriptions: Callback Url (#492) Remove optional args from
+super calls Work around link limit for manifest download (#427) Refactor
+mocked call in test methods Rename test case Use proper configurations
+for csv reading/writing (#427) Remove outdated comment Prettify the
+contents of bundle.json (#444) Add API/CLI tutorial pages to Sphinx
+documentation (#472) Fix dss download docstring to use correct flags
+(#486) Fix documentation - remove extra periods between paragraphs
+(#460) Refresh session token when the jwt expires. (#446) update version
+number to revert #476 (#484) Fix import dependencies (#483) Reposition
+import. (#482) Fix version numbering (#476) change flags starting with -
+to start with – (#480) Fix sub-command description indentation in sphinx
+docs (#479) auto pagination (#465) update required python version to
+3.5+ (#459) Add Fusillade API client (#417)
+
 Changes for v6.5.0 (2019-10-21)
 ===============================
 
