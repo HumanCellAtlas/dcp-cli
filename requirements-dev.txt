@@ -5,6 +5,7 @@
 awscli
 coverage
 flake8
+httpie
 mock
 
 # Old versions of moto do not mock boto3 objects with sufficient fidelity.
