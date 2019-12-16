@@ -92,7 +92,8 @@ class DSSClient(SwaggerClient):
     def _create_version(self):
         return datetime.utcnow().strftime("%Y-%m-%dT%H%M%S.%fZ")
 
-    def upload(self, src_dir, replica, staging_bucket, timeout_seconds=1200, no_progress=False):
+    def upload(self, src_dir, replica, staging_bucket, timeout_seconds=1200, no_progress=False,
+               bundle_uuid=None):
         """
         Upload a directory of files from the local filesystem and create a bundle containing the uploaded files.
 
@@ -108,7 +109,7 @@ class DSSClient(SwaggerClient):
         Upload a directory of files from the local filesystem and create a bundle containing the uploaded files.
         This method requires the use of a client-controlled object storage bucket to stage the data for upload.
         """
-        bundle_uuid = str(uuid.uuid4())
+        bundle_uuid = bundle_uuid if bundle_uuid else str(uuid.uuid4())
         version = datetime.utcnow().strftime("%Y-%m-%dT%H%M%S.%fZ")
 
         files_to_upload, files_uploaded = [], []
