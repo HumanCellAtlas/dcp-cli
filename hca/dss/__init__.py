@@ -129,7 +129,10 @@ class DSSClient(SwaggerClient):
                 if file_uuids_config:
                     file_uuids.append(file_uuid_mapping[full_file_name])
             except KeyError as e:
-                raise ValueError(f'Bad file path mapping in file_uuids_config ({file_uuids_config}):\n{e}')
+                raise ValueError('Bad file path mapping in file_uuids_config ({file_uuids_config}):\n{e}'.format(
+                    file_uuids_config=file_uuids_config,
+                    e=e
+                ))
 
         logger.info("Uploading %i files from %s to %s", len(files_to_upload), src_dir, staging_bucket)
         file_uuids, uploaded_keys, abs_file_paths = upload_to_cloud(files_to_upload, staging_bucket=staging_bucket,
