@@ -53,7 +53,7 @@ def _copy_from_s3(path, s3):
     return file_uuids, key_names
 
 
-def upload_to_cloud(file_handles, staging_bucket, replica, from_cloud=False, log_progress=False):
+def upload_to_cloud(file_handles, staging_bucket, replica, from_cloud=False, log_progress=False, file_uuids=None):
     """
     Upload files to cloud.
 
@@ -67,13 +67,21 @@ def upload_to_cloud(file_handles, staging_bucket, replica, from_cloud=False, log
                               In addition, even if this is set to True, a progress bar will not
                               be shown if (a) the logging level is not INFO or lower or (b) an
                               interactive session is not detected.
+    :param file_uuids: A list of UUIDs to use for the file handles uploaded.  Must be in the same order as
+                       the file handles.  Defaults to random UUIDs if not specified.  Ignored if "from_cloud=True".
+
     :return: a list of file uuids, key-names, and absolute file paths (local) for uploaded files
     """
     s3 = boto3.resource("s3")
-    file_uuids = []
+    file_uuids = file_uuids if file_uuids else []
     key_names = []
     abs_file_paths = []
     log_progress = all((logger.getEffectiveLevel() <= logging.INFO, sys.stdout.isatty(), log_progress))
+
+    if file_uuids:
+        files = list(zip(file_handles, file_uuids))
+    else:
+        files = [(fh, str(uuid.uuid4())) for fh in file_handles]
 
     if from_cloud:
         file_uuids, key_names = _copy_from_s3(file_handles[0], s3)
@@ -84,13 +92,12 @@ def upload_to_cloud(file_handles, staging_bucket, replica, from_cloud=False, log
             logger.addHandler(ProgressBarStreamHandler())
             progress = tqdm.tqdm(total=total_upload_size, desc="Uploading to " + replica,
                                  unit="B", unit_scale=True, unit_divisor=1024)
-        for raw_fh in file_handles:
+        for raw_fh, file_uuid in files:
             file_size = os.path.getsize(raw_fh.name)
             multipart_chunksize = s3_multipart.get_s3_multipart_chunk_size(file_size)
             tx_cfg = TransferConfig(multipart_threshold=s3_multipart.MULTIPART_THRESHOLD,
                                     multipart_chunksize=multipart_chunksize)
             with ChecksummingBufferedReader(raw_fh, multipart_chunksize) as fh:
-                file_uuid = str(uuid.uuid4())
                 key_name = "{}/{}".format(file_uuid, os.path.basename(fh.raw.name))
                 destination_bucket.upload_fileobj(
                     fh,

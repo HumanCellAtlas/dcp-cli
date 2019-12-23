@@ -93,18 +93,22 @@ class DSSClient(SwaggerClient):
         return datetime.utcnow().strftime("%Y-%m-%dT%H%M%S.%fZ")
 
     def upload(self, src_dir, replica, staging_bucket, timeout_seconds=1200, no_progress=False,
-               bundle_uuid=None):
+               bundle_uuid=None, file_uuids_config=None):
         """
         Upload a directory of files from the local filesystem and create a bundle containing the uploaded files.
 
         :param str src_dir: file path to a directory of files to upload to the replica.
         :param str replica: the replica to upload to. The supported replicas are: `aws` for Amazon Web Services, and
-            `gcp` for Google Cloud Platform. [aws, gcp]
+                            `gcp` for Google Cloud Platform. [aws, gcp]
         :param str staging_bucket: a client controlled AWS S3 storage bucket to upload from.
         :param int timeout_seconds: the time to wait for a file to upload to replica.
         :param bool no_progress: if set, will not report upload progress. Note that even if this flag
                                  is not set, progress will not be reported if the logging level is higher
                                  than INFO or if the session is not interactive.
+        :param str bundle_uuid: Specify the bundle UUID.  Defaults to a random UUID if not specified.
+        :param str file_uuids_config: Allows specifying file UUIDs.  Must be a file path to a json file
+                                      where file paths are keys and file UUIDs are values.  Defaults to random UUIDs
+                                      if not specified.
 
         Upload a directory of files from the local filesystem and create a bundle containing the uploaded files.
         This method requires the use of a client-controlled object storage bucket to stage the data for upload.
@@ -112,15 +116,26 @@ class DSSClient(SwaggerClient):
         bundle_uuid = bundle_uuid if bundle_uuid else str(uuid.uuid4())
         version = datetime.utcnow().strftime("%Y-%m-%dT%H%M%S.%fZ")
 
-        files_to_upload, files_uploaded = [], []
+        file_uuid_mapping = {}
+        if file_uuids_config:
+            with open(file_uuids_config, 'r') as f:
+                file_uuid_mapping = json.loads(f.read())
+
+        files_to_upload, files_uploaded, file_uuids = [], [], []
         for filename in iter_paths(src_dir):
             full_file_name = filename.path
             files_to_upload.append(open(full_file_name, "rb"))
+            try:
+                if file_uuids_config:
+                    file_uuids.append(file_uuid_mapping[full_file_name])
+            except KeyError as e:
+                raise ValueError(f'Bad file path mapping in file_uuids_config ({file_uuids_config}):\n{e}')
 
         logger.info("Uploading %i files from %s to %s", len(files_to_upload), src_dir, staging_bucket)
         file_uuids, uploaded_keys, abs_file_paths = upload_to_cloud(files_to_upload, staging_bucket=staging_bucket,
                                                                     replica=replica, from_cloud=False,
-                                                                    log_progress=not no_progress)
+                                                                    log_progress=not no_progress,
+                                                                    file_uuids=file_uuids)
         for file_handle in files_to_upload:
             file_handle.close()
         filenames = [object_name_builder(p, src_dir) for p in abs_file_paths]
