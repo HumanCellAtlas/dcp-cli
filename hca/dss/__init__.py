@@ -93,7 +93,7 @@ class DSSClient(SwaggerClient):
         return datetime.utcnow().strftime("%Y-%m-%dT%H%M%S.%fZ")
 
     def upload(self, src_dir, replica, staging_bucket, timeout_seconds=1200, no_progress=False,
-               bundle_uuid=None):
+               bundle_uuid=None, file_uuid_callback=None):
         """
         Upload a directory of files from the local filesystem and create a bundle containing the uploaded files.
 
@@ -105,6 +105,11 @@ class DSSClient(SwaggerClient):
         :param bool no_progress: if set, will not report upload progress. Note that even if this flag
                                  is not set, progress will not be reported if the logging level is higher
                                  than INFO or if the session is not interactive.
+        :param file_uuid_callback: An optional function that is invoked to allocate a DSS file UUID for the file to be
+                                   uploaded. The function is called with one argument: the absolute path of the file
+                                   about to be uploaded. It must return a string containing the hexadecimal
+                                   representation of a UUID. If this argument is omitted, a random UUID4 will be
+                                   used for each file.
 
         Upload a directory of files from the local filesystem and create a bundle containing the uploaded files.
         This method requires the use of a client-controlled object storage bucket to stage the data for upload.
@@ -120,7 +125,8 @@ class DSSClient(SwaggerClient):
         logger.info("Uploading %i files from %s to %s", len(files_to_upload), src_dir, staging_bucket)
         file_uuids, uploaded_keys, abs_file_paths = upload_to_cloud(files_to_upload, staging_bucket=staging_bucket,
                                                                     replica=replica, from_cloud=False,
-                                                                    log_progress=not no_progress)
+                                                                    log_progress=not no_progress,
+                                                                    file_uuid_callback=file_uuid_callback)
         for file_handle in files_to_upload:
             file_handle.close()
         filenames = [object_name_builder(p, src_dir) for p in abs_file_paths]

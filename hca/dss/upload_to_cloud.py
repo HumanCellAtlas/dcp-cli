@@ -53,7 +53,8 @@ def _copy_from_s3(path, s3):
     return file_uuids, key_names
 
 
-def upload_to_cloud(file_handles, staging_bucket, replica, from_cloud=False, log_progress=False):
+def upload_to_cloud(file_handles, staging_bucket, replica, from_cloud=False, log_progress=False,
+                    file_uuid_callback=None):
     """
     Upload files to cloud.
 
@@ -67,8 +68,16 @@ def upload_to_cloud(file_handles, staging_bucket, replica, from_cloud=False, log
                               In addition, even if this is set to True, a progress bar will not
                               be shown if (a) the logging level is not INFO or lower or (b) an
                               interactive session is not detected.
+    :param file_uuid_callback: An optional function that is invoked to allocate a DSS file UUID for the file to be
+                               uploaded. The function is called with one argument: the absolute path of the file
+                               about to be uploaded. It must return a string containing the hexadecimal
+                               representation of a UUID. If this argument is omitted, a random UUID4 will be
+                               used for each file.
     :return: a list of file uuids, key-names, and absolute file paths (local) for uploaded files
     """
+    if file_uuid_callback is None:
+        def file_uuid_callback(_file_path):
+            return str(uuid.uuid4())
     s3 = boto3.resource("s3")
     file_uuids = []
     key_names = []
@@ -90,7 +99,7 @@ def upload_to_cloud(file_handles, staging_bucket, replica, from_cloud=False, log
             tx_cfg = TransferConfig(multipart_threshold=s3_multipart.MULTIPART_THRESHOLD,
                                     multipart_chunksize=multipart_chunksize)
             with ChecksummingBufferedReader(raw_fh, multipart_chunksize) as fh:
-                file_uuid = str(uuid.uuid4())
+                file_uuid = file_uuid_callback(raw_fh.name)
                 key_name = "{}/{}".format(file_uuid, os.path.basename(fh.raw.name))
                 destination_bucket.upload_fileobj(
                     fh,
