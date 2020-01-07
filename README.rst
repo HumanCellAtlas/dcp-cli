@@ -23,13 +23,13 @@ Documentation on readthedocs.io:
 
 Example CLI/API usage:
 
-* `CLI examples (open endpoints) <https://github.com/HumanCellAtlas/dcp-cli/tree/master/docs/OpenCLIExamples.rst>`_
+* `CLI examples (open endpoints) <https://hca.readthedocs.io/en/latest/tutorials/OpenCLIExamples.html>`_
 
-* `CLI examples (restricted endpoints) <https://github.com/HumanCellAtlas/dcp-cli/tree/master/docs/RestrictedCLIExamples.rst>`_
+* `CLI examples (restricted endpoints) <https://hca.readthedocs.io/en/latest/tutorials/RestrictedCLIExamples.html>`_
 
-* `Python API examples (open endpoints) <https://github.com/HumanCellAtlas/dcp-cli/tree/master/docs/OpenAPIExamples.rst>`_
+* `Python API examples (open endpoints) <https://hca.readthedocs.io/en/latest/tutorials/OpenAPIExamples.html>`_
 
-* `Python API examples (restricted endpoints) <https://github.com/HumanCellAtlas/dcp-cli/tree/master/docs/OpenAPIExamples.rst>`_
+* `Python API examples (restricted endpoints) <https://hca.readthedocs.io/en/latest/tutorials/RestrictedAPIExamples.html>`_
 
 To see the list of commands you can use, type :code:`hca --help`.
 
