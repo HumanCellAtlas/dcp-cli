@@ -4,9 +4,6 @@
   "DSSClient": {
     "swagger_url": "https://dss.data.humancellatlas.org/v1/swagger.json"
   },
-  "DCPQueryClient": {
-    "swagger_url": "https://dss.data.humancellatlas.org/v1/swagger.json"
-  },
   "AuthClient": {
     "swagger_url": "https://auth.data.humancellatlas.org/swagger.json"
   }
