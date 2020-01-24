@@ -1,3 +1,10 @@
+Changes for v7.0.0 (2020-01-23)
+===============================
+
+Remove references to query service (#504) Allow user-specified bundle
+uuid for upload(). (#499) Add ``httpie`` as dev requirement (#495) Fix
+some progress bar tests failing silently
+
 Changes for v6.5.1 (2019-11-26)
 ===============================
 
