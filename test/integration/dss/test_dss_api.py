@@ -6,6 +6,8 @@ import datetime
 import filecmp
 from hca.util import tsv
 import itertools
+import logging
+import json
 import os
 import sys
 import tempfile
@@ -19,6 +21,13 @@ sys.path.insert(0, pkg_root)  # noqa
 import hca.dss
 from hca.dss.util import iter_paths, object_name_builder
 from test import reset_tweak_changes, TEST_DIR
+
+logger = logging.getLogger(__name__)
+
+
+def setUpModule():
+    logging.basicConfig(format="%(asctime)s %(levelname)-7s %(threadName)s: %(message)s")
+    logger.setLevel(logging.INFO)
 
 
 class TestDssApi(unittest.TestCase):
@@ -34,6 +43,44 @@ class TestDssApi(unittest.TestCase):
                 dev = hca.dss.DSSClient(
                     swagger_url="https://dss.dev.data.humancellatlas.org/v1/swagger.json")
                 self.assertEqual("dss.dev.data.humancellatlas.org", dev._swagger_spec['host'])
+
+    def test_python_dss_prod_access(self):
+        prod_bucket = 'org-humancellatlas-upload-prod'
+        bundle_uuid = 'ffffffff-dddd-cccc-bbbb-aaaaaaaaaaaa'
+        prod_client = hca.dss.DSSClient(swagger_url="https://dss.data.humancellatlas.org/v1/swagger.json")
+        bundle_path = os.path.join(TEST_DIR, "res", "bundle")
+        bundle_output = prod_client.upload(src_dir=bundle_path, replica="aws",
+                                           staging_bucket=prod_bucket, bundle_uuid=bundle_uuid)
+        bundle_uuid, bundle_version = bundle_output['bundle_uuid'], bundle_output['bundle_version']
+
+        with tempfile.TemporaryDirectory() as dest_dir:
+            prod_client.download(bundle_uuid=bundle_output['bundle_uuid'], replica="aws", download_dir=dest_dir)
+
+        file_ = bundle_output['files'][0]
+        with prod_client.get_file.stream(uuid=file_['uuid'], replica="aws") as fh:
+            while True:
+                chunk = fh.raw.read(1024)
+                if chunk == b"":
+                    break
+        self.assertTrue(prod_client.head_file(uuid=file_['uuid'], replica="aws").ok)
+
+        res = prod_client.get_bundle(uuid=bundle_uuid, replica="aws")
+        self.assertEqual(res["bundle"]["uuid"], bundle_uuid)
+
+        # Test put-files
+        file_uuid = 'eeeeeeee-dddd-cccc-bbbb-aaaaaaaaaaaa'
+        file_version = '2020-02-07T224634.421157Z'
+        source_url = "s3://{}/{}/{}".format(prod_bucket, file_['uuid'], file_['name'])
+        res = prod_client.put_file(uuid=file_uuid, creator_uid=1, bundle_uuid=bundle_uuid,
+                                   version=file_version, source_url=source_url)
+
+        # Test put-bundles
+        files = [{'indexed': True,
+                  'name': file_['name'],
+                  'uuid': file_uuid,
+                  'version': res['version']}]
+        res = prod_client.put_bundle(uuid=bundle_uuid, files=files, version=file_version, creator_uid=1, replica="aws")
+        self.assertEqual(res["version"], file_version)
 
     def test_set_host_multithreaded(self):
         num_repeats = 10
