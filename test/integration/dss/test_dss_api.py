@@ -35,6 +35,51 @@ class TestDssApi(unittest.TestCase):
                     swagger_url="https://dss.dev.data.humancellatlas.org/v1/swagger.json")
                 self.assertEqual("dss.dev.data.humancellatlas.org", dev._swagger_spec['host'])
 
+    def test_python_dss_prod_access(self):
+        dummy_uuid = 'eeeeeeee-dddd-cccc-bbbb-aaaaaaaaaaaa'
+        file_version = '2020-02-07T224634.421157Z'
+
+        prod_client = hca.dss.DSSClient(swagger_url="https://dss.data.humancellatlas.org/v1/swagger.json")
+
+        bundle_path = os.path.join(TEST_DIR, "res", "bundle")
+        bundle_output = prod_client.upload(src_dir=bundle_path, replica="aws", staging_bucket=)
+        bundle_uuid = bundle_output['bundle_uuid']
+
+        # with tempfile.TemporaryDirectory() as dest_dir:
+        #     prod_client.download(bundle_uuid=bundle_output['bundle_uuid'], replica="aws", download_dir=dest_dir)
+        #
+        # # Test get-files and head-files
+        # file_ = bundle_output['files'][0]
+        # with prod_client.get_file.stream(uuid=file_['uuid'], replica="aws") as fh:
+        #     while True:
+        #         chunk = fh.raw.read(1024)
+        #         if chunk == b"":
+        #             break
+        # self.assertTrue(prod_client.head_file(uuid=file_['uuid'], replica="aws").ok)
+
+        # Test get-bundles
+        res = prod_client.get_bundle(uuid=bundle_uuid, replica="aws")
+        # self.assertEqual(res["bundle"]["uuid"], bundle_uuid)
+
+        # # Test put-files
+        # file_uuid = str(uuid.uuid4())
+        # file_version = datetime.datetime.utcnow().strftime("%Y-%m-%dT%H%M%S.%fZ")
+        # bundle_uuid = str(uuid.uuid4())
+        # source_url = "s3://{}/{}/{}".format(self.staging_bucket, file_['uuid'], file_['name'])
+        # res = prod_client.put_file(uuid=file_uuid, creator_uid=1, bundle_uuid=bundle_uuid,
+        #                            version=file_version, source_url=source_url)
+        #
+        # # Test put-bundles
+        # files = [{'indexed': True,
+        #           'name': file_['name'],
+        #           'uuid': file_uuid,
+        #           'version': res['version']}]
+        # res = prod_client.put_bundle(uuid=bundle_uuid, files=files, version=file_version, creator_uid=1, replica="aws")
+        # self.assertEqual(res["version"], file_version)
+        #
+        # with self.assertRaisesRegexp(Exception, "Missing query parameter 'replica'"):
+        #     res = prod_client.put_bundle(uuid=bundle_uuid, files=[], version=file_version, creator_uid=1)
+
     def test_set_host_multithreaded(self):
         num_repeats = 10
         num_threads = 2
