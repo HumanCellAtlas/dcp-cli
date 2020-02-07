@@ -42,7 +42,8 @@ class TestDssApi(unittest.TestCase):
         prod_client = hca.dss.DSSClient(swagger_url="https://dss.data.humancellatlas.org/v1/swagger.json")
 
         bundle_path = os.path.join(TEST_DIR, "res", "bundle")
-        bundle_output = prod_client.upload(src_dir=bundle_path, replica="aws", staging_bucket=)
+        bundle_output = prod_client.upload(src_dir=bundle_path, replica="aws",
+                                           staging_bucket='org-humancellatlas-upload-prod')
         bundle_uuid = bundle_output['bundle_uuid']
 
         # with tempfile.TemporaryDirectory() as dest_dir:
