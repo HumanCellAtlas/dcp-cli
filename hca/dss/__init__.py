@@ -112,17 +112,15 @@ class DSSClient(SwaggerClient):
         bundle_uuid = bundle_uuid if bundle_uuid else str(uuid.uuid4())
         version = datetime.utcnow().strftime("%Y-%m-%dT%H%M%S.%fZ")
 
-        files_to_upload, files_uploaded = [], []
+        filenames_to_upload, files_uploaded = [], []
         for filename in iter_paths(src_dir):
             full_file_name = filename.path
-            files_to_upload.append(open(full_file_name, "rb"))
+            filenames_to_upload.append(full_file_name)
 
-        logger.info("Uploading %i files from %s to %s", len(files_to_upload), src_dir, staging_bucket)
-        file_uuids, uploaded_keys, abs_file_paths = upload_to_cloud(files_to_upload, staging_bucket=staging_bucket,
+        logger.info("Uploading %i files from %s to %s", len(filenames_to_upload), src_dir, staging_bucket)
+        file_uuids, uploaded_keys, abs_file_paths = upload_to_cloud(filenames_to_upload, staging_bucket=staging_bucket,
                                                                     replica=replica, from_cloud=False,
                                                                     log_progress=not no_progress)
-        for file_handle in files_to_upload:
-            file_handle.close()
         filenames = [object_name_builder(p, src_dir) for p in abs_file_paths]
         filename_key_list = list(zip(filenames, file_uuids, uploaded_keys))
 
