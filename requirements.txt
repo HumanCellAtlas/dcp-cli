@@ -18,7 +18,7 @@ dcplib >= 2.0.2, < 3
 
 # The version range of docutils is pinned by botocore. Pinning it here can cause a version conflict.
 # See https://github.com/boto/botocore/pull/1802, https://github.com/HumanCellAtlas/dcp-cli/issues/418
-docutils
+docutils < 0.16
 
 google-auth >= 1.3.0, < 2
 google-auth-oauthlib >= 0.4.1, < 2
