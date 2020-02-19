@@ -418,5 +418,30 @@ class TestDssApi(unittest.TestCase):
         self.assertNotIn("oauth2_token", config)
 
 
+class TestDssApiFileLimit(unittest.TestCase):
+    staging_bucket = "org-humancellatlas-dss-cli-test"
+
+    @unittest.skipIf(os.name is 'nt', 'Unable to test on Windows')  # TODO windows testing refactor
+    def test_python_open_file_limit_upload(self):
+        import resource
+        old_open_file_limits = resource.getrlimit(resource.RLIMIT_NOFILE)
+        bundle_path = os.path.join(TEST_DIR, "upload", "many-files")
+        uploaded_paths = [x.path for x in iter_paths(str(bundle_path))]
+        uploaded_files = [object_name_builder(p, bundle_path) for p in uploaded_paths]
+        client = hca.dss.DSSClient(swagger_url='https://dss.integration.data.humancellatlas.org/v1/swagger.json')
+        resource.setrlimit(resource.RLIMIT_NOFILE, (30, old_open_file_limits[1]))
+        try:
+            manifest = client.upload(src_dir=bundle_path,
+                                     replica="aws",
+                                     staging_bucket=self.staging_bucket)
+        except Exception:
+            raise
+        else:
+            manifest_files = manifest['files']
+            self.assertEqual(list(file['name'] for file in manifest_files).sort(), uploaded_files.sort())
+        finally:
+            resource.setrlimit(resource.RLIMIT_NOFILE, old_open_file_limits)
+
+
 if __name__ == "__main__":
     unittest.main()
