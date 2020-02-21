@@ -35,3 +35,7 @@ requests >= 2.20.0, < 3
 tenacity >= 5.0.2, < 5.1
 tqdm >= 4.33.0, < 5
 tweak >= 1.0.3, < 2
+
+# Version range restricted due to an incompatibility with later versions of gitdb2.
+# See https://github.com/gitpython-developers/GitPython/issues/983
+gitdb2==3.0.1
