@@ -51,7 +51,6 @@ class TestDssApi(unittest.TestCase):
             with self.subTest(repeat=repeat):
                 with tempfile.TemporaryDirectory() as config_dir:
                     with unittest.mock.patch.dict(os.environ, XDG_CONFIG_HOME=config_dir):
-
                         def f(_):
                             dev = hca.dss.DSSClient(
                                 swagger_url="https://dss.dev.data.humancellatlas.org/v1/swagger.json")
@@ -289,7 +288,8 @@ class TestDssApi(unittest.TestCase):
         self.assertIn('timeDeleted', resp)
 
         with self.assertRaisesRegexp(Exception, "Cannot find subscription!"):
-            resp = self.client.get_subscription(replica="aws", uuid=subscription_uuid, subscription_type='elasticsearch')
+            resp = self.client.get_subscription(replica="aws", uuid=subscription_uuid,
+                                                subscription_type='elasticsearch')
 
         # Test subscriptions version 2 (jmespath subscriptions)
         resp = self.client.put_subscription(callback_url="https://www.test_python_subscriptions.dss.hca.org",
@@ -380,7 +380,6 @@ class TestDssApi(unittest.TestCase):
         new_swagger = datetime.datetime.fromtimestamp(os.path.getmtime(swagger_filename))
         self.assertGreater(new_swagger, old_swagger)
 
-
     @reset_tweak_changes
     def test_python_login_logout_service_account(self):
         query = {'bool': {}}
@@ -457,6 +456,7 @@ class TestProdDSSApi(unittest.TestCase):
     bundle_uuid = 'ffffffff-dddd-cccc-bbbb-aaaaaaaaaaaa'
     file_uuid = 'eeeeeeee-dddd-cccc-bbbb-aaaaaaaaaaaa'
     file_version = '2020-02-07T224634.421157Z'
+    test_prod_file = 'test_prod_file'
 
     @classmethod
     def setUpClass(cls) -> None:
@@ -487,14 +487,37 @@ class TestProdDSSApi(unittest.TestCase):
     #     for subscription in resp['subscriptions']:
     #         logger.info(json.dumps(subscription, indent=4))
 
-    def test_python_prod_dss_upload(self):
+    def upload_to_bucket(self, bucket):
         bundle_path = os.path.join(TEST_DIR, "res", "bundle")
-        for bucket in (self.prod_bucket, 'org-humancellatlas-dss-cli-test'):
-            logger.info('GET Subscription using bucket %s, returned the following response', bucket)
-            with self.subTest(bucket):
-                resp = self.client.upload(src_dir=bundle_path, replica="aws",
-                                          staging_bucket=bucket, bundle_uuid=self.bundle_uuid)
-                logger.info(json.dumps(resp, indent=4))
+        logger.info('GET Subscription using bucket %s, returned the following response', bucket)
+        resp = self.client.upload(src_dir=bundle_path, replica="aws",
+                                  staging_bucket=bucket, bundle_uuid=self.bundle_uuid)
+        logger.info(json.dumps(resp, indent=4))
+
+    def test_python_prod_dss_upload(self):
+        self.upload_to_bucket(self.prod_bucket)
+
+    def test_python_prod_dss_upload_staging_bucket(self):
+        self.upload_to_bucket('org-humancellatlas-dss-cli-test')
+
+    def test_put_bundle(self):
+        test_file = [{'indexed': True,
+                      'name': self.test_prod_file,
+                      'uuid': self.file_uuid,
+                      'version': self.file_version}]
+
+        resp = self.client.put_bundle(uuid=self.bundle_uuid,
+                                      files=test_file,
+                                      version=self.file_version,
+                                      creator_uid=1,
+                                      replica="aws")
+        logger.info(json.dumps(resp, indent=4))
+
+    def test_put_file(self):
+        source_url = "s3://{}/{}/{}".format('org-humancellatlas-dss-cli-test', self.file_uuid, self.test_prod_file)
+        resp = self.client.put_file(uuid=self.file_uuid, creator_uid=1, bundle_uuid=self.bundle_uuid,
+                                    version=self.file_version, source_url=source_url)
+        logger.info(json.dumps(resp, indent=4))
 
     # def test_pyton_prod_dss_upload(self):
     #     bundle_uuid, bundle_version = bundle_output['bundle_uuid'], bundle_output['bundle_version']
