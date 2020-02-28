@@ -44,44 +44,6 @@ class TestDssApi(unittest.TestCase):
                     swagger_url="https://dss.dev.data.humancellatlas.org/v1/swagger.json")
                 self.assertEqual("dss.dev.data.humancellatlas.org", dev._swagger_spec['host'])
 
-    def test_python_dss_prod_access(self):
-        prod_bucket = 'org-humancellatlas-upload-prod'
-        bundle_uuid = 'ffffffff-dddd-cccc-bbbb-aaaaaaaaaaaa'
-        prod_client = hca.dss.DSSClient(swagger_url="https://dss.data.humancellatlas.org/v1/swagger.json")
-        bundle_path = os.path.join(TEST_DIR, "res", "bundle")
-        bundle_output = prod_client.upload(src_dir=bundle_path, replica="aws",
-                                           staging_bucket=prod_bucket, bundle_uuid=bundle_uuid)
-        bundle_uuid, bundle_version = bundle_output['bundle_uuid'], bundle_output['bundle_version']
-
-        with tempfile.TemporaryDirectory() as dest_dir:
-            prod_client.download(bundle_uuid=bundle_output['bundle_uuid'], replica="aws", download_dir=dest_dir)
-
-        file_ = bundle_output['files'][0]
-        with prod_client.get_file.stream(uuid=file_['uuid'], replica="aws") as fh:
-            while True:
-                chunk = fh.raw.read(1024)
-                if chunk == b"":
-                    break
-        self.assertTrue(prod_client.head_file(uuid=file_['uuid'], replica="aws").ok)
-
-        res = prod_client.get_bundle(uuid=bundle_uuid, replica="aws")
-        self.assertEqual(res["bundle"]["uuid"], bundle_uuid)
-
-        # Test put-files
-        file_uuid = 'eeeeeeee-dddd-cccc-bbbb-aaaaaaaaaaaa'
-        file_version = '2020-02-07T224634.421157Z'
-        source_url = "s3://{}/{}/{}".format(prod_bucket, file_['uuid'], file_['name'])
-        res = prod_client.put_file(uuid=file_uuid, creator_uid=1, bundle_uuid=bundle_uuid,
-                                   version=file_version, source_url=source_url)
-
-        # Test put-bundles
-        files = [{'indexed': True,
-                  'name': file_['name'],
-                  'uuid': file_uuid,
-                  'version': res['version']}]
-        res = prod_client.put_bundle(uuid=bundle_uuid, files=files, version=file_version, creator_uid=1, replica="aws")
-        self.assertEqual(res["version"], file_version)
-
     def test_set_host_multithreaded(self):
         num_repeats = 10
         num_threads = 2
@@ -534,39 +496,39 @@ class TestProdDSSApi(unittest.TestCase):
                                           staging_bucket=bucket, bundle_uuid=self.bundle_uuid)
                 logger.info(json.dumps(resp, indent=4))
 
-        # def test_pyton_prod_dss_upload(self):
-        #     bundle_uuid, bundle_version = bundle_output['bundle_uuid'], bundle_output['bundle_version']
-        #     logger.info('Upload returned the following response')
-        #     logger.info(json.dumps(bundle_output, indent=4))
-        #     with tempfile.TemporaryDirectory() as dest_dir:
-        #         self.client.download(bundle_uuid=bundle_output['bundle_uuid'], replica="aws", download_dir=dest_dir)
-        #
-        #     file_ = bundle_output['files'][0]
-        #     with self.client.get_file.stream(uuid=file_['uuid'], replica="aws") as fh:
-        #         while True:
-        #             chunk = fh.raw.read(1024)
-        #             if chunk == b"":
-        #                 break
-        #     self.assertTrue(self.client.head_file(uuid=file_['uuid'], replica="aws").ok)
-        #
-        #     res = self.client.get_bundle(uuid=self.bundle_uuid, replica="aws")
-        #     logger.info('GET Bundle returned the following response')
-        #     logger.info(json.dumps(res, indent=4))
-        #     self.assertEqual(res["bundle"]["uuid"], self.bundle_uuid)
-        #     source_url = "s3://{}/{}/{}".fomat(self.prod_bucket, file_['uuid'], file_['name'])
-        #     logger.info('PUT file returned the following response.')
-        #
-        #     res = self.client.put_file(uuid=self.file_uuid, creator_uid=1, bundle_uuid=bundle_uuid,
-        #                                version=self.file_version, source_url=source_url)
-        #     files = [{'indexed': True,
-        #               'name': file_['name'],
-        #               'uuid': self.file_uuid,
-        #               'version': res['version']}]
-        #     logger.info('PUT Bundle returned the following response')
-        #     res = self.client.put_bundle(uuid=bundle_uuid, files=files, version=self.file_version,
-        #                                  creator_uid=1, replica="aws")
-        #     logger.info(json.dumps(res, indent=4))
-        #     self.assertEqual(res["version"], self.file_version)
+    # def test_pyton_prod_dss_upload(self):
+    #     bundle_uuid, bundle_version = bundle_output['bundle_uuid'], bundle_output['bundle_version']
+    #     logger.info('Upload returned the following response')
+    #     logger.info(json.dumps(bundle_output, indent=4))
+    #     with tempfile.TemporaryDirectory() as dest_dir:
+    #         self.client.download(bundle_uuid=bundle_output['bundle_uuid'], replica="aws", download_dir=dest_dir)
+    #
+    #     file_ = bundle_output['files'][0]
+    #     with self.client.get_file.stream(uuid=file_['uuid'], replica="aws") as fh:
+    #         while True:
+    #             chunk = fh.raw.read(1024)
+    #             if chunk == b"":
+    #                 break
+    #     self.assertTrue(self.client.head_file(uuid=file_['uuid'], replica="aws").ok)
+    #
+    #     res = self.client.get_bundle(uuid=self.bundle_uuid, replica="aws")
+    #     logger.info('GET Bundle returned the following response')
+    #     logger.info(json.dumps(res, indent=4))
+    #     self.assertEqual(res["bundle"]["uuid"], self.bundle_uuid)
+    #     source_url = "s3://{}/{}/{}".fomat(self.prod_bucket, file_['uuid'], file_['name'])
+    #     logger.info('PUT file returned the following response.')
+    #
+    #     res = self.client.put_file(uuid=self.file_uuid, creator_uid=1, bundle_uuid=bundle_uuid,
+    #                                version=self.file_version, source_url=source_url)
+    #     files = [{'indexed': True,
+    #               'name': file_['name'],
+    #               'uuid': self.file_uuid,
+    #               'version': res['version']}]
+    #     logger.info('PUT Bundle returned the following response')
+    #     res = self.client.put_bundle(uuid=bundle_uuid, files=files, version=self.file_version,
+    #                                  creator_uid=1, replica="aws")
+    #     logger.info(json.dumps(res, indent=4))
+    #     self.assertEqual(res["version"], self.file_version)
 
 
 if __name__ == "__main__":
