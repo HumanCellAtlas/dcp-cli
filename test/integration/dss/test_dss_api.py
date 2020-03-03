@@ -30,6 +30,7 @@ def setUpModule():
     logger.setLevel(logging.INFO)
 
 
+@unittest.skip('')
 class TestDssApi(unittest.TestCase):
     staging_bucket = "org-humancellatlas-dss-cli-test"
 
@@ -426,6 +427,7 @@ class TestDssApi(unittest.TestCase):
         self.assertNotIn("oauth2_token", config)
 
 
+@unittest.skip('')
 class TestDssApiFileLimit(unittest.TestCase):
     staging_bucket = "org-humancellatlas-dss-cli-test"
 
@@ -467,18 +469,18 @@ class TestProdDSSApi(unittest.TestCase):
     def tearDownClass(cls) -> None:
         super().tearDownClass()
 
-    def test_python_prod_dss_subscriptions(self):
-        query = {'bool': {}}
-        resp = self.client.put_subscription(es_query=query,
-                                            callback_url="https://www.test_prod_access_in_travis.dss.hca.org",
-                                            replica="aws")
-        logger.info('PUT Subscription UUID is %s.', resp['uuid'])
-        logger.info('PUT Subscription returned the following response')
-        logger.info(json.dumps(resp, indent=4))
-
-        resp = self.client.get_subscriptions(replica="aws", subscription_type='elasticsearch')
-        logger.info('GET Subscription returned the following response')
-        logger.info(json.dumps(resp, indent=4))
+    # def test_python_prod_dss_subscriptions(self):
+    #     query = {'bool': {}}
+    #     resp = self.client.put_subscription(es_query=query,
+    #                                         callback_url="https://www.test_prod_access_in_travis.dss.hca.org",
+    #                                         replica="aws")
+    #     logger.info('PUT Subscription UUID is %s.', resp['uuid'])
+    #     logger.info('PUT Subscription returned the following response')
+    #     logger.info(json.dumps(resp, indent=4))
+    #
+    #     resp = self.client.get_subscriptions(replica="aws", subscription_type='elasticsearch')
+    #     logger.info('GET Subscription returned the following response')
+    #     logger.info(json.dumps(resp, indent=4))
 
     # def test_python_prod_dss_get_subscription(self):
     #     resp = self.client.get_subscriptions(replica="aws", subscription_type='elasticsearch')
@@ -487,23 +489,24 @@ class TestProdDSSApi(unittest.TestCase):
     #     for subscription in resp['subscriptions']:
     #         logger.info(json.dumps(subscription, indent=4))
 
-    def upload_to_bucket(self, bucket):
-        bundle_path = os.path.join(TEST_DIR, "res", "bundle")
-        logger.info('GET Subscription using bucket %s, returned the following response', bucket)
-        resp = self.client.upload(src_dir=bundle_path, replica="aws",
-                                  staging_bucket=bucket, bundle_uuid=self.bundle_uuid)
-        logger.info(json.dumps(resp, indent=4))
-
-    def test_python_prod_dss_upload(self):
-        self.upload_to_bucket(self.prod_bucket)
-
-    def test_python_prod_dss_upload_staging_bucket(self):
-        self.upload_to_bucket('org-humancellatlas-dss-cli-test')
+    # def upload_to_bucket(self, bucket):
+    #     bundle_path = os.path.join(TEST_DIR, "res", "bundle")
+    #     logger.info('GET Subscription using bucket %s, returned the following response', bucket)
+    #     resp = self.client.upload(src_dir=bundle_path, replica="aws",
+    #                               staging_bucket=bucket, bundle_uuid=self.bundle_uuid)
+    #     logger.info(json.dumps(resp, indent=4))
+    #
+    # def test_python_prod_dss_upload(self):
+    #     self.upload_to_bucket(self.prod_bucket)
+    #
+    # def test_python_prod_dss_upload_staging_bucket(self):
+    #     self.upload_to_bucket('org-humancellatlas-dss-cli-test')
 
     def test_put_bundle(self):
         source_url = "s3://{}/{}/{}".format('org-humancellatlas-upload-prod', self.file_uuid, self.test_prod_file)
         resp = self.client.put_file(uuid=self.file_uuid, creator_uid=1, bundle_uuid=self.bundle_uuid,
                                     version=self.file_version, source_url=source_url)
+        logger.info(json.dumps(resp.json(), indent=4))
         test_file = [{'indexed': True,
                       'name': self.test_prod_file,
                       'uuid': self.file_uuid,
@@ -515,40 +518,6 @@ class TestProdDSSApi(unittest.TestCase):
                                       creator_uid=1,
                                       replica="aws")
         logger.info(json.dumps(resp, indent=4))
-
-    # def test_pyton_prod_dss_upload(self):
-    #     bundle_uuid, bundle_version = bundle_output['bundle_uuid'], bundle_output['bundle_version']
-    #     logger.info('Upload returned the following response')
-    #     logger.info(json.dumps(bundle_output, indent=4))
-    #     with tempfile.TemporaryDirectory() as dest_dir:
-    #         self.client.download(bundle_uuid=bundle_output['bundle_uuid'], replica="aws", download_dir=dest_dir)
-    #
-    #     file_ = bundle_output['files'][0]
-    #     with self.client.get_file.stream(uuid=file_['uuid'], replica="aws") as fh:
-    #         while True:
-    #             chunk = fh.raw.read(1024)
-    #             if chunk == b"":
-    #                 break
-    #     self.assertTrue(self.client.head_file(uuid=file_['uuid'], replica="aws").ok)
-    #
-    #     res = self.client.get_bundle(uuid=self.bundle_uuid, replica="aws")
-    #     logger.info('GET Bundle returned the following response')
-    #     logger.info(json.dumps(res, indent=4))
-    #     self.assertEqual(res["bundle"]["uuid"], self.bundle_uuid)
-    #     source_url = "s3://{}/{}/{}".fomat(self.prod_bucket, file_['uuid'], file_['name'])
-    #     logger.info('PUT file returned the following response.')
-    #
-    #     res = self.client.put_file(uuid=self.file_uuid, creator_uid=1, bundle_uuid=bundle_uuid,
-    #                                version=self.file_version, source_url=source_url)
-    #     files = [{'indexed': True,
-    #               'name': file_['name'],
-    #               'uuid': self.file_uuid,
-    #               'version': res['version']}]
-    #     logger.info('PUT Bundle returned the following response')
-    #     res = self.client.put_bundle(uuid=bundle_uuid, files=files, version=self.file_version,
-    #                                  creator_uid=1, replica="aws")
-    #     logger.info(json.dumps(res, indent=4))
-    #     self.assertEqual(res["version"], self.file_version)
 
 
 if __name__ == "__main__":

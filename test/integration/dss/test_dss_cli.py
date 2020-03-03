@@ -278,6 +278,7 @@ class SessionMock:
         return self.request(*args, **kwargs)
 
 
+@unittest.skip('')
 class MockTestCase(unittest.TestCase):
     def _test_with_mock(self, expected_length, no_pagination=False):
         paged_args = ['dss', 'get-bundles-all', '--replica', 'aws']

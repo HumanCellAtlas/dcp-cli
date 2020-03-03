@@ -20,6 +20,7 @@ from hca.util import RetryPolicy
 from hca.dss import upload_to_cloud
 
 
+@unittest.skip('')
 class TestDssApiRetry(unittest.TestCase):
     staging_bucket = "org-humancellatlas-dss-cli-test"
     source_url = None

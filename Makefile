@@ -4,7 +4,7 @@ else
 	SHELL=/bin/bash
 endif
 
-test: lint install integrationtests unittests
+test: lint install integrationtests
 	coverage combine
 	rm -f .coverage.*
 
@@ -18,7 +18,6 @@ unit: lint install unittests
 
 integrationtests:
     # https://github.com/HumanCellAtlas/dcp-cli/issues/127
-	coverage run -p --source=hca -m unittest discover -v -t . -s test/integration/upload
 	coverage run -p --source=hca -m unittest discover -v -t . -s test/integration/dss
 
 integration: lint install integrationtests
