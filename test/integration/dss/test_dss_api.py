@@ -501,6 +501,9 @@ class TestProdDSSApi(unittest.TestCase):
         self.upload_to_bucket('org-humancellatlas-dss-cli-test')
 
     def test_put_bundle(self):
+        source_url = "s3://{}/{}/{}".format('org-humancellatlas-upload-prod', self.file_uuid, self.test_prod_file)
+        resp = self.client.put_file(uuid=self.file_uuid, creator_uid=1, bundle_uuid=self.bundle_uuid,
+                                    version=self.file_version, source_url=source_url)
         test_file = [{'indexed': True,
                       'name': self.test_prod_file,
                       'uuid': self.file_uuid,
@@ -511,12 +514,6 @@ class TestProdDSSApi(unittest.TestCase):
                                       version=self.file_version,
                                       creator_uid=1,
                                       replica="aws")
-        logger.info(json.dumps(resp, indent=4))
-
-    def test_put_file(self):
-        source_url = "s3://{}/{}/{}".format('org-humancellatlas-dss-cli-test', self.file_uuid, self.test_prod_file)
-        resp = self.client.put_file(uuid=self.file_uuid, creator_uid=1, bundle_uuid=self.bundle_uuid,
-                                    version=self.file_version, source_url=source_url)
         logger.info(json.dumps(resp, indent=4))
 
     # def test_pyton_prod_dss_upload(self):
