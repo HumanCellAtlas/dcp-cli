@@ -503,15 +503,20 @@ class TestProdDSSApi(unittest.TestCase):
     #     self.upload_to_bucket('org-humancellatlas-dss-cli-test')
 
     def test_put_bundle(self):
-        source_url = "s3://{}/{}/{}".format('org-humancellatlas-upload-prod', self.file_uuid, self.test_prod_file)
-        resp = self.client.put_file(uuid=self.file_uuid, creator_uid=1, bundle_uuid=self.bundle_uuid,
-                                    version=self.file_version, source_url=source_url)
-        logger.info(json.dumps(resp.json(), indent=4))
+        self.test_prod_file = 'SRR2967608_1.fastq.gz'
+        self.file_uuid = 'dd78d5eb-7cb0-4112-81fe-90e1aecb81db'
+        self.file_version = '2019-10-01T200147.402537Z'
+        source_url = "s3://{}/{}/{}".format('org-humancellatlas-dss-cli-test', '00109752-d6af-4c93-a20c-82373eb5c838', self.test_prod_file)
+        resp = self.client.put_file(uuid='dd78d5eb-7cb0-4112-81fe-90e1aecb81db',
+                                    creator_uid=1,
+                                    bundle_uuid='00004ffa-a7e7-4848-9cb8-9fdbb3b2549f',
+                                    version='2019-10-01T200147.402537Z',
+                                    source_url=source_url)
+        logger.info(json.dumps(resp, indent=4))
         test_file = [{'indexed': True,
                       'name': self.test_prod_file,
                       'uuid': self.file_uuid,
                       'version': self.file_version}]
-
         resp = self.client.put_bundle(uuid=self.bundle_uuid,
                                       files=test_file,
                                       version=self.file_version,
