@@ -503,7 +503,7 @@ class TestProdDSSApi(unittest.TestCase):
     #     self.upload_to_bucket('org-humancellatlas-dss-cli-test')
 
     def test_put_bundle(self):
-        self.test_prod_file = 'SRR2967608_1.fastq.gz'
+        self.test_prod_file = 'dummy-file.fastq.gz'
         self.file_uuid = 'dd78d5eb-7cb0-4112-81fe-90e1aecb81db'
         self.file_version = '2020-03-10T200147.402537Z'
         source_url = "s3://{}/{}/{}".format('org-humancellatlas-dss-cli-test', '00109752-d6af-4c93-a20c-82373eb5c838',
