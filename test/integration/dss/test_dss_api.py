@@ -508,7 +508,7 @@ class TestProdDSSApi(unittest.TestCase):
         self.file_version = '2020-03-09T200147.402537Z'
         source_url = "s3://{}/{}/{}".format('org-humancellatlas-dss-cli-test', '00109752-d6af-4c93-a20c-82373eb5c838',
                                             self.test_prod_file)
-        resp = self.client.put_file(uuid='dd78d5åeb-7cb0-4112-81fe-90e1aecb81db',
+        resp = self.client.put_file(uuid='dd78d5eb-7cb0-4112-81fe-90e1aecb81db',
                                     creator_uid=1,
                                     bundle_uuid='00004ffa-a7e7-4848-9cb8-9fdbb3b2549f',
                                     version='2020-03-09T200147.402537Z',
