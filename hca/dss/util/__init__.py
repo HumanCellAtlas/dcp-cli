@@ -58,7 +58,6 @@ def hardlink(source, link_name):
         if source_stat.st_dev != dest_stat.st_dev or source_stat.st_ino != dest_stat.st_ino:
             raise
     except OSError as e:
-        # See https://docs.python.org/3/library/errno.html
         copy_on_error = [
             errno.EMLINK,  # too many links
             errno.EACCES,  # permission denied
