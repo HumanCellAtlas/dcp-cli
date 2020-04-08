@@ -58,11 +58,9 @@ def hardlink(source, link_name):
         if source_stat.st_dev != dest_stat.st_dev or source_stat.st_ino != dest_stat.st_ino:
             raise
     except OSError as e:
-        copy_on_error = [
-            errno.EMLINK,  # too many links
-            errno.EACCES,  # permission denied
-            errno.EPERM,  # operation not permitted
-        ]
+        # ELINK can occur when max number of links has been reached
+        # EPERM can occur when writing to NFS
+        copy_on_error = (errno.EMLINK, errno.EPERM)
         if e.errno in copy_on_error:
             # FIXME: Copying is not space efficient; see https://github.com/HumanCellAtlas/dcp-cli/issues/453
             log.warning('Failed to link source `%s` to destination `%s`; reverting to copying', source, link_name)
