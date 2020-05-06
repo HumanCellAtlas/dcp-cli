@@ -505,7 +505,7 @@ class DownloadContext(object):
 
         for file_ in manifest['bundle']['files']:
             dss_file = DSSFile.from_dss_bundle_response(file_, self.replica)
-            filename = file_.get("name", dss_file.uuid)
+            filename = file_.get("name", dss_file.uuid).replace('!', '/')
             walking_dir = bundle_dir
 
             globs = metadata_filter if file_['indexed'] else data_filter
