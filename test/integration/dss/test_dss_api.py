@@ -26,7 +26,9 @@ class TestDssApi(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.client = hca.dss.DSSClient()
+        # Explicitly set to dss-integration rather than what the local config is set to.
+        # Ensures no bundles are uploaded to dss-prod from operators machine.
+        cls.client = hca.dss.DSSClient(swagger_url="https://dss.integration.data.humancellatlas.org/v1/swagger.json")
 
     def test_set_host(self):
         with tempfile.TemporaryDirectory() as home:

@@ -26,6 +26,10 @@ class TestDssApiRetry(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
+        # Explicitly set to dss-integration rather than what the local config is set to.
+        # Ensures no bundles are uploaded to dss-prod from operators machine.
+        cls.client = hca.dss.DSSClient(swagger_url="https://dss.integration.data.humancellatlas.org/v1/swagger.json")
+
         with tempfile.TemporaryDirectory() as src_dir:
             bundle_path = os.path.join(src_dir, "bundle")
             os.makedirs(bundle_path)
@@ -49,7 +53,7 @@ class TestDssApiRetry(unittest.TestCase):
         Test that GET methods are retried.  We instruct the server to fake a 504 with some probability, and we should
         retry until successful.
         """
-        client = hca.dss.DSSClient()
+        client = self.client
         file_uuid = str(uuid.uuid4())
         creator_uid = client.config.get("creator_uid", 0)
         version = datetime.utcnow().strftime("%Y-%m-%dT%H%M%S.%fZ")

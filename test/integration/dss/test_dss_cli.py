@@ -24,6 +24,16 @@ from test import CapturingIO, reset_tweak_changes, TEST_DIR
 
 
 class TestDssCLI(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        """
+        These tests rely on a logged in env, ensure that the current stage is not dss-prod
+        """
+        config = hca.get_config()
+        if "https://dss.data.humancellatlas.org" in config['DSSClient']['swagger_url']:
+            raise ValueError('Please change the DSS swagger endpoint in the HCA config file away from `dss-prod`\n'
+                             'For more information see: `https://github.com/HumanCellAtlas/dcp-cli#development`')
+
     def test_post_search_cli(self):
         query = json.dumps({})
         replica = "aws"
