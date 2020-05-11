@@ -27,20 +27,12 @@ class TestDssCLI(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         """
-        These tests rely on a logged in env, assert that the stage is not dss-prod
+        These tests rely on a logged in env, ensure that the current stage is not dss-prod
         """
-        # the dss-api endpoint 'get-bundles-all' provides the stage within the response
-        args = ["dss", "get-bundles-all", "--replica", "aws",
-                "--per-page", "10", "--no-paginate"]
-        with CapturingIO('stdout') as stdout:
-            hca.cli.main(args)
-        result = json.loads(stdout.captured())
-        try:
-            assert("https://dss.data.humancellatlas.org" not in result["dss_api"])
-        except AssertionError:
-            print('\nPlease change the DSS swagger endpoint in the HCA config file away from `dss-prod`\n'
-                  'For more information see: `https://github.com/HumanCellAtlas/dcp-cli#development`')
-            exit(1)
+        config = hca.get_config()
+        if "https://dss.data.humancellatlas.org" in config['DSSClient']['swagger_url']:
+            raise ValueError('Please change the DSS swagger endpoint in the HCA config file away from `dss-prod`\n'
+                             'For more information see: `https://github.com/HumanCellAtlas/dcp-cli#development`')
 
     def test_post_search_cli(self):
         query = json.dumps({})
