@@ -1,3 +1,7 @@
+DEPRECATED
+==========
+This repository has been deprecated. For information about accessing Human Cell Atlas data please refer to the `Data Browser quick start guide. <https://data.humancellatlas.org/guides/quick-start-guide>`_
+
 HCA CLI
 =======
 This repository is a pip installable Command Line Interface (CLI) and Python library (API) for interacting with the

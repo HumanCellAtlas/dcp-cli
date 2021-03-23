@@ -2,6 +2,14 @@
 
 import os
 from setuptools import setup, find_packages
+import sys
+
+if set(sys.argv).isdisjoint({'sdist', 'bdist_wheel', '--name', '--version'}):
+    sys.exit('\nThis repository has been deprecated. For information about '
+             'accessing Human Cell Atlas data please refer to the '
+             '`Data Browser quick start guide. '
+             'https://data.humancellatlas.org/guides/quick-start-guide`\n')
+
 
 install_requires = [line.rstrip() for line in open(os.path.join(os.path.dirname(__file__), "requirements.txt"))]
 
