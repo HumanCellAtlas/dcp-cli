@@ -1,3 +1,12 @@
+Changes for v8.0.0 (2021-03-30)
+===============================
+
+Deprecate repository databiosphere/azul#2897 (#526) Remove dss-prod from
+testing (#522) Update hca/dss/util/**init**.py remove EACCES, improve
+explanatory comments remove link to documentation fall back to copying
+when os.link raises error Close file handlers after use Add specific
+version of gitdb2 dependency (#514)
+
 Changes for v7.0.1 (2020-02-11)
 ===============================
 
