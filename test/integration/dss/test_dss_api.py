@@ -21,6 +21,18 @@ from hca.dss.util import iter_paths, object_name_builder
 from test import reset_tweak_changes, TEST_DIR
 
 
+def get_uploaded_file_names(path: str):
+    files = []
+    for entry in os.scandir(path=path):
+        if entry.is_file():
+            files.append(entry.name)
+        if entry.is_dir():
+            nested_files = get_uploaded_file_names(entry.path)
+            for file in nested_files:
+                files.append('{}/{}'.format(entry.name, file))
+    return files
+
+
 class TestDssApi(unittest.TestCase):
     staging_bucket = "org-humancellatlas-dss-cli-test"
 
@@ -73,9 +85,31 @@ class TestDssApi(unittest.TestCase):
                 downloaded_file_paths = [object_name_builder(p, dest_dir) for p in downloaded_file_names]
                 self.assertEqual(uploaded_files.sort(), downloaded_file_paths.sort())
 
+    @unittest.skipIf(os.name is 'nt', 'Unable to test on Windows')  # TODO windows testing refactor
+    def test_python_exclamation_replacement(self):
+        bundle_path = os.path.join(TEST_DIR, "res", "nested_bundle")
+        uploaded_files = set(get_uploaded_file_names(bundle_path))
+
+        bundle_output = self.client.upload(src_dir=bundle_path,
+                                      replica="aws",
+                                      staging_bucket=self.staging_bucket)
+
+        bundle_uuid = bundle_output['bundle_uuid']
+        bundle_version = bundle_output['version']
+        bundle_fqid = "{}.{}".format(bundle_uuid, bundle_version)
+
+        manifest_files = bundle_output['files']
+        self.assertEqual({file['name'] for file in manifest_files}, uploaded_files)
+
+        with tempfile.TemporaryDirectory() as dest_dir:
+            self.client.download(bundle_uuid=bundle_output['bundle_uuid'], replica="aws", download_dir=dest_dir)
+            nested_downloaded_files = [file.name for file in os.scandir('{}/{}/zarr'.format(dest_dir, bundle_fqid))]
+            for file in ['exclamation.zattrs', 'nested.zattrs']:
+                self.assertIn(file, nested_downloaded_files)
+
     def test_python_upload_download(self):
         bundle_path = os.path.join(TEST_DIR, "res", "bundle")
-        uploaded_files = set(os.listdir(bundle_path))
+        uploaded_files = set(get_uploaded_file_names(bundle_path))
 
         manifest = self.client.upload(src_dir=bundle_path,
                                       replica="aws",
@@ -141,7 +175,7 @@ class TestDssApi(unittest.TestCase):
 
     def test_python_manifest_download(self):
         bundle_path = os.path.join(TEST_DIR, "res", "bundle")
-        uploaded_files = set(os.listdir(bundle_path))
+        uploaded_files = set(get_uploaded_file_names(bundle_path))
 
         manifest = self.client.upload(src_dir=bundle_path,
                                       replica="aws",
